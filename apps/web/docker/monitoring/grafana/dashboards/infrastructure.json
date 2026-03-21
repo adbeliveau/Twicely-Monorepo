@@ -1,0 +1,74 @@
+{
+  "uid": "twicely-infrastructure",
+  "title": "Twicely Infrastructure",
+  "description": "CPU, memory, disk, PostgreSQL connections, Valkey memory",
+  "tags": ["twicely", "infrastructure"],
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "60s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "PostgreSQL Active Connections",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_db_connections_active",
+          "legendFormat": "Active"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_db_connections_max",
+          "legendFormat": "Max"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Valkey Memory Usage",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_valkey_memory_used_bytes",
+          "legendFormat": "Used"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_valkey_memory_max_bytes",
+          "legendFormat": "Max"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Disk Available",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "node_filesystem_avail_bytes / node_filesystem_size_bytes",
+          "legendFormat": "Available Fraction"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "1 - rate(node_cpu_seconds_total{mode=\"idle\"}[5m])",
+          "legendFormat": "CPU Usage"
+        }
+      ]
+    }
+  ]
+}

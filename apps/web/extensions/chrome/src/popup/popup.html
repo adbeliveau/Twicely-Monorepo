@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twicely Crosslister</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Unauthenticated state -->
+    <div id="state-unauthenticated" class="state hidden">
+      <div class="logo">
+        <img src="../icons/icon-48.png" alt="Twicely" width="48" height="48" />
+        <h1>Twicely</h1>
+      </div>
+      <p class="description">Sign in to your Twicely account to enable crosslisting.</p>
+      <button id="btn-connect" class="btn btn-primary">Connect to Twicely</button>
+    </div>
+
+    <!-- Authenticated state -->
+    <div id="state-authenticated" class="state hidden">
+      <div class="user-info">
+        <img id="user-avatar" src="" alt="" width="32" height="32" class="avatar" />
+        <div class="user-text">
+          <span class="connected-label">Connected as</span>
+          <span id="user-display-name" class="display-name"></span>
+        </div>
+      </div>
+
+      <div class="platforms">
+        <div class="platform-row" id="platform-poshmark">
+          <span class="dot dot-gray"></span>
+          <span>Poshmark</span>
+        </div>
+        <div class="platform-row" id="platform-fb-marketplace">
+          <span class="dot dot-gray"></span>
+          <span>Facebook Marketplace</span>
+        </div>
+        <div class="platform-row" id="platform-therealreal">
+          <span class="dot dot-gray"></span>
+          <span>The RealReal</span>
+        </div>
+      </div>
+
+      <div class="version-label">Extension v<span id="ext-version"></span></div>
+
+      <div class="actions">
+        <a href="https://twicely.co/my/selling/crosslist" target="_blank" class="btn btn-secondary">Open Twicely</a>
+        <button id="btn-disconnect" class="btn btn-danger">Disconnect</button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="state-loading" class="state">
+      <p class="loading-text">Loading...</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build
+.next/
+dist/
+.turbo/
+out/
+
+# Environment
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+test-results/
+playwright-report/
+coverage/
+
+# Claude
+.claude/worktrees/

@@ -1,0 +1,51 @@
+{
+  "uid": "twicely-background-jobs",
+  "title": "Twicely Background Jobs",
+  "description": "BullMQ queue depth, throughput, DLQ depth, job latency per queue",
+  "tags": ["twicely", "bullmq", "jobs"],
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Queue Depths",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_bullmq_queue_depth",
+          "legendFormat": "{{queue}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Dead-Letter Queue Depth",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_bullmq_queue_depth{queue=\"dead-letter\"}",
+          "legendFormat": "DLQ"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Queue Throughput",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(twicely_bullmq_jobs_completed_total[5m])",
+          "legendFormat": "Completed {{queue}}"
+        }
+      ]
+    }
+  ]
+}

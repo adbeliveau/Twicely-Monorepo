@@ -1,0 +1,19 @@
+{
+  "name": "twicely",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "db:generate": "pnpm --filter @twicely/db drizzle-kit generate",
+    "db:push": "pnpm --filter @twicely/db drizzle-kit push",
+    "db:seed": "pnpm --filter @twicely/db seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.3"
+  }
+}

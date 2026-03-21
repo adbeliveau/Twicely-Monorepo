@@ -1,0 +1,88 @@
+groups:
+  - name: twicely-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: >
+          rate(twicely_http_requests_total{status=~"5.."}[5m])
+          /
+          rate(twicely_http_requests_total[5m])
+          > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: High HTTP error rate
+          description: >
+            More than 5% of HTTP requests are returning 5xx errors
+            (current value: {{ printf "%.2f" $value }}).
+
+      - alert: SlowAPI
+        expr: >
+          histogram_quantile(
+            0.95,
+            rate(twicely_http_request_duration_seconds_bucket[10m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow API response times
+          description: >
+            p95 API latency exceeds 2 seconds
+            (current value: {{ printf "%.2fs" $value }}).
+
+      - alert: PaymentFailures
+        expr: >
+          rate(twicely_payments_total{outcome="failure"}[5m])
+          /
+          rate(twicely_payments_total[5m])
+          > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: High payment failure rate
+          description: >
+            More than 10% of payment attempts are failing
+            (current value: {{ printf "%.2f" $value }}).
+
+      - alert: DLQGrowing
+        expr: twicely_bullmq_queue_depth{queue="dead-letter"} > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Dead-letter queue depth growing
+          description: >
+            BullMQ dead-letter queue has more than 100 jobs
+            (current value: {{ $value }}).
+
+      - alert: DatabaseConnections
+        expr: >
+          twicely_db_connections_active
+          /
+          twicely_db_connections_max
+          > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Database connection pool near capacity
+          description: >
+            Active DB connections exceed 80% of pool maximum
+            (current value: {{ printf "%.2f" $value }}).
+
+      - alert: DiskSpace
+        expr: >
+          node_filesystem_avail_bytes
+          /
+          node_filesystem_size_bytes
+          < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low disk space
+          description: >
+            Available disk space is below 15%
+            (current value: {{ printf "%.2f" $value }}).

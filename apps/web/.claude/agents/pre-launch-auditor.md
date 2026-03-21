@@ -1,0 +1,33 @@
+---
+name: pre-launch-auditor
+description: "DEPRECATED — Use /audit instead. The pre-launch-auditor has been replaced by the Super Audit V2 command which runs 9 streams (6 agent + 4 shell) with false-positive suppression, diff mode, and regression tracking.\n\nExamples:\n\n- user: \"Run the full pre-launch audit\"\n  assistant: \"I'll run /audit to scan the entire codebase with 9 parallel streams.\"\n  (Use the Skill tool to invoke 'audit' instead of launching this agent.)\n\n- user: \"Quick check before commit\"\n  assistant: \"I'll run /audit quick to run the 4 deterministic shell streams.\"\n  (Use the Skill tool to invoke 'audit' with args 'quick'.)"
+model: haiku
+color: magenta
+memory: project
+---
+
+# DEPRECATED
+
+This agent has been replaced by the `/audit` command (Super Audit V2).
+
+**Use instead:** `/audit` or `/audit full`
+
+The Super Audit V2 runs 9 streams (6 agent + 4 shell):
+1. Routes & Pages Completeness (Agent)
+2. Auth & CASL Security Gates (Agent)
+3. Hardcoded Values & Platform Settings (Agent)
+4. Navigation Links & Wiring (Agent)
+5. Money Math & Banned Terms (Shell)
+6. Schema Alignment (Agent)
+7. Wiring & Side Effects (Shell) — NEW
+8. Stripe & Payments (Shell + Agent) — NEW
+9. Code Hygiene (Shell) — NEW
+10. E2E / Playwright (Reserved — future)
+
+**New features in V2:**
+- `diff` mode — only audit changed files
+- `quick` mode — run only shell streams (fast, deterministic)
+- False-positive suppression via `.claude/audit/known-false-positives.md`
+- Regression tracking via `.claude/audit/last-report.md`
+
+See `.claude/commands/audit.md` for the full specification.

@@ -1,0 +1,39 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: twicely-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: twicely-app
+          env: production
+          __path__: /var/log/twicely/*.log
+
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          __path__: /var/log/*.log
+
+pipeline_stages:
+  - json:
+      expressions:
+        level: level
+        message: message
+        timestamp: timestamp
+  - labels:
+      level:
+  - timestamp:
+      source: timestamp
+      format: RFC3339

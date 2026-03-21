@@ -1,0 +1,90 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1771335942692,
+      "tag": "0000_greedy_supernaut",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771338196335,
+      "tag": "0001_milky_liz_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771424929459,
+      "tag": "0002_add-shipping-cents",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771686480000,
+      "tag": "0003_performance-band-enum-update",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1740819480000,
+      "tag": "0004_add-stripe-customer-id",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1740905880000,
+      "tag": "0005_add-pending-subscription-columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1740992280000,
+      "tag": "0006_add-bundle-subscription",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1741078680000,
+      "tag": "0007_add-shipping-policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1741165080000,
+      "tag": "0008_schema-addendum-v1-3",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1741251480000,
+      "tag": "0009_ledger-entry-type-alignment",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1741337880000,
+      "tag": "0010_add-authentication-columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1741424280000,
+      "tag": "0011_add-notification-setting",
+      "breakpoints": true
+    }
+  ]
+}

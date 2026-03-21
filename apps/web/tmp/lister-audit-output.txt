@@ -1,0 +1,1508 @@
+﻿
+## 1. Find the scheduler
+src\instrumentation.ts
+src\types\listing-form.ts
+src\lib\actions\authentication-complete.ts
+src\lib\actions\crosslister-publish.ts
+src\lib\actions\crosslister-import.ts
+src\lib\actions\storefront.ts
+src\lib\validations\review.ts
+src\lib\validations\messaging.ts
+src\lib\validations\crosslister.ts
+src\lib\db\seed.ts
+src\app\api\cron\shipping\route.ts
+src\app\api\cron\returns\route.ts
+src\app\api\cron\orders\route.ts
+src\lib\monitoring\doctor-checks.ts
+src\lib\db\seed\v32-platform-settings.ts
+src\lib\db\seed\v32-platform-settings-extended.ts
+src\lib\jobs\queue.ts
+src\lib\db\seed\seed-providers.ts
+src\lib\db\seed\seed-protection.ts
+src\lib\db\seed\seed-orders.ts
+src\lib\db\seed\seed-offers.ts
+src\lib\db\seed\seed-listings.ts
+src\lib\db\seed\seed-finance-center.ts
+src\lib\db\seed\seed-engagement.ts
+src\lib\commerce\offer-create.ts
+src\lib\commerce\auth-offer.ts
+src\lib\commerce\local-fee.ts
+src\lib\queries\admin-monetization.ts
+src\lib\commerce\tf-calculator.ts
+src\lib\commerce\return-fees.ts
+src\lib\queries\reconciliation.ts
+src\lib\crosslister\channel-registry.ts
+src\lib\crosslister\workers\emergency-delist-worker.ts
+src\lib\crosslister\queue\constants.ts
+src\lib\crosslister\services\dedupe-service.ts
+src\lib\crosslister\queue\emergency-delist-queue.ts
+src\lib\crosslister\queue\lister-queue.ts
+src\lib\crosslister\queue\lister-worker.ts
+src\lib\crosslister\services\job-executor.ts
+src\lib\crosslister\queue\worker-init.ts
+src\lib\crosslister\connectors\etsy-connector.ts
+src\lib\crosslister\services\publish-service.ts
+src\lib\crosslister\connectors\fb-marketplace-connector.ts
+src\lib\crosslister\connectors\therealreal-normalizer.ts
+src\lib\crosslister\services\__tests__\publish-service.test.ts
+src\lib\crosslister\services\__tests__\publish-service-edge.test.ts
+src\lib\crosslister\services\__tests__\job-executor.test.ts
+src\lib\crosslister\services\publish-service.ts
+src\lib\crosslister\services\publish-meter.ts
+src\lib\crosslister\services\job-executor.ts
+src\lib\crosslister\queue\__tests__\lister-worker.test.ts
+src\lib\crosslister\queue\__tests__\lister-queue.test.ts
+src\lib\crosslister\queue\worker-init.ts
+src\lib\crosslister\queue\lister-worker.ts
+src\lib\crosslister\queue\lister-queue.ts
+src\lib\crosslister\db-types.ts
+src\lib\casl\ability.ts
+src\lib\casl\staff-abilities.ts
+src\lib\casl\subjects.ts
+src\lib\casl\__tests__\crosslister-abilities.test.ts
+src\lib\db\schema\crosslister.ts
+src\lib\queries\crosslister.ts
+src\lib\actions\crosslister-publish.ts
+src\lib\actions\__tests__\crosslister-publish.test.ts
+src\lib\actions\__tests__\crosslister-publish-queue.test.ts
+src\lib\actions\__tests__\crosslister-publish-edge.test.ts
+
+## 2. Rate limit buckets — are they implemented?
+src\app\api\upload\route.ts:76:      { status: 429 }
+src\lib\actions\crosslister-publish.ts:205:      backoff: BACKOFF_PUBLISH,
+src\lib\crosslister\workers\emergency-delist-worker.ts:7: * Attempts: 3 with exponential backoff (2s, 4s, 8s).
+src\lib\crosslister\channel-registry.ts:20:    callsPerHourPerSeller: number;
+src\lib\crosslister\channel-registry.ts:113:      rateLimit: { callsPerHourPerSeller: 200, burstAllowance: 20 },
+src\lib\crosslister\channel-registry.ts:132:      rateLimit: { callsPerHourPerSeller: 60, burstAllowance: 10 },
+src\lib\crosslister\channel-registry.ts:151:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:170:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:189:      rateLimit: { callsPerHourPerSeller: 100, burstAllowance: 10 },
+src\lib\crosslister\channel-registry.ts:208:      rateLimit: { callsPerHourPerSeller: 200, burstAllowance: 20 },
+src\lib\crosslister\channel-registry.ts:227:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:246:      rateLimit: { callsPerHourPerSeller: 60, burstAllowance: 10 },
+src\lib\crosslister\services\sale-detection.ts:202:      backoff: { type: 'exponential' as const, delay: 2000 },
+src\lib\crosslister\services\publish-service.ts:299:        backoff: BACKOFF_PUBLISH,
+src\lib\crosslister\services\publish-service.ts:376:      backoff: BACKOFF_SYNC,
+src\lib\crosslister\queue\rate-limiter.ts:7: * Rate limits sourced from channel-registry.ts (callsPerHourPerSeller).
+src\lib\crosslister\queue\rate-limiter.ts:26:    return meta.rateLimit.callsPerHourPerSeller;
+src\lib\crosslister\queue\lister-worker.ts:54:    // Throwing causes BullMQ to retry with backoff
+src\lib\crosslister\queue\constants.ts:2: * Priority constants, backoff configs, and queue names for the crosslister queue.
+src\lib\crosslister\connectors\therealreal-connector.ts:379:        return { success: false, externalId: null, externalUrl: null, error: `TheRealReal API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\poshmark-connector.ts:360:        return { success: false, externalId: null, externalUrl: null, error: `Poshmark API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\mercari-connector.ts:349:        return { success: false, externalId: null, externalUrl: null, error: `Mercari API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\mercari-connector.ts:374:      if (!resp.ok) return { success: false, error: `Mercari API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\grailed-connector.ts:361:        return { success: false, externalId: null, externalUrl: null, error: `Grailed API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\grailed-connector.ts:387:      if (!resp.ok) return { success: false, error: `Grailed API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\fb-marketplace-connector.ts:302:        return { success: false, externalId: null, externalUrl: null, error: `Facebook API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\fb-marketplace-connector.ts:327:      if (!resp.ok) return { success: false, error: `Facebook API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\etsy-connector.ts:381:        return { success: false, externalId: null, externalUrl: null, error: `Etsy API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\etsy-connector.ts:407:      if (!resp.ok) return { success: false, error: `Etsy API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\ebay-connector.ts:431:        return { success: false, externalId: null, externalUrl: null, error: `eBay API error: ${putResp.status}`, retryable: putResp.status >= 500 || putResp.status === 429 };
+src\lib\crosslister\connectors\ebay-connector.ts:457:        return { success: false, externalId: null, externalUrl: null, error: `eBay API error: ${offerResp.status}`, retryable: offerResp.status >= 500 || offerResp.status === 429 };
+src\lib\crosslister\connectors\ebay-connector.ts:472:        return { success: false, externalId: null, externalUrl: null, error: `eBay API error: ${publishResp.status}`, retryable: publishResp.status >= 500 || publishResp.status === 429 };
+src\lib\crosslister\connectors\ebay-connector.ts:504:        return { success: false, error: `eBay API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\depop-connector.ts:351:        return { success: false, externalId: null, externalUrl: null, error: `Depop API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\crosslister\connectors\depop-connector.ts:376:      if (!resp.ok) return { success: false, error: `Depop API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
+src\lib\db\seed\seed-crosslister.ts:45:  { key: 'crosslister.rateLimit.ebay.callsPerHourPerSeller', value: 200, type: 'number', description: 'eBay API calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:46:  { key: 'crosslister.rateLimit.poshmark.callsPerHourPerSeller', value: 60, type: 'number', description: 'Poshmark calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:47:  { key: 'crosslister.rateLimit.mercari.callsPerHourPerSeller', value: 150, type: 'number', description: 'Mercari calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:48:  { key: 'crosslister.rateLimit.depop.callsPerHourPerSeller', value: 150, type: 'number', description: 'Depop calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:49:  { key: 'crosslister.rateLimit.etsy.callsPerHourPerSeller', value: 200, type: 'number', description: 'Etsy calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:50:  { key: 'crosslister.rateLimit.fbMarketplace.callsPerHourPerSeller', value: 100, type: 'number', description: 'FB Marketplace calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:51:  { key: 'crosslister.rateLimit.grailed.callsPerHourPerSeller', value: 150, type: 'number', description: 'Grailed calls per hour per seller' },
+src\lib\db\seed\seed-crosslister.ts:52:  { key: 'crosslister.rateLimit.therealreal.callsPerHourPerSeller', value: 60, type: 'number', description: 'The RealReal calls per hour per seller' },
+
+## 3. Per-seller fairness quota
+
+## 4. Tier weighting
+
+## 5. Circuit breaker
+src\lib\actions\messaging-manage.ts:76: * Status transitions: OPEN -> ARCHIVED, READ_ONLY -> ARCHIVED.
+src\lib\actions\messaging-helpers.ts:69:  status: 'OPEN' | 'READ_ONLY' | 'ARCHIVED';
+src\lib\actions\messaging-actions.ts:102:    if (existing.status === 'OPEN') return { success: true, conversationId: existing.id };
+src\lib\actions\messaging-actions.ts:116:      status: 'OPEN',
+src\lib\actions\messaging-actions.ts:173:  if (conv.status !== 'OPEN') {
+src\lib\db\seed\seed-protection.ts:31:      // OPEN claim: buyer3 vs seller3 on disputed order (order 10)
+src\lib\db\seed\seed-protection.ts:37:      status:              'OPEN',
+src\lib\db\seed\seed-messaging.ts:74:      status: 'OPEN',
+src\lib\db\seed\seed-messaging.ts:122:      status: 'OPEN',
+src\lib\db\seed\seed-messaging.ts:181:      status: 'OPEN',
+src\lib\db\schema\finance.ts:244:  status:              text('status').notNull().default('OPEN'),
+src\lib\db\schema\enums.ts:81:  'OPEN', 'UNDER_REVIEW', 'RESOLVED_BUYER', 'RESOLVED_SELLER', 'RESOLVED_PARTIAL', 'APPEALED', 'APPEAL_RESOLVED', 'CLOSED'
+src\lib\db\schema\enums.ts:90:export const conversationStatusEnum = pgEnum('conversation_status', ['OPEN', 'READ_ONLY', 'ARCHIVED']);
+src\lib\db\schema\enums.ts:137:  'NEW', 'OPEN', 'PENDING_USER', 'PENDING_INTERNAL', 'ON_HOLD', 'ESCALATED', 'RESOLVED', 'CLOSED'
+src\lib\db\schema\messaging.ts:17:  status:          conversationStatusEnum('status').notNull().default('OPEN'),
+src\lib\db\schema\shipping.ts:90:  status:              disputeStatusEnum('status').notNull().default('OPEN'),
+src\lib\commerce\protection-processing.ts:50:  if (!['OPEN', 'UNDER_REVIEW'].includes(claim.status)) {
+src\app\(hub)\my\disputes\[id]\_constants\dispute-config.ts:12:  OPEN: {
+src\lib\commerce\disputes.ts:7: * OPEN → UNDER_REVIEW → RESOLVED_BUYER (refund) | RESOLVED_SELLER (no refund)
+src\lib\commerce\disputes.ts:8: * OPEN → UNDER_REVIEW → RESOLVED_PARTIAL (partial refund)
+src\lib\commerce\disputes.ts:149:      status: 'OPEN',
+src\lib\commerce\shipping-exceptions.ts:206:      status: 'OPEN',
+src\lib\commerce\dispute-queries.ts:35:        eq(dispute.status, 'OPEN'),
+src\lib\commerce\dispute-queries.ts:108:  if (!['OPEN', 'UNDER_REVIEW'].includes(disp.status)) {
+src\lib\queries\admin-dashboard.ts:39:    .where(eq(helpdeskCase.status, 'OPEN'));
+src\lib\commerce\buyer-protection.ts:209:      status: 'OPEN', // SUBMITTED maps to OPEN
+src\lib\queries\messaging.ts:24:  status: 'OPEN' | 'READ_ONLY' | 'ARCHIVED';
+src\lib\queries\messaging.ts:37:  status: 'OPEN' | 'READ_ONLY' | 'ARCHIVED';
+src\lib\queries\messaging.ts:272: * Returns conversation ID if found and OPEN, null otherwise.
+src\lib\queries\messaging.ts:290:  if (!row || row.status !== 'OPEN') return null;
+
+## 6. Emergency delist priority
+src\lib\notifications\templates.ts:42:  | 'crosslister.delist_failed'
+src\lib\notifications\templates.ts:248:    bodyTemplate: 'Your listing {{itemTitle}} sold on {{channel}} for {{salePriceFormatted}}. We are delisting it from {{delistingPlatforms}}.',
+src\lib\notifications\templates.ts:250:  'crosslister.delist_failed': {
+src\lib\notifications\templates.ts:251:    key: 'crosslister.delist_failed',
+src\lib\notifications\templates.ts:256:    subjectTemplate: 'Action required: could not delist {{itemTitle}} from {{channel}}',
+src\lib\notifications\templates.ts:257:    bodyTemplate: 'We could not automatically delist {{itemTitle}} from {{channel}}. Please delist it manually to prevent a double sale.',
+src\lib\db\schema\providers.ts:36:  priority:          integer('priority').notNull().default(100),
+src\lib\db\schema\crosslister.ts:89:  priority:            integer('priority').notNull().default(500),
+src\lib\actions\admin-providers.ts:26:  priority: z.number().int().min(0).max(1000).default(100),
+src\lib\actions\admin-providers.ts:80:  priority: z.number().int().min(0).max(1000).optional(),
+src\lib\actions\crosslister-publish.ts:54:const delistSchema = z.object({ projectionId: z.string().min(1) }).strict();
+src\lib\actions\crosslister-publish.ts:131:export async function delistFromChannel(input: unknown): Promise<ActionResult> {
+src\lib\actions\crosslister-publish.ts:132:  const parsed = delistSchema.safeParse(input);
+src\lib\actions\crosslister-publish.ts:167:  const idempotencyKey = `delist:${projection.id}:${Date.now()}`;
+src\lib\actions\crosslister-publish.ts:180:  if (!jobRow?.id) return { success: false, error: 'Failed to create delist job.' };
+src\lib\actions\crosslister-publish.ts:190:    `delist:${projection.id}`,
+src\lib\crosslister\connector-interface.ts:50:  delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult>;
+src\lib\crosslister\workers\emergency-delist-worker.ts:2: * BullMQ worker for the lister:emergency-delist queue.
+src\lib\crosslister\workers\emergency-delist-worker.ts:3: * Processes emergency delist jobs triggered by off-platform sale detection.
+src\lib\crosslister\workers\emergency-delist-worker.ts:21:import { EMERGENCY_DELIST_QUEUE } from '../queue/emergency-delist-queue';
+src\lib\crosslister\workers\emergency-delist-worker.ts:23:import type { EmergencyDelistJobData } from '../queue/emergency-delist-queue';
+src\lib\crosslister\workers\emergency-delist-worker.ts:26:/** Concurrency for emergency delist workers — keep low to avoid rate-limit spikes. */
+src\lib\crosslister\workers\emergency-delist-worker.ts:27:const EMERGENCY_DELIST_CONCURRENCY = 5;
+src\lib\crosslister\workers\emergency-delist-worker.ts:30: * Check if all projections for a listing are now non-ACTIVE (delist complete).
+src\lib\crosslister\workers\emergency-delist-worker.ts:49: * Process one emergency delist job.
+src\lib\crosslister\workers\emergency-delist-worker.ts:50: * Called by BullMQ for each job in lister:emergency-delist.
+src\lib\crosslister\workers\emergency-delist-worker.ts:55:  logger.info('[emergencyDelistWorker] Processing delist job', {
+src\lib\crosslister\workers\emergency-delist-worker.ts:83:    logger.info('[emergencyDelistWorker] Projection already delisted — idempotent skip', {
+src\lib\crosslister\workers\emergency-delist-worker.ts:107:    logger.error('[emergencyDelistWorker] Account not found — cannot delist', {
+src\lib\crosslister\workers\emergency-delist-worker.ts:113:      lastPublishError: 'Account not found for emergency delist',
+src\lib\crosslister\workers\emergency-delist-worker.ts:119:  // Load connector and execute delist
+src\lib\crosslister\workers\emergency-delist-worker.ts:124:    const result = await connector.delistListing(accountRow, proj.externalId);
+src\lib\crosslister\workers\emergency-delist-worker.ts:139:      // Check if all projections are now delisted
+src\lib\crosslister\workers\emergency-delist-worker.ts:142:        logger.info('[emergencyDelistWorker] All projections delisted — emitting delist.completed', { listingId });
+src\lib\crosslister\workers\emergency-delist-worker.ts:145:          event: 'delist.completed',
+src\lib\crosslister\workers\emergency-delist-worker.ts:174:        lastPublishError: `Emergency delist failed after 3 attempts: ${String(err)}`,
+src\lib\crosslister\workers\emergency-delist-worker.ts:178:      logger.error('[emergencyDelistWorker] Final delist failure — notifying seller', {
+src\lib\crosslister\workers\emergency-delist-worker.ts:191:      await notify(proj.sellerId, 'crosslister.delist_failed', {
+src\lib\crosslister\workers\emergency-delist-worker.ts:203: * Create and return the emergency delist BullMQ worker.
+src\lib\crosslister\workers\emergency-delist-worker.ts:208:    EMERGENCY_DELIST_QUEUE,
+src\lib\crosslister\workers\emergency-delist-worker.ts:210:    EMERGENCY_DELIST_CONCURRENCY,
+src\lib\crosslister\queue\lister-worker.ts:130:      await markFailed(crossJobId, 'No externalId on projection — cannot delist.', (job.attemptsMade ?? 0) + 1);
+src\lib\crosslister\queue\lister-queue.ts:6: * Other queues (emergency-delist, polling, automation) are future phases.
+src\lib\crosslister\queue\emergency-delist-queue.ts:2: * BullMQ queue definition for emergency delist jobs.
+src\lib\crosslister\queue\emergency-delist-queue.ts:3: * Highest priority queue in the crosslister system (priority 0).
+src\lib\crosslister\queue\emergency-delist-queue.ts:4: * Source: F5-S1 install prompt §1.2, §3; Lister Canonical §4.3 (queue: lister:emergency-delist), §8.2
+src\lib\crosslister\queue\emergency-delist-queue.ts:6: * Separate from lister:publish to ensure emergency delists are never blocked
+src\lib\crosslister\queue\emergency-delist-queue.ts:12:export const EMERGENCY_DELIST_QUEUE = 'lister:emergency-delist';
+src\lib\crosslister\queue\emergency-delist-queue.ts:15:  /** PK of the channel_projection to delist */
+src\lib\crosslister\queue\emergency-delist-queue.ts:19:  /** The channel to delist from */
+src\lib\crosslister\queue\emergency-delist-queue.ts:21:  /** Why this delist was triggered */
+src\lib\crosslister\queue\emergency-delist-queue.ts:29:export const emergencyDelistQueue = createQueue<EmergencyDelistJobData>(EMERGENCY_DELIST_QUEUE);
+src\lib\crosslister\connectors\mercari-connector.ts:382:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\connectors\grailed-connector.ts:395:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\connectors\fb-marketplace-connector.ts:335:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\connectors\etsy-connector.ts:415:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\connectors\ebay-connector.ts:513:  async delistListing(
+src\lib\crosslister\connectors\depop-connector.ts:384:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\connectors\poshmark-connector.ts:378:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\connectors\therealreal-connector.ts:397:  async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+src\lib\crosslister\services\job-executor.ts:211: * Calls connector.delistListing(), updates projection to DELISTED.
+src\lib\crosslister\services\job-executor.ts:232:    const result = await connector.delistListing(accountRow, externalId);
+src\lib\crosslister\services\sale-detection.ts:3: * Source: F5-S1 install prompt §1.1; Lister Canonical §12 (sale detection, emergency delists,
+src\lib\crosslister\services\sale-detection.ts:4: * double-sell); §21 (Centrifugo events: sale.detected, delist.completed)
+src\lib\crosslister\services\sale-detection.ts:18:import { emergencyDelistQueue } from '../queue/emergency-delist-queue';
+src\lib\crosslister\services\sale-detection.ts:70: * 5. Create emergency delist jobs for all other ACTIVE projections
+src\lib\crosslister\services\sale-detection.ts:135:    // Notify seller — do NOT create new delist jobs (already running from first sale)
+src\lib\crosslister\services\sale-detection.ts:189:  // Create emergency delist jobs for each active projection (priority 0 = highest)
+src\lib\crosslister\services\sale-detection.ts:190:  const delistingChannels: string[] = [];
+src\lib\crosslister\services\sale-detection.ts:192:    await emergencyDelistQueue.add('emergency-delist', {
+src\lib\crosslister\services\sale-detection.ts:200:      priority: 0,
+src\lib\crosslister\services\sale-detection.ts:204:    delistingChannels.push(activeProjRow.channel);
+src\lib\crosslister\services\sale-detection.ts:207:  logger.info('[saleDetection] Emergency delist jobs created', {
+src\lib\crosslister\services\sale-detection.ts:210:    channels: delistingChannels,
+src\lib\crosslister\services\sale-detection.ts:225:      delistingChannels,
+src\lib\crosslister\services\sale-detection.ts:232:  const delistingPlatformsText = delistingChannels.join(', ') || 'no other platforms';
+src\lib\crosslister\services\sale-detection.ts:239:    delistingPlatforms: delistingPlatformsText,
+src\lib\crosslister\services\sale-detection.ts:248:    delistingPlatforms: delistingChannels,
+
+## 7. Adaptive polling
+src\lib\crosslister\queue\lister-queue.ts:6: * Other queues (emergency-delist, polling, automation) are future phases.
+src\lib\crosslister\handlers\sale-webhook-handler.ts:6: * Poshmark/Mercari use polling (no webhooks).
+src\lib\crosslister\handlers\sale-polling-handler.ts:2: * Sale polling handler — processes poll results from platforms without webhooks.
+src\lib\crosslister\handlers\sale-polling-handler.ts:3: * Source: F5-S1 install prompt §1.4; Lister Canonical §13 (adaptive polling engine)
+src\lib\crosslister\handlers\sale-polling-handler.ts:5: * For platforms without webhooks (Poshmark, Mercari, Depop), the adaptive polling
+src\lib\crosslister\handlers\sale-polling-handler.ts:21: * Current state of a listing as fetched from an external platform during polling.
+src\lib\crosslister\handlers\sale-polling-handler.ts:22: * Normalized from platform-specific formats by the polling engine.
+src\lib\crosslister\handlers\sale-polling-handler.ts:45: * Called by the adaptive polling engine after fetching current state from a platform.
+src\lib\crosslister\handlers\sale-polling-handler.ts:53:  // Only process ACTIVE projections — already-SOLD or DELISTED ones don't need polling action
+
+## 8. 24-hour rolling window
+src\lib\validations\seller-response.ts:10: * - Can edit within 24 hours of response creation
+src\lib\db\seed\seed-delegation-settings.ts:6: * Three settings controlling staff invitation limits and security requirements.
+src\lib\actions\seller-response.ts:123: * - Can only edit within 24 hours of creation
+src\lib\queries\crosslister.ts:241:  /** COUNT limited to last 24 hours */
+src\lib\queries\crosslister.ts:243:  /** COUNT limited to last 24 hours */
+src\lib\queries\crosslister.ts:249: * completed and failed counts are limited to the last 24 hours.
+
+## 9. Burst protection — spread over 24h
+src\lib\db\schema\crosslister.ts:93:  scheduledFor:        timestamp('scheduled_for', { withTimezone: true }),
+src\lib\db\schema\crosslister.ts:109:  scheduledIdx:        index('cj_scheduled').on(table.scheduledFor),
+src\lib\crosslister\channel-registry.ts:21:    burstAllowance: number;
+src\lib\crosslister\channel-registry.ts:113:      rateLimit: { callsPerHourPerSeller: 200, burstAllowance: 20 },
+src\lib\crosslister\channel-registry.ts:132:      rateLimit: { callsPerHourPerSeller: 60, burstAllowance: 10 },
+src\lib\crosslister\channel-registry.ts:151:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:170:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:189:      rateLimit: { callsPerHourPerSeller: 100, burstAllowance: 10 },
+src\lib\crosslister\channel-registry.ts:208:      rateLimit: { callsPerHourPerSeller: 200, burstAllowance: 20 },
+src\lib\crosslister\channel-registry.ts:227:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:246:      rateLimit: { callsPerHourPerSeller: 60, burstAllowance: 10 },
+
+## 10. Idempotency keys
+src\lib\db\seed\seed-categories.ts:4:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-addresses.ts:5:// Hardcoded IDs for idempotency
+src\lib\jobs\offer-expiry.ts:18: * Uses jobId = `offer-expiry-${offerId}` for idempotency and cancellation.
+src\lib\db\seed\seed-users.ts:5:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-users.ts:33:// Pre-generate a deterministic hash for demo password (for idempotency, we use a fixed salt)
+src\lib\db\seed\seed-system.ts:6:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-stripe-events.ts:4:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-stripe-events.ts:20: * Demonstrates idempotency tracking for payment events.
+src\lib\db\seed\seed-storefronts.ts:5:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-social.ts:6:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-seller-scores.ts:5:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-reviews-extended.ts:12:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-protection.ts:6:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-promotions.ts:6:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-personalization.ts:5:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-offers.ts:7:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-messaging.ts:6:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-finance-center.ts:5:// Hardcoded IDs for idempotency
+src\lib\db\seed\seed-engagement.ts:7:// Hardcoded IDs for idempotency
+src\lib\db\schema\finance.ts:220:// §13.3 stripeEventLog (A2.1 — webhook idempotency)
+src\lib\db\schema\crosslister.ts:90:  idempotencyKey:      text('idempotency_key').notNull().unique(),
+src\lib\db\schema\crosslister.ts:110:  idempotencyIdx:      index('cj_idempotency').on(table.idempotencyKey),
+src\lib\actions\crosslister-publish.ts:167:  const idempotencyKey = `delist:${projection.id}:${Date.now()}`;
+src\lib\actions\crosslister-publish.ts:174:    idempotencyKey,
+src\lib\actions\crosslister-publish.ts:202:      jobId: idempotencyKey,
+src\lib\crosslister\services\publish-service.ts:262:  const idempotencyKey = `publish:${listingId}:${channel}:${Date.now()}`;
+src\lib\crosslister\services\publish-service.ts:269:    idempotencyKey,
+src\lib\crosslister\services\publish-service.ts:296:        jobId: idempotencyKey,
+src\lib\crosslister\services\publish-service.ts:344:  const idempotencyKey = `sync:${projectionId}:${Date.now()}`;
+src\lib\crosslister\services\publish-service.ts:352:    idempotencyKey,
+src\lib\crosslister\services\publish-service.ts:373:      jobId: idempotencyKey,
+
+## 11. Import batch size (50 items)
+src\lib\actions\crosslister-import.ts:42:const batchIdSchema = z.object({ batchId: z.string().min(1) }).strict();
+src\lib\actions\crosslister-import.ts:44:  batchId: z.string().min(1),
+src\lib\actions\crosslister-import.ts:63:): Promise<ActionResult<{ batchId: string }>> {
+src\lib\actions\crosslister-import.ts:112:  // Create import batch
+src\lib\actions\crosslister-import.ts:113:  const [batch] = await db
+src\lib\actions\crosslister-import.ts:125:  if (!batch) return { success: false, error: 'Failed to create import batch.' };
+src\lib\actions\crosslister-import.ts:129:  processImportBatch(batch.id).catch((err) => {
+src\lib\actions\crosslister-import.ts:133:  return { success: true, data: { batchId: batch.id } };
+src\lib\actions\crosslister-import.ts:142:  const parsed = batchIdSchema.safeParse(input);
+src\lib\actions\crosslister-import.ts:156:  const [batch] = await db
+src\lib\actions\crosslister-import.ts:159:    .where(and(eq(importBatch.id, parsed.data.batchId), eq(importBatch.sellerId, sellerId)))
+src\lib\actions\crosslister-import.ts:162:  if (!batch) return { success: false, error: 'Import batch not found.' };
+src\lib\actions\crosslister-import.ts:164:  return { success: true, data: batch };
+src\lib\actions\crosslister-import.ts:168: * Get failed/skipped import records for a batch (paginated).
+src\lib\actions\crosslister-import.ts:187:  // Verify batch ownership
+src\lib\actions\crosslister-import.ts:188:  const [batch] = await db
+src\lib\actions\crosslister-import.ts:191:    .where(and(eq(importBatch.id, parsed.data.batchId), eq(importBatch.sellerId, sellerId)))
+src\lib\actions\crosslister-import.ts:194:  if (!batch) return { success: false, error: 'Import batch not found.' };
+src\lib\actions\crosslister-import.ts:197:  const limit = parsed.data.limit ?? 50;
+src\lib\actions\crosslister-import.ts:205:        eq(importRecord.batchId, parsed.data.batchId),
+src\lib\actions\crosslister-import.ts:235:  // Fetch record + verify ownership via batch
+src\lib\actions\crosslister-import.ts:239:  const [batch] = await db
+src\lib\actions\crosslister-import.ts:242:    .where(and(eq(importBatch.id, record.batchId), eq(importBatch.sellerId, sellerId)))
+src\lib\actions\crosslister-import.ts:245:  if (!batch) return { success: false, error: 'Forbidden.' };
+src\lib\actions\crosslister-import.ts:250:    const channel = batch.channel as ExternalChannel;
+src\lib\validations\crosslister.ts:49: * Start an import batch from a connected account.
+src\lib\crosslister\services\import-service.ts:34:    .where(eq(platformSetting.key, 'crosslister.import.batchSize'))
+src\lib\crosslister\services\import-service.ts:36:  const val = Number(row?.value ?? 50);
+src\lib\crosslister\services\import-service.ts:37:  return isFinite(val) && val > 0 ? val : 50;
+src\lib\crosslister\services\import-service.ts:41:  batchId: string,
+src\lib\crosslister\services\import-service.ts:47:    .where(eq(importBatch.id, batchId));
+src\lib\crosslister\services\import-service.ts:52:  batchId: string,
+src\lib\crosslister\services\import-service.ts:54:  batchChannel: ExternalChannel,
+src\lib\crosslister\services\import-service.ts:56:  await setBatchStatus(batchId, 'FETCHING');
+src\lib\crosslister\services\import-service.ts:57:  const connector = getConnector(batchChannel);
+src\lib\crosslister\services\import-service.ts:58:  const batchSize = await getBatchSize();
+src\lib\crosslister\services\import-service.ts:69:          batchId,
+src\lib\crosslister\services\import-service.ts:71:          channel: batchChannel,
+src\lib\crosslister\services\import-service.ts:79:    await db.update(importBatch).set({ totalItems: totalFetched, updatedAt: new Date() }).where(eq(importBatch.id, batchId));
+src\lib\crosslister\services\import-service.ts:83:    void batchSize; // used via getBatchSize()
+src\lib\crosslister\services\import-service.ts:88:async function stageDeduplicate(batchId: string, sellerId: string): Promise<void> {
+src\lib\crosslister\services\import-service.ts:89:  await setBatchStatus(batchId, 'DEDUPLICATING');
+src\lib\crosslister\services\import-service.ts:94:    .where(and(eq(importRecord.batchId, batchId), eq(importRecord.status, 'pending')));
+src\lib\crosslister\services\import-service.ts:123:async function stageTransform(batchId: string, batchChannel: ExternalChannel): Promise<void> {
+src\lib\crosslister\services\import-service.ts:124:  await setBatchStatus(batchId, 'TRANSFORMING');
+src\lib\crosslister\services\import-service.ts:129:    .where(and(eq(importRecord.batchId, batchId), eq(importRecord.status, 'pending')));
+src\lib\crosslister\services\import-service.ts:134:      const normalized = normalizeExternalListing(raw, batchChannel);
+src\lib\crosslister\services\import-service.ts:161:  batchId: string,
+src\lib\crosslister\services\import-service.ts:164:  batchChannel: ExternalChannel,
+src\lib\crosslister\services\import-service.ts:166:  await setBatchStatus(batchId, 'IMPORTING');
+src\lib\crosslister\services\import-service.ts:176:    .where(and(eq(importRecord.batchId, batchId), eq(importRecord.status, 'pending')));
+src\lib\crosslister\services\import-service.ts:187:      const { listingId } = await createImportedListing(normalized, sellerId, batchChannel);
+src\lib\crosslister\services\import-service.ts:193:        channel: batchChannel,
+src\lib\crosslister\services\import-service.ts:222:    .where(and(eq(importRecord.batchId, batchId), eq(importRecord.status, 'deduplicated')));
+src\lib\crosslister\services\import-service.ts:229:      channel: batchChannel,
+src\lib\crosslister\services\import-service.ts:242:    .where(and(eq(importRecord.batchId, batchId), eq(importRecord.status, 'failed')));
+src\lib\crosslister\services\import-service.ts:249: * processImportBatch — runs the full 5-stage import pipeline for a batch.
+src\lib\crosslister\services\import-service.ts:252:export async function processImportBatch(batchId: string): Promise<void> {
+src\lib\crosslister\services\import-service.ts:253:  const [batch] = await db
+src\lib\crosslister\services\import-service.ts:256:    .where(eq(importBatch.id, batchId))
+src\lib\crosslister\services\import-service.ts:259:  if (!batch) {
+src\lib\crosslister\services\import-service.ts:260:    logger.error('[importService] Batch not found', { batchId });
+src\lib\crosslister\services\import-service.ts:267:    .where(eq(crosslisterAccount.id, batch.accountId))
+src\lib\crosslister\services\import-service.ts:271:    await db.update(importBatch).set({ status: 'FAILED', errorSummaryJson: [{ error: 'Account not found' }] as unknown as Record<string, unknown>, completedAt: new Date(), updatedAt: new Date() }).where(eq(importBatch.id, batchId));
+src\lib\crosslister\services\import-service.ts:275:  await db.update(importBatch).set({ startedAt: new Date(), updatedAt: new Date() }).where(eq(importBatch.id, batchId));
+src\lib\crosslister\services\import-service.ts:277:  const batchChannel = batch.channel as ExternalChannel;
+src\lib\crosslister\services\import-service.ts:280:    await stageFetch(batchId, account, batchChannel);
+src\lib\crosslister\services\import-service.ts:281:    await stageDeduplicate(batchId, batch.sellerId);
+src\lib\crosslister\services\import-service.ts:282:    await stageTransform(batchId, batchChannel);
+src\lib\crosslister\services\import-service.ts:283:    const { created, deduplicated, failed } = await stageImport(batchId, batch.accountId, batch.sellerId, batchChannel);
+src\lib\crosslister\services\import-service.ts:298:    }).where(eq(importBatch.id, batchId));
+src\lib\crosslister\services\import-service.ts:305:        .where(eq(sellerProfile.userId, batch.sellerId))
+src\lib\crosslister\services\import-service.ts:311:          .where(eq(sellerProfile.userId, batch.sellerId));
+src\lib\crosslister\services\import-service.ts:320:    }).where(eq(crosslisterAccount.id, batch.accountId));
+src\lib\crosslister\services\import-service.ts:323:    notifyImportCompleted(batch.sellerId, batchId, {
+src\lib\crosslister\services\import-service.ts:330:    logger.error('[importService] Batch failed', { batchId, error: String(err) });
+src\lib\crosslister\services\import-service.ts:336:    }).where(eq(importBatch.id, batchId));
+src\lib\crosslister\services\import-notifier.ts:25:  _batchId: string,
+src\lib\db\seed\seed-crosslister.ts:65:  { key: 'crosslister.import.batchSize', value: 50, type: 'number', description: 'Number of listings fetched per import batch page' },
+src\lib\db\seed\seed-crosslister.ts:66:  { key: 'crosslister.import.maxConcurrentBatches', value: 3, type: 'number', description: 'Max parallel import batch jobs per seller' },
+src\lib\db\schema\enums.ts:128:export const importBatchStatusEnum = pgEnum('import_batch_status', [
+src\lib\db\schema\crosslister.ts:114:export const importBatch = pgTable('import_batch', {
+src\lib\db\schema\crosslister.ts:143:  batchId:             text('batch_id').notNull().references(() => importBatch.id, { onDelete: 'cascade' }),
+src\lib\casl\ability.ts:216:  // Import batches — seller can start and view own imports
+src\lib\queries\crosslister.ts:32: * Get all import batches for a seller, ordered by createdAt DESC.
+src\lib\queries\crosslister.ts:43: * Get a single import batch by ID with ownership check.
+src\lib\queries\crosslister.ts:52:    .where(and(eq(importBatch.id, batchId), eq(importBatch.sellerId, sellerId)))
+src\lib\queries\crosslister.ts:59: * Get paginated import records for a batch.
+src\lib\queries\crosslister.ts:74:    .where(and(eq(importBatch.id, batchId), eq(importBatch.sellerId, sellerId)))
+src\lib\queries\crosslister.ts:81:      ? and(eq(importRecord.batchId, batchId), eq(importRecord.status, options.status))
+src\lib\queries\crosslister.ts:82:      : eq(importRecord.batchId, batchId),
+src\lib\queries\crosslister.ts:89:        ? and(eq(importRecord.batchId, batchId), eq(importRecord.status, options.status))
+src\lib\queries\crosslister.ts:90:        : eq(importRecord.batchId, batchId),
+src\lib\queries\crosslister.ts:123: * connected accounts + latest import batch + active listing count per account.
+src\lib\queries\crosslister.ts:129:  const batches = await getImportBatches(sellerId);
+
+## 12. Platform rate limits — are they in platform settings (not hardcoded)?
+src\lib\auth\staff-auth.ts:65:    now.getTime() + SESSION_ABSOLUTE_HOURS * 60 * 60 * 1000
+src\lib\auth\staff-auth.ts:123:    now.getTime() - SESSION_INACTIVITY_MINUTES * 60 * 1000
+src\lib\auth\server.ts:107:      maxAge: 60 * 5, // 5 minutes
+src\lib\auth\server.ts:109:    expiresIn: 60 * 60 * 24 * 7, // 7 days
+src\lib\auth\server.ts:110:    updateAge: 60 * 60 * 24, // 1 day
+src\lib\auth\server.ts:113:    window: 60, // 1 minute
+src\lib\commerce\boosting.ts:138:  const msPerDay = 24 * 60 * 60 * 1000;
+src\lib\commerce\buyer-protection.ts:8: * - Counterfeit: 60 days from delivery (extended window)
+src\lib\commerce\buyer-protection.ts:34:export const DEFAULT_COUNTERFEIT_CLAIM_WINDOW_DAYS = 60;
+src\lib\commerce\buyer-protection.ts:119:  const windowEnd = new Date(deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000);
+src\lib\commerce\buyer-protection.ts:126:  const daysRemaining = Math.ceil((windowEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+src\lib\commerce\buyer-protection.ts:212:      deadlineAt: new Date(now.getTime() + reviewDeadlineHours * 60 * 60 * 1000),
+src\lib\commerce\buyer-protection.ts:249: * C5.2 — Create counterfeit claim with 60-day window.
+src\lib\commerce\bundle-offers.ts:126:  const expiresAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+src\lib\commerce\bundle-offer-response.ts:134:    const expiresAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+src\lib\commerce\disputes.ts:152:      deadlineAt: new Date(now.getTime() + reviewDeadlineHours * 60 * 60 * 1000),
+src\lib\commerce\create-quote.ts:63:  const sellerDeadline = new Date(Date.now() + deadlineHours * 60 * 60 * 1000);
+src\lib\commerce\offer-create.ts:106:    const expiresAt = new Date(Date.now() + (lst.offerExpiryHours ?? limits.expiryHours) * 60 * 60 * 1000);
+src\lib\commerce\offer-create.ts:132:  const expiresAt = new Date(Date.now() + (lst.offerExpiryHours ?? limits.expiryHours) * 60 * 60 * 1000);
+src\lib\commerce\offer-transitions.ts:61:  const expiresAt = new Date(Date.now() + (lst?.offerExpiryHours ?? defaultExpiryHours) * 60 * 60 * 1000);
+src\lib\commerce\offer-queries.ts:164:  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+src\lib\commerce\order-number.ts:7: * Example: TWC-260218-A7K2B
+src\components\subscription\tier-config.ts:44:    features: ['200 publishes/mo', '25 AI credits', '25 BG removals'],
+src\components\subscription\tier-config.ts:51:    features: ['2,000 publishes/mo', '200 AI credits', '200 BG removals'],
+src\lib\commerce\returns-validation.ts:20:  const windowEnd = new Date(deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000);
+src\lib\jobs\shipping-quote-deadline.ts:31:      repeat: { every: 15 * 60 * 1000 }, // every 15 minutes
+src\lib\commerce\returns-types.ts:12:export const COUNTERFEIT_WINDOW_DAYS = 60;
+src\lib\commerce\shipping-exceptions.ts:105:      (now.getTime() - ord.expectedDeliveryAt.getTime()) / (24 * 60 * 60 * 1000)
+src\lib\commerce\shipping-exceptions.ts:125:        (now.getTime() - lastEventDate.getTime()) / (24 * 60 * 60 * 1000)
+src\lib\commerce\shipping-exceptions.ts:140:      (now.getTime() - ship.shippedAt.getTime()) / (24 * 60 * 60 * 1000)
+src\lib\commerce\shipping-exceptions.ts:209:      deadlineAt: new Date(now.getTime() + reviewDeadlineHours * 60 * 60 * 1000),
+src\lib\commerce\review-visibility.ts:13:  const windowDays = await getPlatformSetting<number>('review.windowDays', 60);
+src\lib\commerce\watcher-offers.ts:84:  const expiresAt = new Date(Date.now() + WATCHER_OFFER_EXPIRY_HOURS * 60 * 60 * 1000);
+src\lib\commerce\watcher-offers.ts:183:  const expiresAt = new Date(Date.now() + WATCHER_OFFER_EXPIRY_HOURS * 60 * 60 * 1000);
+src\lib\validations\shipping-profile.ts:18:  weightOz: z.number().int().min(1).max(1200).optional(),
+src\lib\validations\shipping-profile.ts:71:  weightOz: z.number().int().min(1).max(1200).optional().nullable(),
+src\lib\validations\seller-response.ts:7: * - Body: 1-2000 characters (required)
+src\lib\validations\seller-response.ts:16:    .max(2000, 'Response cannot exceed 2000 characters'),
+src\lib\validations\review.ts:9: * - Title: max 200 chars
+src\lib\validations\review.ts:22:    .max(200, 'Title must be 200 characters or less')
+src\lib\validations\finance-center.ts:74:    vendor: z.string().max(200).optional(),
+src\lib\validations\finance-center.ts:96:    vendor: z.string().max(200).optional().nullable(),
+src\app\api\webhooks\stripe\route.ts:50:    // Return 200 anyway to acknowledge receipt — Stripe will retry on 4xx/5xx
+src\lib\validations\address.ts:74:    .max(200, 'Address must be 200 characters or less'),
+src\lib\validations\address.ts:75:  address2: z.string().max(200, 'Apt/Suite must be 200 characters or less').optional(),
+src\app\api\upload\route.ts:23:const RATE_WINDOW_MS = 60 * 1000; // 1 minute
+src\app\api\returns\[id]\respond\route.ts:16:  response: z.string().min(1).max(2000).optional(),
+src\lib\utils\format.ts:53:    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+src\lib\upload\validate.ts:6:export const MIN_DIMENSION = 200;
+src\app\api\metrics\route.ts:35:      status: 200,
+src\lib\subscriptions\lister-downgrade-warnings.ts:36:  LITE: 200,
+src\lib\subscriptions\lister-downgrade-warnings.ts:37:  PRO: 2000,
+src\lib\subscriptions\lister-downgrade-warnings.ts:44:  LITE: 600,   // 200 * 3
+src\lib\subscriptions\lister-downgrade-warnings.ts:45:  PRO: 6000,   // 2000 * 3
+src\lib\subscriptions\price-map.ts:59:    monthlyCents: 1200,
+src\lib\stripe\trials.ts:109:      : new Date(Date.now() + TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+src\lib\stripe\trials.ts:139:  return Math.floor(diff / (1000 * 60 * 60 * 24));
+src\lib\crosslister\services\sale-detection.ts:202:      backoff: { type: 'exponential' as const, delay: 2000 },
+src\lib\crosslister\services\rollover-manager.ts:62:    getNumericSetting(limitKey, tier === 'FREE' ? 25 : tier === 'LITE' ? 200 : 2000),
+src\lib\crosslister\services\rollover-manager.ts:63:    getNumericSetting('xlister.rolloverDays', 60),
+src\lib\crosslister\services\rollover-manager.ts:86:    expiresAt = new Date(now.getTime() + rolloverDays * 24 * 60 * 60 * 1000);
+src\lib\crosslister\services\publish-meter.ts:55:    if (tier === 'LITE') return 200;
+src\lib\crosslister\services\publish-meter.ts:56:    if (tier === 'PRO') return 2000;
+src\lib\stripe\checkout-webhooks.ts:101:  //    already added for this user within the last 60 seconds (duplicate webhook guard).
+src\lib\stripe\checkout-webhooks.ts:102:  const sixtySecondsAgo = new Date(Date.now() - 60_000);
+src\lib\stripe\chargebacks.ts:95:          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+src\lib\crosslister\services\platform-fees.ts:36:  POSHMARK: 2000,     // 20%
+src\lib\crosslister\services\platform-fees.ts:42:  THEREALREAL: 2000,  // 20% (fallback — The RealReal charges high commission)
+src\lib\stripe\chargeback-evidence.ts:142:      amountCents: -(await getPlatformSetting<number>('commerce.chargeback.feeCents', 1500)),
+src\lib\storage\r2-client.ts:94: * @param expiresIn - URL expiry in seconds (default 3600 = 1 hour)
+src\lib\storage\r2-client.ts:99:  expiresIn: number = 3600
+src\lib\crosslister\queue\rate-limiter.ts:29:    return 60;
+src\lib\crosslister\queue\constants.ts:32:/** Backoff config for SYNC/UPDATE jobs: 60s, 300s, 900s (exponential). */
+src\lib\crosslister\queue\constants.ts:35:  delay: 60_000,
+src\lib\crosslister\queue\constants.ts:48:export const RATE_LIMIT_WINDOW_MS = 3_600_000;
+src\components\admin\settings\settings-help.ts:26:  'xlister.rolloverDays': 'Unused monthly credits (publishes, AI, BG removals) expire after this many days. Credits earned in January expire in March if set to 60 days.',
+src\components\admin\settings\settings-help.ts:27:  'xlister.rolloverMaxMultiplier': 'Maximum accumulated credits as a multiple of the monthly allowance. At 3x, a user with 200/mo can hold at most 600 credits.',
+src\lib\db\schema\subscriptions.ts:64:  creditsIncluded:     integer('credits_included').notNull().default(2000),
+src\lib\db\schema\storefront.ts:16:  aboutHtml:           text('about_html'),                // Rich text, 2000 char limit
+src\lib\db\schema\storefront.ts:20:  returnPolicy:        text('return_policy'),             // 2000 char limit
+src\lib\db\schema\storefront.ts:21:  shippingPolicy:      text('shipping_policy'),           // 2000 char limit
+src\app\api\cron\health\route.ts:7: * Cron job: Run doctor checks every 60 seconds.
+src\lib\crosslister\handlers\sale-webhook-handler.ts:35:  /** ISO 8601 timestamp of when the sale occurred */
+src\lib\db\schema\personalization.ts:13:  description: varchar('description', { length: 200 }),
+src\lib\db\schema\listings.ts:82:  videoDurationSeconds:  integer('video_duration_seconds'),   // 15-60 seconds per platform settings
+src\lib\db\schema\affiliates.ts:20:  commissionRateBps:   integer('commission_rate_bps').notNull(),     // 1500 = 15.00%
+src\lib\db\index.ts:13:  max_lifetime: 60 * 30,
+src\lib\queries\buyer-reviews.ts:114:      ? Math.ceil((editDeadline.getTime() - now.getTime()) / (1000 * 60 * 60))
+src\lib\queries\trust-metrics.ts:42:    (now.getTime() - userData.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+src\lib\queries\trust-metrics.ts:87:  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+src\lib\queries\trust-metrics.ts:178:  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+src\lib\queries\boosting.ts:55:    .limit(200);
+src\lib\queries\admin-monetization.ts:67:    { min: 200000, max: 499900, rate: 1050 },
+src\lib\queries\admin-monetization.ts:98:    minimumPayoutCents: val('payout.minimumNoneCents') ?? 1500,
+src\lib\queries\seller-dashboard.ts:32:  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+src\lib\queries\seller-dashboard.ts:33:  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+src\lib\crosslister\connectors\therealreal-types.ts:62:  /** ISO 8601 timestamps */
+src\lib\crosslister\connectors\therealreal-normalizer.ts:81:  // Title: trim, max 200 chars (TRR max is 80)
+src\lib\crosslister\connectors\therealreal-normalizer.ts:82:  const title = (raw.title ?? '').trim().slice(0, 200);
+src\lib\crosslister\connectors\therealreal-connector.ts:51:  maxDescriptionLength: 2000,
+src\lib\crosslister\connectors\therealreal-connector.ts:74:        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
+src\lib\crosslister\connectors\therealreal-connector.ts:355:    await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 6000));
+src\lib\crosslister\connectors\therealreal-connector.ts:401:    await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 6000));
+src\lib\crosslister\connectors\poshmark-normalizer.ts:75:  // Title: trim, max 200 chars
+src\lib\crosslister\connectors\poshmark-normalizer.ts:76:  const title = (raw.title ?? '').trim().slice(0, 200);
+src\lib\crosslister\connectors\poshmark-connector.ts:56:  maxDescriptionLength: 1500,
+src\lib\crosslister\connectors\poshmark-connector.ts:339:    // Human-like delay: 2000-8000ms
+src\lib\crosslister\connectors\poshmark-connector.ts:340:    await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 6000));
+src\lib\crosslister\connectors\poshmark-connector.ts:382:    await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 6000));
+src\lib\crosslister\connectors\mercari-normalizer.ts:67:  // Title: trim, max 200 chars
+src\lib\crosslister\connectors\mercari-normalizer.ts:68:  const title = (raw.name ?? '').trim().slice(0, 200);
+src\lib\crosslister\connectors\grailed-types.ts:62:  /** ISO 8601 timestamps */
+src\lib\crosslister\connectors\grailed-normalizer.ts:71:  // Title: trim, max 200 chars (Grailed max is 80)
+src\lib\crosslister\connectors\grailed-normalizer.ts:72:  const title = (raw.title ?? '').trim().slice(0, 200);
+src\lib\crosslister\connectors\fb-marketplace-normalizer.ts:67:  // Title: trim, max 200 chars (FB max is 80)
+src\lib\crosslister\connectors\fb-marketplace-normalizer.ts:68:  const title = (raw.name ?? '').trim().slice(0, 200);
+src\lib\crosslister\connectors\etsy-normalizer.ts:72:  // Title: trim, max 200 chars (Etsy max is 140 but we store up to 200)
+src\lib\crosslister\connectors\etsy-normalizer.ts:73:  const title = (raw.title ?? '').trim().slice(0, 200);
+src\lib\notifications\qa-notifier.ts:60:      questionText: questionRow.questionText.slice(0, 200),
+src\lib\notifications\qa-notifier.ts:112:      answerText: questionRow.answerText.slice(0, 200),
+src\lib\notifications\message-notifier.ts:74:      messagePreview: msg.body.slice(0, 200),
+src\lib\crosslister\connectors\ebay-normalizer.ts:76:  // Title: trim, max 200 chars
+src\lib\crosslister\connectors\ebay-normalizer.ts:78:  const title = rawTitle.slice(0, 200);
+src\lib\queries\crosslister.ts:224:  const limit = Math.min(200, options.limit ?? 50);
+src\lib\queries\crosslister.ts:252:  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+src\lib\crosslister\connectors\ebay-connector.ts:550:   * Health check: try fetching 1 item. Returns healthy if 200 OK.
+src\lib\crosslister\connectors\depop-types.ts:59:  /** ISO 8601 timestamps */
+src\lib\crosslister\connectors\depop-normalizer.ts:85:  const title = rawTitle.trim().slice(0, 200);
+src\lib\actions\buyer-review.ts:45:  const submitWindowDays = await getPlatformSetting<number>('review.windowDays', 60);
+src\lib\actions\admin-providers.ts:25:  displayName: z.string().min(1).max(200),
+src\lib\actions\admin-providers.ts:78:  displayName: z.string().min(1).max(200).optional(),
+src\lib\crosslister\channel-registry.ts:113:      rateLimit: { callsPerHourPerSeller: 200, burstAllowance: 20 },
+src\lib\crosslister\channel-registry.ts:131:      defaultCapabilities: tierCCapabilities(16, 80, 1500, true),
+src\lib\crosslister\channel-registry.ts:132:      rateLimit: { callsPerHourPerSeller: 60, burstAllowance: 10 },
+src\lib\crosslister\channel-registry.ts:151:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:170:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:208:      rateLimit: { callsPerHourPerSeller: 200, burstAllowance: 20 },
+src\lib\crosslister\channel-registry.ts:227:      rateLimit: { callsPerHourPerSeller: 150, burstAllowance: 15 },
+src\lib\crosslister\channel-registry.ts:245:      defaultCapabilities: tierCCapabilities(12, 80, 2000, false),
+src\lib\crosslister\channel-registry.ts:246:      rateLimit: { callsPerHourPerSeller: 60, burstAllowance: 10 },
+src\lib\actions\browsing-history.ts:13:    searchQuery: z.string().max(200).optional(),
+src\lib\actions\admin-meetup-locations.ts:15:  name: z.string().min(1).max(200),
+src\lib\actions\authentication.ts:23:  notes: z.string().max(2000).optional(),
+src\lib\actions\admin-feature-flag-schemas.ts:8:  name: z.string().min(1).max(200),
+src\lib\actions\admin-feature-flag-schemas.ts:21:  name: z.string().min(1).max(200).optional(),
+src\lib\actions\messaging-helpers.ts:33:  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+src\lib\actions\storefront.ts:15:  storeDescription: z.string().max(2000).optional(),
+src\lib\actions\storefront.ts:107:    if (data.shippingPolicy && data.shippingPolicy.length > 2000)
+src\lib\actions\storefront.ts:108:      return { success: false, error: 'Shipping policy max 2000 characters' };
+src\lib\actions\storefront.ts:123:    if (data.announcement && data.announcement.length > 200)
+src\lib\actions\storefront.ts:124:      return { success: false, error: 'Announcement max 200 characters' };
+src\lib\actions\storefront.ts:129:    if (data.aboutHtml && data.aboutHtml.length > 2000)
+src\lib\actions\storefront.ts:130:      return { success: false, error: 'About section max 2000 characters' };
+src\lib\actions\seller-response.ts:34: * - Body: 1-2000 characters
+src\lib\actions\seller-response.ts:124: * - Body: 1-2000 characters
+src\lib\actions\seller-response.ts:250:      const daysRemaining = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+src\lib\actions\staff-login.ts:10:const COOKIE_MAX_AGE_SECONDS = 8 * 60 * 60;
+src\lib\actions\reviews.ts:39: * - Review window: configurable via review.windowDays (default 60 days)
+src\lib\actions\reviews.ts:95:  const reviewWindowDays = await getPlatformSetting<number>('review.windowDays', 60);
+
+## 13. Cat the main scheduler file
+Scheduler candidates: src\lib\jobs\queue.ts src\lib\actions\__tests__\crosslister-publish-queue.test.ts src\lib\crosslister\workers\__tests__\emergency-delist-success.test.ts
+=== src\lib\jobs\queue.ts ===
+import { Queue, Worker, type ConnectionOptions, type Processor } from 'bullmq';
+
+/**
+ * Valkey/Redis connection configuration.
+ * Uses VALKEY_HOST and VALKEY_PORT environment variables.
+ */
+const connection: ConnectionOptions = {
+  host: process.env.VALKEY_HOST ?? 'localhost',
+  port: parseInt(process.env.VALKEY_PORT ?? '6379', 10),
+  maxRetriesPerRequest: null,
+};
+
+/**
+ * Create a BullMQ queue with consistent connection config.
+ */
+export function createQueue<T>(name: string): Queue<T> {
+  return new Queue<T>(name, { connection });
+}
+
+/**
+ * Create a BullMQ worker with consistent connection config.
+ */
+export function createWorker<T>(
+  name: string,
+  processor: Processor<T>,
+  concurrency = 5
+): Worker<T> {
+  return new Worker<T>(name, processor, {
+    connection,
+    concurrency,
+  });
+}
+
+export { connection };
+=== src\lib\actions\__tests__\crosslister-publish-queue.test.ts ===
+/**
+ * Tests for the F3.1 queue-pattern actions:
+ *   publishListings (queued response)
+ *   cancelJob
+ *   getJobQueueStatus
+ *   delistFromChannel (enqueue pattern)
+ *   updateProjectionOverrides (sync job enqueue)
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/lib/casl', () => ({
+  authorize: vi.fn().mockResolvedValue({
+    session: { userId: 'user-1', delegationId: null },
+    ability: { can: vi.fn().mockReturnValue(true) },
+  }),
+}));
+
+vi.mock('@/lib/db', () => ({
+  db: {
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([{ id: 'job-1' }]),
+    update: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+  },
+}));
+
+vi.mock('@/lib/db/schema', () => ({
+  listing: {},
+  channelProjection: {},
+  crosslisterAccount: {},
+  crossJob: {},
+}));
+
+vi.mock('drizzle-orm', () => ({
+  eq: vi.fn(),
+  and: vi.fn(),
+  inArray: vi.fn(),
+}));
+
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+
+vi.mock('@/lib/crosslister/services/publish-meter', () => ({
+  canPublish: vi.fn().mockResolvedValue(true),
+  getPublishAllowance: vi.fn().mockResolvedValue({
+    tier: 'FREE', monthlyLimit: 25, usedThisMonth: 0, remaining: 25, rolloverBalance: 0,
+  }),
+}));
+
+vi.mock('@/lib/crosslister/services/publish-service', () => ({
+  publishListingToChannel: vi.fn().mockResolvedValue({
+    success: true, crossJobId: 'cj-1', projectionId: 'proj-1',
+  }),
+  enqueueSyncJob: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/crosslister/queue/lister-queue', () => ({
+  listerPublishQueue: {
+    add: vi.fn().mockResolvedValue({ id: 'bq-1' }),
+    remove: vi.fn().mockResolvedValue(1),
+  },
+}));
+
+vi.mock('@/lib/queries/crosslister', () => ({
+  getSellerQueueStatus: vi.fn().mockResolvedValue({
+    queued: 3, inProgress: 1, completed: 10, failed: 0,
+  }),
+}));
+
+vi.mock('@/lib/crosslister/queue/constants', () => ({
+  PRIORITY_DELIST: 100,
+  MAX_ATTEMPTS_PUBLISH: 3,
+  BACKOFF_PUBLISH: { type: 'exponential', delay: 30_000 },
+  REMOVE_ON_COMPLETE: { count: 1000 },
+  REMOVE_ON_FAIL: { count: 5000 },
+}));
+
+vi.mock('@/lib/validations/crosslister', () => ({
+  publishListingsSchema: {
+    safeParse: vi.fn().mockImplementation((input: unknown) => {
+      const i = input as Record<string, unknown>;
+      if (!i?.listingIds || !i?.channels) {
+        return { success: false, error: { issues: [{ message: 'Invalid' }] } };
+      }
+      return { success: true, data: { listingIds: i.listingIds, channels: i.channels } };
+    }),
+  },
+  updateProjectionOverridesSchema: {
+    safeParse: vi.fn().mockImplementation((input: unknown) => {
+      const i = input as Record<string, unknown>;
+      if (!i?.projectionId) {
+        return { success: false, error: { issues: [{ message: 'projectionId required' }] } };
+      }
+      return { success: true, data: i };
+    }),
+  },
+  cancelJobSchema: {
+    safeParse: vi.fn().mockImplementation((input: unknown) => {
+      const i = input as Record<string, unknown>;
+      if (!i?.jobId) {
+        return { success: false, error: { issues: [{ message: 'jobId required' }] } };
+      }
+      return { success: true, data: { jobId: i.jobId } };
+    }),
+  },
+}));
+
+// --- publishListings ---
+
+describe('publishListings â€” queued response', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
+
+  it('returns queued count instead of published count', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'user-1', status: 'ACTIVE' }]),
+    });
+    const { publishListings } = await import('../crosslister-publish');
+    const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
+    expect(result.success).toBe(true);
+    expect(result.data?.queued).toBe(1);
+    expect('published' in (result.data ?? {})).toBe(false);
+  });
+
+  it('returns Unauthorized when no session', async () => {
+    const { authorize } = await import('@/lib/casl');
+    (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ session: null, ability: { can: vi.fn() } });
+    const { publishListings } = await import('../crosslister-publish');
+    const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Unauthorized');
+  });
+
+  it('returns Forbidden when ability.can returns false', async () => {
+    const { authorize } = await import('@/lib/casl');
+    (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      session: { userId: 'user-1', delegationId: null },
+      ability: { can: vi.fn().mockReturnValue(false) },
+    });
+    const { publishListings } = await import('../crosslister-publish');
+    const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Forbidden');
+  });
+
+  it('calls publishListingToChannel (enqueue) for each listing x channel', async () => {
+    const { publishListingToChannel } = await import('@/lib/crosslister/services/publish-service');
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue([
+        { id: 'lst-1', ownerUserId: 'user-1', status: 'ACTIVE' },
+        { id: 'lst-2', ownerUserId: 'user-1', status: 'ACTIVE' },
+      ]),
+    });
+    const { publishListings } = await import('../crosslister-publish');
+    await publishListings({ listingIds: ['lst-1', 'lst-2'], channels: ['EBAY', 'POSHMARK'] });
+    expect(publishListingToChannel).toHaveBeenCalledTimes(4);
+  });
+});
+
+// --- cancelJob ---
+
+describe('cancelJob', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
+
+  it('cancels a QUEUED job successfully', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{
+        id: 'cj-1', sellerId: 'user-1', status: 'QUEUED',
+        jobType: 'CREATE', projectionId: 'proj-1', bullmqJobId: 'bq-1',
+      }]),
+    });
+    (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    });
+
+    const { cancelJob } = await import('../crosslister-publish');
+    const result = await cancelJob({ jobId: 'cj-1' });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects cancellation of IN_PROGRESS job', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{
+        id: 'cj-1', sellerId: 'user-1', status: 'IN_PROGRESS',
+        jobType: 'CREATE', projectionId: 'proj-1', bullmqJobId: null,
+      }]),
+    });
+
+    const { cancelJob } = await import('../crosslister-publish');
+    const result = await cancelJob({ jobId: 'cj-1' });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('in progress');
+  });
+
+  it('returns Not found for job owned by different seller', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([]), // no row found (ownership check built into query)
+    });
+
+    const { cancelJob } = await import('../crosslister-publish');
+    const result = await cancelJob({ jobId: 'cj-other' });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Not found');
+  });
+
+  it('reverts projection status from QUEUED to DRAFT for CREATE jobs', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{
+        id: 'cj-1', sellerId: 'user-1', status: 'QUEUED',
+        jobType: 'CREATE', projectionId: 'proj-1', bullmqJobId: null,
+      }]),
+    });
+    const setCalls: unknown[] = [];
+    (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+      set: vi.fn().mockImplementation((vals: unknown) => {
+        setCalls.push(vals);
+        return { where: vi.fn().mockResolvedValue([]) };
+      }),
+    });
+
+    const { cancelJob } = await import('../crosslister-publish');
+    await cancelJob({ jobId: 'cj-1' });
+
+    const draftRevert = setCalls.find((c) => (c as Record<string, unknown>)?.status === 'DRAFT') as Record<string, unknown> | undefined;
+    expect(draftRevert).toBeDefined();
+  });
+
+  it('removes BullMQ job from queue when bullmqJobId exists', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{
+        id: 'cj-1', sellerId: 'user-1', status: 'QUEUED',
+        jobType: 'CREATE', projectionId: 'proj-1', bullmqJobId: 'bq-xyz',
+      }]),
+    });
+    (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    });
+
+    const { listerPublishQueue } = await import('@/lib/crosslister/queue/lister-queue');
+    const { cancelJob } = await import('../crosslister-publish');
+    await cancelJob({ jobId: 'cj-1' });
+    expect(listerPublishQueue.remove).toHaveBeenCalledWith('bq-xyz');
+  });
+
+  it('requires delete CrossJob CASL permission', async () => {
+    const { authorize } = await import('@/lib/casl');
+    (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      session: { userId: 'user-1', delegationId: null },
+      ability: { can: vi.fn().mockReturnValue(false) },
+    });
+    const { cancelJob } = await import('../crosslister-publish');
+    const result = await cancelJob({ jobId: 'cj-1' });
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Forbidden');
+  });
+});
+
+// --- getJobQueueStatus ---
+
+describe('getJobQueueStatus', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
+
+  it('returns queue status counts for authenticated seller', async () => {
+    const { getJobQueueStatus } = await import('../crosslister-publish');
+    const result = await getJobQueueStatus();
+    expect(result.success).toBe(true);
+    expect(result.data?.queued).toBe(3);
+    expect(result.data?.inProgress).toBe(1);
+  });
+
+  it('returns Unauthorized when no session', async () => {
+    const { authorize } = await import('@/lib/casl');
+    (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ session: null, ability: { can: vi.fn() } });
+    const { getJobQueueStatus } = await import('../crosslister-publish');
+    const result = await getJobQueueStatus();
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Unauthorized');
+  });
+
+  it('requires read CrossJob CASL permission', async () => {
+    const { authorize } = await import('@/lib/casl');
+    (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      session: { userId: 'user-1', delegationId: null },
+      ability: { can: vi.fn().mockReturnValue(false) },
+    });
+    const { getJobQueueStatus } = await import('../crosslister-publish');
+    const result = await getJobQueueStatus();
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Forbidden');
+  });
+});
+
+// --- delistFromChannel enqueue ---
+
+describe('delistFromChannel â€” enqueue pattern', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
+
+  it('enqueues DELIST job instead of calling connector inline', async () => {
+    const { db } = await import('@/lib/db');
+    let callNum = 0;
+    (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockImplementation(() => {
+        callNum++;
+        if (callNum === 1) {
+          return Promise.resolve([{
+            id: 'proj-1', sellerId: 'user-1', status: 'ACTIVE',
+            externalId: 'ext-123', accountId: 'acct-1', channel: 'EBAY',
+            listingId: 'lst-1',
+          }]);
+        }
+        if (callNum === 2) {
+          return Promise.resolve([{ id: 'acct-1', sellerId: 'user-1' }]);
+        }
+        return Promise.resolve([]);
+      }),
+    }));
+    (db.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 'cj-delist-1' }]),
+      }),
+    });
+    (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    });
+
+    const { listerPublishQueue } = await import('@/lib/crosslister/queue/lister-queue');
+    const { delistFromChannel } = await import('../crosslister-publish');
+    const result = await delistFromChannel({ projectionId: 'proj-1' });
+
+    expect(result.success).toBe(true);
+    expect(listerPublishQueue.add).toHaveBeenCalledWith(
+      expect.stringContaining('delist'),
+      expect.objectContaining({ jobType: 'DELIST' }),
+      expect.any(Object),
+    );
+  });
+});
+
+// --- updateProjectionOverrides sync enqueue ---
+
+describe('updateProjectionOverrides â€” sync enqueue', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
+
+  it('enqueues SYNC job when hasPendingSync is true and projection is ACTIVE', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{
+        id: 'proj-1', status: 'ACTIVE', syncEnabled: true,
+        overridesJson: {}, externalId: 'ext-123',
+      }]),
+    });
+    (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    });
+
+    const { enqueueSyncJob } = await import('@/lib/crosslister/services/publish-service');
+    const { updateProjectionOverrides } = await import('../crosslister-publish');
+    await updateProjectionOverrides({ projectionId: 'proj-1', titleOverride: 'New Title' });
+
+    expect(enqueueSyncJob).toHaveBeenCalledWith('proj-1', 'user-1');
+  });
+
+  it('does NOT enqueue SYNC job when projection is not ACTIVE', async () => {
+    const { db } = await import('@/lib/db');
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{
+        id: 'proj-1', status: 'QUEUED', syncEnabled: true,
+        overridesJson: {}, externalId: null,
+      }]),
+    });
+    (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    });
+
+    const { enqueueSyncJob } = await import('@/lib/crosslister/services/publish-service');
+    const { updateProjectionOverrides } = await import('../crosslister-publish');
+    await updateProjectionOverrides({ projectionId: 'proj-1', titleOverride: 'New Title' });
+
+    expect(enqueueSyncJob).not.toHaveBeenCalled();
+  });
+});
+=== src\lib\crosslister\workers\__tests__\emergency-delist-success.test.ts ===
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
+
+// Mock DB
+vi.mock('@/lib/db', () => ({
+  db: {
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+  },
+}));
+
+vi.mock('@/lib/db/schema', () => ({
+  channelProjection: {},
+  listing: {},
+  crosslisterAccount: {},
+}));
+
+vi.mock('drizzle-orm', () => ({
+  eq: vi.fn(),
+  and: vi.fn(),
+  ne: vi.fn(),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('@/lib/notifications/service', () => ({
+  notify: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/realtime/centrifugo-publisher', () => ({
+  publishToChannel: vi.fn().mockResolvedValue(undefined),
+  sellerChannel: vi.fn((id: string) => `private-user.${id}`),
+}));
+
+vi.mock('../../connector-registry', () => ({
+  getConnector: vi.fn().mockReturnValue({
+    delistListing: vi.fn().mockResolvedValue({ success: true }),
+  }),
+}));
+
+vi.mock('@/lib/jobs/queue', () => ({
+  createWorker: vi.fn().mockReturnValue({
+    on: vi.fn(),
+    close: vi.fn(),
+  }),
+  createQueue: vi.fn().mockReturnValue({
+    add: vi.fn().mockResolvedValue({ id: 'bq-1' }),
+    close: vi.fn(),
+  }),
+  connection: {},
+}));
+
+// --- Fixtures ---
+const ACTIVE_PROJECTION = {
+  id: 'proj-posh',
+  status: 'ACTIVE',
+  externalId: 'posh-ext-123',
+  accountId: 'acct-posh-1',
+  sellerId: 'seller-1',
+};
+
+const ACCOUNT_ROW = {
+  id: 'acct-posh-1',
+  sellerId: 'seller-1',
+  channel: 'POSHMARK',
+  status: 'ACTIVE',
+};
+
+const BASE_JOB_DATA = {
+  projectionId: 'proj-posh',
+  listingId: 'lst-1',
+  channel: 'POSHMARK',
+  reason: 'SALE_DETECTED' as const,
+  sourceChannel: 'EBAY',
+  sourceSaleId: 'order-abc-123',
+};
+
+interface MockJob {
+  id: string;
+  data: typeof BASE_JOB_DATA;
+  attemptsMade: number;
+}
+
+function makeJob(data: typeof BASE_JOB_DATA, attemptsMade = 0): MockJob {
+  return { id: 'bq-job-1', data, attemptsMade };
+}
+
+/** Helper: set up sequential select call results on the mocked db */
+function setupSelectSequence(dbMock: unknown, results: unknown[][]): void {
+  const db = dbMock as { select: Mock };
+  let callCount = 0;
+  db.select.mockImplementation(() => ({
+    from: vi.fn().mockReturnValue({
+      where: vi.fn().mockImplementation(() => {
+        const idx = callCount++;
+        const result = results[idx] ?? [];
+        const resolvedPromise = Promise.resolve(result);
+        // Support both: await .where() directly and .where().limit()
+        return Object.assign(resolvedPromise, {
+          limit: vi.fn().mockResolvedValue(result),
+        });
+      }),
+    }),
+  }));
+}
+
+function setupUpdateMock(dbMock: unknown): void {
+  const db = dbMock as { update: Mock };
+  db.update.mockReturnValue({
+    set: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    }),
+  });
+}
+
+async function getProcessor(): Promise<((job: MockJob) => Promise<void>) | undefined> {
+  const { createWorker } = await import('@/lib/jobs/queue');
+  const { createEmergencyDelistWorker } = await import('../emergency-delist-worker');
+  createEmergencyDelistWorker();
+  const calls = (createWorker as Mock).mock.calls;
+  return calls[calls.length - 1]?.[1] as ((job: MockJob) => Promise<void>) | undefined;
+}
+
+describe('createEmergencyDelistWorker', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('creates a BullMQ worker for lister:emergency-delist', async () => {
+    const { createEmergencyDelistWorker } = await import('../emergency-delist-worker');
+    const { createWorker } = await import('@/lib/jobs/queue');
+
+    createEmergencyDelistWorker();
+
+    expect(createWorker).toHaveBeenCalledWith(
+      'lister:emergency-delist',
+      expect.any(Function),
+      expect.any(Number),
+    );
+  });
+});
+
+describe('emergency delist processor â€” success paths', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('updates projection to DELISTED on successful delist', async () => {
+    const { db } = await import('@/lib/db');
+    const dbAny = db as unknown as { update: Mock };
+
+    setupSelectSequence(db, [
+      [ACTIVE_PROJECTION],
+      [ACCOUNT_ROW],
+      [], // no active projections remaining
+    ]);
+    setupUpdateMock(db);
+
+    const { getConnector } = await import('../../connector-registry');
+    (getConnector as Mock).mockReturnValue({
+      delistListing: vi.fn().mockResolvedValue({ success: true }),
+    });
+
+    const processor = await getProcessor();
+    if (processor) {
+      await processor(makeJob(BASE_JOB_DATA));
+    }
+
+    expect(dbAny.update).toHaveBeenCalled();
+  });
+
+  it('emits delist.completed Centrifugo event when all projections delisted', async () => {
+    const { db } = await import('@/lib/db');
+
+    setupSelectSequence(db, [
+      [ACTIVE_PROJECTION],
+      [ACCOUNT_ROW],
+      [], // no active projections remaining
+    ]);
+    setupUpdateMock(db);
+
+    const { getConnector } = await import('../../connector-registry');
+    (getConnector as Mock).mockReturnValue({
+      delistListing: vi.fn().mockResolvedValue({ success: true }),
+    });
+
+    const { publishToChannel } = await import('@/lib/realtime/centrifugo-publisher');
+    const processor = await getProcessor();
+    if (processor) {
+      await processor(makeJob(BASE_JOB_DATA));
+    }
+
+    expect(publishToChannel).toHaveBeenCalledWith(
+      'private-user.seller-1',
+      expect.objectContaining({ event: 'delist.completed', listingId: 'lst-1' }),
+    );
+  });
+
+  it('skips idempotently when projection is already DELISTED', async () => {
+    const { db } = await import('@/lib/db');
+
+    setupSelectSequence(db, [
+      [{ ...ACTIVE_PROJECTION, status: 'DELISTED' }],
+    ]);
+
+    const { getConnector } = await import('../../connector-registry');
+    const processor = await getProcessor();
+    if (processor) {
+      await processor(makeJob(BASE_JOB_DATA));
+    }
+
+    expect(getConnector).not.toHaveBeenCalled();
+  });
+
+  it('Tier C platform (session-based) goes through same delist flow', async () => {
+    const { db } = await import('@/lib/db');
+    const sessionAccount = { ...ACCOUNT_ROW, channel: 'POSHMARK' };
+
+    setupSelectSequence(db, [
+      [ACTIVE_PROJECTION],
+      [sessionAccount],
+      [],
+    ]);
+    setupUpdateMock(db);
+
+    const { getConnector } = await import('../../connector-registry');
+    const mockDelist = vi.fn().mockResolvedValue({ success: true });
+    (getConnector as Mock).mockReturnValue({ delistListing: mockDelist });
+
+    const processor = await getProcessor();
+    if (processor) {
+      await processor(makeJob(BASE_JOB_DATA));
+    }
+
+    expect(mockDelist).toHaveBeenCalledWith(sessionAccount, ACTIVE_PROJECTION.externalId);
+  });
+
+  it('does not cross-contaminate projections from different listings', async () => {
+    const { db } = await import('@/lib/db');
+    const dbAny = db as unknown as { update: Mock };
+
+    setupSelectSequence(db, [
+      [{ ...ACTIVE_PROJECTION, id: 'proj-other', listingId: 'lst-99' }],
+      [ACCOUNT_ROW],
+      [],
+    ]);
+    setupUpdateMock(db);
+
+    const { getConnector } = await import('../../connector-registry');
+    (getConnector as Mock).mockReturnValue({
+      delistListing: vi.fn().mockResolvedValue({ success: true }),
+    });
+
+    const processor = await getProcessor();
+    if (processor) {
+      await processor(makeJob({ ...BASE_JOB_DATA, projectionId: 'proj-other', listingId: 'lst-99' }));
+    }
+
+    expect(dbAny.update).toHaveBeenCalled();
+  });
+});
+
+## 14. Cat the connector base/registry
+Connector candidates: src\app\api\crosslister\mercari\callback\route.ts src\app\api\crosslister\etsy\callback\route.ts src\app\api\crosslister\grailed\callback\route.ts src\app\api\crosslister\ebay\callback\route.ts src\app\api\crosslister\fb-marketplace\callback\route.ts
+=== src\app\api\crosslister\mercari\callback\route.ts ===
+96 src\app\api\crosslister\mercari\callback\route.ts
+=== src\app\api\crosslister\etsy\callback\route.ts ===
+94 src\app\api\crosslister\etsy\callback\route.ts
+=== src\app\api\crosslister\grailed\callback\route.ts ===
+94 src\app\api\crosslister\grailed\callback\route.ts
+=== src\app\api\crosslister\ebay\callback\route.ts ===
+91 src\app\api\crosslister\ebay\callback\route.ts
+=== src\app\api\crosslister\fb-marketplace\callback\route.ts ===
+94 src\app\api\crosslister\fb-marketplace\callback\route.ts
+
+## 15. Test coverage — crosslister
+src\components\promotions\__tests__\promotion-ui.test.ts
+src\components\admin\__tests__\flagged-messages-table.test.ts
+src\lib\__integration__\queries.integration.test.ts
+src\components\subscription\__tests__\lister-subscription-card.test.ts
+src\lib\validations\__tests__\crosslister.test.ts
+src\lib\validations\__tests__\crosslister-overrides.test.ts
+src\components\messaging\__tests__\message-seller-button-extended.test.ts
+src\components\messaging\__tests__\message-composer-extended.test.ts
+src\components\messaging\__tests__\conversation-thread-extended.test.ts
+src\components\messaging\__tests__\conversation-list-extended.test.ts
+src\lib\utils\__tests__\tier-gates.test.ts
+src\components\pages\listing\__tests__\listing-action-buttons.test.ts
+src\components\qa\__tests__\qa-helpers.test.ts
+src\components\qa\__tests__\qa-actions-pin-hide-section.test.ts
+src\components\qa\__tests__\qa-actions-ask-answer.test.ts
+src\lib\auth\__tests__\staff-auth.test.ts
+src\lib\crosslister\__tests__\connector-registry.test.ts
+src\lib\crosslister\__tests__\channel-registry.test.ts
+src\lib\subscriptions\__tests__\subscription-engine.test.ts
+src\lib\subscriptions\__tests__\price-map.test.ts
+src\lib\subscriptions\__tests__\lister-downgrade-warnings.test.ts
+src\lib\subscriptions\__tests__\classification.test.ts
+src\lib\db\seed\__tests__\seed-validation.test.ts
+src\lib\subscriptions\__tests__\bundle-resolution.test.ts
+src\lib\db\schema\__tests__\social-discovery.test.ts
+src\lib\db\seed\__tests__\seed-validation-structure.test.ts
+src\lib\db\seed\__tests__\seed-validation-engagement.test.ts
+src\lib\db\seed\__tests__\seed-validation-enums.test.ts
+src\lib\db\seed\__tests__\seed-validation-commerce.test.ts
+src\lib\crosslister\workers\__tests__\emergency-delist-success.test.ts
+src\lib\crosslister\workers\__tests__\emergency-delist-failure.test.ts
+src\lib\finance\__tests__\format-type-group.test.ts
+src\lib\finance\__tests__\format.test.ts
+src\lib\finance\__tests__\post-off-platform-sale.test.ts
+src\lib\stripe\__tests__\trials.test.ts
+src\lib\finance\__tests__\report-csv.test.ts
+src\lib\finance\__tests__\report-pdf.test.ts
+src\lib\stripe\__tests__\subscription-webhooks.test.ts
+src\lib\finance\__tests__\receipt-ocr.test.ts
+src\lib\stripe\__tests__\payouts.test.ts
+src\lib\stripe\__tests__\connect.test.ts
+src\lib\stripe\__tests__\checkout.test.ts
+src\lib\stripe\__tests__\checkout-webhooks.test.ts
+src\lib\stripe\__tests__\bundle-webhooks.test.ts
+src\lib\mutations\__tests__\apply-pending-downgrade.test.ts
+src\lib\storage\__tests__\image-service.test.ts
+src\lib\crosslister\services\__tests__\sale-detection-notify.test.ts
+src\lib\crosslister\services\__tests__\sale-detection-core.test.ts
+src\lib\crosslister\services\__tests__\rollover-manager.test.ts
+src\lib\notifications\__tests__\service.test.ts
+src\lib\crosslister\services\__tests__\publish-service.test.ts
+src\lib\notifications\__tests__\qa-notifier.test.ts
+src\lib\crosslister\services\__tests__\publish-service-edge.test.ts
+src\lib\crosslister\services\__tests__\publish-meter.test.ts
+src\lib\crosslister\services\__tests__\publish-meter-rollover.test.ts
+src\lib\crosslister\services\__tests__\policy-validator.test.ts
+src\lib\crosslister\services\__tests__\platform-fees.test.ts
+src\lib\crosslister\services\__tests__\normalizer-dispatch.test.ts
+src\lib\crosslister\services\__tests__\listing-transform.test.ts
+src\lib\crosslister\services\__tests__\job-executor.test.ts
+src\lib\crosslister\services\__tests__\import-service.test.ts
+src\lib\crosslister\services\__tests__\dedupe-service.test.ts
+src\lib\services\__tests__\shipping-quote-resolver.test.ts
+src\lib\services\__tests__\price-history-service.test.ts
+src\lib\services\__tests__\price-alert-processor.test.ts
+src\lib\services\__tests__\price-alert-processor-stock.test.ts
+src\lib\services\__tests__\message-safety.test.ts
+src\lib\crosslister\queue\__tests__\rate-limiter.test.ts
+src\lib\services\__tests__\combined-shipping.test.ts
+src\lib\crosslister\queue\__tests__\lister-worker.test.ts
+src\lib\services\__tests__\combined-shipping-quoted.test.ts
+src\lib\crosslister\queue\__tests__\lister-queue.test.ts
+src\lib\actions\__tests__\watchlist.test.ts
+src\lib\services\__tests__\combined-shipping-discount.test.ts
+src\lib\actions\__tests__\storefront.test.ts
+src\lib\actions\__tests__\storefront-pages.test.ts
+src\lib\actions\__tests__\storefront-pages-manage.test.ts
+src\lib\actions\__tests__\storefront-extended.test.ts
+src\lib\actions\__tests__\shipping-quote.test.ts
+src\lib\actions\__tests__\shipping-quote-respond.test.ts
+src\lib\actions\__tests__\shipping-quote-respond-happy.test.ts
+src\lib\actions\__tests__\shipping-quote-penalty.test.ts
+src\lib\actions\__tests__\seller-response.test.ts
+src\lib\actions\__tests__\seller-listings.test.ts
+src\lib\actions\__tests__\reviews.test.ts
+src\lib\actions\__tests__\reviews-update.test.ts
+src\lib\actions\__tests__\qa.test.ts
+src\lib\actions\__tests__\qa-pin.test.ts
+src\lib\actions\__tests__\qa-answer-hide-pin.test.ts
+src\lib\actions\__tests__\purchase-overage-pack.test.ts
+src\lib\actions\__tests__\promotions-crud.test.ts
+src\lib\actions\__tests__\price-history.test.ts
+src\lib\actions\__tests__\price-drop.test.ts
+src\lib\actions\__tests__\price-alerts.test.ts
+src\lib\actions\__tests__\price-alerts-delete.test.ts
+src\lib\crosslister\connectors\__tests__\therealreal-normalizer.test.ts
+src\lib\actions\__tests__\messaging.test.ts
+src\lib\crosslister\connectors\__tests__\therealreal-connector.test.ts
+src\lib\actions\__tests__\messaging-send.test.ts
+src\lib\crosslister\connectors\__tests__\poshmark-normalizer.test.ts
+src\lib\actions\__tests__\messaging-manage.test.ts
+src\lib\crosslister\connectors\__tests__\poshmark-connector.test.ts
+src\lib\actions\__tests__\messaging-helpers.test.ts
+src\lib\crosslister\connectors\__tests__\mercari-normalizer.test.ts
+src\lib\actions\__tests__\manage-subscription.test.ts
+src\lib\crosslister\connectors\__tests__\mercari-connector.test.ts
+src\lib\crosslister\connectors\__tests__\grailed-normalizer.test.ts
+src\lib\actions\__tests__\finance-center.test.ts
+src\lib\crosslister\connectors\__tests__\grailed-connector.test.ts
+src\lib\actions\__tests__\category-alerts.test.ts
+src\lib\actions\__tests__\finance-center-reports.test.ts
+src\lib\crosslister\connectors\__tests__\fb-marketplace-normalizer.test.ts
+src\lib\actions\__tests__\category-alerts-notifier.test.ts
+src\lib\crosslister\connectors\__tests__\fb-marketplace-connector.test.ts
+src\lib\actions\__tests__\buyer-review.test.ts
+src\lib\actions\__tests__\finance-center-mileage-update-delete.test.ts
+src\lib\crosslister\connectors\__tests__\etsy-normalizer.test.ts
+src\lib\actions\__tests__\browsing-history.test.ts
+src\lib\crosslister\connectors\__tests__\etsy-connector.test.ts
+src\lib\actions\__tests__\browsing-history-queries.test.ts
+src\lib\crosslister\connectors\__tests__\ebay-normalizer.test.ts
+src\lib\actions\__tests__\boosting.test.ts
+src\lib\actions\__tests__\finance-center-mileage-list.test.ts
+src\lib\crosslister\connectors\__tests__\ebay-connector.test.ts
+src\lib\actions\__tests__\authentication.test.ts
+src\lib\crosslister\connectors\__tests__\depop-normalizer.test.ts
+src\lib\actions\__tests__\authentication-complete.test.ts
+src\lib\crosslister\connectors\__tests__\depop-connector.test.ts
+src\lib\actions\__tests__\finance-center-mileage-create.test.ts
+src\lib\actions\__tests__\admin-users.test.ts
+src\lib\queries\__tests__\subscriptions.test.ts
+src\lib\actions\__tests__\admin-users-warn.test.ts
+src\lib\actions\__tests__\admin-staff.test.ts
+src\lib\queries\__tests__\storefront.test.ts
+src\lib\actions\__tests__\finance-center-extra.test.ts
+src\lib\actions\__tests__\admin-staff-lifecycle.test.ts
+src\lib\actions\__tests__\finance-center-expenses-receipt.test.ts
+src\lib\actions\__tests__\admin-settings.test.ts
+src\lib\actions\__tests__\finance-center-expenses-receipt-update.test.ts
+src\lib\actions\__tests__\admin-orders.test.ts
+src\lib\actions\__tests__\finance-center-expenses-list.test.ts
+src\lib\actions\__tests__\admin-moderation.test.ts
+src\lib\actions\__tests__\finance-center-expenses-crud.test.ts
+src\lib\actions\__tests__\admin-meetup-toggle.test.ts
+src\lib\actions\__tests__\finance-center-expenses-create.test.ts
+src\lib\actions\__tests__\admin-meetup-locations.test.ts
+src\lib\actions\__tests__\finance-center-dashboard.test.ts
+src\lib\actions\__tests__\admin-finance.test.ts
+src\lib\actions\__tests__\delegation.test.ts
+src\lib\queries\__tests__\storefront-pages.test.ts
+src\lib\actions\__tests__\admin-finance-happy-path.test.ts
+src\lib\actions\__tests__\delegation-revoke-accept.test.ts
+src\lib\actions\__tests__\crosslister-publish.test.ts
+src\lib\actions\__tests__\admin-custom-roles.test.ts
+src\lib\actions\__tests__\admin-custom-roles-assign.test.ts
+src\lib\actions\__tests__\crosslister-publish-queue.test.ts
+src\lib\actions\__tests__\address.test.ts
+src\lib\actions\__tests__\crosslister-publish-edge.test.ts
+src\lib\actions\__tests__\address-delete.test.ts
+src\lib\actions\__tests__\crosslister-import.test.ts
+src\lib\actions\__tests__\crosslister-accounts.test.ts
+src\lib\actions\__tests__\create-subscription-checkout.test.ts
+src\lib\queries\__tests__\shipping-quote.test.ts
+src\lib\actions\__tests__\create-bundle-checkout.test.ts
+src\lib\actions\__tests__\change-subscription.test.ts
+src\lib\actions\__tests__\checkout-initiate.test.ts
+src\lib\actions\__tests__\change-subscription-bundle.test.ts
+src\lib\actions\__tests__\checkout-finalize.test.ts
+src\lib\commerce\__tests__\deal-badges.test.ts
+src\lib\commerce\__tests__\create-order-quoted.test.ts
+src\lib\commerce\__tests__\performance-band.test.ts
+src\lib\commerce\__tests__\boosting.test.ts
+src\lib\commerce\__tests__\order-number.test.ts
+src\lib\commerce\__tests__\checkout-promotions.test.ts
+src\lib\commerce\__tests__\auth-offer.test.ts
+src\lib\commerce\__tests__\watcher-offers.test.ts
+src\lib\commerce\__tests__\offer-engine.test.ts
+src\lib\commerce\__tests__\buyer-quality.test.ts
+src\lib\commerce\__tests__\trust-weight.test.ts
+src\lib\commerce\__tests__\local-pickup.test.ts
+src\lib\queries\__tests__\shipping-quote-expired.test.ts
+src\lib\commerce\__tests__\tf-calculator.test.ts
+src\lib\commerce\__tests__\buyer-protection.test.ts
+src\lib\commerce\__tests__\disputes.test.ts
+src\lib\commerce\__tests__\shipping-exceptions.test.ts
+src\lib\commerce\__tests__\bundle-offers.test.ts
+src\lib\commerce\__tests__\return-fees.test.ts
+src\lib\commerce\__tests__\review-visibility.test.ts
+src\lib\commerce\__tests__\promotions.test.ts
+src\lib\commerce\__tests__\returns.test.ts
+src\lib\queries\__tests__\reviews.test.ts
+src\lib\queries\__tests__\revenue-by-platform.test.ts
+src\lib\queries\__tests__\qa.test.ts
+src\lib\queries\__tests__\promotions.test.ts
+src\lib\queries\__tests__\price-history.test.ts
+src\lib\queries\__tests__\messaging.test.ts
+src\lib\casl\__tests__\staff-ability.test.ts
+src\lib\queries\__tests__\messaging-unread.test.ts
+src\lib\casl\__tests__\permission-registry.test.ts
+src\lib\casl\__tests__\custom-role-abilities.test.ts
+src\lib\queries\__tests__\messaging-admin.test.ts
+src\lib\casl\__tests__\crosslister-abilities.test.ts
+src\lib\casl\__tests__\authorize.test.ts
+src\lib\queries\__tests__\finance-center.test.ts
+src\lib\casl\__tests__\ability-seller-staff.test.ts
+src\lib\casl\__tests__\ability-guest-buyer.test.ts
+src\lib\queries\__tests__\finance-center-reports.test.ts
+src\lib\queries\__tests__\finance-center-mileage.test.ts
+src\lib\queries\__tests__\finance-center-kpis-edge.test.ts
+src\lib\queries\__tests__\finance-center-expenses-list.test.ts
+src\lib\queries\__tests__\finance-center-expenses-cogs.test.ts
+src\lib\queries\__tests__\finance-center-detail.test.ts
+src\lib\queries\__tests__\finance-center-detail-extra.test.ts
+src\lib\authentication\__tests__\phash.test.ts
+src\lib\authentication\__tests__\cost-split.test.ts
+src\lib\queries\__tests__\delegation.test.ts
+src\lib\authentication\__tests__\constants.test.ts
+src\lib\queries\__tests__\crosslister.test.ts
+src\lib\queries\__tests__\buyer-reviews.test.ts
+src\lib\queries\__tests__\buyer-quality.test.ts
+src\lib\queries\__tests__\authentication.test.ts
+src\lib\queries\__tests__\admin-dashboard.test.ts
+src\lib\queries\__tests__\admin-dashboard-charts.test.ts
+src\lib\queries\shipping-profiles.test.ts
+src\lib\queries\seller-dashboard.test.ts

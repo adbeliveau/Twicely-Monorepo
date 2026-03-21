@@ -1,0 +1,90 @@
+{
+  "uid": "twicely-platform-overview",
+  "title": "Twicely Platform Overview",
+  "description": "High-level platform health: active users, orders, revenue, error rate, latency",
+  "tags": ["twicely", "overview"],
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Users (DAU)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_users_active_daily",
+          "legendFormat": "DAU"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Orders per Hour",
+      "type": "stat",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(twicely_orders_total[1h]) * 3600",
+          "legendFormat": "Orders/hr"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Active Listings",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "twicely_listings_active",
+          "legendFormat": "Active Listings"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "HTTP Error Rate",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(twicely_http_requests_total{status=~\"5..\"}[5m]) / rate(twicely_http_requests_total[5m])",
+          "legendFormat": "5xx Rate"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "p95 Request Latency",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, rate(twicely_http_request_duration_seconds_bucket[10m]))",
+          "legendFormat": "p95 Latency"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Request Rate Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(twicely_http_requests_total[5m])",
+          "legendFormat": "{{method}} {{route}} {{status}}"
+        }
+      ]
+    }
+  ]
+}
