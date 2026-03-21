@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
   },
   output: 'standalone',
   allowedDevOrigins: ['twicely.co', 'twicely.local', 'hub.twicely.co', 'hub.twicely.local'],
-  transpilePackages: ['@puckeditor/core'],
+  transpilePackages: ['@puckeditor/core','@twicely/db','@twicely/auth','@twicely/casl','@twicely/commerce','@twicely/crosslister','@twicely/stripe','@twicely/email','@twicely/notifications','@twicely/ui','@twicely/utils','@twicely/logger','@twicely/storage','@twicely/realtime','@twicely/jobs','@twicely/subscriptions','@twicely/scoring','@twicely/finance','@twicely/shipping','@twicely/search','@twicely/config'],
   images: {
     dangerouslyAllowSVG: false,
     contentDispositionType: 'attachment',

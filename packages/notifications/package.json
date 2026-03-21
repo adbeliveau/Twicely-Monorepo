@@ -11,5 +11,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@twicely/db": "workspace:*",
+    "@twicely/email": "workspace:*",
+    "@twicely/logger": "workspace:*"
   }
 }
