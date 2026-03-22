@@ -26,90 +26,107 @@ interface UserFinanceTabProps {
 }
 
 function fmt(cents: number): string {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 export function UserFinanceTab({ balance, payouts, ledgerEntries }: UserFinanceTabProps) {
   return (
     <div className="space-y-6">
-      {/* Balance Card */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Earnings</h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-xs text-gray-500">Available for payout</p>
-            <p className="text-lg font-semibold text-gray-900">{fmt(balance?.availableCents ?? 0)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Pending</p>
-            <p className="text-lg font-semibold text-gray-900">{fmt(balance?.pendingCents ?? 0)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Reserved</p>
-            <p className="text-lg font-semibold text-gray-900">{fmt(balance?.reservedCents ?? 0)}</p>
-          </div>
+      {/* Balance Cards */}
+      <div className="grid gap-5 sm:grid-cols-3">
+        <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available for payout</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{fmt(balance?.availableCents ?? 0)}</p>
+        </div>
+        <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{fmt(balance?.pendingCents ?? 0)}</p>
+        </div>
+        <div className="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Reserved</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{fmt(balance?.reservedCents ?? 0)}</p>
         </div>
       </div>
 
       {/* Payouts Table */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-primary">Recent Payouts</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-primary/5 text-left">
-              <tr>
-                <th className="px-3 py-2 font-medium text-primary/70">Status</th>
-                <th className="px-3 py-2 font-medium text-primary/70">Amount</th>
-                <th className="px-3 py-2 font-medium text-primary/70">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {payouts.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2">
-                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{p.status}</span>
-                  </td>
-                  <td className="px-3 py-2">{fmt(p.amountCents)}</td>
-                  <td className="px-3 py-2 text-gray-500">{p.createdAt.toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {payouts.length === 0 && (
-                <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-400">No payouts</td></tr>
-              )}
-            </tbody>
-          </table>
+      <div className="rounded-2xl bg-white shadow-sm dark:bg-gray-800">
+        <div className="border-b border-gray-100 px-6 py-4 dark:border-gray-700">
+          <h3 className="font-bold text-gray-900 dark:text-white">Recent Payouts</h3>
+        </div>
+        <div className="p-6">
+          {payouts.length === 0 ? (
+            <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">No payouts</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {payouts.map((p) => (
+                    <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          p.status === 'COMPLETED' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                          p.status === 'FAILED' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
+                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        }`}>{p.status}</span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{fmt(p.amountCents)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(p.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Ledger Table */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-semibold text-primary">Recent Ledger Entries</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-primary/5 text-left">
-              <tr>
-                <th className="px-3 py-2 font-medium text-primary/70">Type</th>
-                <th className="px-3 py-2 font-medium text-primary/70">Amount</th>
-                <th className="px-3 py-2 font-medium text-primary/70">Status</th>
-                <th className="px-3 py-2 font-medium text-primary/70">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {ledgerEntries.map((e) => (
-                <tr key={e.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 font-mono text-xs">{e.type}</td>
-                  <td className="px-3 py-2">{fmt(e.amountCents)}</td>
-                  <td className="px-3 py-2">
-                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{e.status}</span>
-                  </td>
-                  <td className="px-3 py-2 text-gray-500">{e.createdAt.toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {ledgerEntries.length === 0 && (
-                <tr><td colSpan={4} className="px-3 py-4 text-center text-gray-400">No ledger entries</td></tr>
-              )}
-            </tbody>
-          </table>
+      <div className="rounded-2xl bg-white shadow-sm dark:bg-gray-800">
+        <div className="border-b border-gray-100 px-6 py-4 dark:border-gray-700">
+          <h3 className="font-bold text-gray-900 dark:text-white">Recent Ledger Entries</h3>
+        </div>
+        <div className="p-6">
+          {ledgerEntries.length === 0 ? (
+            <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">No ledger entries</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {ledgerEntries.map((e) => (
+                    <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className="font-mono text-xs text-gray-800 dark:text-gray-200">{e.type}</span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{fmt(e.amountCents)}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">{e.status}</span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{formatDate(e.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

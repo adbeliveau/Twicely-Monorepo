@@ -248,7 +248,7 @@ export function UserInfoBar({ user }: UserInfoBarProps) {
             {formatDate(user.createdAt)}
           </dd>
         </div>
-        {user.addresses.length > 0 && (
+        {user.addresses.length > 0 ? (
           <div className="col-span-2">
             <dt className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Address
@@ -256,6 +256,13 @@ export function UserInfoBar({ user }: UserInfoBarProps) {
             <dd className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
               {user.addresses?.[0]?.city}, {user.addresses?.[0]?.state} {user.addresses?.[0]?.zip}
             </dd>
+          </div>
+        ) : (
+          <div className="col-span-2">
+            <dt className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Address
+            </dt>
+            <dd className="mt-1 text-sm italic text-gray-400 dark:text-gray-500">Not set</dd>
           </div>
         )}
       </div>

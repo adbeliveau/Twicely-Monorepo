@@ -81,7 +81,7 @@ export default async function UserDetailPage({
   void session; // session available for future use
 
   return (
-    <div>
+    <div className="p-6">
       <UserDetailHeader
         user={userDetail}
         actions={
