@@ -34,8 +34,8 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { normalizeDepopListing, toExternalListing } from './depop-normalizer';
-import type { DepopProductsResponse, DepopTokenResponse, DepopUserProfile } from './depop-types';
+import { normalizeDepopListing, toExternalListing } from '@twicely/crosslister/connectors/depop-normalizer';
+import type { DepopProductsResponse, DepopTokenResponse, DepopUserProfile } from '@twicely/crosslister/connectors/depop-types';
 
 const DEPOP_AUTH_URL = 'https://www.depop.com/oauth/authorize';
 const DEPOP_TOKEN_URL = 'https://www.depop.com/oauth/token';

@@ -9,7 +9,7 @@ import { returnRequest, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { processReturnRefund } from '@twicely/stripe/refunds';
-import type { ApproveReturnResult, RespondToReturnInput } from './returns-types';
+import type { ApproveReturnResult, RespondToReturnInput } from '@twicely/commerce/returns-types';
 
 /**
  * Seller approves a return request.

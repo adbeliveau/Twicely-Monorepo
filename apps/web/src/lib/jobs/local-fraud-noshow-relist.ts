@@ -8,7 +8,7 @@
  * Per TWICELY_V3_LOCAL_CANONICAL_ADDENDUM_v1_1.md §A12
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { checkNoshowRelist } from '@twicely/commerce/local-fraud-detection';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';

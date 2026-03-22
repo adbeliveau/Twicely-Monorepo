@@ -1,16 +1,16 @@
-import { SHIPPING_QUOTE_TEMPLATES } from './templates-shipping-quote';
-import { POST_ORDER_TEMPLATES } from './templates-post-order';
-import { LOCAL_TEMPLATES } from './templates-local';
-import { AFFILIATE_TEMPLATES } from './templates-affiliate';
-import { CROSSLISTER_TEMPLATES } from './templates-crosslister';
-import { ENFORCEMENT_TEMPLATES } from './templates-enforcement';
-import { TAX_TEMPLATES } from './templates-tax';
-import { KYC_TEMPLATES } from './templates-kyc';
-import { PRIVACY_TEMPLATES } from './templates-privacy';
-import { HELPDESK_TEMPLATES } from './templates-helpdesk';
-import type { TemplateKey, TemplateDef } from './templates-types';
+import { SHIPPING_QUOTE_TEMPLATES } from '@twicely/notifications/templates-shipping-quote';
+import { POST_ORDER_TEMPLATES } from '@twicely/notifications/templates-post-order';
+import { LOCAL_TEMPLATES } from '@twicely/notifications/templates-local';
+import { AFFILIATE_TEMPLATES } from '@twicely/notifications/templates-affiliate';
+import { CROSSLISTER_TEMPLATES } from '@twicely/notifications/templates-crosslister';
+import { ENFORCEMENT_TEMPLATES } from '@twicely/notifications/templates-enforcement';
+import { TAX_TEMPLATES } from '@twicely/notifications/templates-tax';
+import { KYC_TEMPLATES } from '@twicely/notifications/templates-kyc';
+import { PRIVACY_TEMPLATES } from '@twicely/notifications/templates-privacy';
+import { HELPDESK_TEMPLATES } from '@twicely/notifications/templates-helpdesk';
+import type { TemplateKey, TemplateDef } from '@twicely/notifications/templates-types';
 
-export type { TemplateKey, NotificationPriority, NotificationChannel, TemplateDef } from './templates-types';
+export type { TemplateKey, NotificationPriority, NotificationChannel, TemplateDef } from '@twicely/notifications/templates-types';
 
 export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   'offer.declined': {

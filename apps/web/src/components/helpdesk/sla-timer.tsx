@@ -166,7 +166,7 @@ export function SlaProgress({ dueAt, startedAt, isMet = false, className }: SlaP
       const due = new Date(dueAt).getTime();
       const total = due - start;
       const elapsed = Date.now() - start;
-      const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+      const pct = total <= 0 ? 100 : Math.min(100, Math.max(0, (elapsed / total) * 100));
       setProgress(pct);
       if (pct >= 100) setState("breached");
       else if (pct >= 90) setState("critical");

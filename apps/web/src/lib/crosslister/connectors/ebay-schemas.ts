@@ -40,4 +40,4 @@ export const EbayInventoryItemSchema = z.object({
   offers: z.array(EbayOfferSchema).optional(),
 });
 
-export type { EbayInventoryItem } from './ebay-types';
+export type { EbayInventoryItem } from '@twicely/crosslister/connectors/ebay-types';

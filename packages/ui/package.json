@@ -6,13 +6,48 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    "./*": "./src/*.ts",
+    "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx",
+    "./input": "./src/input.tsx",
+    "./label": "./src/label.tsx",
+    "./badge": "./src/badge.tsx",
+    "./dialog": "./src/dialog.tsx",
+    "./checkbox": "./src/checkbox.tsx",
+    "./select": "./src/select.tsx",
+    "./textarea": "./src/textarea.tsx",
+    "./tabs": "./src/tabs.tsx",
+    "./table": "./src/table.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./separator": "./src/separator.tsx",
+    "./switch": "./src/switch.tsx",
+    "./avatar": "./src/avatar.tsx",
+    "./sheet": "./src/sheet.tsx",
+    "./tooltip": "./src/tooltip.tsx",
+    "./dropdown-menu": "./src/dropdown-menu.tsx",
+    "./alert-dialog": "./src/alert-dialog.tsx",
+    "./breadcrumb": "./src/breadcrumb.tsx",
+    "./copy-input": "./src/copy-input.tsx",
+    "./multi-select": "./src/multi-select.tsx",
+    "./pagination": "./src/pagination.tsx",
+    "./radio-group": "./src/radio-group.tsx",
+    "./scroll-area": "./src/scroll-area.tsx",
+    "./aspect-ratio": "./src/aspect-ratio.tsx",
+    "./toast": "./src/toast.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^0.564.0",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.3",
+    "sonner": "^2.0.7",
     "@twicely/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19"
   }
 }

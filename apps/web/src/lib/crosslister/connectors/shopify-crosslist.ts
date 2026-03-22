@@ -7,9 +7,9 @@
  */
 
 import type { TransformedListing } from '../types';
-import type { ShopifyProductInput, ShopifyCreateProductResponse, ShopifyErrorResponse } from './shopify-types';
-import { parseShopifyPrice, mapShopifyStatus } from './shopify-normalizer';
-import { ShopifyProductSchema } from './shopify-schemas';
+import type { ShopifyProductInput, ShopifyCreateProductResponse, ShopifyErrorResponse } from '@twicely/crosslister/connectors/shopify-types';
+import { parseShopifyPrice, mapShopifyStatus } from '@twicely/crosslister/connectors/shopify-normalizer';
+import { ShopifyProductSchema } from '@twicely/crosslister/connectors/shopify-schemas';
 
 interface ShopifyCrosslistConfig { apiVersion: string }
 

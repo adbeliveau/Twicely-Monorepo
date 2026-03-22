@@ -8,7 +8,7 @@
  * BullMQ queue name: 'local-auto-cancel' (hyphens, not colons)
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { localTransaction, order, helpdeskCase } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

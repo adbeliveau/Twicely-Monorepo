@@ -13,7 +13,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.1",
     "@twicely/db": "workspace:*",
     "@twicely/logger": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
   }
 }

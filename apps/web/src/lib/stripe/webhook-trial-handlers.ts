@@ -8,10 +8,10 @@ import type Stripe from 'stripe';
 import { db } from '@twicely/db';
 import { sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { markTrialConverted, markTrialExpired, getTrialDaysRemaining } from './trials';
+import { markTrialConverted, markTrialExpired, getTrialDaysRemaining } from '@twicely/stripe/trials';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
-import type { WebhookResult } from './webhooks';
+import type { WebhookResult } from '@twicely/stripe/webhooks';
 
 /**
  * Subscription trial ending — notify seller.

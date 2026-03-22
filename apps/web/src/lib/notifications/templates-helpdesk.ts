@@ -1,4 +1,4 @@
-import type { TemplateDef } from './templates-types';
+import type { TemplateDef } from '@twicely/notifications/templates-types';
 
 export const HELPDESK_TEMPLATES: Record<string, TemplateDef> = {
   'helpdesk.case.created': {

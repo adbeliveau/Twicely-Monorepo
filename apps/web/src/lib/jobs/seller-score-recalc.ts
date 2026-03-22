@@ -4,9 +4,9 @@
  * Seller Score Canonical Section 12.1.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
-import { sellerProfile, sellerScoreSnapshot } from '@twicely/db/schema';
+import { sellerProfile, sellerScoreSnapshot, listing } from '@twicely/db/schema';
 import { eq, and, gte, desc, ne } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
@@ -19,12 +19,13 @@ import { getReviewAverage, getMedianResponseTime } from '@/lib/scoring/metric-qu
 import {
   determineEffectiveBand, runAutoEnforcement, notifyBandTransition, loadEnforcementSettings,
   type SellerRow,
-} from './seller-score-recalc-helpers';
+} from '@twicely/jobs/seller-score-recalc-helpers';
 import { logger } from '@twicely/logger';
+import { getTypesenseClient } from '@twicely/search/typesense-client';
+import { LISTINGS_COLLECTION } from '@twicely/search/typesense-schema';
 import type { BandThresholds, CategoryThresholds, MetricWeights, PerformanceBand } from '@/lib/scoring/score-types';
 
 const QUEUE_NAME = 'seller-score-recalc';
-const WINDOW_DAYS = 90;
 
 interface RecalcJobData { triggeredAt: string; }
 
@@ -87,9 +88,9 @@ async function loadCategoryThresholds(fb: string): Promise<CategoryThresholds> {
   };
 }
 
-async function processSeller(seller: SellerRow, settings: Awaited<ReturnType<typeof loadScoreSettings>>, enfSettings: Awaited<ReturnType<typeof loadEnforcementSettings>>, platformMean: number, today: string): Promise<void> {
+async function processSeller(seller: SellerRow, settings: Awaited<ReturnType<typeof loadScoreSettings>>, enfSettings: Awaited<ReturnType<typeof loadEnforcementSettings>>, platformMean: number, today: string, windowDays: number): Promise<void> {
   const { userId } = seller;
-  const orderCount = await getCompletedOrderCount(userId, WINDOW_DAYS);
+  const orderCount = await getCompletedOrderCount(userId, windowDays);
   if (orderCount < 1) return;
 
   if (orderCount < settings.newSellerThreshold) {
@@ -98,15 +99,15 @@ async function processSeller(seller: SellerRow, settings: Awaited<ReturnType<typ
   }
 
   const [onTimeShippingPct, inadClaimRatePct, reviewAverage, responseTimeHours, returnRatePct, cancellationRatePct, feeBucket] = await Promise.all([
-    getOnTimeShippingRate(userId, WINDOW_DAYS), getInadClaimRate(userId, WINDOW_DAYS),
-    getReviewAverage(userId, WINDOW_DAYS), getMedianResponseTime(userId, WINDOW_DAYS),
-    getReturnRate(userId, WINDOW_DAYS), getCancellationRate(userId, WINDOW_DAYS),
-    getPrimaryFeeBucket(userId, WINDOW_DAYS),
+    getOnTimeShippingRate(userId, windowDays), getInadClaimRate(userId, windowDays),
+    getReviewAverage(userId, windowDays), getMedianResponseTime(userId, windowDays),
+    getReturnRate(userId, windowDays), getCancellationRate(userId, windowDays),
+    getPrimaryFeeBucket(userId, windowDays),
   ]);
 
   const thresholds = await loadCategoryThresholds(feeBucket);
   const ninetyDaysAgo = new Date();
-  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - WINDOW_DAYS);
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - windowDays);
   const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0] as string;
   const snapshots = await db.select({ overallScore: sellerScoreSnapshot.overallScore }).from(sellerScoreSnapshot)
     .where(and(eq(sellerScoreSnapshot.userId, userId), gte(sellerScoreSnapshot.snapshotDate, ninetyDaysAgoStr)))
@@ -135,7 +136,7 @@ async function processSeller(seller: SellerRow, settings: Awaited<ReturnType<typ
   await db.insert(sellerScoreSnapshot).values({
     id: createId(), sellerProfileId: seller.id, userId, snapshotDate: today,
     overallScore: result.score, componentScoresJson: result.perMetricScores,
-    performanceBand: effectiveBand, periodStart: new Date(Date.now() - WINDOW_DAYS * 86400000), periodEnd: new Date(),
+    performanceBand: effectiveBand, periodStart: new Date(Date.now() - windowDays * 86400000), periodEnd: new Date(),
     orderCount, defectCount: 0, searchMultiplier,
     onTimeShippingPct, inadClaimRatePct, reviewAverage, responseTimeHours, returnRatePct, cancellationRatePct,
     shippingScore: result.perMetricScores.shippingScore, inadScore: result.perMetricScores.inadScore,
@@ -150,10 +151,33 @@ async function processSeller(seller: SellerRow, settings: Awaited<ReturnType<typ
   }
 
   await runAutoEnforcement(seller, result.score, enfSettings.warningDurationDays, enfSettings.coachingBelow, enfSettings.warningBelow, enfSettings.restrictionBelow, enfSettings.preSuspensionBelow);
+
+  // Update Typesense: patch sellerScore on all ACTIVE listings for this seller
+  try {
+    const client = getTypesenseClient();
+    const activeListings = await db
+      .select({ id: listing.id })
+      .from(listing)
+      .where(and(eq(listing.ownerUserId, userId), eq(listing.status, 'ACTIVE')));
+
+    if (activeListings.length > 0) {
+      const docs = activeListings.map((l) => ({
+        id: l.id,
+        sellerScore: result.score,
+        sellerPerformanceBand: effectiveBand,
+      }));
+      await client.collections(LISTINGS_COLLECTION).documents().import(docs, { action: 'update' });
+    }
+  } catch {
+    // Typesense unavailable — scores will sync on next listing update
+  }
 }
 
 export async function processSellerScoreRecalc(): Promise<void> {
-  const [settings, enfSettings, platformMean] = await Promise.all([loadScoreSettings(), loadEnforcementSettings(), getPlatformMeanScore()]);
+  const [settings, enfSettings, platformMean, windowDays] = await Promise.all([
+    loadScoreSettings(), loadEnforcementSettings(), getPlatformMeanScore(),
+    getPlatformSetting<number>('trust.standards.evaluationPeriodDays', 90),
+  ]);
   const today = new Date().toISOString().split('T')[0] as string;
 
   const sellers = await db.select({
@@ -167,7 +191,7 @@ export async function processSellerScoreRecalc(): Promise<void> {
 
   for (const seller of sellers) {
     try {
-      await processSeller(seller as SellerRow, settings, enfSettings, platformMean, today);
+      await processSeller(seller as SellerRow, settings, enfSettings, platformMean, today, windowDays);
     } catch (err) {
       logger.error('[sellerScoreRecalc] Error processing seller', { userId: seller.userId, err });
     }

@@ -10,7 +10,7 @@ import { order, ledgerEntry } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
-import type { WebhookResult } from './webhooks';
+import type { WebhookResult } from '@twicely/stripe/webhooks';
 
 export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookResult> {
   try {

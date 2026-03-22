@@ -8,7 +8,7 @@
 import { db } from '@twicely/db';
 import { returnRequest, ledgerEntry } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { calculateReturnFees } from './return-fees';
+import { calculateReturnFees } from '@twicely/commerce/return-fees';
 
 export interface ApplyFeesResult {
   success: boolean;

@@ -11,5 +11,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@twicely/db": "workspace:*",
+    "@twicely/logger": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
   }
 }

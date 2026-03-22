@@ -153,6 +153,10 @@ export async function isWithinAttributionWindow(
  * @returns Maximum number of promoted slots
  */
 export async function calculatePromotedSlots(totalResults: number): Promise<number> {
+  // Fix 4: Global boost gate
+  const boostEnabled = await getPlatformSetting<boolean>('discovery.promo.boostEnabled', true);
+  if (!boostEnabled) return 0;
+
   if (totalResults <= 0) {
     return 0;
   }

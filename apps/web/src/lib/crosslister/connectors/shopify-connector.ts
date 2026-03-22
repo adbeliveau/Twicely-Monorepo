@@ -42,8 +42,8 @@ import {
   authenticateShopify,
   refreshShopifyAuth,
   revokeShopifyAuth,
-} from './shopify-auth';
-import { fetchShopifyProducts, fetchSingleShopifyProduct } from './shopify-import';
+} from '@twicely/crosslister/connectors/shopify-auth';
+import { fetchShopifyProducts, fetchSingleShopifyProduct } from '@twicely/crosslister/connectors/shopify-import';
 import {
   toShopifyProductInput,
   toShopifyPartialInput,
@@ -51,7 +51,7 @@ import {
   updateShopifyProduct,
   deleteShopifyProduct,
   fetchShopifyProductForVerify,
-} from './shopify-crosslist';
+} from '@twicely/crosslister/connectors/shopify-crosslist';
 
 const SHOPIFY_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,

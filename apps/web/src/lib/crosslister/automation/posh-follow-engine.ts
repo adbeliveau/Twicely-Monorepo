@@ -18,7 +18,7 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { canPerformAutomationAction } from '../services/automation-meter';
-import { canPerformAutomation } from './automation-circuit-breaker';
+import { canPerformAutomation } from '@twicely/crosslister/automation/automation-circuit-breaker';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import {
   AUTOMATION_JOB_PRIORITY,
@@ -26,7 +26,7 @@ import {
   AUTOMATION_MAX_ATTEMPTS,
   POSH_DAILY_FOLLOW_LIMIT_SETTING,
   POSH_DAILY_FOLLOW_LIMIT_DEFAULT,
-} from './constants';
+} from '@twicely/crosslister/automation/constants';
 
 export async function runPoshFollowEngine(): Promise<void> {
   logger.info('[poshFollowEngine] Starting run');

@@ -39,6 +39,9 @@ export async function createPriceAlertAction(
   if (!session) return { success: false, error: 'Unauthorized' };
   if (!ability.can('create', 'Notification')) return { success: false, error: 'Not authorized' };
 
+  const alertsEnabled = await getPlatformSetting<boolean>('discovery.priceAlert.enabled', true);
+  if (!alertsEnabled) return { success: false, error: 'Price alerts are currently disabled' };
+
   // Read limits from platform_settings (with fallback defaults)
   const maxAlertsPerUser = await getPlatformSetting<number>('discovery.priceAlert.maxPerUser', 100);
   const defaultExpiryDays = await getPlatformSetting<number>('discovery.priceAlert.defaultExpiryDays', 90);

@@ -50,4 +50,4 @@ export const PoshmarkListingSchema = z.object({
   covershot: PoshmarkCovershotSchema.optional(),
 });
 
-export type { PoshmarkListing } from './poshmark-types';
+export type { PoshmarkListing } from '@twicely/crosslister/connectors/poshmark-types';

@@ -1,7 +1,8 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { platformSetting } from '../schema';
+import type { PlatformSettingSeed } from './v32-platform-settings';
 
-const COMMS_SETTINGS = [
+export const COMMS_SETTINGS: PlatformSettingSeed[] = [
   {
     key: 'comms.email.enabled',
     value: true,

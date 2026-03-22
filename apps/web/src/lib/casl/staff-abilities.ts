@@ -1,5 +1,5 @@
 import type { AbilityBuilder } from '@casl/ability';
-import type { AppAbility, CaslSession } from './types';
+import type { AppAbility, CaslSession } from '@twicely/casl/types';
 
 /**
  * Define abilities for seller staff (delegated access)

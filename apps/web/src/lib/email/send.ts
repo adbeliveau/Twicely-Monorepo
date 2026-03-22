@@ -1,3 +1,4 @@
+import { logger } from '@twicely/logger';
 import { Resend } from 'resend';
 import type { ReactElement } from 'react';
 
@@ -13,7 +14,7 @@ export async function sendEmail({
   react: ReactElement;
 }): Promise<{ success: boolean; error?: string }> {
   if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set, skipping');
+    logger.warn('[email] RESEND_API_KEY not set, skipping');
     return { success: true };
   }
   try {
@@ -25,7 +26,7 @@ export async function sendEmail({
     });
     return { success: true };
   } catch (err) {
-    console.error('[email] send failed:', err);
+    logger.error('[email] send failed', { error: String(err) });
     return { success: false, error: String(err) };
   }
 }

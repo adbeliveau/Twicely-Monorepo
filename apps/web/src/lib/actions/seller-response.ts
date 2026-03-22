@@ -90,7 +90,7 @@ export async function submitSellerResponse(
   }
 
   // 5. Check within response window (from platform settings)
-  const responseWindowDays = await getPlatformSetting<number>('review.sellerResponseWindowDays', 30);
+  const responseWindowDays = await getPlatformSetting<number>('trust.review.sellerResponseWindowDays', 30);
   const now = new Date();
   const responseDeadline = new Date(reviewData.createdAt);
   responseDeadline.setDate(responseDeadline.getDate() + responseWindowDays);
@@ -169,7 +169,7 @@ export async function updateSellerResponse(
   }
 
   // 4. Check edit window (from platform settings)
-  const editWindowHours = await getPlatformSetting<number>('review.editWindowHours', 48);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
   const now = new Date();
   const editDeadline = new Date(responseData.createdAt);
   editDeadline.setHours(editDeadline.getHours() + editWindowHours);
@@ -219,7 +219,7 @@ export async function getSellerPendingReviews(): Promise<
 
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   const now = new Date();
-  const responseWindowDays = await getPlatformSetting<number>('review.sellerResponseWindowDays', 30);
+  const responseWindowDays = await getPlatformSetting<number>('trust.review.sellerResponseWindowDays', 30);
 
   const rows = await db
     .select({

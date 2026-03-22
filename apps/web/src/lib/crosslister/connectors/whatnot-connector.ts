@@ -35,10 +35,10 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { executeGraphQL } from './whatnot-graphql';
-import { toWhatnotInput, toWhatnotPartialInput } from './whatnot-transform';
-import { WhatnotListingSchema } from './whatnot-schemas';
-import { normalizeWhatnotListing, toExternalListing, parseMoneyToCents } from './whatnot-normalizer';
+import { executeGraphQL } from '@twicely/crosslister/connectors/whatnot-graphql';
+import { toWhatnotInput, toWhatnotPartialInput } from '@twicely/crosslister/connectors/whatnot-transform';
+import { WhatnotListingSchema } from '@twicely/crosslister/connectors/whatnot-schemas';
+import { normalizeWhatnotListing, toExternalListing, parseMoneyToCents } from '@twicely/crosslister/connectors/whatnot-normalizer';
 import type {
   WhatnotTokenResponse,
   WhatnotUserProfile,
@@ -49,7 +49,7 @@ import type {
   WhatnotListingUpdateResponse,
   WhatnotListingUnpublishResponse,
   WhatnotSingleListingResponse,
-} from './whatnot-types';
+} from '@twicely/crosslister/connectors/whatnot-types';
 
 const WHATNOT_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,

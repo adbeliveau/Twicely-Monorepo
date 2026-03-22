@@ -112,7 +112,7 @@ export const SEED_I14_SETTINGS: PlatformSettingSeed[] = [
 
   // ─── Shipping ─────────────────────────────────────────────────────────────
   {
-    key: 'shipping.freeThresholdCents',
+    key: 'fulfillment.shipping.freeThresholdCents',
     value: 5000,
     type: 'cents',
     category: 'fulfillment',

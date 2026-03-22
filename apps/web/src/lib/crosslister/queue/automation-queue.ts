@@ -5,7 +5,7 @@
  */
 
 import { createQueue } from '@twicely/jobs/queue';
-import { LISTER_AUTOMATION_QUEUE } from './constants';
+import { LISTER_AUTOMATION_QUEUE } from '@twicely/crosslister/queue/constants';
 import { AUTOMATION_MAX_ATTEMPTS, AUTOMATION_BACKOFF_DELAYS } from '../automation/constants';
 
 export interface AutomationJobData {

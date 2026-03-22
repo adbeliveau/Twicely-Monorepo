@@ -1,6 +1,7 @@
 'use server';
 
 import { authorize, sub } from '@twicely/casl';
+import { logger } from '@twicely/logger';
 import { db } from '@twicely/db';
 import { mileageEntry } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -95,7 +96,8 @@ export async function createMileageAction(
     revalidatePath('/my/selling/finances');
     revalidatePath('/my/selling/finances/mileage');
     return { success: true, entry: inserted };
-  } catch {
+  } catch (error) {
+    logger.error('[createMileageAction] Failed to create mileage entry', { error: String(error) });
     return { success: false, error: 'Failed to create mileage entry' };
   }
 }
@@ -155,7 +157,8 @@ export async function updateMileageAction(
     revalidatePath('/my/selling/finances');
     revalidatePath('/my/selling/finances/mileage');
     return { success: true, entry: updated };
-  } catch {
+  } catch (error) {
+    logger.error('[updateMileageAction] Failed to update mileage entry', { error: String(error) });
     return { success: false, error: 'Failed to update mileage entry' };
   }
 }
@@ -195,7 +198,8 @@ export async function deleteMileageAction(
     revalidatePath('/my/selling/finances');
     revalidatePath('/my/selling/finances/mileage');
     return { success: true };
-  } catch {
+  } catch (error) {
+    logger.error('[deleteMileageAction] Failed to delete mileage entry', { error: String(error) });
     return { success: false, error: 'Failed to delete mileage entry' };
   }
 }
@@ -225,7 +229,8 @@ export async function listMileageAction(
   try {
     const data = await getMileageList(userId, parsed.data);
     return { success: true, data };
-  } catch {
+  } catch (error) {
+    logger.error('[listMileageAction] Failed to load mileage entries', { error: String(error) });
     return { success: false, error: 'Failed to load mileage entries' };
   }
 }

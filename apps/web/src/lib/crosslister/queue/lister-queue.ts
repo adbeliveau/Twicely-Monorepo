@@ -7,7 +7,7 @@
  */
 
 import { createQueue } from '@twicely/jobs/queue';
-import { LISTER_PUBLISH_QUEUE } from './constants';
+import { LISTER_PUBLISH_QUEUE } from '@twicely/crosslister/queue/constants';
 
 export interface ListerPublishJobData {
   /** PK of the cross_job row */

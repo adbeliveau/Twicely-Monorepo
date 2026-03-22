@@ -5,7 +5,7 @@
  * With destination charges, refunds are issued from the connected account.
  */
 
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import { db } from '@twicely/db';
 import { returnRequest, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

@@ -25,7 +25,7 @@ const mockValkeyClient = {
   del: mockValkeyDel,
   status: 'ready',
 };
-vi.mock('@twicely/db/cache/valkey', () => ({
+vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: () => mockValkeyClient,
   isConnected: () => true,
 }));

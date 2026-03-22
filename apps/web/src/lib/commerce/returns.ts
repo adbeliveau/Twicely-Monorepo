@@ -4,8 +4,8 @@
  * Barrel re-export. All consumers import from this file unchanged.
  */
 
-export * from './returns-types';
-export * from './returns-validation';
-export * from './returns-create';
-export * from './returns-lifecycle';
-export * from './returns-queries';
+export * from '@twicely/commerce/returns-types';
+export * from '@twicely/commerce/returns-validation';
+export * from '@twicely/commerce/returns-create';
+export * from '@twicely/commerce/returns-lifecycle';
+export * from '@twicely/commerce/returns-queries';

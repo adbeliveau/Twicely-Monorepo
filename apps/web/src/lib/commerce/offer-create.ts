@@ -7,11 +7,11 @@ import {
   countActiveOffersByBuyerForSeller,
   countActiveOffersByBuyerForListing,
   hasRecentDeclinedOffer,
-} from './offer-queries';
+} from '@twicely/commerce/offer-queries';
 import { isBuyerBlocked } from '@/lib/queries/buyer-block';
 import { updateEngagement } from '@/lib/actions/browsing-history-helpers';
-import { notifyOfferEvent } from './offer-notifications';
-import { createOrderFromOffer } from './offer-to-order';
+import { notifyOfferEvent } from '@twicely/commerce/offer-notifications';
+import { createOrderFromOffer } from '@twicely/commerce/offer-to-order';
 import { scheduleOfferExpiry } from '@twicely/jobs/offer-expiry';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
@@ -39,6 +39,9 @@ export interface CreateOfferParams {
 /** Create a new offer with Stripe authorization hold */
 export async function createOffer(params: CreateOfferParams) {
   const { listingId, buyerId, offerCents, message, paymentMethodId, shippingAddressId } = params;
+
+  const offerEnabled = await getPlatformSetting<boolean>('commerce.offer.enabled', true);
+  if (!offerEnabled) return { success: false, error: 'Offers are currently disabled' };
 
   // 1. Validate listing exists, is ACTIVE, allowOffers = true
   const [lst] = await db.select({

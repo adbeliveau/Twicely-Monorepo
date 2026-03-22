@@ -1,4 +1,4 @@
-import type { TemplateDef } from './templates';
+import type { TemplateDef } from '@twicely/notifications/templates';
 
 /**
  * Notification templates for Privacy & Data events (G6).

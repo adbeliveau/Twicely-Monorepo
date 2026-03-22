@@ -110,13 +110,18 @@ export async function markOrderCompleted(
 }
 
 /**
- * Auto-complete orders that have been DELIVERED past the escrow hold period.
+ * Auto-complete orders that have been DELIVERED past the auto-complete window.
  * Called by cron job to finalize transactions.
+ *
+ * Uses `commerce.order.autoCompleteAfterDays` (default 3) — conceptually separate
+ * from `commerce.escrow.holdHours` (72h). Currently equivalent in value but
+ * independently configurable: escrow controls fund release timing, auto-complete
+ * controls order status transition.
  */
 export async function autoCompleteDeliveredOrders(): Promise<number> {
-  const holdHours = await getPlatformSetting<number>('commerce.escrow.holdHours', 72);
+  const autoCompleteDays = await getPlatformSetting<number>('commerce.order.autoCompleteAfterDays', 3);
   const cutoff = new Date();
-  cutoff.setHours(cutoff.getHours() - holdHours);
+  cutoff.setHours(cutoff.getHours() - (autoCompleteDays * 24));
 
   const eligibleOrders = await db
     .select({ id: order.id })

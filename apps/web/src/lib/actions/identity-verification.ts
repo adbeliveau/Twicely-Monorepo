@@ -14,6 +14,7 @@ import { createVerificationSession, getVerificationSessionResult } from '@twicel
 import { getActiveVerification, getVerificationHistory } from '@/lib/queries/identity-verification';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
+import { notify } from '@twicely/notifications/service';
 import type { IdentityVerificationRecord } from '@/lib/queries/identity-verification';
 
 const StartVerificationSchema = z.object({
@@ -154,6 +155,8 @@ export async function startEnhancedVerification(
     verificationId: record.id,
     triggeredBy,
   });
+
+  void notify(userId, 'kyc.verification_required', {});
 
   return {
     success: true,

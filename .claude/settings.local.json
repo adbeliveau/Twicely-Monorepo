@@ -288,7 +288,20 @@
       "Bash(ls \"C:/Users/XPS-15/Projects/Twicely/src/app/\\(helpdesk\\)/hd/page.tsx\")",
       "Bash(ls \"C:/Users/XPS-15/Projects/Twicely/src/app/\\(helpdesk\\)/hd/layout.tsx\")",
       "Bash(powershell -Command \"robocopy ''''C:\\\\Users\\\\XPS-15\\\\Downloads\\\\TailAdmin\\\\tailadmin-nextjs-pro-224\\\\tailadmin-nextjs-pro-main'''' ''''C:\\\\Users\\\\XPS-15\\\\Projects\\\\Twicely Mono\\\\apps\\\\admin'''' /E /XD node_modules .next .git /NFL /NDL /NJH /NJS /NC /NS\")",
-      "Bash(\"C:/Users/XPS-15/Projects/Twicely Mono/CLAUDE.md\":*)"
+      "Bash(\"C:/Users/XPS-15/Projects/Twicely Mono/CLAUDE.md\":*)",
+      "Bash(else echo:*)",
+      "Bash(fi)",
+      "Bash(for pkg:*)",
+      "Read(//c/Users/XPS-15/Projects/Twicely Mono/packages/utils/$pkg/**)",
+      "Bash(pnpm install:*)",
+      "Bash(grep -rn \"from ''''\\\\.\\\\/\" apps/web/src/lib/stripe/ --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(grep -rn \"from ''''\\\\.\\\\/\" apps/web/src/lib/notifications/ --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(grep -rn \"from ''''\\\\.\\\\/\" apps/web/src/lib/jobs/ --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(node -e \":*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm --version)",
+      "Bash(head:*)",
+      "Bash(npx create-expo-app@latest mobile --template blank-typescript)"
     ],
     "additionalDirectories": [
       "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts"

@@ -4,6 +4,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { searchListings } from '@twicely/search/listings';
 import { getCategoryTree } from '@/lib/queries/categories';
 import { getCategoryBySlug } from '@/lib/queries/categories';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { ListingGrid } from '@/components/shared/listing-grid';
 import { ListingCardSkeleton } from '@/components/shared/listing-card-skeleton';
 import { PagePagination } from '@/components/shared/page-pagination';
@@ -71,6 +72,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   // Build search filters
+  const pageSize = await getPlatformSetting<number>('discovery.search.defaultPageSize', 48);
   const filters: SearchFiltersType = {
     q: params.q,
     categoryId,
@@ -81,7 +83,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     brand: params.brand,
     sort: (params.sort as SearchFiltersType['sort']) ?? 'relevance',
     page: params.page ? parseInt(params.page, 10) : 1,
-    limit: 24,
+    limit: pageSize,
   };
 
   const results = await searchListings(filters);

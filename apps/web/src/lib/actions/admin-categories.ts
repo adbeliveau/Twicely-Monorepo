@@ -254,13 +254,15 @@ export async function reorderCategories(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  await Promise.all(
-    parsed.data.orderedIds.map((id, index) =>
-      db.update(category)
-        .set({ sortOrder: index, updatedAt: new Date() })
-        .where(eq(category.id, id))
-    )
-  );
+  await db.transaction(async (tx) => {
+    await Promise.all(
+      parsed.data.orderedIds.map((id, index) =>
+        tx.update(category)
+          .set({ sortOrder: index, updatedAt: new Date() })
+          .where(eq(category.id, id))
+      )
+    );
+  });
 
   revalidatePath('/categories');
   return { success: true };

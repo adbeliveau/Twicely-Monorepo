@@ -36,4 +36,4 @@ export const EtsyListingSchema = z.object({
   when_made: z.string().optional(),
 });
 
-export type { EtsyListing } from './etsy-types';
+export type { EtsyListing } from '@twicely/crosslister/connectors/etsy-types';

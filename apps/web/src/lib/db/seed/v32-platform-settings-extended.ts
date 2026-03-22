@@ -11,10 +11,10 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // COMMERCE — Cart, Offers, Orders, Listings
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'cart.expiryHours', value: 72, type: 'number', category: 'commerce', description: 'Cart items expire after this many hours' },
-  { key: 'cart.maxItems', value: 100, type: 'number', category: 'commerce', description: 'Maximum items allowed in cart' },
-  { key: 'cart.reservationMinutes', value: 15, type: 'number', category: 'commerce', description: 'Hold item in cart before releasing' },
-  { key: 'cart.guestCheckoutEnabled', value: false, type: 'boolean', category: 'commerce', description: 'Allow checkout without account' },
+  { key: 'commerce.cart.expiryHours', value: 72, type: 'number', category: 'commerce', description: 'Cart items expire after this many hours' },
+  { key: 'commerce.cart.maxItems', value: 100, type: 'number', category: 'commerce', description: 'Maximum items allowed in cart' },
+  { key: 'commerce.cart.reservationMinutes', value: 15, type: 'number', category: 'commerce', description: 'Hold item in cart before releasing' },
+  { key: 'commerce.cart.guestCheckoutEnabled', value: false, type: 'boolean', category: 'commerce', description: 'Allow checkout without account' },
   { key: 'commerce.offer.enabled', value: true, type: 'boolean', category: 'commerce', description: 'Enable Make Offer feature globally' },
   { key: 'commerce.offer.expirationHours', value: 48, type: 'number', category: 'commerce', description: 'Offers expire after X hours' },
   { key: 'commerce.offer.minPercentOfAsking', value: 50, type: 'number', category: 'commerce', description: 'Minimum offer as % of asking price' },
@@ -36,30 +36,30 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'bundle.smartPromptsEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Show bundle suggestions in cart' },
   { key: 'bundle.freeShippingPromptEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Suggest items for free shipping in cart' },
   { key: 'bundle.maxPromptsPerCart', value: 3, type: 'number', category: 'commerce', description: 'Max bundle prompts shown at once' },
-  // Removed: order.autoCompleteAfterDays — dead config, code uses commerce.escrow.holdHours instead
-  { key: 'order.buyerCancelWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
-  { key: 'order.maxItemsPerOrder', value: 50, type: 'number', category: 'commerce', description: 'Maximum items in single order' },
+  { key: 'commerce.order.autoCompleteAfterDays', value: 3, type: 'number', category: 'commerce', description: 'Days after delivery before order auto-completes (separate from escrow hold)' },
+  { key: 'commerce.order.buyerCancelWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
+  { key: 'commerce.order.maxItemsPerOrder', value: 50, type: 'number', category: 'commerce', description: 'Maximum items in single order' },
   { key: 'listing.maxImagesPerListing', value: 24, type: 'number', category: 'commerce', description: 'Maximum photos per listing' },
   { key: 'listing.minTitleLength', value: 10, type: 'number', category: 'commerce', description: 'Minimum characters in listing title' },
   { key: 'listing.maxTitleLength', value: 80, type: 'number', category: 'commerce', description: 'Maximum characters in listing title' },
   { key: 'listing.durationDays', value: 90, type: 'number', category: 'commerce', description: 'Default listing duration in days' },
   { key: 'listing.autoRenewEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Allow auto-renew of expired listings' },
-  { key: 'cancellation.buyerWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
-  { key: 'cancellation.sellerPenaltyEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Penalize sellers who cancel orders' },
-  { key: 'cancellation.autoRefundOnCancel', value: true, type: 'boolean', category: 'commerce', description: 'Automatically refund on cancellation' },
+  { key: 'commerce.cancel.buyerWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
+  { key: 'commerce.cancel.sellerPenaltyEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Penalize sellers who cancel orders' },
+  { key: 'commerce.cancel.autoRefundOnCancel', value: true, type: 'boolean', category: 'commerce', description: 'Automatically refund on cancellation' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FULFILLMENT — Shipping, Returns, Insurance
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'shipping.defaultHandlingDays', value: 3, type: 'number', category: 'fulfillment', description: 'Default handling time in business days' },
-  { key: 'shipping.maxHandlingDays', value: 7, type: 'number', category: 'fulfillment', description: 'Maximum allowed handling time' },
-  { key: 'shipping.trackingRequiredAboveCents', value: 5000, type: 'cents', category: 'fulfillment', description: 'Require tracking for orders above this amount' },
-  { key: 'shipping.signatureRequiredAboveCents', value: 75000, type: 'cents', category: 'fulfillment', description: 'Require signature for orders above this amount' },
-  { key: 'shipping.defaultCarrier', value: 'USPS', type: 'string', category: 'fulfillment', description: 'Default shipping carrier' },
-  { key: 'shipping.labelGenerationEnabled', value: true, type: 'boolean', category: 'fulfillment', description: 'Enable shipping label generation via Shippo' },
-  { key: 'insurance.autoInsureAboveCents', value: 10000, type: 'cents', category: 'fulfillment', description: 'Auto-insure shipments above this amount ($100)' },
-  { key: 'returns.windowDays', value: 30, type: 'number', category: 'fulfillment', description: 'Default return window in days' },
-  { key: 'returns.restockingFeeBps', value: 0, type: 'bps', category: 'fulfillment', description: 'Restocking fee in basis points' },
+  { key: 'fulfillment.shipping.defaultHandlingDays', value: 3, type: 'number', category: 'fulfillment', description: 'Default handling time in business days' },
+  { key: 'fulfillment.shipping.maxHandlingDays', value: 7, type: 'number', category: 'fulfillment', description: 'Maximum allowed handling time' },
+  { key: 'fulfillment.shipping.trackingRequiredAboveCents', value: 5000, type: 'cents', category: 'fulfillment', description: 'Require tracking for orders above this amount' },
+  { key: 'fulfillment.shipping.signatureRequiredAboveCents', value: 75000, type: 'cents', category: 'fulfillment', description: 'Require signature for orders above this amount' },
+  { key: 'fulfillment.shipping.defaultCarrier', value: 'USPS', type: 'string', category: 'fulfillment', description: 'Default shipping carrier' },
+  { key: 'fulfillment.shipping.labelGenerationEnabled', value: true, type: 'boolean', category: 'fulfillment', description: 'Enable shipping label generation via Shippo' },
+  { key: 'fulfillment.insurance.autoInsureAboveCents', value: 10000, type: 'cents', category: 'fulfillment', description: 'Auto-insure shipments above this amount ($100)' },
+  { key: 'fulfillment.returns.windowDays', value: 30, type: 'number', category: 'fulfillment', description: 'Default return window in days' },
+  { key: 'fulfillment.returns.restockingFeeBps', value: 0, type: 'bps', category: 'fulfillment', description: 'Restocking fee in basis points' },
   { key: 'commerce.returns.restockingFeePercent', value: 0.10, type: 'number', category: 'fulfillment', description: 'Restocking fee as a decimal fraction (e.g. 0.10 = 10%) for buyer-remorse returns' },
   { key: 'commerce.returns.restockingFeeMaxCents', value: 5000, type: 'cents', category: 'fulfillment', description: 'Maximum restocking fee in cents ($50)' },
   { key: 'commerce.returns.restockingFeeMinCents', value: 100, type: 'cents', category: 'fulfillment', description: 'Minimum restocking fee in cents ($1)' },
@@ -94,15 +94,15 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'trust.event.refundSellerFault', value: -4.0, type: 'number', category: 'trust', description: 'Trust score delta when seller at fault for refund' },
   { key: 'trust.event.disputeOpened', value: -2.0, type: 'number', category: 'trust', description: 'Trust score delta when dispute opened against seller' },
   { key: 'trust.event.disputeSellerFault', value: -6.0, type: 'number', category: 'trust', description: 'Trust score delta when seller loses dispute' },
-  { key: 'review.eligibleDaysAfterDelivery', value: 3, type: 'number', category: 'trust', description: 'Days after delivery before review eligible' },
-  { key: 'review.windowDays', value: 60, type: 'number', category: 'trust', description: 'Days to leave review after eligible' },
-  { key: 'review.allowSellerResponse', value: true, type: 'boolean', category: 'trust', description: 'Allow sellers to respond to reviews' },
-  { key: 'review.moderationEnabled', value: true, type: 'boolean', category: 'trust', description: 'Enable review moderation' },
-  { key: 'review.editWindowHours', value: 48, type: 'number', category: 'trust', description: 'Hours to edit review after posting' },
-  { key: 'review.sellerResponseWindowDays', value: 30, type: 'number', category: 'trust', description: 'Days after review for seller to respond' },
-  { key: 'standards.evaluationPeriodDays', value: 90, type: 'number', category: 'trust', description: 'Rolling window for seller standards evaluation' },
-  { key: 'standards.maxDefectRatePercent', value: 2, type: 'number', category: 'trust', description: 'Max transaction defect rate for GOOD standing' },
-  { key: 'standards.topRatedMinOrdersYear', value: 100, type: 'number', category: 'trust', description: 'Minimum annual orders for TOP_RATED' },
+  { key: 'trust.review.eligibleDaysAfterDelivery', value: 3, type: 'number', category: 'trust', description: 'Days after delivery before review eligible' },
+  { key: 'trust.review.windowDays', value: 60, type: 'number', category: 'trust', description: 'Days to leave review after eligible' },
+  { key: 'trust.review.allowSellerResponse', value: true, type: 'boolean', category: 'trust', description: 'Allow sellers to respond to reviews' },
+  { key: 'trust.review.moderationEnabled', value: true, type: 'boolean', category: 'trust', description: 'Enable review moderation' },
+  { key: 'trust.review.editWindowHours', value: 48, type: 'number', category: 'trust', description: 'Hours to edit review after posting' },
+  { key: 'trust.review.sellerResponseWindowDays', value: 30, type: 'number', category: 'trust', description: 'Days after review for seller to respond' },
+  { key: 'trust.standards.evaluationPeriodDays', value: 90, type: 'number', category: 'trust', description: 'Rolling window for seller standards evaluation' },
+  { key: 'trust.standards.maxDefectRatePercent', value: 2, type: 'number', category: 'trust', description: 'Max transaction defect rate for GOOD standing' },
+  { key: 'trust.standards.topRatedMinOrdersYear', value: 100, type: 'number', category: 'trust', description: 'Minimum annual orders for TOP_RATED' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BUYER QUALITY — Buyer quality tier thresholds
@@ -136,44 +136,37 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // DISCOVERY — Search, promotions, price alerts, market index
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'search.titleWeight', value: 10, type: 'number', category: 'discovery', description: 'Weight for title matches in search ranking' },
-  { key: 'search.descriptionWeight', value: 3, type: 'number', category: 'discovery', description: 'Weight for description matches in search' },
-  { key: 'search.trustMultiplierEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Boost trusted sellers in search results' },
-  { key: 'search.freshnessBoostEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Boost recently listed items in search' },
-  { key: 'search.defaultPageSize', value: 48, type: 'number', category: 'discovery', description: 'Default search results per page' },
-  { key: 'promo.boostEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Enable promoted listings in search' },
-  { key: 'promo.maxBoostMultiplier', value: 3, type: 'number', category: 'discovery', description: 'Maximum ranking boost for promoted listings' },
-  { key: 'priceAlert.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Enable price drop alerts' },
-  { key: 'priceAlert.maxPerUser', value: 50, type: 'number', category: 'discovery', description: 'Maximum price alerts per user' },
-  { key: 'marketIndex.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Compute market price indexes' },
-  { key: 'marketIndex.dealBadgesEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Show Great Deal badges on listings' },
+  { key: 'discovery.search.titleWeight', value: 10, type: 'number', category: 'discovery', description: 'Weight for title matches in search ranking' },
+  { key: 'discovery.search.descriptionWeight', value: 3, type: 'number', category: 'discovery', description: 'Weight for description matches in search' },
+  { key: 'discovery.search.trustMultiplierEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Boost trusted sellers in search results' },
+  { key: 'discovery.search.freshnessBoostEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Boost recently listed items in search' },
+  { key: 'discovery.search.defaultPageSize', value: 48, type: 'number', category: 'discovery', description: 'Default search results per page' },
+  { key: 'discovery.promo.boostEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Enable promoted listings in search' },
+  { key: 'discovery.promo.maxBoostMultiplier', value: 3, type: 'number', category: 'discovery', description: 'Maximum ranking boost for promoted listings' },
+  { key: 'discovery.priceAlert.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Enable price drop alerts' },
+  { key: 'discovery.priceAlert.maxPerUser', value: 50, type: 'number', category: 'discovery', description: 'Maximum price alerts per user' },
+  { key: 'discovery.marketIndex.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Compute market price indexes' },
+  { key: 'discovery.marketIndex.dealBadgesEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Show Great Deal badges on listings' },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // COMMUNICATIONS — Email, push, SMS, messaging
+  // COMMUNICATIONS — Messaging channel settings (email/push/sms/digest in seed-comms-settings.ts)
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'email.enabled', value: true, type: 'boolean', category: 'comms', description: 'Enable email notifications globally' },
-  { key: 'email.maxPerDayPerUser', value: 20, type: 'number', category: 'comms', description: 'Email rate limit per user per day' },
-  { key: 'email.marketingEnabled', value: true, type: 'boolean', category: 'comms', description: 'Enable marketing email campaigns' },
-  { key: 'push.enabled', value: true, type: 'boolean', category: 'comms', description: 'Enable push notifications globally' },
-  { key: 'sms.enabled', value: false, type: 'boolean', category: 'comms', description: 'Enable SMS notifications globally' },
-  { key: 'digest.enabled', value: true, type: 'boolean', category: 'comms', description: 'Enable email digest feature' },
-  { key: 'digest.frequency', value: 'weekly', type: 'string', category: 'comms', description: 'Default digest frequency (daily/weekly/monthly)' },
-  { key: 'messaging.enabled', value: true, type: 'boolean', category: 'comms', description: 'Enable buyer-seller direct messaging' },
-  { key: 'messaging.rateLimitPerHour', value: 30, type: 'number', category: 'comms', description: 'Max messages per user per hour' },
-  { key: 'messaging.moderationEnabled', value: true, type: 'boolean', category: 'comms', description: 'Enable message content moderation' },
+  { key: 'comms.messaging.enabled', value: true, type: 'boolean', category: 'comms', description: 'Enable buyer-seller direct messaging' },
+  { key: 'comms.messaging.rateLimitPerHour', value: 30, type: 'number', category: 'comms', description: 'Max messages per user per hour' },
+  { key: 'comms.messaging.moderationEnabled', value: true, type: 'boolean', category: 'comms', description: 'Enable message content moderation' },
   { key: 'comms.messaging.attachmentMaxBytes', value: 10_485_760, type: 'number', category: 'comms', description: 'Message attachment max file size (bytes)' },
   { key: 'comms.messaging.bannedKeywords', value: [], type: 'array', category: 'comms', description: 'Banned keyword list for message moderation (managed via /cfg/messaging/keywords)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PRIVACY — Data retention, GDPR
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'retention.messageDays', value: 730, type: 'number', category: 'privacy', description: 'Keep messages for this many days (2 years)' },
-  { key: 'retention.searchLogDays', value: 90, type: 'number', category: 'privacy', description: 'Keep search logs for this many days' },
-  { key: 'retention.auditLogDays', value: 2555, type: 'number', category: 'privacy', description: 'Keep audit logs for compliance (7 years)' },
-  { key: 'gdpr.dataExportEnabled', value: true, type: 'boolean', category: 'privacy', description: 'Allow users to export their data' },
-  { key: 'gdpr.deletionGracePeriodDays', value: 30, type: 'number', category: 'privacy', description: 'Days before permanent deletion after request' },
-  { key: 'gdpr.anonymizeOnDeletion', value: true, type: 'boolean', category: 'privacy', description: 'Anonymize vs hard delete user data' },
-  { key: 'gdpr.cookieConsentRequired', value: true, type: 'boolean', category: 'privacy', description: 'Require cookie consent banner' },
+  { key: 'privacy.retention.messageDays', value: 730, type: 'number', category: 'privacy', description: 'Keep messages for this many days (2 years)' },
+  { key: 'privacy.retention.searchLogDays', value: 90, type: 'number', category: 'privacy', description: 'Keep search logs for this many days' },
+  { key: 'privacy.retention.auditLogDays', value: 2555, type: 'number', category: 'privacy', description: 'Keep audit logs for compliance (7 years)' },
+  { key: 'privacy.gdpr.dataExportEnabled', value: true, type: 'boolean', category: 'privacy', description: 'Allow users to export their data' },
+  { key: 'privacy.gdpr.deletionGracePeriodDays', value: 30, type: 'number', category: 'privacy', description: 'Days before permanent deletion after request' },
+  { key: 'privacy.gdpr.anonymizeOnDeletion', value: true, type: 'boolean', category: 'privacy', description: 'Anonymize vs hard delete user data' },
+  { key: 'privacy.gdpr.cookieConsentRequired', value: true, type: 'boolean', category: 'privacy', description: 'Require cookie consent banner' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SOCIAL FEED — G3.8
@@ -218,9 +211,9 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // PRIVACY — Additional keys from Platform Settings Canonical §14 (G6)
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'retention.webhookLogDays', value: 90, type: 'number', category: 'privacy', description: 'Webhook log retention (days)' },
-  { key: 'retention.analyticsEventDays', value: 365, type: 'number', category: 'privacy', description: 'Analytics event retention (1 year)' },
-  { key: 'retention.notificationLogDays', value: 180, type: 'number', category: 'privacy', description: 'Notification log retention (days)' },
+  { key: 'privacy.retention.webhookLogDays', value: 90, type: 'number', category: 'privacy', description: 'Webhook log retention (days)' },
+  { key: 'privacy.retention.analyticsEventDays', value: 365, type: 'number', category: 'privacy', description: 'Analytics event retention (1 year)' },
+  { key: 'privacy.retention.notificationLogDays', value: 180, type: 'number', category: 'privacy', description: 'Notification log retention (days)' },
   { key: 'gdpr.exportFormats', value: ['json', 'csv'], type: 'array', category: 'privacy', description: 'Available data export formats' },
   { key: 'privacy.dataExportMaxHours', value: 48, type: 'number', category: 'privacy', description: 'Maximum hours to generate a data export (SLA)' },
 

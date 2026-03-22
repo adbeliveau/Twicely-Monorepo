@@ -32,4 +32,4 @@ export const FbCommerceListingSchema = z.object({
   retailer_id: z.string().optional(),
 });
 
-export type { FbCommerceListing } from './fb-marketplace-types';
+export type { FbCommerceListing } from '@twicely/crosslister/connectors/fb-marketplace-types';

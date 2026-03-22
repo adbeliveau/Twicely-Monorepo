@@ -7,7 +7,7 @@
  * The HTTP routes at /api/cron/* remain as manual triggers / fallbacks.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
@@ -45,42 +45,42 @@ export async function registerCronJobs(): Promise<void> {
   await cronQueue.add(
     'cron:orders',
     { task: 'orders', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-orders', repeat: { pattern: ordersPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-orders', repeat: { pattern: ordersPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Returns: auto-approve overdue
   await cronQueue.add(
     'cron:returns',
     { task: 'returns', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-returns', repeat: { pattern: returnsPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-returns', repeat: { pattern: returnsPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Shipping: scan for exceptions
   await cronQueue.add(
     'cron:shipping',
     { task: 'shipping', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-shipping', repeat: { pattern: shippingPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-shipping', repeat: { pattern: shippingPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Health: doctor checks
   await cronQueue.add(
     'cron:health',
     { task: 'health', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-health', repeat: { pattern: healthPattern }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'cron-health', repeat: { pattern: healthPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 
   // Vacation: auto-end expired vacation modes
   await cronQueue.add(
     'cron:vacation',
     { task: 'vacation', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-vacation', repeat: { pattern: vacationPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-vacation', repeat: { pattern: vacationPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Seller score recalculation
   await cronQueue.add(
     'cron:seller-score-recalc',
     { task: 'seller-score-recalc', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-seller-score-recalc', repeat: { pattern: sellerScorePattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-seller-score-recalc', repeat: { pattern: sellerScorePattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   logger.info('[cronJobs] Registered 6 platform cron jobs');
@@ -105,6 +105,21 @@ export async function registerCronJobs(): Promise<void> {
   const { enqueueHelpdeskRetentionPurge } = await import('./helpdesk-retention-purge');
   await enqueueHelpdeskRetentionPurge();
   logger.info('[cronJobs] Registered helpdesk retention purge cron job');
+
+  // Helpdesk auto-close — every 15 min (Helpdesk Canonical §17)
+  const { enqueueHelpdeskAutoClose } = await import('./helpdesk-auto-close');
+  await enqueueHelpdeskAutoClose();
+  logger.info('[cronJobs] Registered helpdesk auto-close cron job');
+
+  // Helpdesk SLA check — every 5 min (Helpdesk Canonical §12.4)
+  const { enqueueHelpdeskSlaCheck } = await import('./helpdesk-sla-check');
+  await enqueueHelpdeskSlaCheck();
+  logger.info('[cronJobs] Registered helpdesk SLA check cron job');
+
+  // Helpdesk CSAT send — every 5 min (Helpdesk Canonical §18)
+  const { enqueueHelpdeskCsatSend } = await import('./helpdesk-csat-send');
+  await enqueueHelpdeskCsatSend();
+  logger.info('[cronJobs] Registered helpdesk CSAT send cron job');
 }
 
 async function processCronJob(task: CronTask): Promise<void> {

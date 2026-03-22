@@ -63,7 +63,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           <h2 className="mb-3 text-sm font-semibold text-primary">GMV Trend ({periodLabel})</h2>
           <DashboardBarChart
             data={charts.gmv}
-            formatValue={formatCents}
+            formatKind="cents"
             barColor="bg-green-500"
             emptyMessage="No GMV data yet"
           />
@@ -72,7 +72,6 @@ export default async function DashboardPage({ searchParams }: Props) {
           <h2 className="mb-3 text-sm font-semibold text-primary">Orders Trend ({periodLabel})</h2>
           <DashboardBarChart
             data={charts.orders}
-            formatValue={(v) => String(v)}
             barColor="bg-blue-500"
             emptyMessage="No order data yet"
           />
@@ -81,7 +80,6 @@ export default async function DashboardPage({ searchParams }: Props) {
           <h2 className="mb-3 text-sm font-semibold text-primary">New Users ({periodLabel})</h2>
           <DashboardBarChart
             data={charts.users}
-            formatValue={(v) => String(v)}
             barColor="bg-purple-500"
             emptyMessage="No signup data yet"
           />

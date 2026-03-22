@@ -15,9 +15,9 @@ import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getConnector } from '../connector-registry';
 import { executeDelistJob, executeCreateJob, executeUpdateJob } from '../services/job-executor';
-import { LISTER_AUTOMATION_QUEUE } from './constants';
+import { LISTER_AUTOMATION_QUEUE } from '@twicely/crosslister/queue/constants';
 import { AUTOMATION_WORKER_CONCURRENCY } from '../automation/constants';
-import type { AutomationJobData } from './automation-queue';
+import type { AutomationJobData } from '@twicely/crosslister/queue/automation-queue';
 import type { ExternalChannel } from '../types';
 import {
   recordAutomationSuccess,

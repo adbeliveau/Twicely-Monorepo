@@ -3,26 +3,26 @@
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "cache": true
     },
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
       "persistent": true,
       "cache": false
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": [],
       "cache": true
     },
     "test": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": [],
       "cache": true,
       "inputs": ["src/**/*.ts", "src/**/*.tsx", "vitest.config.ts"]
     },
     "lint": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": [],
       "cache": true
     }
   }

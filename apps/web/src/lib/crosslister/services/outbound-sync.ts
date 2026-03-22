@@ -253,7 +253,7 @@ export async function executeOutboundSync(job: SyncJobPayload): Promise<void> {
     return;
   }
 
-  const handlingTimeDays = await getPlatformSetting<number>('shipping.defaultHandlingDays', 3);
+  const handlingTimeDays = await getPlatformSetting<number>('fulfillment.shipping.defaultHandlingDays', 3);
 
   // Load projection and account
   const [proj] = await db

@@ -8,7 +8,7 @@
  * Per TWICELY_V3_HELPDESK_CANONICAL.md §24.1 and §26.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { helpdeskCase, caseMessage, caseEvent, caseWatcher, caseCsat } from '@twicely/db/schema';
 import { eq, and, lt, inArray } from 'drizzle-orm';
@@ -74,6 +74,6 @@ export async function enqueueHelpdeskRetentionPurge(): Promise<void> {
   await queue.add(
     'retention-purge',
     { triggeredAt: new Date().toISOString() },
-    { jobId: 'helpdesk-retention-purge', repeat: { pattern: '0 4 * * *' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'helpdesk-retention-purge', repeat: { pattern: '0 4 * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 }

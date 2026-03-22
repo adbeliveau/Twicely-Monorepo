@@ -7,7 +7,7 @@
 import { db } from '@twicely/db';
 import { channelProjection, sellerProfile } from '@twicely/db/schema';
 import { and, eq, lte, isNotNull } from 'drizzle-orm';
-import { canPoll, recordPoll } from './poll-budget';
+import { canPoll, recordPoll } from '@twicely/crosslister/polling/poll-budget';
 import { canDispatch } from '../queue/circuit-breaker';
 import { logger } from '@twicely/logger';
 import type { ExternalChannel } from '../types';

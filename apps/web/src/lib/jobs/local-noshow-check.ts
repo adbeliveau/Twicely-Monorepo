@@ -8,7 +8,7 @@
  * Per TWICELY_V3_LOCAL_CANONICAL.md §7.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { localTransaction, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

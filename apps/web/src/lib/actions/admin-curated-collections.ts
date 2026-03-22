@@ -248,28 +248,30 @@ export async function reorderCollectionItemsAction(input: unknown) {
 
   const { collectionId, items } = parsed.data;
 
-  await Promise.all(
-    items.map((item) =>
-      db
-        .update(curatedCollectionItem)
-        .set({ sortOrder: item.sortOrder })
-        .where(
-          and(
-            eq(curatedCollectionItem.collectionId, collectionId),
-            eq(curatedCollectionItem.listingId, item.listingId),
+  await db.transaction(async (tx) => {
+    await Promise.all(
+      items.map((item) =>
+        tx
+          .update(curatedCollectionItem)
+          .set({ sortOrder: item.sortOrder })
+          .where(
+            and(
+              eq(curatedCollectionItem.collectionId, collectionId),
+              eq(curatedCollectionItem.listingId, item.listingId),
+            ),
           ),
-        ),
-    ),
-  );
+      ),
+    );
 
-  await db.insert(auditEvent).values({
-    actorType: 'STAFF',
-    actorId: session.staffUserId,
-    action: 'REORDER_COLLECTION_ITEMS',
-    subject: 'CuratedCollection',
-    subjectId: collectionId,
-    severity: 'LOW',
-    detailsJson: {},
+    await tx.insert(auditEvent).values({
+      actorType: 'STAFF',
+      actorId: session.staffUserId,
+      action: 'REORDER_COLLECTION_ITEMS',
+      subject: 'CuratedCollection',
+      subjectId: collectionId,
+      severity: 'LOW',
+      detailsJson: {},
+    });
   });
 
   revalidatePath('/mod/collections/' + collectionId);

@@ -87,6 +87,7 @@ export const V32_PLATFORM_SETTINGS: PlatformSettingSeed[] = [
   { key: 'payout.instantMaxCents', value: 25000, type: 'cents', category: 'payout', description: 'Maximum instant payout ($250)' },
   { key: 'payout.instantEnabled', value: true, type: 'boolean', category: 'payout', description: 'Enable instant payouts' },
   { key: 'payout.onPlatformFeePaymentEnabled', value: true, type: 'boolean', category: 'payout', description: 'Allow paying platform fees from payout balance' },
+  { key: 'commerce.payout.delayDays', value: 2, type: 'number', category: 'payout', description: 'Stripe payout delay days (minimum hold before funds are released to seller bank)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STORE PRICING (Section 4.3)
@@ -383,12 +384,15 @@ import { V32_EXTENDED_SETTINGS } from './v32-platform-settings-extended';
 import { AI_AUTOFILL_SETTINGS } from './seed-ai-autofill';
 // Affiliate & trial settings (G1.2)
 import { AFFILIATE_TRIAL_SETTINGS } from './seed-affiliate-settings';
+// Communications settings — comms.email.*, comms.push.*, comms.sms.*, comms.digest.*
+import { COMMS_SETTINGS } from './seed-comms-settings';
 
 export const V32_ALL_SETTINGS: PlatformSettingSeed[] = [
   ...V32_PLATFORM_SETTINGS,
   ...V32_EXTENDED_SETTINGS,
   ...AI_AUTOFILL_SETTINGS,
   ...AFFILIATE_TRIAL_SETTINGS,
+  ...COMMS_SETTINGS,
 ];
 
 // Total settings count for verification

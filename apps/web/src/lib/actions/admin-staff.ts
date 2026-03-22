@@ -7,9 +7,10 @@
  */
 
 import { db } from '@twicely/db';
-import { staffUser, staffUserRole, auditEvent } from '@twicely/db/schema';
+import { staffUser, staffUserRole, staffSession, auditEvent } from '@twicely/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorize, STAFF_TOKEN_COOKIE } from '@twicely/casl/staff-authorize';
+import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { hash } from 'bcryptjs';
 import { createId } from '@paralleldrive/cuid2';
@@ -20,6 +21,36 @@ import {
   grantSystemRoleSchema,
   revokeSystemRoleSchema,
 } from './admin-staff-schemas';
+
+/**
+ * Enforce MFA re-verification for CRITICAL operations (Actors Canonical §1.3 + §6.1).
+ * Only enforced when the acting staff user has mfaEnabled === true.
+ * Returns null if OK, or an error response if MFA is required but not verified.
+ */
+async function requireMfaForCriticalAction(actingStaffUserId: string): Promise<{ error: string; requiresMfa: true } | null> {
+  const [actor] = await db
+    .select({ mfaEnabled: staffUser.mfaEnabled })
+    .from(staffUser)
+    .where(eq(staffUser.id, actingStaffUserId))
+    .limit(1);
+
+  if (!actor?.mfaEnabled) return null; // MFA not set up — passes (enforced when enabled)
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(STAFF_TOKEN_COOKIE)?.value;
+  if (!token) return { error: 'MFA re-verification required', requiresMfa: true };
+
+  const [sess] = await db
+    .select({ mfaVerified: staffSession.mfaVerified })
+    .from(staffSession)
+    .where(eq(staffSession.token, token))
+    .limit(1);
+
+  if (!sess?.mfaVerified) {
+    return { error: 'MFA re-verification required', requiresMfa: true };
+  }
+  return null;
+}
 
 // ─── createStaffUserAction ────────────────────────────────────────────────────
 
@@ -142,7 +173,9 @@ export async function grantSystemRoleAction(input: unknown) {
 
   const { staffUserId, role } = parsed.data;
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  // MFA re-verification for CRITICAL operations (Actors Canonical §1.3 + §6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   if (!session.platformRoles.includes('SUPER_ADMIN')) {
     if ((ELEVATED_ROLES as readonly string[]).includes(role)) {
@@ -192,7 +225,9 @@ export async function revokeSystemRoleAction(input: unknown) {
 
   const { staffUserId, role } = parsed.data;
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  // MFA re-verification for CRITICAL operations (Actors Canonical §1.3 + §6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   if (!session.platformRoles.includes('SUPER_ADMIN')) {
     if ((ELEVATED_ROLES as readonly string[]).includes(role)) {

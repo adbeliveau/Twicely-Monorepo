@@ -8,7 +8,7 @@
  * BullMQ queue names: 'local-safety-nudge', 'local-safety-escalation' (hyphens)
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { localTransaction, helpdeskCase } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';

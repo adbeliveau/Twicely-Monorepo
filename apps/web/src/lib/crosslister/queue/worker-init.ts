@@ -7,9 +7,9 @@
  * Source: F3.1 install prompt §3.11
  */
 
-import { listerWorker } from './lister-worker';
-import { automationWorker } from './automation-worker';
-import { startSchedulerLoop, stopSchedulerLoop } from './scheduler-loop';
+import { listerWorker } from '@twicely/crosslister/queue/lister-worker';
+import { automationWorker } from '@twicely/crosslister/queue/automation-worker';
+import { startSchedulerLoop, stopSchedulerLoop } from '@twicely/crosslister/queue/scheduler-loop';
 import { runPollSchedulerTick } from '../polling/poll-scheduler';
 import { runAutomationTick } from '../automation/automation-scheduler';
 import { logger } from '@twicely/logger';

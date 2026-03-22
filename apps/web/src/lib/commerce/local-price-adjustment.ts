@@ -19,7 +19,7 @@ import { localTransaction, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { generateTokenPair } from './local-token';
+import { generateTokenPair } from '@twicely/commerce/local-token';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

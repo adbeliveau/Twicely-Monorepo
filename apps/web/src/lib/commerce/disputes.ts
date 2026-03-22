@@ -32,7 +32,7 @@ export {
   type DisputeResolution,
   type ResolveDisputeInput,
   type ResolveDisputeResult,
-} from './dispute-queries';
+} from '@twicely/commerce/dispute-queries';
 
 // Dispute claim types
 type ClaimType = 'INR' | 'INAD' | 'DAMAGED' | 'COUNTERFEIT' | 'REMORSE';

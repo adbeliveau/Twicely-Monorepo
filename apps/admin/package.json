@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.16",
@@ -36,7 +37,13 @@
     "simplebar-react": "^3.3.0",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss": "^4.0.0"
+    "tailwindcss": "^4.0.0",
+    "@twicely/db": "workspace:*",
+    "@twicely/auth": "workspace:*",
+    "@twicely/casl": "workspace:*",
+    "@twicely/logger": "workspace:*",
+    "@twicely/utils": "workspace:*",
+    "@twicely/ui": "workspace:*"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

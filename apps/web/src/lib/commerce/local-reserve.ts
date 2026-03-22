@@ -12,7 +12,7 @@
 import { db } from '@twicely/db';
 import { orderItem, listing } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { declineAllPendingOffersForListing } from './offer-transitions';
+import { declineAllPendingOffersForListing } from '@twicely/commerce/offer-transitions';
 import { logger } from '@twicely/logger';
 
 // ─── Reserve ──────────────────────────────────────────────────────────────────

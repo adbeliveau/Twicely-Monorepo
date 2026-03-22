@@ -6,7 +6,7 @@
  * NOT a 'use server' file. Plain TypeScript module.
  */
 
-import { executeDelistJob, executeCreateJob, type JobExecutionResult } from './job-executor';
+import { executeDelistJob, executeCreateJob, type JobExecutionResult } from '@twicely/crosslister/services/job-executor';
 import type { ExternalChannel } from '../types';
 
 /**

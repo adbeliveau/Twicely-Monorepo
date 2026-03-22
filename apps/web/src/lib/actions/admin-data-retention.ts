@@ -43,17 +43,17 @@ export async function getRetentionDashboard(): Promise<{
     throw new ForbiddenError('Access denied');
   }
 
-  const settingsMap = await getPlatformSettingsByPrefix('retention.');
-  const gdprMap = await getPlatformSettingsByPrefix('gdpr.');
+  const settingsMap = await getPlatformSettingsByPrefix('privacy.retention.');
+  const gdprMap = await getPlatformSettingsByPrefix('privacy.gdpr.');
 
   const policies: RetentionPolicyEntry[] = [
-    { key: 'retention.messageDays', label: 'Message retention (days)', value: settingsMap.get('retention.messageDays') ?? 730 },
-    { key: 'retention.searchLogDays', label: 'Search log retention (days)', value: settingsMap.get('retention.searchLogDays') ?? 90 },
-    { key: 'retention.auditLogDays', label: 'Audit log retention (days)', value: settingsMap.get('retention.auditLogDays') ?? 2555 },
-    { key: 'retention.webhookLogDays', label: 'Webhook log retention (days)', value: settingsMap.get('retention.webhookLogDays') ?? 90 },
-    { key: 'retention.analyticsEventDays', label: 'Analytics event retention (days)', value: settingsMap.get('retention.analyticsEventDays') ?? 365 },
-    { key: 'retention.notificationLogDays', label: 'Notification log retention (days)', value: settingsMap.get('retention.notificationLogDays') ?? 180 },
-    { key: 'gdpr.deletionGracePeriodDays', label: 'Deletion cooling-off (days)', value: gdprMap.get('gdpr.deletionGracePeriodDays') ?? 30 },
+    { key: 'privacy.retention.messageDays', label: 'Message retention (days)', value: settingsMap.get('privacy.retention.messageDays') ?? 730 },
+    { key: 'privacy.retention.searchLogDays', label: 'Search log retention (days)', value: settingsMap.get('privacy.retention.searchLogDays') ?? 90 },
+    { key: 'privacy.retention.auditLogDays', label: 'Audit log retention (days)', value: settingsMap.get('privacy.retention.auditLogDays') ?? 2555 },
+    { key: 'privacy.retention.webhookLogDays', label: 'Webhook log retention (days)', value: settingsMap.get('privacy.retention.webhookLogDays') ?? 90 },
+    { key: 'privacy.retention.analyticsEventDays', label: 'Analytics event retention (days)', value: settingsMap.get('privacy.retention.analyticsEventDays') ?? 365 },
+    { key: 'privacy.retention.notificationLogDays', label: 'Notification log retention (days)', value: settingsMap.get('privacy.retention.notificationLogDays') ?? 180 },
+    { key: 'privacy.gdpr.deletionGracePeriodDays', label: 'Deletion cooling-off (days)', value: gdprMap.get('privacy.gdpr.deletionGracePeriodDays') ?? 30 },
   ];
 
   return { policies };
@@ -71,7 +71,7 @@ export async function getDeletionQueue(): Promise<DeletionQueueEntry[]> {
   }
 
   const gracePeriodDays = await getPlatformSetting<number>(
-    'gdpr.deletionGracePeriodDays',
+    'privacy.gdpr.deletionGracePeriodDays',
     30
   );
 

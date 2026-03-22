@@ -8,7 +8,7 @@
  * Manually triggerable via admin action for testing.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { logger } from '@twicely/logger';
 import { notify } from '@twicely/notifications/service';
 import { db } from '@twicely/db';
@@ -40,7 +40,7 @@ export async function registerTaxDocumentGenerationJob(): Promise<void> {
     },
     {
       jobId: 'tax-1099-annual',
-      repeat: { pattern: '0 0 15 1 *' }, // January 15, midnight UTC
+      repeat: { pattern: '0 0 15 1 *', tz: 'UTC' }, // January 15, midnight UTC
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     }

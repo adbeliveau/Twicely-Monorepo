@@ -2,9 +2,9 @@ import { db } from '@twicely/db';
 import { listingOffer, listing } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { stripe } from '@twicely/stripe/server';
-import { getOfferById } from './offer-queries';
-import { notifyOfferEvent } from './offer-notifications';
-import { createOrderFromOffer } from './offer-to-order';
+import { getOfferById } from '@twicely/commerce/offer-queries';
+import { notifyOfferEvent } from '@twicely/commerce/offer-notifications';
+import { createOrderFromOffer } from '@twicely/commerce/offer-to-order';
 import { scheduleOfferExpiry, cancelOfferExpiry } from '@twicely/jobs/offer-expiry';
 
 // Import base transitions (without job scheduling)
@@ -14,14 +14,14 @@ import {
   cancelOffer as cancelOfferBase,
   expireOffer as expireOfferBase,
   type OfferResult,
-} from './offer-transitions';
+} from '@twicely/commerce/offer-transitions';
 
 // Re-export types and extracted functions
 export type { OfferResult };
-export { createOrderFromOffer } from './offer-to-order';
+export { createOrderFromOffer } from '@twicely/commerce/offer-to-order';
 export { scheduleOfferExpiry, cancelOfferExpiry } from '@twicely/jobs/offer-expiry';
-export { createOffer } from './offer-create';
-export type { CreateOfferParams } from './offer-create';
+export { createOffer } from '@twicely/commerce/offer-create';
+export type { CreateOfferParams } from '@twicely/commerce/offer-create';
 
 /**
  * Accept an offer -- capture hold, create order, decline other offers.
@@ -46,9 +46,14 @@ export async function acceptOffer(offerId: string, actorId: string, paymentMetho
 
   let stripePaymentIntentId: string;
 
-  // Lock listing and verify availability, capture payment
+  // Lock listing + offer row and verify availability, capture payment
   try {
     stripePaymentIntentId = await db.transaction(async (tx) => {
+      // Lock the offer row to prevent double-accept race condition
+      const [lockedOffer] = await tx.select({ status: listingOffer.status })
+        .from(listingOffer).where(eq(listingOffer.id, offerId)).for('update');
+      if (!lockedOffer || lockedOffer.status !== 'PENDING') throw new Error('Offer is no longer pending');
+
       const [lst] = await tx.select({
         id: listing.id, status: listing.status, availableQuantity: listing.availableQuantity, quantity: listing.quantity,
       }).from(listing).where(eq(listing.id, offerData.listingId)).for('update');

@@ -103,7 +103,7 @@ export async function getBuyerReviews(
     .offset(offset);
 
   const now = new Date();
-  const editWindowHours = await getPlatformSetting<number>('review.editWindowHours', 48);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
 
   const reviews = rows.map((row) => {
     // Calculate edit eligibility

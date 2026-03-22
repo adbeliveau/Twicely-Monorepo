@@ -8,7 +8,7 @@
  * Queue name: 'local-schedule-nudge' (hyphens per BullMQ project convention)
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { localTransaction } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

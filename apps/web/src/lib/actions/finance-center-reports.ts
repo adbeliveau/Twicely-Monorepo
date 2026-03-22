@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { authorize, sub } from '@twicely/casl';
+import { logger } from '@twicely/logger';
 import { db } from '@twicely/db';
 import { financialReport } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -159,7 +160,8 @@ export async function generateReportAction(
 
     revalidatePath('/my/selling/finances/statements');
     return { success: true, report: inserted };
-  } catch {
+  } catch (error) {
+    logger.error('[generateReportAction] Failed to generate report', { error: String(error) });
     return { success: false, error: 'Failed to generate report' };
   }
 }
@@ -188,7 +190,8 @@ export async function listReportsAction(
   try {
     const data = await getReportList(userId, parsed.data);
     return { success: true, data };
-  } catch {
+  } catch (error) {
+    logger.error('[listReportsAction] Failed to load reports', { error: String(error) });
     return { success: false, error: 'Failed to load reports' };
   }
 }
@@ -218,7 +221,8 @@ export async function getReportAction(
     const report = await getReportById(userId, parsed.data.id);
     if (!report) return { success: false, error: 'Not found' };
     return { success: true, report };
-  } catch {
+  } catch (error) {
+    logger.error('[getReportAction] Failed to load report', { error: String(error) });
     return { success: false, error: 'Failed to load report' };
   }
 }
@@ -268,7 +272,8 @@ export async function deleteReportAction(
 
     revalidatePath('/my/selling/finances/statements');
     return { success: true };
-  } catch {
+  } catch (error) {
+    logger.error('[deleteReportAction] Failed to delete report', { error: String(error) });
     return { success: false, error: 'Failed to delete report' };
   }
 }

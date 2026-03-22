@@ -52,9 +52,9 @@ export const CATEGORY_LABELS: Record<PermissionCategory, string> = {
 };
 
 // Merge base + extended + domain module data so consumers import from a single location
-import { PERMISSION_MODULES as _BASE } from './permission-registry-data';
-import { PERMISSION_MODULES_EXTENDED as _EXT } from './permission-registry-data-extended';
-import { PERMISSION_MODULES_DOMAINS as _DOM } from './permission-registry-data-domains';
+import { PERMISSION_MODULES as _BASE } from '@twicely/casl/permission-registry-data';
+import { PERMISSION_MODULES_EXTENDED as _EXT } from '@twicely/casl/permission-registry-data-extended';
+import { PERMISSION_MODULES_DOMAINS as _DOM } from '@twicely/casl/permission-registry-data-domains';
 
 const _MODULES: PermissionModule[] = [..._BASE, ..._EXT, ..._DOM];
 export const PERMISSION_MODULES = _MODULES;

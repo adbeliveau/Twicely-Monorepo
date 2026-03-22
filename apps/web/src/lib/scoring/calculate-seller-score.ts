@@ -11,7 +11,7 @@ import type {
   PerformanceBand,
   BandThresholds,
   TrendState,
-} from './score-types';
+} from '@twicely/scoring/score-types';
 
 // ─── Sigmoid helpers ───────────────────────────────────────────────────────
 

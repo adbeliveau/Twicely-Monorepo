@@ -7,6 +7,7 @@ const footerSections = [
     links: [
       { label: 'Browse', href: '/s' },
       { label: 'Categories', href: '/c' },
+      { label: 'Explore', href: '/explore' },
       { label: 'How It Works', href: '/p/how-it-works' },
     ],
   },
@@ -14,6 +15,8 @@ const footerSections = [
     title: 'Sell',
     links: [
       { label: 'Start Selling', href: '/sell' },
+      { label: 'Become a Seller', href: '/become-seller' },
+      { label: 'Pricing', href: '/pricing' },
       { label: 'Fees', href: '/p/fees' },
       { label: 'Seller Dashboard', href: '/my/selling' },
     ],

@@ -1,11 +1,11 @@
 import { AbilityBuilder, createMongoAbility } from '@casl/ability';
-import type { AppAbility, CaslSession } from './types';
+import type { AppAbility, CaslSession } from '@twicely/casl/types';
 import {
   definePlatformAgentAbilities,
   definePlatformAdminAbilities,
-} from './platform-abilities';
-import { defineStaffAbilities } from './staff-abilities';
-import { defineBuyerAbilities, defineGuestAbilities } from './buyer-abilities';
+} from '@twicely/casl/platform-abilities';
+import { defineStaffAbilities } from '@twicely/casl/staff-abilities';
+import { defineBuyerAbilities, defineGuestAbilities } from '@twicely/casl/buyer-abilities';
 
 /**
  * Define abilities for a seller

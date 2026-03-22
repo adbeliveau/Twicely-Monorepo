@@ -12,13 +12,13 @@ import {
   REASON_FAULT_MAP,
   REASON_BUCKET_MAP,
   RETURN_SHIPPING_PAYER,
-} from './returns-types';
+} from '@twicely/commerce/returns-types';
 import type {
   ReturnReason,
   CreateReturnRequestInput,
   CreateReturnRequestResult,
-} from './returns-types';
-import { isWithinReturnWindow, isValidINRClaim, calculateSellerResponseDue } from './returns-validation';
+} from '@twicely/commerce/returns-types';
+import { isWithinReturnWindow, isValidINRClaim, calculateSellerResponseDue } from '@twicely/commerce/returns-validation';
 
 /**
  * Create a return request.

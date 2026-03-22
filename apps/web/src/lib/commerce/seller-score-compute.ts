@@ -20,7 +20,7 @@ import {
   computePerformanceBand,
   type PerformanceBand,
   type SellerMetrics,
-} from './performance-band';
+} from '@twicely/commerce/performance-band';
 import { logger } from '@twicely/logger';
 
 export interface ComputeSellerScoreResult {

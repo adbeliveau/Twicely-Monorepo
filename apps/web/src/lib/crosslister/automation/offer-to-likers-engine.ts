@@ -22,7 +22,7 @@ import { logger } from '@twicely/logger';
 import { canPerformAutomationAction } from '../services/automation-meter';
 import { getConnector } from '../connector-registry';
 import type { ExternalChannel } from '../types';
-import { AUTOMATION_JOB_PRIORITY, AUTOMATION_ENGINE, OFFER_COOLDOWN_DAYS, AUTOMATION_MAX_ATTEMPTS } from './constants';
+import { AUTOMATION_JOB_PRIORITY, AUTOMATION_ENGINE, OFFER_COOLDOWN_DAYS, AUTOMATION_MAX_ATTEMPTS } from '@twicely/crosslister/automation/constants';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

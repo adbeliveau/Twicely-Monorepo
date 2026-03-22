@@ -97,3 +97,19 @@ export async function authorize(): Promise<{
   const ability = defineAbilitiesFor(caslSession);
   return { ability, session: caslSession };
 }
+
+/**
+ * Variant of authorize() that throws ForbiddenError if no authenticated session.
+ * Use this in any action/route that requires authentication (most mutations).
+ * Guest-compatible routes (cart, listing detail) should keep using authorize().
+ */
+export async function requireAuth(): Promise<{
+  ability: AppAbility;
+  session: CaslSession;
+}> {
+  const result = await authorize();
+  if (!result.session) {
+    throw new ForbiddenError('Authentication required');
+  }
+  return { ability: result.ability, session: result.session };
+}

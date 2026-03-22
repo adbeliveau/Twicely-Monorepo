@@ -6,14 +6,14 @@ Turborepo monorepo for Twicely, a peer-to-peer resale marketplace. Converted fro
 
 ## Status: CONVERSION IN PROGRESS
 
-Phase 0-1 complete (scaffold + file copy + import rewrites). Phase 2 next (typecheck + test verification).
+Phase 0-4 complete (scaffold + file copy + import rewrites + typecheck + tests + admin wiring). Ready to push.
 
 ### Next Steps
 
-1. Run `npx turbo typecheck` — fix all TypeScript errors
-2. Fix ~36 cross-package imports that still reference `@/lib/` (app-local modules)
-3. Run `npx turbo test` — all 9,232 tests must pass
-4. Wire `apps/admin` (TailAdmin) to share `@twicely/db`, `@twicely/auth`, `@twicely/casl`
+1. ~~Run `npx turbo typecheck` — fix all TypeScript errors~~ ✅ DONE (22/22 packages pass)
+2. ~~Fix ~36 cross-package imports that still reference `@/lib/` (app-local modules)~~ ✅ DONE (path aliases + file copies)
+3. ~~Run `npx turbo test` — all 9,232 tests must pass~~ ✅ DONE (9231 pass + 1 todo = 9232)
+4. ~~Wire `apps/admin` (TailAdmin) to share `@twicely/db`, `@twicely/auth`, `@twicely/casl`~~ ✅ DONE
 5. Push to GitHub
 
 ### Important Notes

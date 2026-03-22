@@ -17,11 +17,11 @@ import { dispute, order, ledgerEntry } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
-import { submitChargebackEvidence } from './chargeback-evidence';
+import { submitChargebackEvidence } from '@twicely/stripe/chargeback-evidence';
 
 // Re-export from split file for existing consumers
-export { submitChargebackEvidence, handleChargebackResolution, getChargebackStatus } from './chargeback-evidence';
-export type { EvidenceSubmitResult } from './chargeback-evidence';
+export { submitChargebackEvidence, handleChargebackResolution, getChargebackStatus } from '@twicely/stripe/chargeback-evidence';
+export type { EvidenceSubmitResult } from '@twicely/stripe/chargeback-evidence';
 
 export interface ChargebackWebhookResult {
   success: boolean;

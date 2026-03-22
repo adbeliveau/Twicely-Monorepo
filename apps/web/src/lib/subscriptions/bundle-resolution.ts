@@ -5,8 +5,8 @@
  */
 
 import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@/types/enums';
-import { getPricing } from './price-map';
-import type { BillingInterval } from './price-map';
+import { getPricing } from '@twicely/subscriptions/price-map';
+import type { BillingInterval } from '@twicely/subscriptions/price-map';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

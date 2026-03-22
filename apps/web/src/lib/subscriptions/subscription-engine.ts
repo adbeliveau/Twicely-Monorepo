@@ -6,16 +6,16 @@
  * NO DATABASE ACCESS — pure functions only.
  */
 
-import { getPricing, resolveStripePriceId } from './price-map';
-import type { BillingInterval } from './price-map';
-import { getListerDowngradeWarnings } from './lister-downgrade-warnings';
+import { getPricing, resolveStripePriceId } from '@twicely/subscriptions/price-map';
+import type { BillingInterval } from '@twicely/subscriptions/price-map';
+import { getListerDowngradeWarnings } from '@twicely/subscriptions/lister-downgrade-warnings';
 import {
   compareStoreTiers,
   compareListerTiers,
   compareBundleTiers,
   getDowngradeWarnings,
-} from './subscription-engine-core';
-import type { DowngradeWarning } from './subscription-engine-core';
+} from '@twicely/subscriptions/subscription-engine-core';
+import type { DowngradeWarning } from '@twicely/subscriptions/subscription-engine-core';
 import type { StoreTier, ListerTier, BundleTier } from '@/types/enums';
 
 // ─── Re-export everything from core so existing imports continue to work ─────
@@ -31,13 +31,13 @@ export {
   isPaidListerTier,
   canSubscribeToStoreTier,
   getDowngradeWarnings,
-} from './subscription-engine-core';
+} from '@twicely/subscriptions/subscription-engine-core';
 
 export type {
   StoreEligibility,
   DowngradeContext,
   DowngradeWarning,
-} from './subscription-engine-core';
+} from '@twicely/subscriptions/subscription-engine-core';
 
 // ─── Change Classification ──────────────────────────────────────────────────
 
@@ -153,10 +153,10 @@ export function getBillingIntervalFromPriceId(stripePriceId: string): BillingInt
 
 // ─── Bundle Resolution (re-export from bundle-resolution.ts) ────────────────
 
-export { resolveBundleEntitlements, resolveBundleComponents, getBundleSavingsCents, BUNDLE_COMPONENTS } from './bundle-resolution';
-export type { BundleEntitlements, BundleComponents } from './bundle-resolution';
+export { resolveBundleEntitlements, resolveBundleComponents, getBundleSavingsCents, BUNDLE_COMPONENTS } from '@twicely/subscriptions/bundle-resolution';
+export type { BundleEntitlements, BundleComponents } from '@twicely/subscriptions/bundle-resolution';
 
 // ─── Lister Downgrade Warnings (re-export) ──────────────────────────────────
 
-export { getListerDowngradeWarnings } from './lister-downgrade-warnings';
-export type { ListerDowngradeContext, ListerDowngradeWarning } from './lister-downgrade-warnings';
+export { getListerDowngradeWarnings } from '@twicely/subscriptions/lister-downgrade-warnings';
+export type { ListerDowngradeContext, ListerDowngradeWarning } from '@twicely/subscriptions/lister-downgrade-warnings';

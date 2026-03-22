@@ -1,5 +1,6 @@
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { expireOffer } from '@twicely/commerce/offer-engine';
+import { logger } from '@twicely/logger';
 
 interface OfferExpiryJobData {
   offerId: string;
@@ -61,7 +62,7 @@ export const offerExpiryWorker = createWorker<OfferExpiryJobData>(
     const result = await expireOffer(offerId);
 
     if (!result.success && result.error !== 'Offer not found') {
-      console.error(`[offer-expiry] Failed to expire offer ${offerId}:`, result.error);
+      logger.error(`[offer-expiry] Failed to expire offer ${offerId}`, { offerId, error: result.error });
     }
   }
 );

@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
 import { getStaffSession } from '@twicely/auth/staff-auth';
-import { defineAbilitiesFor } from './ability';
-import { ForbiddenError } from './authorize';
-import type { AppAbility, PlatformRole } from './types';
+import { defineAbilitiesFor } from '@twicely/casl/ability';
+import { ForbiddenError } from '@twicely/casl/authorize';
+import type { AppAbility, PlatformRole } from '@twicely/casl/types';
 import { db } from '@twicely/db';
 import { staffUserCustomRole, customRole } from '@twicely/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';

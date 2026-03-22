@@ -8,7 +8,7 @@
  * Per TWICELY_V3_AFFILIATE_AND_TRIALS_CANONICAL §2.9.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { affiliate, referral } from '@twicely/db/schema';
 import { eq, and, gte, inArray } from 'drizzle-orm';
@@ -40,7 +40,7 @@ export async function registerAffiliateFraudScanJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'affiliate-fraud-scan',
-      repeat: { pattern: '0 */6 * * *' },
+      repeat: { pattern: '0 */6 * * *', tz: 'UTC' },
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     },

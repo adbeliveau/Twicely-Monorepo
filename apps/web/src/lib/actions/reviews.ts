@@ -92,13 +92,24 @@ export async function submitReview(orderId: string, data: ReviewSubmissionData):
     return { success: false, error: 'Order completion date not available' };
   }
 
-  const reviewWindowDays = await getPlatformSetting<number>('review.windowDays', 60);
+  const eligibleDays = await getPlatformSetting<number>('trust.review.eligibleDaysAfterDelivery', 3);
+  const reviewWindowDays = await getPlatformSetting<number>('trust.review.windowDays', 60);
   const now = new Date();
-  const windowEndDate = new Date(referenceDate);
+
+  // Eligibility starts after eligibleDays from delivery/completion
+  const eligibleAt = new Date(referenceDate);
+  eligibleAt.setDate(eligibleAt.getDate() + eligibleDays);
+
+  if (now < eligibleAt) {
+    return { success: false, error: `Reviews can be submitted ${eligibleDays} days after delivery` };
+  }
+
+  // Window closes after reviewWindowDays from eligibleAt
+  const windowEndDate = new Date(eligibleAt);
   windowEndDate.setDate(windowEndDate.getDate() + reviewWindowDays);
 
   if (now > windowEndDate) {
-    return { success: false, error: `Review window closed. You had ${reviewWindowDays} days after order completion to leave a review.` };
+    return { success: false, error: `Review window closed. You had ${reviewWindowDays} days after eligibility to leave a review.` };
   }
 
   // Check for existing review (orderId unique constraint will fail if duplicate)
@@ -189,7 +200,7 @@ export async function updateReview(reviewId: string, data: ReviewSubmissionData)
   }
 
   // Check edit window (from platform settings)
-  const editWindowHours = await getPlatformSetting<number>('review.editWindowHours', 48);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
   const now = new Date();
   const editWindowEnd = new Date(existingReview.createdAt);
   editWindowEnd.setHours(editWindowEnd.getHours() + editWindowHours);

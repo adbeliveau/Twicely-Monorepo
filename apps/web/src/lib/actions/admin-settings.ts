@@ -11,6 +11,8 @@ import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { getValkeyClient } from '@twicely/db/cache';
+import { logger } from '@twicely/logger';
 
 const updateSettingSchema = z.object({
   settingId: z.string().min(1),
@@ -221,6 +223,22 @@ export async function saveGeneralSettings(data: Record<string, unknown>) {
     severity: 'HIGH',
     detailsJson: { keys: Object.keys(parsed.data) },
   });
+
+  // Propagate maintenance mode to process.env (same-instance) + Valkey (cross-instance)
+  if ('general.maintenanceMode' in parsed.data) {
+    const isEnabled = parsed.data['general.maintenanceMode'] === true;
+    process.env.MAINTENANCE_MODE = isEnabled ? '1' : '';
+    try {
+      const valkey = getValkeyClient();
+      if (isEnabled) {
+        await valkey.set('platform:maintenance', '1');
+      } else {
+        await valkey.del('platform:maintenance');
+      }
+    } catch (err) {
+      logger.warn('[saveGeneralSettings] Failed to propagate maintenanceMode to Valkey', { error: String(err) });
+    }
+  }
 
   revalidatePath('/cfg');
   return { success: true };

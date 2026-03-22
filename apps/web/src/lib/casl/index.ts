@@ -1,13 +1,13 @@
 // Types
-export type { AppAbility, CaslSession, DelegationScope } from './types';
-export type { Subject } from './subjects';
-export type { Action } from './action-types';
+export type { AppAbility, CaslSession, DelegationScope } from '@twicely/casl/types';
+export type { Subject } from '@twicely/casl/subjects';
+export type { Action } from '@twicely/casl/action-types';
 
 // Constants
-export { SUBJECTS } from './subjects';
-export { ACTIONS } from './action-types';
+export { SUBJECTS } from '@twicely/casl/subjects';
+export { ACTIONS } from '@twicely/casl/action-types';
 
 // Core
-export { defineAbilitiesFor } from './ability';
-export { authorize, ForbiddenError } from './authorize';
-export { sub } from './check';
+export { defineAbilitiesFor } from '@twicely/casl/ability';
+export { authorize, requireAuth, ForbiddenError } from '@twicely/casl/authorize';
+export { sub } from '@twicely/casl/check';

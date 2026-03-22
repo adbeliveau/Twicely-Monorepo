@@ -1,7 +1,7 @@
 import { db } from '@twicely/db';
 import { conversation, message as messageTable, user, listing } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { notify } from './service';
+import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
 import { publishToChannel } from '@twicely/realtime/centrifugo-publisher';
 import { conversationChannel, MESSAGING_EVENTS } from '@twicely/realtime/messaging-channels';

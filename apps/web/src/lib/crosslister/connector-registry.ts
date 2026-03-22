@@ -11,8 +11,8 @@
  * Source: Lister Canonical Section 9.2, Architecture Rule §3.3
  */
 
-import type { PlatformConnector } from './connector-interface';
-import type { ExternalChannel } from './types';
+import type { PlatformConnector } from '@twicely/crosslister/connector-interface';
+import type { ExternalChannel } from '@twicely/crosslister/types';
 
 // Map of channel -> connector instance
 const connectors = new Map<ExternalChannel, PlatformConnector>();

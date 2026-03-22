@@ -4,7 +4,7 @@
  * All subjects must exist in subjects.ts SUBJECTS array.
  */
 
-import type { PermissionModule } from './permission-registry';
+import type { PermissionModule } from '@twicely/casl/permission-registry';
 
 export const PERMISSION_MODULES_DOMAINS: PermissionModule[] = [
   // ─── CROSSLISTER ───────────────────────────────────────────────────────────

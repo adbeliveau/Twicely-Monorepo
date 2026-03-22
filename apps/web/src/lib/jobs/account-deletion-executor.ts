@@ -9,7 +9,7 @@
  * Financial records are PSEUDONYMIZED, never deleted.
  */
 
-import { createQueue } from './queue';
+import { createQueue } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import {
   user as userTable,

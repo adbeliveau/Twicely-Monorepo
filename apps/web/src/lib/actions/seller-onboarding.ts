@@ -6,6 +6,7 @@ import { sellerProfile, businessInfo, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { ensureSellerProfile } from '@/lib/listings/seller-activate';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getSellerProfile } from '@/lib/queries/seller';
 import { getBusinessInfo } from '@/lib/queries/business-info';
 import { businessInfoSchema, storeNameSchema } from '@/lib/validations/seller-onboarding';
@@ -42,6 +43,15 @@ export async function enableSellerAction(): Promise<ActionResult> {
   // Idempotent: already a seller
   if (session.isSeller) {
     return { success: true, alreadySeller: true };
+  }
+
+  // Check platform gate — seller registration may be disabled
+  const sellerRegistrationEnabled = await getPlatformSetting<boolean>(
+    'general.sellerRegistrationEnabled',
+    true
+  );
+  if (!sellerRegistrationEnabled) {
+    return { success: false, error: 'Seller registration is currently unavailable. Please try again later.' };
   }
 
   await ensureSellerProfile(session.userId);

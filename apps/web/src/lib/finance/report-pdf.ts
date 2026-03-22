@@ -4,7 +4,7 @@
  * Users download the HTML file and print to PDF via their browser.
  */
 import type { PnlReportData, BalanceSheetData, CashFlowData } from '@/lib/queries/finance-center-reports';
-import { formatCentsToDollars } from './format';
+import { formatCentsToDollars } from '@twicely/finance/format';
 
 function escapeHtml(s: string): string {
   return s

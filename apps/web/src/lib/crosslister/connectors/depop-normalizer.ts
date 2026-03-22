@@ -9,7 +9,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { DepopProduct } from './depop-types';
+import type { DepopProduct } from '@twicely/crosslister/connectors/depop-types';
 
 /** Normalized Depop listing data, ready for listing creation */
 export interface DepopNormalizedData {

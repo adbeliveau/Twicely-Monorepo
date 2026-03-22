@@ -6,7 +6,7 @@
  * or accept local transactions until their suspension window expires.
  */
 
-import { isUserSuspendedFromLocal } from './local-reliability';
+import { isUserSuspendedFromLocal } from '@twicely/commerce/local-reliability';
 
 export interface LocalEligibilityResult {
   eligible: boolean;

@@ -31,8 +31,8 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { normalizeMercariListing, toExternalListing } from './mercari-normalizer';
-import type { MercariListingsResponse, MercariTokenResponse, MercariUserProfile } from './mercari-types';
+import { normalizeMercariListing, toExternalListing } from '@twicely/crosslister/connectors/mercari-normalizer';
+import type { MercariListingsResponse, MercariTokenResponse, MercariUserProfile } from '@twicely/crosslister/connectors/mercari-types';
 
 const MERCARI_AUTH_URL = 'https://www.mercari.com/oauth/authorize';
 const MERCARI_TOKEN_URL = 'https://api.mercari.com/oauth/token';

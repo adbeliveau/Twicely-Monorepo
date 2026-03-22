@@ -1,4 +1,4 @@
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import type Stripe from 'stripe';
 import type { PromoCodeRow } from '@/lib/queries/promo-codes';
 

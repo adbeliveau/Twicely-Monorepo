@@ -4,11 +4,11 @@
  * consumption by Phase F connector implementations and actions.
  */
 
-export * from './types';
-export * from './db-types';
-export * from './connector-interface';
-export * from './connector-registry';
-export * from './channel-registry';
+export * from '@twicely/crosslister/types';
+export * from '@twicely/crosslister/db-types';
+export * from '@twicely/crosslister/connector-interface';
+export * from '@twicely/crosslister/connector-registry';
+export * from '@twicely/crosslister/channel-registry';
 
 // Connector implementations — import to trigger self-registration
 import './connectors'; // registers ebay, poshmark, mercari

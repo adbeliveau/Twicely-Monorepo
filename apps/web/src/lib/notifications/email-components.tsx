@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { TemplateKey } from './templates';
+import type { TemplateKey } from '@twicely/notifications/templates';
 
 import OfferDeclinedEmail from '@twicely/email/templates/offer-declined';
 import OfferAcceptedEmail from '@twicely/email/templates/offer-accepted';

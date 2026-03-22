@@ -19,10 +19,10 @@ const SHIPPO_WEBHOOK_EVENTS = [
 ];
 
 const FULFILLMENT_KEYS = [
-  'shipping.defaultHandlingDays', 'shipping.maxHandlingDays',
-  'shipping.trackingRequiredAboveCents', 'shipping.signatureRequiredAboveCents',
-  'shipping.defaultCarrier', 'shipping.labelGenerationEnabled',
-  'insurance.autoInsureAboveCents', 'returns.windowDays',
+  'fulfillment.shipping.defaultHandlingDays', 'fulfillment.shipping.maxHandlingDays',
+  'fulfillment.shipping.trackingRequiredAboveCents', 'fulfillment.shipping.signatureRequiredAboveCents',
+  'fulfillment.shipping.defaultCarrier', 'fulfillment.shipping.labelGenerationEnabled',
+  'fulfillment.insurance.autoInsureAboveCents', 'fulfillment.returns.windowDays',
 ];
 
 export default async function ShippoSettingsPage() {
@@ -40,14 +40,14 @@ export default async function ShippoSettingsPage() {
 
   const fm = new Map<string, unknown>(fulfillmentRows.map((r) => [r.key, r.value]));
   const fulfillmentSettings = {
-    defaultHandlingDays: Number(fm.get('shipping.defaultHandlingDays') ?? 3),
-    maxHandlingDays: Number(fm.get('shipping.maxHandlingDays') ?? 7),
-    trackingRequiredAboveCents: Number(fm.get('shipping.trackingRequiredAboveCents') ?? 5000),
-    signatureRequiredAboveCents: Number(fm.get('shipping.signatureRequiredAboveCents') ?? 75000),
-    defaultCarrier: String(fm.get('shipping.defaultCarrier') ?? 'USPS'),
-    labelGenerationEnabled: fm.get('shipping.labelGenerationEnabled') !== false,
-    autoInsureAboveCents: Number(fm.get('insurance.autoInsureAboveCents') ?? 10000),
-    returnsWindowDays: Number(fm.get('returns.windowDays') ?? 30),
+    defaultHandlingDays: Number(fm.get('fulfillment.shipping.defaultHandlingDays') ?? 3),
+    maxHandlingDays: Number(fm.get('fulfillment.shipping.maxHandlingDays') ?? 7),
+    trackingRequiredAboveCents: Number(fm.get('fulfillment.shipping.trackingRequiredAboveCents') ?? 5000),
+    signatureRequiredAboveCents: Number(fm.get('fulfillment.shipping.signatureRequiredAboveCents') ?? 75000),
+    defaultCarrier: String(fm.get('fulfillment.shipping.defaultCarrier') ?? 'USPS'),
+    labelGenerationEnabled: fm.get('fulfillment.shipping.labelGenerationEnabled') !== false,
+    autoInsureAboveCents: Number(fm.get('fulfillment.insurance.autoInsureAboveCents') ?? 10000),
+    returnsWindowDays: Number(fm.get('fulfillment.returns.windowDays') ?? 30),
   };
 
   if (!adapter) {

@@ -1,3 +1,4 @@
+import { logger } from '@twicely/logger';
 import { db } from '@twicely/db';
 import { priceAlert, listing, user } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
@@ -112,7 +113,7 @@ export async function processPriceAlerts(
           alertMessage,
           listingUrl: `${BASE_URL}/i/${listingRow.slug}`,
         }).catch((err) => {
-          console.error('[processPriceAlerts] Notification error:', err);
+          logger.error('[processPriceAlerts] Notification error', { error: String(err) });
         });
 
         // Mark alert as triggered (deactivate to prevent re-triggering)
@@ -130,7 +131,7 @@ export async function processPriceAlerts(
 
     return { triggered, total: alerts.length };
   } catch (err) {
-    console.error('[processPriceAlerts] Error:', err);
+    logger.error('[processPriceAlerts] Error', { error: String(err) });
     return { triggered: 0, total: 0 };
   }
 }
@@ -173,7 +174,7 @@ export async function processBackInStockAlerts(listingId: string): Promise<Proce
         newPriceFormatted: formatPrice(listingRow.priceCents ?? 0),
         listingUrl: `${BASE_URL}/i/${listingRow.slug}`,
       }).catch((err) => {
-        console.error('[processBackInStockAlerts] Notification error:', err);
+        logger.error('[processBackInStockAlerts] Notification error', { error: String(err) });
       });
 
       // Mark alert as triggered
@@ -190,7 +191,7 @@ export async function processBackInStockAlerts(listingId: string): Promise<Proce
 
     return { triggered, total: alerts.length };
   } catch (err) {
-    console.error('[processBackInStockAlerts] Error:', err);
+    logger.error('[processBackInStockAlerts] Error', { error: String(err) });
     return { triggered: 0, total: 0 };
   }
 }

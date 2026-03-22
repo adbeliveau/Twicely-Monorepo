@@ -40,4 +40,4 @@ export const MercariItemSchema = z.object({
   created: z.number().optional(),
 });
 
-export type { MercariItem } from './mercari-types';
+export type { MercariItem } from '@twicely/crosslister/connectors/mercari-types';

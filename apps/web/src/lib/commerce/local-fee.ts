@@ -15,8 +15,8 @@
  * - Does NOT count toward monthly GMV for bracket calculation
  */
 
-import { calculateTf, getTfBrackets, getMinimumTfCents } from './tf-calculator';
-import type { TfResult } from './tf-calculator';
+import { calculateTf, getTfBrackets, getMinimumTfCents } from '@twicely/commerce/tf-calculator';
+import type { TfResult } from '@twicely/commerce/tf-calculator';
 
 // ─── Calculator ──────────────────────────────────────────────────────────────
 

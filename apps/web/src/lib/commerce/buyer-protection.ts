@@ -27,7 +27,7 @@ export {
   type ProcessClaimInput,
   type ProcessClaimResult,
   type ProtectionStatus,
-} from './protection-processing';
+} from '@twicely/commerce/protection-processing';
 
 // Default claim windows (fallback if platform_settings unavailable)
 export const DEFAULT_STANDARD_CLAIM_WINDOW_DAYS = 30;

@@ -14,7 +14,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { ShopifyProductParsed } from './shopify-schemas';
+import type { ShopifyProductParsed } from '@twicely/crosslister/connectors/shopify-schemas';
 
 /** Normalized Shopify product data, ready for ExternalListing conversion */
 export interface ShopifyNormalizedData {

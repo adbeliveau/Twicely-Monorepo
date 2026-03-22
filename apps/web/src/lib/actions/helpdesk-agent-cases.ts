@@ -14,6 +14,7 @@ import {
 } from '@/lib/validations/helpdesk';
 import { calculateSlaDue } from '@/lib/helpdesk/sla';
 import { notifyCaseWatchers } from '@/lib/helpdesk/notify-watchers';
+import { notify } from '@twicely/notifications/service';
 
 interface ActionResult<T = undefined> {
   success: boolean;
@@ -74,6 +75,11 @@ export async function addAgentReply(formData: unknown): Promise<ActionResult> {
   });
 
   notifyCaseWatchers(caseId, session.staffUserId, isInternal ? 'New internal note added' : 'New reply sent').catch(() => undefined);
+
+  if (!isInternal) {
+    void notify(caseRecord.requesterId, 'helpdesk.case.agent_reply', {});
+  }
+
   revalidatePath(`/hd/cases/${caseId}`);
   return { success: true };
 }

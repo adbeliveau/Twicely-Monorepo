@@ -13,10 +13,22 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "idb-keyval": "^6.2.2",
+    "zod": "^4.3.6",
+    "@twicely/casl": "workspace:*",
     "@twicely/db": "workspace:*",
-    "@twicely/stripe": "workspace:*",
-    "@twicely/notifications": "workspace:*",
+    "@twicely/finance": "workspace:*",
+    "@twicely/jobs": "workspace:*",
     "@twicely/logger": "workspace:*",
+    "@twicely/notifications": "workspace:*",
+    "@twicely/stripe": "workspace:*",
     "@twicely/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
   }
 }

@@ -10,7 +10,7 @@ import { eq } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { stripe } from '@twicely/stripe/server';
 import { logger } from '@twicely/logger';
-import { isEligibleForProtection, isWithinClaimWindow } from './buyer-protection';
+import { isEligibleForProtection, isWithinClaimWindow } from '@twicely/commerce/buyer-protection';
 
 export interface ProcessClaimInput {
   adminId: string;

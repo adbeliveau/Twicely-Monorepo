@@ -9,7 +9,7 @@
 import { db } from '@twicely/db';
 import { sellerProfile, platformSetting } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { getAvailableCredits } from './rollover-manager';
+import { getAvailableCredits } from '@twicely/crosslister/services/rollover-manager';
 
 export interface PublishAllowance {
   tier: string;

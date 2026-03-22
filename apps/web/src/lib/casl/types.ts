@@ -1,8 +1,8 @@
 import { type MongoAbility } from '@casl/ability';
 
 // Re-export for convenience
-export type { Subject } from './subjects';
-export type { Action } from './action-types';
+export type { Subject } from '@twicely/casl/subjects';
+export type { Action } from '@twicely/casl/action-types';
 
 // Platform staff roles — enum values from platformRoleEnum
 export type PlatformRole =

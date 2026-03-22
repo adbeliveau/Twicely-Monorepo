@@ -28,6 +28,16 @@ async function saveVideoToLocal(bytes: Uint8Array, ext: string): Promise<string>
   return `/uploads/videos/${filename}`;
 }
 
+// Hard ceiling on video file size (500 MB). Files above this are rejected
+// regardless of claimed duration — prevents abuse via oversized uploads.
+const MAX_VIDEO_FILE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
+
+// Sanity-check threshold: files above 100 MB are rejected regardless of
+// claimed duration. A legitimate user video at typical bitrates should be well
+// under this limit for the allowed duration window. This mitigates the risk of
+// accepting a very large file whose client-reported duration has been spoofed.
+const SANITY_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
+
 /**
  * Handle video upload (type === 'video').
  */
@@ -35,6 +45,25 @@ export async function handleVideoUpload(
   formData: FormData,
   file: File
 ): Promise<NextResponse> {
+  // --- Hard file-size gate (server-side, not spoofable) ---
+  if (file.size > MAX_VIDEO_FILE_SIZE_BYTES) {
+    return NextResponse.json(
+      { success: false, error: 'Video file exceeds the 500 MB size limit' },
+      { status: 400 }
+    );
+  }
+
+  if (file.size > SANITY_FILE_SIZE_BYTES) {
+    // NOTE: durationSeconds comes from the client and can be spoofed.
+    // Ideally we would run ffprobe server-side, but until that is wired up
+    // this file-size gate acts as a coarse sanity check — no legitimate
+    // video within our allowed duration range should exceed 100 MB.
+    return NextResponse.json(
+      { success: false, error: 'Video file is too large for the allowed duration' },
+      { status: 400 }
+    );
+  }
+
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   // Validate video bytes (magic bytes + size)
@@ -48,7 +77,11 @@ export async function handleVideoUpload(
     return NextResponse.json({ success: false, error: 'Invalid video format' }, { status: 400 });
   }
 
-  // Validate client-reported duration
+  // Validate client-reported duration.
+  // LIMITATION: durationSeconds is provided by the client and cannot be
+  // trusted. A malicious client could send an arbitrary value. The file-size
+  // gates above provide a coarse server-side sanity check, but true
+  // server-side duration validation requires ffprobe (TODO).
   const durationStr = formData.get('durationSeconds') as string | null;
   const durationSeconds = durationStr ? parseInt(durationStr, 10) : null;
 

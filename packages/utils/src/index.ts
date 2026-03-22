@@ -1,2 +1,2 @@
 export { cn } from './cn';
-export { formatPrice, formatCentsToDollars } from './format';
+export { formatPrice } from './format';

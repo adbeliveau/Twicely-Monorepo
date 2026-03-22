@@ -1,4 +1,4 @@
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { combinedShippingQuote, order } from '@twicely/db/schema';
 import { eq, and, lt } from 'drizzle-orm';

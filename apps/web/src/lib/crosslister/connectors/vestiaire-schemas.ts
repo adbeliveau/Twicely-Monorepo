@@ -44,4 +44,4 @@ export const VestiaireListingSchema = z.object({
   slug: z.string().optional(),
 });
 
-export type { VestiaireListing } from './vestiaire-types';
+export type { VestiaireListing } from '@twicely/crosslister/connectors/vestiaire-types';

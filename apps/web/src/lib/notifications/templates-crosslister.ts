@@ -1,4 +1,4 @@
-import type { TemplateDef } from './templates';
+import type { TemplateDef } from '@twicely/notifications/templates';
 
 /**
  * Notification templates for crosslister events (F5).

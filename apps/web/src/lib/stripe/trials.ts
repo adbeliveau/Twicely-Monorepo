@@ -5,7 +5,7 @@
  * Trial eligibility is tracked per product type per user.
  */
 
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import { db } from '@twicely/db';
 import { eq, and } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';

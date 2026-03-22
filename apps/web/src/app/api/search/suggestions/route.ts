@@ -23,6 +23,18 @@ const BRAND_LIMIT = 2;
 const CATEGORY_LIMIT = 2;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
+    const { getValkeyClient } = await import('@twicely/db/cache');
+    const valkey = getValkeyClient();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const key = `search-rate:${ip}`;
+    const count = await valkey.incr(key);
+    if (count === 1) await valkey.expire(key, 60);
+    if (count > 30) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+  } catch { /* Valkey down — fail open */ }
+
   const q = request.nextUrl.searchParams.get('q') ?? '';
   const query = q.trim().slice(0, MAX_QUERY_LENGTH);
 

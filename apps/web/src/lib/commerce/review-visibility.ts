@@ -9,8 +9,8 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
  * - Only one: visibleAt = deliveredAt + windowDays (solo reveal)
  */
 export async function updateReviewVisibility(orderId: string): Promise<void> {
-  const editWindowHours = await getPlatformSetting<number>('review.editWindowHours', 48);
-  const windowDays = await getPlatformSetting<number>('review.windowDays', 60);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
+  const windowDays = await getPlatformSetting<number>('trust.review.windowDays', 60);
 
   await db.transaction(async (tx) => {
     const [orderData] = await tx

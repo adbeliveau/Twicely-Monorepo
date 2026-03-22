@@ -3,6 +3,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@twicely/db';
 import { user, session, account, verification } from '@/lib/db/schema/auth';
 import { logger } from '@twicely/logger';
+import { sendEmail } from '@twicely/email/send';
+import { createElement } from 'react';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -92,17 +94,33 @@ export const auth = betterAuth({
     minPasswordLength: 10,
     maxPasswordLength: 128,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
-      logger.info('Password reset email sent', { to: user.email });
-      // TODO: Send via Resend — url contains the reset token
-      void url; // Suppress unused warning until Resend integration
+    sendResetPassword: async ({ user: u, url }) => {
+      logger.info('Password reset email sending', { to: u.email });
+      await sendEmail({
+        to: u.email,
+        subject: 'Reset your Twicely password',
+        react: createElement('div', null,
+          createElement('h2', null, 'Reset Your Password'),
+          createElement('p', null, `Hi ${u.name ?? 'there'}, click the link below to reset your password.`),
+          createElement('a', { href: url, style: { color: '#2563eb' } }, 'Reset Password'),
+          createElement('p', { style: { fontSize: '12px', color: '#6b7280' } }, 'This link expires in 1 hour. If you did not request this, ignore this email.'),
+        ),
+      });
     },
   },
   emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
-      logger.info('Email verification sent', { to: user.email });
-      // TODO: Send via Resend — url contains the verification token
-      void url; // Suppress unused warning until Resend integration
+    sendVerificationEmail: async ({ user: u, url }) => {
+      logger.info('Email verification sending', { to: u.email });
+      await sendEmail({
+        to: u.email,
+        subject: 'Verify your Twicely email',
+        react: createElement('div', null,
+          createElement('h2', null, 'Verify Your Email'),
+          createElement('p', null, `Hi ${u.name ?? 'there'}, click the link below to verify your email address.`),
+          createElement('a', { href: url, style: { color: '#2563eb' } }, 'Verify Email'),
+          createElement('p', { style: { fontSize: '12px', color: '#6b7280' } }, 'If you did not create a Twicely account, ignore this email.'),
+        ),
+      });
     },
   },
   session: {

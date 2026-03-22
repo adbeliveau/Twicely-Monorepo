@@ -54,6 +54,13 @@ function normalizeCategory(cat: string): string {
   if (cat === 'local') return 'commerce';
   if (cat === 'stripe') return 'payments';
   if (cat === 'featureFlags') return 'integrations';
+  // Map categories that were falling through to unmapped buckets
+  if (cat === 'affiliate' || cat === 'trials') return 'fees';
+  if (cat === 'helpdesk') return 'commerce';
+  if (cat === 'trust' || cat === 'scoring') return 'trust';
+  if (cat === 'kyc' || cat === 'tax') return 'payments';
+  if (cat === 'social' || cat === 'vacation') return 'discovery';
+  if (cat === 'extension' || cat === 'newsletter') return 'integrations';
   return cat;
 }
 

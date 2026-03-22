@@ -10,7 +10,7 @@
 import { db } from '@twicely/db';
 import { localTransaction } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { verifyTokenServer } from './local-token';
+import { verifyTokenServer } from '@twicely/commerce/local-token';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

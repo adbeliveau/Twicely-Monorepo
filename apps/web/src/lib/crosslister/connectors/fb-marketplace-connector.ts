@@ -34,8 +34,8 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { normalizeFbMarketplaceListing, toExternalListing } from './fb-marketplace-normalizer';
-import type { FbCommerceListingsResponse, FbOAuthTokenResponse, FbUserProfile } from './fb-marketplace-types';
+import { normalizeFbMarketplaceListing, toExternalListing } from '@twicely/crosslister/connectors/fb-marketplace-normalizer';
+import type { FbCommerceListingsResponse, FbOAuthTokenResponse, FbUserProfile } from '@twicely/crosslister/connectors/fb-marketplace-types';
 
 const FB_AUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth';
 const FB_TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token';

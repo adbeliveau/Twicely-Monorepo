@@ -7,9 +7,9 @@ import { listingOffer, offerBundleItem } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { stripe } from '@twicely/stripe/server';
 import { scheduleOfferExpiry, cancelOfferExpiry } from '@twicely/jobs/offer-expiry';
-import { notifyOfferEvent } from './offer-notifications';
-import { createOrderFromOffer } from './offer-to-order';
-import { getOfferById } from './offer-queries';
+import { notifyOfferEvent } from '@twicely/commerce/offer-notifications';
+import { createOrderFromOffer } from '@twicely/commerce/offer-to-order';
+import { getOfferById } from '@twicely/commerce/offer-queries';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 export interface BundleOfferResult {
@@ -58,10 +58,16 @@ export async function respondToBundleOffer(
       return { success: false, error: 'Failed to capture payment' };
     }
 
-    // Mark accepted
-    await db.update(listingOffer)
-      .set({ status: 'ACCEPTED', respondedAt: new Date(), updatedAt: new Date() })
-      .where(eq(listingOffer.id, offerId));
+    // Mark accepted inside a transaction so the status update is atomic
+    try {
+      await db.transaction(async (tx) => {
+        await tx.update(listingOffer)
+          .set({ status: 'ACCEPTED', respondedAt: new Date(), updatedAt: new Date() })
+          .where(eq(listingOffer.id, offerId));
+      });
+    } catch {
+      return { success: false, error: 'Failed to update offer status after payment capture' };
+    }
 
     // Cancel expiry job
     await cancelOfferExpiry(offerId);

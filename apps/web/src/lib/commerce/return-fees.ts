@@ -21,7 +21,7 @@ import { eq } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 // Re-export applyReturnFees (extracted to return-fee-apply.ts)
-export { applyReturnFees, type ApplyFeesResult } from './return-fee-apply';
+export { applyReturnFees, type ApplyFeesResult } from '@twicely/commerce/return-fee-apply';
 
 // Default constants (fallback if platform_settings unavailable)
 export const DEFAULT_RESTOCKING_FEE_PERCENT = 0.10; // 10%

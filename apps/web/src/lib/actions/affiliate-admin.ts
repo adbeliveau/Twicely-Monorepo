@@ -12,6 +12,7 @@ import {
   unsuspendAffiliateSchema,
   banAffiliateSchema,
 } from '@/lib/validations/affiliate';
+import { notify } from '@twicely/notifications/service';
 
 interface AdminActionResult {
   success: boolean;
@@ -78,6 +79,8 @@ export async function approveInfluencerApplication(input: unknown): Promise<Admi
     },
   });
 
+  void notify(record.userId, 'affiliate.influencer_approved', {});
+
   revalidatePath('/usr/affiliates');
   return { success: true };
 }
@@ -130,6 +133,8 @@ export async function rejectInfluencerApplication(input: unknown): Promise<Admin
     severity: 'MEDIUM',
     detailsJson: { rejectionReason: data.rejectionReason },
   });
+
+  void notify(record.userId, 'affiliate.influencer_rejected', { reason: data.rejectionReason });
 
   revalidatePath('/usr/affiliates');
   return { success: true };

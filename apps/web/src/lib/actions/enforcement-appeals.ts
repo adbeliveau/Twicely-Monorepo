@@ -14,6 +14,7 @@ import { authorize } from '@twicely/casl/authorize';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { submitAppealSchema, reviewAppealSchema } from '@/lib/validations/enforcement';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { notify } from '@twicely/notifications/service';
 
 // ─── submitEnforcementAppealAction ────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ export async function submitEnforcementAppealAction(input: unknown) {
     detailsJson: { userId: session.userId, actionType: existing.actionType, appealNote },
   });
 
-  // TODO: dispatch notification when notification service is wired
+  void notify(session.userId, 'enforcement.appeal_submitted', { actionType: existing.actionType });
   revalidatePath('/my/selling/performance');
   revalidatePath('/mod/enforcement');
   return { success: true };
@@ -168,7 +169,9 @@ export async function reviewEnforcementAppealAction(input: unknown) {
       }
     }
 
-    // TODO: dispatch notification when notification service is wired (enforcement.appeal_approved)
+    void notify(existing.userId, 'enforcement.appeal_approved', {
+      actionType: existing.actionType,
+    });
   } else {
     // DENIED — action returns to ACTIVE
     await db
@@ -182,7 +185,9 @@ export async function reviewEnforcementAppealAction(input: unknown) {
       })
       .where(eq(enforcementAction.id, enforcementActionId));
 
-    // TODO: dispatch notification when notification service is wired (enforcement.appeal_denied)
+    void notify(existing.userId, 'enforcement.appeal_denied', {
+      actionType: existing.actionType,
+    });
   }
 
   await db.insert(auditEvent).values({

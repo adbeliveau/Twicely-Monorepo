@@ -37,7 +37,7 @@ export async function MarketplaceHeader() {
         {/* Nav links - desktop */}
         <nav aria-label="Main navigation" className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild className="hidden md:inline-flex">
-            <Link href="/my/selling/listings/new">Sell</Link>
+            <Link href="/sell">Sell</Link>
           </Button>
           {userId ? (
             <>

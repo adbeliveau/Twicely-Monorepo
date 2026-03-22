@@ -1,4 +1,4 @@
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { sellerProfile } from '@twicely/db/schema';
 import { and, eq, isNotNull, lt, sql } from 'drizzle-orm';
@@ -27,7 +27,7 @@ export async function registerExpireFreeListerJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'expire-free-lister-tier',
-      repeat: { pattern: '0 2 * * *' },
+      repeat: { pattern: '0 2 * * *', tz: 'UTC' },
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     }

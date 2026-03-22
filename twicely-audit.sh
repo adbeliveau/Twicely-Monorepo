@@ -15,7 +15,7 @@
 # Exit codes: 0 = clean, non-zero = issue count
 
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel 2>/dev/null || echo '.')"
+cd "$(git rev-parse --show-toplevel 2>/dev/null || echo '.')/apps/web"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

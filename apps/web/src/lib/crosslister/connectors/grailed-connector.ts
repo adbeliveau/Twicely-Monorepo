@@ -34,8 +34,8 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { normalizeGrailedListing, toExternalListing } from './grailed-normalizer';
-import type { GrailedListingsResponse, GrailedTokenResponse, GrailedUserProfile } from './grailed-types';
+import { normalizeGrailedListing, toExternalListing } from '@twicely/crosslister/connectors/grailed-normalizer';
+import type { GrailedListingsResponse, GrailedTokenResponse, GrailedUserProfile } from '@twicely/crosslister/connectors/grailed-types';
 
 const GRAILED_AUTH_URL = 'https://www.grailed.com/oauth/authorize';
 const GRAILED_TOKEN_URL = 'https://www.grailed.com/oauth/token';

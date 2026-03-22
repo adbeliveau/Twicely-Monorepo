@@ -1,4 +1,4 @@
-import type { Subject } from './subjects';
+import type { Subject } from '@twicely/casl/subjects';
 
 /**
  * Custom subject helper that wraps conditions with CASL's subject type marker.

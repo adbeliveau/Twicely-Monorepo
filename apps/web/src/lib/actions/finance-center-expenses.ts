@@ -1,6 +1,7 @@
 'use server';
 
 import { authorize, sub } from '@twicely/casl';
+import { logger } from '@twicely/logger';
 import { db } from '@twicely/db';
 import { expense } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -118,7 +119,8 @@ export async function createExpenseAction(
     revalidatePath('/my/selling/finances');
     revalidatePath('/my/selling/finances/expenses');
     return { success: true, expense: finalExpense };
-  } catch {
+  } catch (error) {
+    logger.error('[createExpenseAction] Failed to create expense', { error: String(error) });
     return { success: false, error: 'Failed to create expense' };
   }
 }
@@ -198,7 +200,8 @@ export async function updateExpenseAction(
     revalidatePath('/my/selling/finances');
     revalidatePath('/my/selling/finances/expenses');
     return { success: true, expense: finalExpense };
-  } catch {
+  } catch (error) {
+    logger.error('[updateExpenseAction] Failed to update expense', { error: String(error) });
     return { success: false, error: 'Failed to update expense' };
   }
 }
@@ -238,7 +241,8 @@ export async function deleteExpenseAction(
     revalidatePath('/my/selling/finances');
     revalidatePath('/my/selling/finances/expenses');
     return { success: true };
-  } catch {
+  } catch (error) {
+    logger.error('[deleteExpenseAction] Failed to delete expense', { error: String(error) });
     return { success: false, error: 'Failed to delete expense' };
   }
 }
@@ -268,7 +272,8 @@ export async function listExpensesAction(
   try {
     const data = await getExpenseList(userId, parsed.data);
     return { success: true, data };
-  } catch {
+  } catch (error) {
+    logger.error('[listExpensesAction] Failed to load expenses', { error: String(error) });
     return { success: false, error: 'Failed to load expenses' };
   }
 }

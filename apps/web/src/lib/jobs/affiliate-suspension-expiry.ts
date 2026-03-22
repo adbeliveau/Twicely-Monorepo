@@ -10,7 +10,7 @@
  * Permanently banned affiliates have suspendedUntil = NULL and are never auto-restored.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { logger } from '@twicely/logger';
 import { db } from '@twicely/db';
 import { affiliate, auditEvent } from '@twicely/db/schema';
@@ -32,7 +32,7 @@ export async function registerAffiliateSuspensionExpiryJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'affiliate-suspension-expiry',
-      repeat: { pattern: '0 2 * * *' }, // Daily at 2 AM UTC
+      repeat: { pattern: '0 2 * * *', tz: 'UTC' }, // Daily at 2 AM UTC
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     },

@@ -13,8 +13,16 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "react": "19.2.3",
     "@twicely/db": "workspace:*",
     "@twicely/email": "workspace:*",
-    "@twicely/logger": "workspace:*"
+    "@twicely/logger": "workspace:*",
+    "@twicely/realtime": "workspace:*",
+    "@twicely/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19"
   }
 }

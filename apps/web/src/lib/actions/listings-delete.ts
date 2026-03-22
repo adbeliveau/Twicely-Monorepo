@@ -6,6 +6,7 @@ import { listing, listingImage } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { logger } from '@twicely/logger';
+import { deleteListingDocument } from '@twicely/search/typesense-index';
 import { z } from 'zod';
 
 const deleteListingSchema = z.object({
@@ -67,6 +68,11 @@ export async function deleteListing(listingId: string): Promise<ActionResult> {
         })
         .where(eq(listing.id, listingId));
     }
+
+    // Remove from Typesense search index
+    deleteListingDocument(listingId).catch((err) => {
+      logger.error('[typesense] Failed to remove deleted listing from index', { listingId, error: String(err) });
+    });
 
     revalidatePath('/my/selling');
     revalidatePath('/my/selling/listings');

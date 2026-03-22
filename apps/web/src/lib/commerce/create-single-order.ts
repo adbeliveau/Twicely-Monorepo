@@ -1,5 +1,5 @@
-import { createOrdersFromCart } from './create-order';
-import type { CreateOrderInput, OrderCreationResult } from './order-gmv';
+import { createOrdersFromCart } from '@twicely/commerce/create-order';
+import type { CreateOrderInput, OrderCreationResult } from '@twicely/commerce/order-gmv';
 
 /**
  * Create a single order (for single-seller checkout).

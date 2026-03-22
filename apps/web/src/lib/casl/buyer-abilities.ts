@@ -4,7 +4,7 @@
  */
 
 import type { AbilityBuilder } from '@casl/ability';
-import type { AppAbility, CaslSession } from './types';
+import type { AppAbility, CaslSession } from '@twicely/casl/types';
 
 export function defineGuestAbilities(builder: AbilityBuilder<AppAbility>): void {
   const { can } = builder;

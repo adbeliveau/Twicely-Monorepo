@@ -5,9 +5,10 @@
  * All calls made with stripeAccount header for connected account access.
  */
 
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 export interface BalanceResult {
   success: boolean;
@@ -140,6 +141,7 @@ export async function getPayoutHistory(
  */
 export async function getPayoutSchedule(stripeAccountId: string): Promise<PayoutScheduleResult> {
   try {
+    const defaultDelayDays = await getPlatformSetting<number>('commerce.payout.delayDays', 2);
     const account = await stripe.accounts.retrieve(stripeAccountId);
     const schedule = account.settings?.payouts?.schedule;
 
@@ -147,7 +149,7 @@ export async function getPayoutSchedule(stripeAccountId: string): Promise<Payout
       return {
         success: true,
         schedule: {
-          delayDays: 2,
+          delayDays: defaultDelayDays,
           interval: 'daily',
         },
       };
@@ -156,7 +158,7 @@ export async function getPayoutSchedule(stripeAccountId: string): Promise<Payout
     return {
       success: true,
       schedule: {
-        delayDays: schedule.delay_days ?? 2,
+        delayDays: schedule.delay_days ?? defaultDelayDays,
         interval: schedule.interval as 'manual' | 'daily' | 'weekly' | 'monthly',
         weeklyAnchor: schedule.weekly_anchor,
         monthlyAnchor: schedule.monthly_anchor,

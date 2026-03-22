@@ -9,7 +9,7 @@ import { SignJWT } from 'jose';
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 const mockValkeySet = vi.fn().mockResolvedValue('OK');
-vi.mock('@twicely/db/cache/valkey', () => ({
+vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn(() => ({ set: mockValkeySet })),
 }));
 

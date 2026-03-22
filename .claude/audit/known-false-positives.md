@@ -86,8 +86,10 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
 - **FP-064:** Dead exports in `src/lib/commerce/` (35+ functions)
   — Phase G wiring. Functions are correct implementations awaiting UI/route integration.
 
-- **FP-065:** Unwired notification templates (messaging, QA, search, watchlist)
+- **FP-065:** Unwired notification templates (messaging, QA, search, watchlist, social)
   — Phase G wiring. Templates are defined correctly, notify() calls added when UI is built.
+  `social.followed_seller_new_listing` IS wired via `notifyFollowedSellerNewListing()` in
+  `listings-create.ts` — shell script can't detect indirect wiring through helper functions.
 
 - **FP-066:** Weak ID validation (`z.string().min(1)` instead of `z.string().cuid2()`)
   — Acceptable for now. Will tighten ID validation in a dedicated security pass.
@@ -175,10 +177,9 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   — Both keys ARE seeded at `src/lib/db/seed/v32-platform-settings.ts:358-359`.
   Auditor checked the wrong section of the seed file.
 
-- **FP-083:** W-NEW-09 — Key naming mismatches (`review.*` vs `trust.review.*`, etc.)
-  — Code and seed are internally consistent: both use `review.*`, `standards.*`, and `commerce.protection.*`.
-  The spec document uses `trust.review.*` etc., but this is a doc-only divergence.
-  Renaming would require simultaneous changes to 10+ files and the DB. No functional impact.
+- **FP-083:** ~~RESOLVED~~ — Key naming mismatches fixed in audit fix session 2026-03-21.
+  All seed keys and code call sites now use canonical prefixes (`trust.review.*`, `trust.standards.*`,
+  `fulfillment.shipping.*`, `discovery.*`, `privacy.gdpr.*`, `privacy.retention.*`, etc.).
 
 - **FP-084:** W-NEW-11 — `helpdeskSlaPolicy` missing `businessHoursOnly` and `escalateOnBreach` columns
   — Both columns ARE present in `src/lib/db/schema/helpdesk.ts:178-179`.

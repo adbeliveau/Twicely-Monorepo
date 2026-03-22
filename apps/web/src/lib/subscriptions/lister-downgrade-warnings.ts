@@ -7,7 +7,7 @@
  */
 
 import type { ListerTier } from '@/types/enums';
-import { compareListerTiers } from './subscription-engine';
+import { compareListerTiers } from '@twicely/subscriptions/subscription-engine';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

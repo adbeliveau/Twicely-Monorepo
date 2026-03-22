@@ -1,5 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { timingSafeEqual } from 'crypto';
+
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i]! ^ b[i]!;
+  }
+  return result === 0;
+}
 
 /**
  * Next.js Middleware — Route protection, auth checks, subdomain routing
@@ -10,6 +18,29 @@ import { timingSafeEqual } from 'crypto';
  * - PUBLIC: Pass through, no auth check
  * - AUTHENTICATED: Redirect to /auth/login if no session
  */
+
+/**
+ * Maintenance mode check — reads process.env.MAINTENANCE_MODE.
+ * Set by: admin action (process.env write) or Railway env var panel.
+ * The admin saveGeneralSettings action writes to both DB (source of truth)
+ * and process.env (for same-instance middleware) and Valkey (for cross-instance sync).
+ */
+function isMaintenanceModeActive(): boolean {
+  return process.env.MAINTENANCE_MODE === '1' || process.env.MAINTENANCE_MODE === 'true';
+}
+
+const MAINTENANCE_EXEMPT_PREFIXES = [
+  '/auth/',
+  '/api/auth/',
+  '/api/webhooks/',
+  '/api/cron/',
+  '/_next/',
+];
+
+function isMaintenanceExempt(pathname: string): boolean {
+  return MAINTENANCE_EXEMPT_PREFIXES.some((p) => pathname.startsWith(p))
+    || pathname === '/favicon.ico';
+}
 
 const PUBLIC_PATHS = [
   '/',
@@ -111,15 +142,38 @@ export default function middleware(request: NextRequest): NextResponse {
     return handleHub(request);
   }
 
+  // 0.5. Maintenance mode — block all public traffic except auth + webhooks + cron
+  if (isMaintenanceModeActive() && !isMaintenanceExempt(pathname)) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Platform is temporarily unavailable for maintenance. Please try again shortly.' },
+        { status: 503 }
+      );
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/maintenance';
+    return NextResponse.rewrite(url);
+  }
+
   // 1. CRON routes - require CRON_SECRET
   if (isCronPath(pathname)) {
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
-    const expected = Buffer.from(`Bearer ${cronSecret}`);
-    const actual = Buffer.from(authHeader ?? '');
-    if (!cronSecret || expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+    const encoder = new TextEncoder();
+    const expected = encoder.encode(`Bearer ${cronSecret}`);
+    const actual = encoder.encode(authHeader ?? '');
+    if (!cronSecret || !timingSafeEqual(expected, actual)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // 1.5. Hub API routes - require staff token
+  if (pathname.startsWith('/api/hub/')) {
+    const staffToken = request.cookies.get('twicely.staff_token');
+    if (!staffToken?.value) {
+      return NextResponse.json({ error: 'Staff authentication required' }, { status: 401 });
     }
     return NextResponse.next();
   }

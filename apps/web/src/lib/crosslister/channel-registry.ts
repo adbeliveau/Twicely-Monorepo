@@ -6,7 +6,7 @@
  * Source: Lister Canonical Sections 9.1, 8.3, 19.2, 27.2
  */
 
-import type { ExternalChannel, ConnectorTier, ConnectorCapabilities } from './types';
+import type { ExternalChannel, ConnectorTier, ConnectorCapabilities } from '@twicely/crosslister/types';
 
 export interface ChannelMetadata {
   channel: ExternalChannel;

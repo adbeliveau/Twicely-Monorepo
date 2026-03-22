@@ -4,7 +4,7 @@
  * All monetary values formatted as dollars.
  */
 import type { PnlReportData, BalanceSheetData, CashFlowData } from '@/lib/queries/finance-center-reports';
-import { formatCentsToDollars } from './format';
+import { formatCentsToDollars } from '@twicely/finance/format';
 
 function row(...cells: (string | number)[]): string {
   return cells.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',');

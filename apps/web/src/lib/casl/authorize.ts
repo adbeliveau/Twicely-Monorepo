@@ -4,8 +4,8 @@ import { auth } from '@twicely/auth/server';
 import { db } from '@twicely/db';
 import { delegatedAccess } from '@/lib/db/schema/subscriptions';
 import { sellerProfile } from '@/lib/db/schema/identity';
-import { defineAbilitiesFor } from './ability';
-import type { AppAbility, CaslSession } from './types';
+import { defineAbilitiesFor } from '@twicely/casl/ability';
+import type { AppAbility, CaslSession } from '@twicely/casl/types';
 
 /**
  * Custom error for authorization failures
@@ -96,4 +96,20 @@ export async function authorize(): Promise<{
 
   const ability = defineAbilitiesFor(caslSession);
   return { ability, session: caslSession };
+}
+
+/**
+ * Variant of authorize() that throws ForbiddenError if no authenticated session.
+ * Use this in any action/route that requires authentication (most mutations).
+ * Guest-compatible routes (cart, listing detail) should keep using authorize().
+ */
+export async function requireAuth(): Promise<{
+  ability: AppAbility;
+  session: CaslSession;
+}> {
+  const result = await authorize();
+  if (!result.session) {
+    throw new ForbiddenError('Authentication required');
+  }
+  return { ability: result.ability, session: result.session };
 }

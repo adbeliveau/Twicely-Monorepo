@@ -9,7 +9,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { TrrConsignment } from './therealreal-types';
+import type { TrrConsignment } from '@twicely/crosslister/connectors/therealreal-types';
 
 /** Normalized The RealReal listing data, ready for listing creation */
 export interface TrrNormalizedData {

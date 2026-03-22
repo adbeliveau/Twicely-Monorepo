@@ -1,7 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { auth } from './server';
+import { auth } from '@twicely/auth/server';
 import { db } from '@twicely/db';
 import { user } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

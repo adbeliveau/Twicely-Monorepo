@@ -7,7 +7,7 @@
  */
 
 import type { TransformedListing } from '../types';
-import type { WhatnotListingInput } from './whatnot-types';
+import type { WhatnotListingInput } from '@twicely/crosslister/connectors/whatnot-types';
 
 /**
  * Convert a full TransformedListing to WhatnotListingInput for create mutations.

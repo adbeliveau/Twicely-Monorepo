@@ -8,7 +8,7 @@ import { db } from '@twicely/db';
 import { crossJob, channelProjection, crosslisterAccount } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { recordSuccess, recordFailure } from '../queue/circuit-breaker';
-import { scheduleNextPoll } from './poll-tier-manager';
+import { scheduleNextPoll } from '@twicely/crosslister/polling/poll-tier-manager';
 import type { ExternalChannel } from '../types';
 import { logger } from '@twicely/logger';
 

@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: [
+    '@twicely/db',
+    '@twicely/auth',
+    '@twicely/casl',
+    '@twicely/logger',
+    '@twicely/utils',
+    '@twicely/ui',
+  ],
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

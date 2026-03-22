@@ -90,8 +90,9 @@ export async function initiateCheckout(input: InitiateCheckoutInput): Promise<In
       logger.warn('[checkout] Rate limited', { userId: session.userId, attempts });
       return { success: false, error: 'Too many checkout attempts. Please wait a few minutes.' };
     }
-  } catch {
-    // Valkey unavailable — fail open
+  } catch (err) {
+    // Valkey unavailable — fail open (rate limiting best-effort only)
+    logger.warn('[checkout] Valkey rate-limit check failed, proceeding', { userId: session.userId, error: String(err) });
   }
 
   const parsed = initiateCheckoutSchema.safeParse(input);
@@ -263,21 +264,30 @@ export async function initiateCheckout(input: InitiateCheckoutInput): Promise<In
         .where(eq(order.id, ord.id));
     }
 
-    const { clientSecret, paymentIntentId } = await createConnectPaymentIntent({
-      amountCents: adjustedTotalCents,
-      applicationFeeCents: adjustedTfCents,
-      destinationAccountId: seller.stripeAccountId!,
-      metadata: {
-        orderId: ord.id,
-        buyerId: userId,
-        sellerId: ord.sellerId,
-        ...(discountCents > 0 && input.coupon ? {
-          promotionId: input.coupon.promotionId,
-          couponCode: input.coupon.couponCode,
-          discountCents: String(discountCents),
-        } : {}),
-      },
-    });
+    let clientSecret: string;
+    let paymentIntentId: string;
+    try {
+      const piResult = await createConnectPaymentIntent({
+        amountCents: adjustedTotalCents,
+        applicationFeeCents: adjustedTfCents,
+        destinationAccountId: seller.stripeAccountId!,
+        metadata: {
+          orderId: ord.id,
+          buyerId: userId,
+          sellerId: ord.sellerId,
+          ...(discountCents > 0 && input.coupon ? {
+            promotionId: input.coupon.promotionId,
+            couponCode: input.coupon.couponCode,
+            discountCents: String(discountCents),
+          } : {}),
+        },
+      });
+      clientSecret = piResult.clientSecret;
+      paymentIntentId = piResult.paymentIntentId;
+    } catch (err) {
+      logger.error('[checkout] Failed to create PaymentIntent', { orderId: ord.id, error: String(err) });
+      return { success: false, error: 'Failed to create payment. Please try again.' };
+    }
 
     // Update order with paymentIntentId
     await db

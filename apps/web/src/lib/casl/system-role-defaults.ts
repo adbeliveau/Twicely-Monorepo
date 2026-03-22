@@ -4,7 +4,7 @@
  * Used by /roles/system/[code] to show the read-only toggle grid.
  */
 
-import type { PlatformRole } from './types';
+import type { PlatformRole } from '@twicely/casl/types';
 
 export interface SystemRoleDefinition {
   code: PlatformRole;

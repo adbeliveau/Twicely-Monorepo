@@ -9,7 +9,7 @@
  * Runs every 5 minutes on the `helpdesk-csat-send` queue.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { helpdeskCase, caseCsat } from '@twicely/db/schema';
 import { eq, and, lt } from 'drizzle-orm';
@@ -75,5 +75,9 @@ createWorker<HelpdeskCsatSendData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskCsatSend(): Promise<void> {
-  await queue.add('csat-send', { triggeredAt: new Date().toISOString() });
+  await queue.add(
+    'csat-send',
+    { triggeredAt: new Date().toISOString() },
+    { jobId: 'helpdesk-csat-send', repeat: { pattern: '*/5 * * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+  );
 }

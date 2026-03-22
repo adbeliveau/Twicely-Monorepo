@@ -43,4 +43,4 @@ export const TrrConsignmentSchema = z.object({
   condition_notes: z.string().optional(),
 });
 
-export type { TrrConsignment } from './therealreal-types';
+export type { TrrConsignment } from '@twicely/crosslister/connectors/therealreal-types';

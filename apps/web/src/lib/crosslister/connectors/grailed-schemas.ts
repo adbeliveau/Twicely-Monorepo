@@ -47,4 +47,4 @@ export const GrailedListingSchema = z.object({
   location: z.string().optional(),
 });
 
-export type { GrailedListing } from './grailed-types';
+export type { GrailedListing } from '@twicely/crosslister/connectors/grailed-types';

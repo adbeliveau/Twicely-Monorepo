@@ -24,8 +24,8 @@ import { eq, and } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { isFeatureEnabled } from '@/lib/services/feature-flags';
 import { getChannelMetadata } from '../channel-registry';
-import { transformListingForChannel } from './listing-transform';
-import { validateForChannel } from './policy-validator';
+import { transformListingForChannel } from '@twicely/crosslister/services/listing-transform';
+import { validateForChannel } from '@twicely/crosslister/services/policy-validator';
 import { listerPublishQueue } from '../queue/lister-queue';
 import {
   PRIORITY_CREATE,
@@ -38,7 +38,7 @@ import {
   REMOVE_ON_FAIL,
 } from '../queue/constants';
 import type { ExternalChannel, ExternalCategoryMapping } from '../types';
-import type { ChannelOverrides, CanonicalListingData, CanonicalImageData } from './listing-transform';
+import type { ChannelOverrides, CanonicalListingData, CanonicalImageData } from '@twicely/crosslister/services/listing-transform';
 
 export interface PublishEnqueueResult {
   success: boolean;

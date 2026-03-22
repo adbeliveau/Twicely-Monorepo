@@ -9,7 +9,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { FbCommerceListing } from './fb-marketplace-types';
+import type { FbCommerceListing } from '@twicely/crosslister/connectors/fb-marketplace-types';
 
 /** Normalized Facebook Marketplace listing data, ready for listing creation */
 export interface FbMarketplaceNormalizedData {

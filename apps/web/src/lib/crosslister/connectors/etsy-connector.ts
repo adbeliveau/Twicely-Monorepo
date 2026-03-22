@@ -34,8 +34,8 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { normalizeEtsyListing, toExternalListing } from './etsy-normalizer';
-import type { EtsyListingsResponse, EtsyTokenResponse, EtsyUserProfile } from './etsy-types';
+import { normalizeEtsyListing, toExternalListing } from '@twicely/crosslister/connectors/etsy-normalizer';
+import type { EtsyListingsResponse, EtsyTokenResponse, EtsyUserProfile } from '@twicely/crosslister/connectors/etsy-types';
 
 const ETSY_AUTH_URL = 'https://www.etsy.com/oauth/connect';
 const ETSY_TOKEN_URL = 'https://api.etsy.com/v3/public/oauth/token';

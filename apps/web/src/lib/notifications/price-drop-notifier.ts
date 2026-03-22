@@ -1,7 +1,7 @@
 import { db } from '@twicely/db';
 import { watchlistItem, listing, user } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { notify } from './service';
+import { notify } from '@twicely/notifications/service';
 import { formatPrice } from '@twicely/utils/format';
 import { logger } from '@twicely/logger';
 

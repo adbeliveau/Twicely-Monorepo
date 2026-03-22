@@ -1,4 +1,4 @@
-import type { PermissionModule } from './permission-registry';
+import type { PermissionModule } from '@twicely/casl/permission-registry';
 
 export const PERMISSION_MODULES: PermissionModule[] = [
   {

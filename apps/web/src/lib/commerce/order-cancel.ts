@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { stripe } from '@twicely/stripe/server';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 interface CancelOrderResult { success: boolean; error?: string }
 
@@ -32,6 +33,8 @@ export async function cancelOrder(
       orderNumber: order.orderNumber,
       paymentIntentId: order.paymentIntentId,
       totalCents: order.totalCents,
+      paidAt: order.paidAt,
+      createdAt: order.createdAt,
     })
     .from(order)
     .where(eq(order.id, orderId))
@@ -57,6 +60,15 @@ export async function cancelOrder(
   }
 
   const cancelInitiator = isBuyer ? 'BUYER' : 'SELLER';
+
+  // Buyer-only: enforce cancellation time window
+  if (isBuyer) {
+    const cancelWindowHours = await getPlatformSetting<number>('commerce.cancel.buyerWindowHours', 1);
+    const hoursSincePaid = (Date.now() - new Date(orderData.paidAt ?? orderData.createdAt).getTime()) / (1000 * 60 * 60);
+    if (hoursSincePaid > cancelWindowHours) {
+      return { success: false, error: 'Cancellation window has expired' };
+    }
+  }
 
   try {
     // Issue full refund via Stripe FIRST (before any DB changes)

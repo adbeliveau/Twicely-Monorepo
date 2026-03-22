@@ -2,8 +2,8 @@
  * C4 + C4.1 — Returns & Disputes: Validation helpers
  */
 
-import { getReturnWindowDays, getCounterfeitWindowDays, getSellerResponseDays } from './returns-types';
-import type { ReturnReason } from './returns-types';
+import { getReturnWindowDays, getCounterfeitWindowDays, getSellerResponseDays } from '@twicely/commerce/returns-types';
+import type { ReturnReason } from '@twicely/commerce/returns-types';
 
 /**
  * Check if an order is within the return window.

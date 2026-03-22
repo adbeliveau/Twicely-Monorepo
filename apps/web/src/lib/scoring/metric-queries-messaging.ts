@@ -7,7 +7,7 @@
 import { db } from '@twicely/db';
 import { review, conversation, message } from '@twicely/db/schema';
 import { eq, and, gte } from 'drizzle-orm';
-import { windowStart } from './metric-queries';
+import { windowStart } from '@twicely/scoring/metric-queries';
 
 /**
  * Review average: weighted DSR average for the window.

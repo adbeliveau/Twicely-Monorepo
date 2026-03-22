@@ -4,6 +4,7 @@
  * Handles listing images, avatars, and store banners with validation.
  */
 
+import { logger } from '@twicely/logger';
 import { uploadToR2, deleteFromR2, extractKeyFromUrl, R2_PUBLIC_URL } from './r2-client';
 import { validateImageBytes, detectImageType, getExtension } from '@/lib/upload/validate';
 
@@ -56,7 +57,7 @@ export async function uploadListingImage(
 
     return { success: true, url, thumbnailUrl };
   } catch (error) {
-    console.error('[ImageService] Failed to upload listing image:', error);
+    logger.error('[ImageService] Failed to upload listing image', { error: String(error) });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Upload failed',
@@ -91,7 +92,7 @@ export async function uploadAvatar(
     const url = await uploadToR2(key, buffer, contentType);
     return { success: true, url };
   } catch (error) {
-    console.error('[ImageService] Failed to upload avatar:', error);
+    logger.error('[ImageService] Failed to upload avatar', { error: String(error) });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Upload failed',
@@ -126,7 +127,7 @@ export async function uploadStoreBanner(
     const url = await uploadToR2(key, buffer, contentType);
     return { success: true, url };
   } catch (error) {
-    console.error('[ImageService] Failed to upload banner:', error);
+    logger.error('[ImageService] Failed to upload banner', { error: String(error) });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Upload failed',
@@ -148,7 +149,7 @@ export async function deleteImage(url: string): Promise<{ success: boolean; erro
     await deleteFromR2(key);
     return { success: true };
   } catch (error) {
-    console.error('[ImageService] Failed to delete image:', error);
+    logger.error('[ImageService] Failed to delete image', { error: String(error) });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Delete failed',

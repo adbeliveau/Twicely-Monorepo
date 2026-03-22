@@ -42,7 +42,7 @@ export async function submitBuyerReview(data: SubmitBuyerReviewInput): Promise<R
   if (o.status !== 'DELIVERED' && o.status !== 'COMPLETED') return { success: false, error: 'Order must be delivered' };
   if (!o.deliveredAt) return { success: false, error: 'Delivery date not available' };
 
-  const submitWindowDays = await getPlatformSetting<number>('review.windowDays', 60);
+  const submitWindowDays = await getPlatformSetting<number>('trust.review.windowDays', 60);
   const windowEnd = new Date(o.deliveredAt);
   windowEnd.setDate(windowEnd.getDate() + submitWindowDays);
   if (new Date() > windowEnd) return { success: false, error: `Review window closed (${submitWindowDays} days)` };
@@ -87,7 +87,7 @@ export async function updateBuyerReview(data: UpdateBuyerReviewInput): Promise<R
   if (!r) return { success: false, error: 'Review not found' };
   if (r.sellerUserId !== userId) return { success: false, error: 'Unauthorized' };
 
-  const editWindowHours = await getPlatformSetting<number>('review.editWindowHours', 48);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
   const editDeadline = new Date(r.createdAt);
   editDeadline.setHours(editDeadline.getHours() + editWindowHours);
   if (new Date() > editDeadline) return { success: false, error: `Edit window closed (${editWindowHours}h)` };

@@ -8,7 +8,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { PoshmarkListing } from './poshmark-types';
+import type { PoshmarkListing } from '@twicely/crosslister/connectors/poshmark-types';
 
 /** Normalized Poshmark listing data, ready for listing creation */
 export interface PoshmarkNormalizedData {

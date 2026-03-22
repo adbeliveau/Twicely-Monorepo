@@ -13,7 +13,20 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "bullmq": "^5.69.3",
+    "drizzle-orm": "^0.45.1",
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/s3-request-presigner": "^3.995.0",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "@twicely/commerce": "workspace:*",
     "@twicely/db": "workspace:*",
-    "@twicely/logger": "workspace:*"
+    "@twicely/logger": "workspace:*",
+    "@twicely/notifications": "workspace:*",
+    "@twicely/scoring": "workspace:*",
+    "@twicely/storage": "workspace:*",
+    "@twicely/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
   }
 }

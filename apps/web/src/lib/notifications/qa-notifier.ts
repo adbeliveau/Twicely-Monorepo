@@ -1,7 +1,7 @@
 import { db } from '@twicely/db';
 import { listingQuestion, listing, user } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { notify } from './service';
+import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';

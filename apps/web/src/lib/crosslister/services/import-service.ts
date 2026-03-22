@@ -21,10 +21,10 @@ import { platformSetting } from '@twicely/db/schema';
 import { logger } from '@twicely/logger';
 import '../connectors'; // Ensure all connectors are registered
 import { getConnector } from '../connector-registry';
-import { generateFingerprint, findDedupeMatch } from './dedupe-service';
-import { normalizeExternalListing } from './normalizer-dispatch';
-import { createImportedListing } from './listing-creator';
-import { notifyImportCompleted } from './import-notifier';
+import { generateFingerprint, findDedupeMatch } from '@twicely/crosslister/services/dedupe-service';
+import { normalizeExternalListing } from '@twicely/crosslister/services/normalizer-dispatch';
+import { createImportedListing } from '@twicely/crosslister/services/listing-creator';
+import { notifyImportCompleted } from '@twicely/crosslister/services/import-notifier';
 import type { ExternalListing, ExternalChannel } from '../types';
 
 async function getBatchSize(): Promise<number> {

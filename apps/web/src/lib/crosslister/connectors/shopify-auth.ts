@@ -9,8 +9,8 @@
 import { logger } from '@twicely/logger';
 import type { AuthInput, AuthResult, ConnectorCapabilities } from '../types';
 import type { CrosslisterAccount } from '../db-types';
-import type { ShopifyAccessTokenResponse, ShopifyShopResponse } from './shopify-types';
-import { ShopifyAccessTokenSchema, ShopifyShopSchema } from './shopify-schemas';
+import type { ShopifyAccessTokenResponse, ShopifyShopResponse } from '@twicely/crosslister/connectors/shopify-types';
+import { ShopifyAccessTokenSchema, ShopifyShopSchema } from '@twicely/crosslister/connectors/shopify-schemas';
 
 interface ShopifyAuthConfig {
   clientId: string;

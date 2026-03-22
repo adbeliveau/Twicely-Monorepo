@@ -8,7 +8,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { GrailedListing } from './grailed-types';
+import type { GrailedListing } from '@twicely/crosslister/connectors/grailed-types';
 
 /** Normalized Grailed listing data, ready for listing creation */
 export interface GrailedNormalizedData {

@@ -10,7 +10,7 @@
  * Runs every 5 minutes on the `helpdesk-sla-check` queue.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { helpdeskCase, helpdeskSlaPolicy, caseEvent, helpdeskTeam } from '@twicely/db/schema';
 import { eq, and, isNotNull, inArray } from 'drizzle-orm';
@@ -118,5 +118,9 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskSlaCheck(): Promise<void> {
-  await queue.add('sla-check', { triggeredAt: new Date().toISOString() });
+  await queue.add(
+    'sla-check',
+    { triggeredAt: new Date().toISOString() },
+    { jobId: 'helpdesk-sla-check', repeat: { pattern: '*/5 * * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+  );
 }

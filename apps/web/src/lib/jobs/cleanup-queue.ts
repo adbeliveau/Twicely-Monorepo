@@ -11,14 +11,14 @@
  * 4. data-purge       — daily at 04:30 UTC
  */
 
-import { cleanupQueue, CLEANUP_QUEUE_NAME } from './account-deletion-executor';
-import { runSessionCleanup } from './cleanup-session';
-import { runAuditArchive } from './cleanup-audit-archive';
-import { runDataPurge } from './cleanup-data-purge';
-import { createWorker } from './queue';
-import { upsertPlatformSetting } from './cleanup-helpers';
+import { cleanupQueue, CLEANUP_QUEUE_NAME } from '@twicely/jobs/account-deletion-executor';
+import { runSessionCleanup } from '@twicely/jobs/cleanup-session';
+import { runAuditArchive } from '@twicely/jobs/cleanup-audit-archive';
+import { runDataPurge } from '@twicely/jobs/cleanup-data-purge';
+import { createWorker } from '@twicely/jobs/queue';
+import { upsertPlatformSetting } from '@twicely/jobs/cleanup-helpers';
 import { logger } from '@twicely/logger';
-import type { CleanupJobData } from './account-deletion-executor';
+import type { CleanupJobData } from '@twicely/jobs/account-deletion-executor';
 
 /** Register all cleanup repeatable jobs. Call once at startup. */
 export async function registerCleanupJobs(): Promise<void> {

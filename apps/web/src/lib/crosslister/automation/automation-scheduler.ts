@@ -15,16 +15,16 @@
  */
 
 import { logger } from '@twicely/logger';
-import { runAutoRelistEngine } from './auto-relist-engine';
-import { runPriceDropEngine } from './price-drop-engine';
-import { runOfferToLikersEngine } from './offer-to-likers-engine';
-import { runPoshShareEngine } from './posh-share-engine';
-import { runPoshFollowEngine } from './posh-follow-engine';
+import { runAutoRelistEngine } from '@twicely/crosslister/automation/auto-relist-engine';
+import { runPriceDropEngine } from '@twicely/crosslister/automation/price-drop-engine';
+import { runOfferToLikersEngine } from '@twicely/crosslister/automation/offer-to-likers-engine';
+import { runPoshShareEngine } from '@twicely/crosslister/automation/posh-share-engine';
+import { runPoshFollowEngine } from '@twicely/crosslister/automation/posh-follow-engine';
 import {
   AUTO_RELIST_HOUR_UTC,
   PRICE_DROP_HOUR_UTC,
   OFFER_TO_LIKERS_HOUR_UTC,
-} from './constants';
+} from '@twicely/crosslister/automation/constants';
 
 /**
  * Run the automation tick for the current UTC hour.

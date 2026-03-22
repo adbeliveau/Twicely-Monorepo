@@ -1,4 +1,4 @@
-import { getOfferWithParties } from './offer-queries';
+import { getOfferWithParties } from '@twicely/commerce/offer-queries';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
 
@@ -7,7 +7,7 @@ function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL ?? '';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
 
 /**
  * Fire-and-forget notification for offer events.

@@ -11,5 +11,14 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@casl/ability": "^6.8.0",
+    "drizzle-orm": "^0.45.1",
+    "@twicely/auth": "workspace:*",
+    "@twicely/db": "workspace:*"
+  },
+  "devDependencies": {
+    "next": "16.1.6"
   }
 }

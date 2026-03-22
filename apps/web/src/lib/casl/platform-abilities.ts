@@ -1,5 +1,5 @@
 import type { AbilityBuilder } from '@casl/ability';
-import type { AppAbility, PlatformRole } from './types';
+import type { AppAbility, PlatformRole } from '@twicely/casl/types';
 
 /**
  * Define abilities for platform agents (non-admin staff roles)
@@ -63,6 +63,7 @@ export function definePlatformAgentAbilities(
     can('read', 'Dispute');
     can('read', 'Payout');
     can('read', 'AuditEvent');
+    can('read', 'SecurityEvent');
     // I7 — Trust & Safety — Support can view trust context during disputes
     can('read', 'TrustSafety');
     can('create', 'Return');
@@ -92,6 +93,7 @@ export function definePlatformAgentAbilities(
     can('read', 'Message');
     can('read', 'Conversation');
     can('read', 'AuditEvent');
+    can('read', 'SecurityEvent');
     can('update', 'Listing');
     can('update', 'SellerProfile');
     can('update', 'Review');
@@ -150,6 +152,7 @@ export function definePlatformAgentAbilities(
   if (roles.includes('SRE')) {
     can('read', 'HealthCheck');
     can('read', 'AuditEvent');
+    can('read', 'SecurityEvent');
     can('manage', 'HealthCheck');
   }
 }

@@ -38,8 +38,8 @@ export default async function PrivacySettingsPage() {
         .then((rows) => rows[0] ?? null),
       getAccountDeletionBlockers(),
       getMyDataExportRequests(),
-      getPlatformSetting<number>('gdpr.deletionGracePeriodDays', 30),
-      getPlatformSetting<string[]>('gdpr.exportFormats', ['json', 'csv']),
+      getPlatformSetting<number>('privacy.gdpr.deletionGracePeriodDays', 30),
+      getPlatformSetting<string[]>('privacy.gdpr.exportFormats', ['json', 'csv']),
     ]);
 
   return (

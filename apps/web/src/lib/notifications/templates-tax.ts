@@ -1,4 +1,4 @@
-import type { TemplateDef } from './templates';
+import type { TemplateDef } from '@twicely/notifications/templates';
 
 export const TAX_TEMPLATES: Record<string, TemplateDef> = {
   'tax.info_required': {

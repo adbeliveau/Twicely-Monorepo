@@ -3,6 +3,7 @@
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@twicely/ui/button';
+import { toast } from 'sonner';
 import { adminDeactivatePromotion, adminReactivatePromotion, adminUpdatePromoCode } from '@/lib/actions/admin-promotions';
 
 export function PromotionActionButtons({ promotionId, isActive }: { promotionId: string; isActive: boolean }) {
@@ -11,12 +12,19 @@ export function PromotionActionButtons({ promotionId, isActive }: { promotionId:
 
   function handleToggle() {
     startTransition(async () => {
-      if (isActive) {
-        await adminDeactivatePromotion({ promotionId });
-      } else {
-        await adminReactivatePromotion({ promotionId });
+      try {
+        const result = isActive
+          ? await adminDeactivatePromotion({ promotionId })
+          : await adminReactivatePromotion({ promotionId });
+        if (!result.success) {
+          toast.error(result.error ?? 'Failed to update promotion');
+          return;
+        }
+        toast.success(isActive ? 'Promotion deactivated' : 'Promotion reactivated');
+        router.refresh();
+      } catch {
+        toast.error('An unexpected error occurred');
       }
-      router.refresh();
     });
   }
 
@@ -38,8 +46,17 @@ export function PromoCodeActionButtons({ codeId, isActive }: { codeId: string; i
 
   function handleToggle() {
     startTransition(async () => {
-      await adminUpdatePromoCode({ id: codeId, isActive: !isActive });
-      router.refresh();
+      try {
+        const result = await adminUpdatePromoCode({ id: codeId, isActive: !isActive });
+        if (!result.success) {
+          toast.error(result.error ?? 'Failed to update promo code');
+          return;
+        }
+        toast.success(isActive ? 'Promo code deactivated' : 'Promo code reactivated');
+        router.refresh();
+      } catch {
+        toast.error('An unexpected error occurred');
+      }
     });
   }
 

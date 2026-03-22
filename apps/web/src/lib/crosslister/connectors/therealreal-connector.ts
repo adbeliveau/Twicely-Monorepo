@@ -34,8 +34,8 @@ import type {
 } from '../types';
 import { registerConnector } from '../connector-registry';
 import { tierCDelay } from '../services/platform-fees';
-import { normalizeTrrListing, toExternalListing } from './therealreal-normalizer';
-import type { TrrAuthResponse, TrrConsignmentsResponse, TrrSessionData } from './therealreal-types';
+import { normalizeTrrListing, toExternalListing } from '@twicely/crosslister/connectors/therealreal-normalizer';
+import type { TrrAuthResponse, TrrConsignmentsResponse, TrrSessionData } from '@twicely/crosslister/connectors/therealreal-types';
 
 const TRR_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,

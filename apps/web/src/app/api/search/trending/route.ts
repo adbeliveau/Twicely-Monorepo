@@ -5,7 +5,7 @@
  * Source: G10.6
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@twicely/db';
 import { browsingHistory } from '@twicely/db/schema';
 import { sql } from 'drizzle-orm';
@@ -25,7 +25,19 @@ const FALLBACK_TRENDING = [
   'Levi\'s jeans',
 ];
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request?: NextRequest): Promise<NextResponse> {
+  try {
+    const { getValkeyClient } = await import('@twicely/db/cache');
+    const valkey = getValkeyClient();
+    const ip = request?.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const key = `search-rate:${ip}`;
+    const count = await valkey.incr(key);
+    if (count === 1) await valkey.expire(key, 60);
+    if (count > 30) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+  } catch { /* Valkey down — fail open */ }
+
   try {
     const since = new Date();
     since.setDate(since.getDate() - WINDOW_DAYS);

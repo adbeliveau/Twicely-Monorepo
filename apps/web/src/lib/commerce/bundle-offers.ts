@@ -10,14 +10,14 @@ import { listingOffer, offerBundleItem, listing, address } from '@twicely/db/sch
 import { eq, inArray } from 'drizzle-orm';
 import { stripe } from '@twicely/stripe/server';
 import { scheduleOfferExpiry } from '@twicely/jobs/offer-expiry';
-import { notifyOfferEvent } from './offer-notifications';
-import { getOfferById } from './offer-queries';
+import { notifyOfferEvent } from '@twicely/commerce/offer-notifications';
+import { getOfferById } from '@twicely/commerce/offer-queries';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 // Re-export response function and types for external consumers
-export { respondToBundleOffer } from './bundle-offer-response';
-export type { BundleOfferResult } from './bundle-offer-response';
-import type { BundleOfferResult } from './bundle-offer-response';
+export { respondToBundleOffer } from '@twicely/commerce/bundle-offer-response';
+export type { BundleOfferResult } from '@twicely/commerce/bundle-offer-response';
+import type { BundleOfferResult } from '@twicely/commerce/bundle-offer-response';
 
 export interface CreateBundleOfferParams {
   buyerId: string;

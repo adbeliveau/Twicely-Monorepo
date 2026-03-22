@@ -7,7 +7,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { MercariItem } from './mercari-types';
+import type { MercariItem } from '@twicely/crosslister/connectors/mercari-types';
 
 /** Normalized Mercari listing data, ready for listing creation */
 export interface MercariNormalizedData {

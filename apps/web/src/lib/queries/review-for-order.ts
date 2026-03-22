@@ -48,7 +48,7 @@ export async function getReviewForOrder(orderId: string, userId: string): Promis
   }
 
   // Check if user can edit (ownership + within edit window)
-  const editWindowHours = await getPlatformSetting<number>('review.editWindowHours', 48);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
   const now = new Date();
   const editWindowEnd = new Date(reviewRecord.createdAt);
   editWindowEnd.setHours(editWindowEnd.getHours() + editWindowHours);

@@ -42,6 +42,17 @@ export async function POST(): Promise<NextResponse> {
   }
 
   try {
+    const { getValkeyClient } = await import('@twicely/db/cache');
+    const valkey = getValkeyClient();
+    const key = `setup-intent-rate:${session.userId}`;
+    const count = await valkey.incr(key);
+    if (count === 1) await valkey.expire(key, 60);
+    if (count > 5) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+  } catch { /* fail open */ }
+
+  try {
     const customerId = await getOrCreateStripeCustomer(session.userId, session.email);
 
     const setupIntent = await stripe.setupIntents.create({

@@ -5,8 +5,8 @@ import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
 
 // Re-export extracted modules
-export { markOrderCompleted, autoCompleteDeliveredOrders } from './order-completion';
-export { cancelOrder } from './order-cancel';
+export { markOrderCompleted, autoCompleteDeliveredOrders } from '@twicely/commerce/order-completion';
+export { cancelOrder } from '@twicely/commerce/order-cancel';
 
 export type Carrier = 'USPS' | 'UPS' | 'FEDEX' | 'OTHER';
 

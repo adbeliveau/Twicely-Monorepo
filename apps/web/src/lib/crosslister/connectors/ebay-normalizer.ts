@@ -6,7 +6,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { EbayInventoryItem } from './ebay-types';
+import type { EbayInventoryItem } from '@twicely/crosslister/connectors/ebay-types';
 
 /**
  * Normalized data returned from the normalizer, ready for listing creation.

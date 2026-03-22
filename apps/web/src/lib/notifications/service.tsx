@@ -2,8 +2,10 @@ import { db } from '@twicely/db';
 import { notification, notificationPreference, notificationSetting, user } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendEmail } from '@twicely/email/send';
-import { TEMPLATES, interpolate, type TemplateKey } from './templates';
+import { TEMPLATES, interpolate, type TemplateKey } from '@twicely/notifications/templates';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getValkeyClient } from '@twicely/db/cache';
 
 interface UserPrefs {
   email: boolean;
@@ -156,8 +158,29 @@ export async function notify(
 
   // EMAIL — digest routing for NORMAL/LOW priority
   if (prefs.email) {
+    // Fix 1: Global email gate
+    const emailEnabled = await getPlatformSetting<boolean>('comms.email.enabled', true);
+    if (!emailEnabled) return; // Email globally disabled
+
+    // Fix 2: Per-user daily email rate limit
+    try {
+      const valkey = getValkeyClient();
+      const maxPerDay = await getPlatformSetting<number>('comms.email.maxPerDayPerUser', 50);
+      const rateLimitKey = `email-rate:${userId}:${new Date().toISOString().split('T')[0]}`;
+      const count = await valkey.incr(rateLimitKey);
+      if (count === 1) await valkey.expire(rateLimitKey, 86400);
+      if (count > maxPerDay) {
+        logger.warn('[notify] Email rate limit exceeded', { userId, count, maxPerDay });
+        return;
+      }
+    } catch {
+      // Valkey unavailable — fail open
+    }
+
     const isInformational = template.priority === 'NORMAL' || template.priority === 'LOW';
-    if (isInformational && settings.digestFrequency) {
+    // Fix 3: Global digest gate — if disabled, send immediately instead of queueing
+    const digestEnabled = await getPlatformSetting<boolean>('comms.digest.enabled', true);
+    if (isInformational && digestEnabled && settings.digestFrequency) {
       // Queue for digest: create row with sentAt=null
       try {
         await db.insert(notification).values({
@@ -186,6 +209,22 @@ export async function notify(
       const emailComponent = getEmailComponent(templateKey, data);
       if (!emailComponent) {
         logger.error(`[notify] No email component for template: ${templateKey}`);
+        try {
+          await db.insert(notification).values({
+            userId,
+            channel: 'EMAIL',
+            priority: template.priority,
+            templateKey,
+            subject,
+            body,
+            dataJson: data,
+            sentAt: null,
+            failedAt: new Date(),
+            failureReason: 'No email component for template',
+          });
+        } catch (err) {
+          logger.error('[notify] Failed to record EMAIL component-missing failure', { err });
+        }
         return;
       }
 

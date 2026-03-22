@@ -10,7 +10,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { WhatnotListing } from './whatnot-types';
+import type { WhatnotListing } from '@twicely/crosslister/connectors/whatnot-types';
 
 /** Normalized Whatnot listing data, ready for listing creation */
 export interface WhatnotNormalizedData {

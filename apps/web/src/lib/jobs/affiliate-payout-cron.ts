@@ -1,4 +1,4 @@
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { logger } from '@twicely/logger';
 
 const QUEUE_NAME = 'affiliate-payout';
@@ -23,7 +23,7 @@ export async function registerAffiliatePayoutJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'affiliate-payout-monthly',
-      repeat: { pattern: '0 6 15 * *' },
+      repeat: { pattern: '0 6 15 * *', tz: 'UTC' },
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     }

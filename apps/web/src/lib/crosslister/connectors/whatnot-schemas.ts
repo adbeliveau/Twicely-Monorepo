@@ -53,7 +53,7 @@ export const WhatnotTokenResponseSchema = z.object({
   error_description: z.string().optional(),
 });
 
-export type { WhatnotListing } from './whatnot-types';
+export type { WhatnotListing } from '@twicely/crosslister/connectors/whatnot-types';
 
 // Mutation response schemas
 

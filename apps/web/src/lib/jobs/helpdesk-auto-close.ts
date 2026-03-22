@@ -8,7 +8,7 @@
  * Runs every 15 minutes on the `helpdesk` queue.
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { helpdeskCase, caseEvent } from '@twicely/db/schema';
 import { eq, and, lt, inArray } from 'drizzle-orm';
@@ -104,5 +104,9 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskAutoClose(): Promise<void> {
-  await queue.add('auto-close', { triggeredAt: new Date().toISOString() });
+  await queue.add(
+    'auto-close',
+    { triggeredAt: new Date().toISOString() },
+    { jobId: 'helpdesk-auto-close', repeat: { pattern: '*/15 * * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+  );
 }

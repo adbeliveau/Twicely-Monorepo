@@ -6,7 +6,7 @@
  * Per Feature Lock-in §45 + Actors & Security Canonical §4.2.
  */
 
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import { db } from '@twicely/db';
 import { identityVerification, sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
@@ -14,6 +14,7 @@ import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import type Stripe from 'stripe';
+import { notify } from '@twicely/notifications/service';
 
 export interface VerificationSessionResult {
   sessionId: string;
@@ -109,6 +110,14 @@ export async function handleVerificationWebhook(
     return;
   }
 
+  // Notify submission received on first outcome event (not canceled — user abandoned)
+  if (
+    event.type === 'identity.verification_session.verified' ||
+    event.type === 'identity.verification_session.requires_input'
+  ) {
+    void notify(record.userId, 'kyc.verification_submitted', {});
+  }
+
   if (event.type === 'identity.verification_session.verified') {
     const reportId = session.last_verification_report?.toString();
 
@@ -143,6 +152,10 @@ export async function handleVerificationWebhook(
       level: record.level,
       expiresAt,
     });
+
+    void notify(record.userId, 'kyc.verification_approved', {
+      level: record.level,
+    });
   } else if (event.type === 'identity.verification_session.requires_input') {
     const failureReason =
       session.last_error?.code ?? 'unknown';
@@ -169,6 +182,11 @@ export async function handleVerificationWebhook(
       failureReason,
       retryAfter,
     });
+
+    void notify(record.userId, 'kyc.verification_failed', {
+      failureReason,
+      retryAfterDate: retryAfter.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    });
   } else if (event.type === 'identity.verification_session.canceled') {
     const retryDays = await getPlatformSetting<number>('kyc.failedRetryDays', 30);
 
@@ -185,5 +203,9 @@ export async function handleVerificationWebhook(
         updatedAt: new Date(),
       })
       .where(eq(identityVerification.id, record.id));
+
+    void notify(record.userId, 'kyc.verification_expired', {
+      expiryDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    });
   }
 }

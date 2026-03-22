@@ -11,7 +11,7 @@ import { channelPolicyRule } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getChannelMetadata } from '../channel-registry';
 import type { ExternalChannel } from '../types';
-import type { CanonicalListingData, CanonicalImageData } from './listing-transform';
+import type { CanonicalListingData, CanonicalImageData } from '@twicely/crosslister/services/listing-transform';
 
 export type PolicyResult =
   | { status: 'ALLOW' }

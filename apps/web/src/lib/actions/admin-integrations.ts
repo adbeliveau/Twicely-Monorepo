@@ -19,11 +19,15 @@ import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
 
 const updateKeysSchema = z.object({
-  provider: z.enum(['stripe', 'shippo']),
+  provider: z.enum(['stripe', 'shippo', 'resend', 'anthropic', 'taxjar']),
   testSecretKey: z.string().optional(),
   liveSecretKey: z.string().optional(),
   testPublishableKey: z.string().optional(),
   livePublishableKey: z.string().optional(),
+  webhookSigningSecret: z.string().optional(),
+  connectWebhookSecret: z.string().optional(),
+  identityWebhookSecret: z.string().optional(),
+  apiKey: z.string().optional(),
 }).strict();
 
 async function getOrCreateInstance(
@@ -83,14 +87,18 @@ export async function updateIntegrationKeys(input: unknown) {
   const parsed = updateKeysSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
 
-  const { provider, testSecretKey, liveSecretKey, testPublishableKey, livePublishableKey } = parsed.data;
-  const instanceName = provider === 'stripe' ? 'stripe-primary' : 'shippo-primary';
+  const { provider, testSecretKey, liveSecretKey, testPublishableKey, livePublishableKey, webhookSigningSecret, connectWebhookSecret, identityWebhookSecret, apiKey } = parsed.data;
+  const instanceName = `${provider}-primary`;
   const instanceId = await getOrCreateInstance(instanceName, instanceName, session.staffUserId);
 
   if (testSecretKey) await upsertSecret(instanceId, 'test_secret_key', testSecretKey);
   if (liveSecretKey) await upsertSecret(instanceId, 'live_secret_key', liveSecretKey);
   if (testPublishableKey) await upsertSecret(instanceId, 'test_publishable_key', testPublishableKey);
   if (livePublishableKey) await upsertSecret(instanceId, 'live_publishable_key', livePublishableKey);
+  if (webhookSigningSecret) await upsertSecret(instanceId, 'webhook_signing_secret', webhookSigningSecret);
+  if (connectWebhookSecret) await upsertSecret(instanceId, 'connect_webhook_secret', connectWebhookSecret);
+  if (identityWebhookSecret) await upsertSecret(instanceId, 'identity_webhook_secret', identityWebhookSecret);
+  if (apiKey) await upsertSecret(instanceId, 'api_key', apiKey);
 
   await db.insert(auditEvent).values({
     actorType: 'STAFF',

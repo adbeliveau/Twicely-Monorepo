@@ -12,14 +12,21 @@ interface DataPoint {
 
 interface DashboardBarChartProps {
   data: DataPoint[];
-  formatValue: (value: number) => string;
+  formatKind?: 'cents' | 'number';
   barColor?: string;
   emptyMessage?: string;
 }
 
+function formatValue(value: number, kind: 'cents' | 'number'): string {
+  if (kind === 'cents') {
+    return `$${(value / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  }
+  return String(value);
+}
+
 export function DashboardBarChart({
   data,
-  formatValue,
+  formatKind = 'number',
   barColor = 'bg-blue-500',
   emptyMessage = 'No data yet',
 }: DashboardBarChartProps) {
@@ -46,7 +53,7 @@ export function DashboardBarChart({
                 />
               </div>
               <span className="w-16 shrink-0 text-xs font-medium text-gray-700">
-                {formatValue(point.value)}
+                {formatValue(point.value, formatKind)}
               </span>
             </div>
           </div>

@@ -8,7 +8,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { EtsyListing } from './etsy-types';
+import type { EtsyListing } from '@twicely/crosslister/connectors/etsy-types';
 
 /** Normalized Etsy listing data, ready for listing creation */
 export interface EtsyNormalizedData {
@@ -77,7 +77,7 @@ export function normalizeEtsyListing(raw: EtsyListing): EtsyNormalizedData {
 
   // Price: from price field
   const amount = raw.price?.amount ?? 0;
-  const divisor = raw.price?.divisor ?? 100;
+  const divisor = raw.price?.divisor || 100;
   const priceCents = parseEtsyPrice(amount, divisor);
   const currencyCode = raw.price?.currency_code ?? 'USD';
 

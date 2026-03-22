@@ -13,6 +13,7 @@ import { generateCaseNumber } from '@/lib/helpdesk/case-number';
 import { evaluateRoutingRules } from '@/lib/helpdesk/routing';
 import { calculateSlaDue } from '@/lib/helpdesk/sla';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { notify } from '@twicely/notifications/service';
 
 interface ActionResult<T = undefined> {
   success: boolean;
@@ -87,6 +88,8 @@ export async function createCase(
     actorId: session.userId,
     dataJson: { channel: 'WEB', type: data.type },
   });
+
+  void notify(session.userId, 'helpdesk.case.created', { caseNumber: newCase.caseNumber });
 
   revalidatePath('/my/support');
   return { success: true, data: { caseNumber: newCase.caseNumber } };

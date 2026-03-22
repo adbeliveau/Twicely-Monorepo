@@ -4,7 +4,7 @@
  * Handles evidence submission to Stripe and chargeback resolution (won/lost).
  */
 
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import { db } from '@twicely/db';
 import { dispute, order, shipment, ledgerEntry } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

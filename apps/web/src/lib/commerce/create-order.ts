@@ -1,19 +1,19 @@
 import { db } from '@twicely/db';
 import { order, orderItem, cart, cartItem, listing, category, sellerProfile, shippingProfile } from '@twicely/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
-import { generateOrderNumber } from './order-number';
-import { calculateTf, getTfBrackets, getMinimumTfCents } from './tf-calculator';
+import { generateOrderNumber } from '@twicely/commerce/order-number';
+import { calculateTf, getTfBrackets, getMinimumTfCents } from '@twicely/commerce/tf-calculator';
 import { calculateCombinedShipping, type CombinedShippingItem, type CombinedShippingMode } from '@/lib/services/combined-shipping';
 import { getAuthOfferConfig } from '@twicely/commerce/auth-offer';
-import { getSellerMonthlyGmv } from './order-gmv';
-import type { CreateOrderInput, OrderCreationResult, CartItemWithDetails } from './order-gmv';
+import { getSellerMonthlyGmv } from '@twicely/commerce/order-gmv';
+import type { CreateOrderInput, OrderCreationResult, CartItemWithDetails } from '@twicely/commerce/order-gmv';
 import { notify } from '@twicely/notifications/service';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { createCombinedShippingQuoteIfNeeded } from './create-quote';
+import { createCombinedShippingQuoteIfNeeded } from '@twicely/commerce/create-quote';
 
 // Re-export single-order creator and shared types for external consumers
-export { createOrder } from './create-single-order';
-export type { CreateOrderInput, OrderCreationResult } from './order-gmv';
+export { createOrder } from '@twicely/commerce/create-single-order';
+export type { CreateOrderInput, OrderCreationResult } from '@twicely/commerce/order-gmv';
 
 /**
  * Create orders from a cart. Since items may be from different sellers,
@@ -50,6 +50,9 @@ export async function createOrdersFromCart(
   if (cartItems.length === 0) {
     return [{ success: false, error: 'Cart is empty' }];
   }
+
+  const maxItems = await getPlatformSetting<number>('commerce.order.maxItemsPerOrder', 50);
+  if (cartItems.length > maxItems) return [{ success: false, error: `Orders are limited to ${maxItems} items` }];
 
   // Get seller info (pre-fetch outside transaction)
   const sellerIds = [...new Set(cartItems.map((i) => i.sellerId))];
@@ -106,7 +109,7 @@ export async function createOrdersFromCart(
   const results: OrderCreationResult[] = [];
 
   for (const [sellerId, sellerCartItems] of cartItemsBySeller) {
-    const defaultHandlingDays = await getPlatformSetting<number>('shipping.defaultHandlingDays', 3);
+    const defaultHandlingDays = await getPlatformSetting<number>('fulfillment.shipping.defaultHandlingDays', 3);
     const sellerInfo = sellerInfoMap.get(sellerId) ?? { handlingTimeDays: defaultHandlingDays };
     const { handlingTimeDays } = sellerInfo;
     const sellerMonthlyGmv = sellerGmvMap.get(sellerId) ?? 0;

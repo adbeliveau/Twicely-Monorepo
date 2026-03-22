@@ -17,7 +17,7 @@
  * - Notification preferences
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import {
   dataExportRequest,
@@ -29,7 +29,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { S3Client } from '@aws-sdk/client-s3';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
-import { collectUserDataFull } from './data-export-full';
+import { collectUserDataFull } from '@twicely/jobs/data-export-full';
 
 const QUEUE_NAME = 'data-export';
 

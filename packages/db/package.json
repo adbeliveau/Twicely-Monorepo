@@ -6,10 +6,29 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./schema/*": "./src/schema/*.ts",
+    "./seed": "./src/seed.ts",
+    "./seed/*": "./src/seed/*.ts",
+    "./queries/*": "./src/queries/*.ts",
     "./*": "./src/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "postgres": "^3.4.8",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.3.1",
+    "ioredis": "^5.10.0",
+    "@twicely/config": "workspace:*",
+    "@twicely/logger": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/bcryptjs": "^2.4.6"
   }
 }

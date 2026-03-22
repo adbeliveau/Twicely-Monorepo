@@ -35,12 +35,12 @@ import type {
 } from '../types';
 import { registerConnector } from '../connector-registry';
 import { tierCDelay } from '../services/platform-fees';
-import { normalizePoshmarkListing, toExternalListing } from './poshmark-normalizer';
+import { normalizePoshmarkListing, toExternalListing } from '@twicely/crosslister/connectors/poshmark-normalizer';
 import type {
   PoshmarkAuthResponse,
   PoshmarkListingsResponse,
   PoshmarkSessionData,
-} from './poshmark-types';
+} from '@twicely/crosslister/connectors/poshmark-types';
 
 const POSHMARK_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,

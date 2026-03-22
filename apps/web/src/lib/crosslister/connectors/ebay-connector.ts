@@ -31,8 +31,8 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
-import { normalizeEbayListing, toExternalListing } from './ebay-normalizer';
-import type { EbayInventoryResponse, EbayTokenResponse } from './ebay-types';
+import { normalizeEbayListing, toExternalListing } from '@twicely/crosslister/connectors/ebay-normalizer';
+import type { EbayInventoryResponse, EbayTokenResponse } from '@twicely/crosslister/connectors/ebay-types';
 
 const EBAY_AUTH_URL = 'https://auth.ebay.com/oauth2/authorize';
 const EBAY_TOKEN_URL_PROD = 'https://api.ebay.com/identity/v1/oauth2/token';

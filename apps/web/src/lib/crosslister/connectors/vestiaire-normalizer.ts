@@ -12,7 +12,7 @@
  */
 
 import type { ExternalListing, ExternalImage } from '../types';
-import type { VestiaireListing } from './vestiaire-types';
+import type { VestiaireListing } from '@twicely/crosslister/connectors/vestiaire-types';
 
 /** Normalized Vestiaire listing data, ready for listing creation */
 export interface VestiaireNormalizedData {

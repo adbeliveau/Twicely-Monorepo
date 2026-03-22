@@ -11,8 +11,8 @@
  */
 
 import type { ExternalListing, PaginatedListings } from '../types';
-import { ShopifyProductSchema } from './shopify-schemas';
-import { normalizeShopifyProduct, toExternalListing } from './shopify-normalizer';
+import { ShopifyProductSchema } from '@twicely/crosslister/connectors/shopify-schemas';
+import { normalizeShopifyProduct, toExternalListing } from '@twicely/crosslister/connectors/shopify-normalizer';
 import { logger } from '@twicely/logger';
 
 interface ShopifyImportConfig {

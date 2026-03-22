@@ -63,7 +63,7 @@ describe('cron-jobs', () => {
     expect(ordersCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-orders',
-        repeat: { pattern: '0 * * * *' },
+        repeat: { pattern: '0 * * * *', tz: 'UTC' },
       }),
     );
   });
@@ -79,7 +79,7 @@ describe('cron-jobs', () => {
     expect(returnsCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-returns',
-        repeat: { pattern: '10 * * * *' },
+        repeat: { pattern: '10 * * * *', tz: 'UTC' },
       }),
     );
   });
@@ -95,7 +95,7 @@ describe('cron-jobs', () => {
     expect(shippingCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-shipping',
-        repeat: { pattern: '20 * * * *' },
+        repeat: { pattern: '20 * * * *', tz: 'UTC' },
       }),
     );
   });
@@ -111,7 +111,7 @@ describe('cron-jobs', () => {
     expect(healthCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-health',
-        repeat: { pattern: '*/5 * * * *' },
+        repeat: { pattern: '*/5 * * * *', tz: 'UTC' },
       }),
     );
   });

@@ -14,7 +14,7 @@
  * BullMQ queue name: 'local-escrow-release' (hyphens, not colons)
  */
 
-import { createQueue, createWorker } from './queue';
+import { createQueue, createWorker } from '@twicely/jobs/queue';
 import { db } from '@twicely/db';
 import { localTransaction, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';

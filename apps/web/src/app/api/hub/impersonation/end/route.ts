@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 import { db } from '@twicely/db';
 import { auditEvent } from '@twicely/db/schema';
 import { getImpersonationSession } from '@twicely/auth/impersonation';
+import { getStaffSession } from '@twicely/auth/staff-auth';
+import { STAFF_TOKEN_COOKIE } from '@twicely/casl/staff-authorize';
 
 const HUB_BASE_URL =
   process.env.NODE_ENV === 'production'
@@ -33,7 +36,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Step 2: Extract identifiers
+  // Step 2: Re-validate the staff session is still active (Actors Canonical §3.6)
+  const cookieStore = await cookies();
+  const staffToken = cookieStore.get(STAFF_TOKEN_COOKIE)?.value;
+  if (!staffToken) {
+    return NextResponse.json({ error: 'Staff session not found' }, { status: 401 });
+  }
+  const staffSession = await getStaffSession(staffToken);
+  if (!staffSession) {
+    return NextResponse.json({ error: 'Staff session expired or invalid' }, { status: 401 });
+  }
+  if (staffSession.staffUserId !== impersonationSession.staffUserId) {
+    return NextResponse.json({ error: 'Session mismatch' }, { status: 403 });
+  }
+
+  // Step 3: Extract identifiers
   const { targetUserId, staffUserId } = impersonationSession;
 
   // Step 3: Insert audit event

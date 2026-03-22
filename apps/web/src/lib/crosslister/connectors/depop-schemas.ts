@@ -46,4 +46,4 @@ export const DepopProductSchema = z.object({
   national_shipping_cost: z.string().optional(),
 });
 
-export type { DepopProduct } from './depop-types';
+export type { DepopProduct } from '@twicely/crosslister/connectors/depop-types';

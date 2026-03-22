@@ -13,6 +13,7 @@ import { recordPriceChange } from '@/lib/services/price-history-service';
 import { logger } from '@twicely/logger';
 import { z } from 'zod';
 import { detectOutboundSyncNeeded, queueOutboundSync } from '@twicely/crosslister/services/outbound-sync';
+import { upsertListingDocument, deleteListingDocument } from '@twicely/search/typesense-index';
 
 const updateListingIdSchema = z.object({
   listingId: z.string().cuid2(),
@@ -181,6 +182,31 @@ export async function updateListing(
       });
     }
 
+    // Fire-and-forget: sync to Typesense search index
+    if (updated && status === 'ACTIVE') {
+      upsertListingDocument({
+        id: listingId,
+        title: data.title ?? '',
+        description: data.description ?? undefined,
+        brand: data.brand ?? undefined,
+        priceCents: data.priceCents ?? 0,
+        freeShipping: data.freeShipping ?? false,
+        ownerUserId: userId,
+        sellerScore: 0,
+        sellerTotalReviews: 0,
+        activatedAt: Math.floor(Date.now() / 1000),
+        createdAt: Math.floor(Date.now() / 1000),
+        slug: updated.slug ?? undefined,
+        condition: data.condition ?? undefined,
+      }).catch((err) => {
+        logger.error('[typesense] Failed to update listing in index', { listingId, error: String(err) });
+      });
+    } else if (status !== 'ACTIVE') {
+      deleteListingDocument(listingId).catch((err) => {
+        logger.error('[typesense] Failed to remove listing from index', { listingId, error: String(err) });
+      });
+    }
+
     // Fire-and-forget: trigger outbound sync to external channels with active projections
     detectOutboundSyncNeeded(listingId).then((targets) => {
       if (targets.length > 0) {
@@ -224,7 +250,7 @@ export async function updateListingStatus(
   try {
     // Verify ownership and get current status
     const [existingListing] = await db
-      .select({ id: listing.id, ownerUserId: listing.ownerUserId, status: listing.status })
+      .select({ id: listing.id, ownerUserId: listing.ownerUserId, status: listing.status, title: listing.title })
       .from(listing)
       .where(eq(listing.id, listingId))
       .limit(1);
@@ -270,6 +296,27 @@ export async function updateListingStatus(
     }
 
     await db.update(listing).set(updateData).where(eq(listing.id, listingId));
+
+    // Fire-and-forget: sync Typesense — remove non-ACTIVE listings from index
+    if (newStatus === 'ACTIVE') {
+      upsertListingDocument({
+        id: listingId,
+        title: existingListing.title ?? '',
+        ownerUserId: userId,
+        priceCents: 0,
+        freeShipping: false,
+        sellerScore: 0,
+        sellerTotalReviews: 0,
+        activatedAt: Math.floor(Date.now() / 1000),
+        createdAt: Math.floor(Date.now() / 1000),
+      }).catch((err) => {
+        logger.error('[typesense] Failed to index reactivated listing', { listingId, error: String(err) });
+      });
+    } else {
+      deleteListingDocument(listingId).catch((err) => {
+        logger.error('[typesense] Failed to remove listing from index', { listingId, error: String(err) });
+      });
+    }
 
     revalidatePath('/my/selling');
     revalidatePath('/my/selling/listings');

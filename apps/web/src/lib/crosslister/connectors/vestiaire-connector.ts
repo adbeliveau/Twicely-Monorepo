@@ -34,8 +34,8 @@ import type {
 } from '../types';
 import { registerConnector } from '../connector-registry';
 import { tierCDelay } from '../services/platform-fees';
-import { normalizeVestiaireListing, toExternalListing } from './vestiaire-normalizer';
-import type { VestiaireListingsResponse, VestiaireSessionData } from './vestiaire-types';
+import { normalizeVestiaireListing, toExternalListing } from '@twicely/crosslister/connectors/vestiaire-normalizer';
+import type { VestiaireListingsResponse, VestiaireSessionData } from '@twicely/crosslister/connectors/vestiaire-types';
 
 const VESTIAIRE_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,

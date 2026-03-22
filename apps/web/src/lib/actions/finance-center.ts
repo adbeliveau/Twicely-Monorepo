@@ -1,6 +1,7 @@
 'use server';
 
 import { authorize, sub } from '@twicely/casl';
+import { logger } from '@twicely/logger';
 import {
   getFinanceDashboardKPIs,
   getRevenueTimeSeries,
@@ -63,7 +64,8 @@ export async function getFinanceDashboardAction(): Promise<FinanceDashboardRespo
     ]);
 
     return { success: true, kpis, timeSeries, expenses, mileage, financeTier };
-  } catch {
+  } catch (error) {
+    logger.error('[getFinanceDashboardAction] Failed to load financial data', { error: String(error) });
     return { success: false, error: 'Failed to load financial data' };
   }
 }
@@ -105,7 +107,8 @@ export async function getTransactionHistoryAction(
     });
 
     return { success: true, data };
-  } catch {
+  } catch (error) {
+    logger.error('[getTransactionHistoryAction] Failed to load transactions', { error: String(error) });
     return { success: false, error: 'Failed to load transactions' };
   }
 }
@@ -133,7 +136,8 @@ export async function getCogsSummaryAction(
   try {
     const cogs = await getCogsSummary(userId, parsed.data.days);
     return { success: true, cogs };
-  } catch {
+  } catch (error) {
+    logger.error('[getCogsSummaryAction] Failed to load COGS data', { error: String(error) });
     return { success: false, error: 'Failed to load COGS data' };
   }
 }

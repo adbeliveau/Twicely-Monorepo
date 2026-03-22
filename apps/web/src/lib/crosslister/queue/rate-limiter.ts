@@ -8,7 +8,7 @@
  */
 
 import { getChannelMetadata } from '@twicely/crosslister/channel-registry';
-import { RATE_LIMIT_WINDOW_MS } from './constants';
+import { RATE_LIMIT_WINDOW_MS } from '@twicely/crosslister/queue/constants';
 
 interface RateBucket {
   timestamps: number[];

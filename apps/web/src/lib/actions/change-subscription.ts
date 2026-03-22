@@ -12,6 +12,7 @@
 import { z } from 'zod';
 import { db } from '@twicely/db';
 import { sellerProfile } from '@twicely/db/schema';
+import { logger } from '@twicely/logger';
 import {
   storeSubscription,
   listerSubscription,
@@ -156,7 +157,12 @@ export async function changeSubscriptionAction(
           items: [{ id: itemId, price: newPriceId }],
           proration_behavior: 'create_prorations',
         });
-      } catch {
+      } catch (err) {
+        logger.error('[changeSubscription] Stripe subscription update failed', {
+          stripeSubscriptionId: currentSub.stripeSubscriptionId,
+          newPriceId,
+          error: String(err),
+        });
         return { success: false, error: 'Failed to update subscription' };
       }
 

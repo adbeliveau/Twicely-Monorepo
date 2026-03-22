@@ -13,7 +13,17 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "stripe": "^20.3.1",
+    "@stripe/stripe-js": "^8.7.0",
+    "drizzle-orm": "^0.45.1",
+    "@twicely/commerce": "workspace:*",
+    "@twicely/crosslister": "workspace:*",
     "@twicely/db": "workspace:*",
-    "@twicely/logger": "workspace:*"
+    "@twicely/logger": "workspace:*",
+    "@twicely/notifications": "workspace:*",
+    "@twicely/subscriptions": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
   }
 }

@@ -7,10 +7,13 @@ import { authorize, sub } from '@twicely/casl';
 import { generateListingSlug } from '@/lib/listings/slug';
 import { ensureSellerProfile } from '@/lib/listings/seller-activate';
 import { notifyCategoryAlertMatches } from '@twicely/notifications/category-alert-notifier';
+import { notifyFollowedSellerNewListing } from '@/lib/notifications/followed-seller-notifier';
 import { recordPriceChange } from '@/lib/services/price-history-service';
 import type { ListingFormData } from '@/types/listing-form';
 import { listingFormSchema } from '@/lib/validations/listing';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { upsertListingDocument } from '@twicely/search/typesense-index';
 import { z } from 'zod';
 
 const createListingStatusSchema = z.object({
@@ -46,6 +49,15 @@ export async function createListing(
   const parsedData = listingFormSchema.safeParse(data);
   if (!parsedData.success) {
     return { success: false, error: parsedData.error.issues[0]?.message ?? 'Invalid listing data' };
+  }
+
+  // Validate price range from platform_settings
+  const priceCents = data.priceCents ?? 0;
+  if (priceCents > 0) {
+    const minPriceCents = await getPlatformSetting<number>('general.minListingPriceCents', 100);
+    const maxPriceCents = await getPlatformSetting<number>('general.maxListingPriceCents', 10000000);
+    if (priceCents < minPriceCents) return { success: false, error: `Price must be at least $${(minPriceCents / 100).toFixed(2)}` };
+    if (priceCents > maxPriceCents) return { success: false, error: `Price cannot exceed $${(maxPriceCents / 100).toFixed(2)}` };
   }
 
   try {
@@ -128,10 +140,31 @@ export async function createListing(
       });
     }
 
-    // Fire-and-forget: notify category alert matches for ACTIVE listings
+    // Fire-and-forget: notify category alert matches + followers for ACTIVE listings
     if (status === 'ACTIVE') {
       notifyCategoryAlertMatches(newListing.id).catch((err) => {
         logger.error('[category-alerts] Failed for listing', { listingId: newListing.id, error: String(err) });
+      });
+      notifyFollowedSellerNewListing(newListing.id).catch((err) => {
+        logger.error('[followed-seller-notify] Failed for listing', { listingId: newListing.id, error: String(err) });
+      });
+      upsertListingDocument({
+        id: newListing.id,
+        title: data.title ?? '',
+        description: data.description ?? undefined,
+        brand: data.brand ?? undefined,
+        priceCents: data.priceCents ?? 0,
+        freeShipping: data.freeShipping ?? false,
+        ownerUserId: userId,
+        sellerScore: 0,
+        sellerTotalReviews: 0,
+        activatedAt: Math.floor(Date.now() / 1000),
+        createdAt: Math.floor(Date.now() / 1000),
+        slug: newListing.slug ?? undefined,
+        condition: data.condition ?? undefined,
+        categoryId: typeof data.category === 'string' ? data.category : undefined,
+      }).catch((err) => {
+        logger.error('[typesense] Failed to index listing', { listingId: newListing.id, error: String(err) });
       });
     }
 

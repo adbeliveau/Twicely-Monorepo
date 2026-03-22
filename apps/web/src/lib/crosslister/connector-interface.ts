@@ -6,7 +6,7 @@
  * This file only defines the contract — no concrete implementations here.
  */
 
-import type { CrosslisterAccount } from './db-types';
+import type { CrosslisterAccount } from '@twicely/crosslister/db-types';
 import type {
   ExternalChannel,
   ConnectorTier,
@@ -23,7 +23,7 @@ import type {
   HealthResult,
   WebhookRegistration,
   WebhookEvent,
-} from './types';
+} from '@twicely/crosslister/types';
 
 export interface PlatformConnector {
   readonly channel: ExternalChannel;

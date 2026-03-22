@@ -5,7 +5,7 @@
  * Platform uses destination charges pattern with application_fee.
  */
 
-import { stripe } from './server';
+import { stripe } from '@twicely/stripe/server';
 import { db } from '@twicely/db';
 import { sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
