@@ -88,8 +88,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({ displayName, email, roles }) => {
         <div className={`${isApplicationMenuOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 xl:flex shadow-theme-md xl:justify-end xl:px-0 xl:shadow-none`}>
           <div className="flex items-center gap-2 2xsm:gap-3">
             <ThemeToggleButton />
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800" aria-label="Notifications">
+            <button className="relative flex h-10 w-10 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800" aria-label="Notifications">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M10 2C7.23858 2 5 4.23858 5 7V8.58579L4.29289 9.29289C4.10536 9.48043 4 9.73478 4 10V12C4 12.2652 4.10536 12.5196 4.29289 12.7071L5.58579 14H14.4142L15.7071 12.7071C15.8946 12.5196 16 12.2652 16 12V10C16 9.73478 15.8946 9.48043 15.7071 9.29289L15 8.58579V7C15 4.23858 12.7614 2 10 2ZM8 15C8 16.1046 8.89543 17 10 17C11.1046 17 12 16.1046 12 15H8Z" fill="currentColor"/></svg>
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-orange-500" />
             </button>
           </div>
           <div className="flex items-center gap-3">
