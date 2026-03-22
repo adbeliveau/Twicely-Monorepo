@@ -11,10 +11,11 @@ import type { PlatformRole } from '@twicely/casl/types';
 interface HubShellProps {
   children: React.ReactNode;
   displayName: string;
+  email: string;
   roles: PlatformRole[];
 }
 
-function HubShellInner({ children }: HubShellProps) {
+function HubShellInner({ children, displayName, email, roles }: HubShellProps) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const pathname = usePathname();
 
@@ -45,7 +46,7 @@ function HubShellInner({ children }: HubShellProps) {
       <div
         className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
       >
-        <AppHeader />
+        <AppHeader displayName={displayName} email={email} roles={roles} />
         <main
           id="main-content"
           tabIndex={-1}
@@ -58,11 +59,11 @@ function HubShellInner({ children }: HubShellProps) {
   );
 }
 
-export function HubShell({ children, displayName, roles }: HubShellProps) {
+export function HubShell({ children, displayName, email, roles }: HubShellProps) {
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <HubShellInner displayName={displayName} roles={roles}>
+        <HubShellInner displayName={displayName} email={email} roles={roles}>
           {children}
         </HubShellInner>
       </SidebarProvider>

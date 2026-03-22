@@ -26,84 +26,90 @@ export default async function HubLoginPage({
         : null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-      {/* Logo + subtitle */}
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-primary">Twicely</h1>
-        <p className="mt-1 text-sm text-gray-500">Staff Portal</p>
-      </div>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-[#7C3AED]">Twicely</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Staff Portal
+          </p>
+        </div>
 
-      {/* Card */}
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
-        <h2 className="text-xl font-bold text-gray-900">Staff Sign In</h2>
+        {/* Login Card */}
+        <div className="rounded-2xl bg-white p-8 shadow-lg dark:bg-gray-800">
+          <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+            Staff Sign In
+          </h2>
 
-        {sessionMessage && (
-          <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-            {sessionMessage}
-          </div>
-        )}
+          {sessionMessage && (
+            <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              {sessionMessage}
+            </div>
+          )}
 
-        {hasError && (
-          <div className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-700">
-            Invalid email or password. Please try again.
-          </div>
-        )}
+          {hasError && (
+            <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+              Invalid email or password. Please try again.
+            </div>
+          )}
 
-        <form action={loginStaffAction} className="mt-6 space-y-5">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="email"
-              className="block text-sm font-semibold text-primary"
+          <form action={loginStaffAction} className="space-y-4">
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="Enter your email"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#7C3AED] focus:outline-none focus:ring-1 focus:ring-[#7C3AED] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#7C3AED] focus:outline-none focus:ring-1 focus:ring-[#7C3AED] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-[#7C3AED] py-2.5 font-medium text-white hover:bg-[#6D28D9] disabled:opacity-50"
             >
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder="you@twicely.co"
-              className="w-full rounded-xl border border-gray-200 bg-primary/5 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+              Sign In
+            </button>
+          </form>
+        </div>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="password"
-              className="block text-sm font-semibold text-primary"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              placeholder="••••••••••••"
-              className="w-full rounded-xl border border-gray-200 bg-primary/5 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        {/* Footer */}
+        <p className="mt-6 text-center text-sm text-gray-500">
+          This portal is for Twicely staff only.
+          <br />
+          <Link
+            href="https://twicely.co"
+            className="text-[#7C3AED] hover:underline"
           >
-            Sign In
-          </button>
-        </form>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>This portal is for Twicely staff only.</p>
-        <Link
-          href="https://twicely.co"
-          className="mt-1 inline-block font-medium text-primary hover:text-primary/80"
-        >
-          Go to Twicely.co
-        </Link>
+            Go to Twicely.co
+          </Link>
+        </p>
       </div>
     </div>
   );

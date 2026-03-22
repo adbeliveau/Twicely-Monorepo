@@ -55,6 +55,7 @@ export default async function HubRouteLayout({
       <ImpersonationBanner />
       <HubShell
         displayName={staffSession.displayName}
+        email={staffSession.email}
         roles={staffSession.roles}
       >
         {children}

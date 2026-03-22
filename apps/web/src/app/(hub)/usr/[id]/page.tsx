@@ -9,8 +9,8 @@ import {
   getAdminUserOrders, getAdminUserListings, getAdminUserCases,
   getAdminUserFinance, getAdminUserActivity, getAdminUserNotes,
 } from '@/lib/queries/admin-user-tabs';
-import { AdminPageHeader } from '@/components/admin/admin-page-header';
-import { UserActions } from '@/components/admin/actions/user-actions';
+import { UserDetailHeader, UserInfoBar } from '@/components/admin/user-detail/user-detail-header';
+import { UserActionsDropdown } from '@/components/admin/user-detail/user-actions-dropdown';
 import { UserDetailTabs } from '@/components/admin/user-detail/user-detail-tabs';
 import { UserOverviewTab } from '@/components/admin/user-detail/user-overview-tab';
 import { UserOrdersTab } from '@/components/admin/user-detail/user-orders-tab';
@@ -81,12 +81,11 @@ export default async function UserDetailPage({
   void session; // session available for future use
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title={userDetail.name}
-        description={userDetail.email}
+    <div>
+      <UserDetailHeader
+        user={userDetail}
         actions={
-          <UserActions
+          <UserActionsDropdown
             userId={id}
             isBanned={userDetail.isBanned}
             canImpersonate={ability.can('impersonate', 'User')}
@@ -99,6 +98,8 @@ export default async function UserDetailPage({
         }
       />
 
+      <UserInfoBar user={userDetail} />
+
       <Suspense fallback={<div className="h-10 animate-pulse rounded bg-gray-100" />}>
         <UserDetailTabs
           userId={id}
@@ -107,7 +108,7 @@ export default async function UserDetailPage({
         />
       </Suspense>
 
-      <div>{tabContent}</div>
+      <div className="mt-6">{tabContent}</div>
     </div>
   );
 }
