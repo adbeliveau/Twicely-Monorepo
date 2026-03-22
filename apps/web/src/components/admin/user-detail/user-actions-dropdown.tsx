@@ -16,7 +16,7 @@ interface UserActionsDropdownProps {
 
 export function UserActionsDropdown({
   userId, isBanned, canImpersonate = false,
-  isSeller: _isSeller = false, payoutsEnabled = false,
+  isSeller: _isSeller = false, payoutsEnabled: _payoutsEnabled = false,
   canUpdateUser = false, canUpdateSeller: _canUpdateSeller = false,
 }: UserActionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
