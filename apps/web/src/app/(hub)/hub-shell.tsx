@@ -1,6 +1,7 @@
 'use client';
 
 import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import CorpSidebar from '@/layout/CorpSidebar';
 import Backdrop from '@/layout/Backdrop';
 import AppHeader from '@/layout/AppHeader';
@@ -59,10 +60,12 @@ function HubShellInner({ children }: HubShellProps) {
 
 export function HubShell({ children, displayName, roles }: HubShellProps) {
   return (
-    <SidebarProvider>
-      <HubShellInner displayName={displayName} roles={roles}>
-        {children}
-      </HubShellInner>
-    </SidebarProvider>
+    <ThemeProvider>
+      <SidebarProvider>
+        <HubShellInner displayName={displayName} roles={roles}>
+          {children}
+        </HubShellInner>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }
