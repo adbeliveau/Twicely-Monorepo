@@ -100,7 +100,7 @@ export function HelpdeskLayoutClient({
           isSidebarHidden={sidebarHidden}
           onToggleSidebar={handleToggleSidebar}
         />
-        <main id="main-content" tabIndex={-1} className="flex-1 overflow-hidden">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

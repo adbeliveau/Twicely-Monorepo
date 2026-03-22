@@ -88,82 +88,119 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const results = await searchListings(filters);
 
+  const deals = params.sort === 'deals';
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Mobile Filter Button */}
-      <div className="flex items-center justify-between md:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="mx-auto max-w-[1584px] px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
+            {deals
+              ? 'Deals & Discounts'
+              : params.q
+                ? `Search results for "${params.q}"`
+                : 'All Listings'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {results.totalCount.toLocaleString()} results found
+          </p>
+        </div>
+
+        {/* Active Filters */}
+        <ActiveFilters categoryName={categoryName} />
+
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
+          {/* Filters Sidebar (Desktop) */}
+          <aside className="hidden lg:col-span-1 lg:block">
+            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                Filters
+              </h2>
               <SearchFilters categories={filterCategories} />
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+          </aside>
 
-      {/* Active Filters */}
-      <ActiveFilters categoryName={categoryName} />
-
-      {/* Main Content */}
-      <div className="flex gap-8">
-        {/* Desktop Sidebar */}
-        <aside className="hidden w-[280px] shrink-0 md:block">
-          <SearchFilters categories={filterCategories} />
-        </aside>
-
-        {/* Results */}
-        <div className="flex-1">
-          <div className="mb-6">
-            <SearchResultsHeader
-              query={params.q ?? null}
-              totalCount={results.totalCount}
-              sort={filters.sort ?? 'relevance'}
-            />
+          {/* Mobile Filter Button */}
+          <div className="flex items-center justify-between lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-lg border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300">
+                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  Filters
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4">
+                  <SearchFilters categories={filterCategories} />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
-          <Suspense
-            fallback={
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <ListingCardSkeleton key={i} />
-                ))}
-              </div>
-            }
-          >
-            {results.listings.length > 0 ? (
-              <>
-                <ListingGrid listings={results.listings} />
-                {results.totalPages > 1 && (
-                  <div className="mt-8">
-                    <PagePagination
-                      currentPage={results.page}
-                      totalPages={results.totalPages}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
-              <EmptyState
-                title={
-                  params.q
-                    ? `No results for "${params.q}"`
-                    : 'No listings found'
-                }
-                description="Try adjusting your filters or search terms"
-                actionLabel="Browse all listings"
-                actionHref="/s"
+          {/* Results */}
+          <div className="lg:col-span-3">
+            <div className="mb-6">
+              <SearchResultsHeader
+                query={params.q ?? null}
+                totalCount={results.totalCount}
+                sort={filters.sort ?? 'relevance'}
               />
-            )}
-          </Suspense>
+            </div>
+
+            <Suspense
+              fallback={
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <ListingCardSkeleton key={i} />
+                  ))}
+                </div>
+              }
+            >
+              {results.listings.length > 0 ? (
+                <>
+                  <ListingGrid listings={results.listings} />
+                  {results.totalPages > 1 && (
+                    <div className="mt-8">
+                      <PagePagination
+                        currentPage={results.page}
+                        totalPages={results.totalPages}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-lg bg-white p-12 text-center shadow-sm dark:bg-gray-800">
+                  <svg
+                    className="mx-auto mb-4 h-16 w-16 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <EmptyState
+                    title={
+                      params.q
+                        ? `No results for "${params.q}"`
+                        : 'No listings found'
+                    }
+                    description="Try adjusting your filters or search terms"
+                    actionLabel="Browse all listings"
+                    actionHref="/s"
+                  />
+                </div>
+              )}
+            </Suspense>
+          </div>
         </div>
       </div>
     </div>

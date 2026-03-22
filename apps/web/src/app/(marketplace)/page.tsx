@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import type { Metadata } from 'next';
-import { SearchBar } from '@/components/shared/search-bar';
 import { CategoryCard } from '@/components/shared/category-card';
 import { ListingGrid } from '@/components/shared/listing-grid';
 import { RecentlyViewedCarousel } from '@/components/listing/recently-viewed-carousel';
@@ -19,6 +18,10 @@ import { getForYouFeed } from '@/lib/queries/feed';
 import { auth } from '@twicely/auth';
 import { HomeTabs } from '@/components/pages/home/home-tabs';
 import { NewsletterSignup } from '@/components/shared/newsletter-signup';
+import { HomepageHero } from '@/components/pages/home/homepage-hero';
+import { HomepageCategoryRow } from '@/components/pages/home/homepage-category-row';
+import { HomepageTrustBar } from '@/components/pages/home/homepage-trust-bar';
+import { HomepageSellerSpotlight } from '@/components/pages/home/homepage-seller-spotlight';
 
 export const metadata: Metadata = {
   title: 'Twicely — Buy & Sell Secondhand',
@@ -37,7 +40,7 @@ const TRENDING_SEARCHES = [
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://twicely.co';
 
-/* ── Async sections ── */
+/* -- Async sections -- */
 
 async function RecentlyViewedSection() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -47,18 +50,18 @@ async function RecentlyViewedSection() {
   return <RecentlyViewedCarousel items={items} />;
 }
 
-/* ── Skeleton fallback ── */
+/* -- Skeleton fallback -- */
 
 function CardSkeleton({ count, columns }: { count: number; columns: string }) {
   return (
     <section aria-busy="true" aria-label="Loading listings">
-      <div className="mb-6 h-7 w-40 animate-pulse rounded bg-muted" />
+      <div className="mb-6 h-7 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
       <div className={`grid gap-4 ${columns}`}>
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="animate-pulse space-y-2">
-            <div className="aspect-square rounded-lg bg-muted" />
-            <div className="h-4 w-3/4 rounded bg-muted" />
-            <div className="h-4 w-1/2 rounded bg-muted" />
+            <div className="aspect-square rounded-lg bg-gray-200 dark:bg-gray-700" />
+            <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-gray-700" />
           </div>
         ))}
       </div>
@@ -66,7 +69,7 @@ function CardSkeleton({ count, columns }: { count: number; columns: string }) {
   );
 }
 
-/* ── Categories tab content ── */
+/* -- Categories tab content -- */
 
 async function CategoriesTabContent() {
   const [categories, recentListings] = await Promise.all([
@@ -80,8 +83,8 @@ async function CategoriesTabContent() {
       {categories.length > 0 && (
         <section>
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Shop by category</h2>
-            <Link href="/s" className="text-sm text-muted-foreground hover:text-foreground">
+            <h2 className="text-[22px] font-bold text-gray-900 dark:text-white">Shop by category</h2>
+            <Link href="/s" className="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">
               View all
             </Link>
           </div>
@@ -94,8 +97,8 @@ async function CategoriesTabContent() {
       )}
       <section>
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Recently listed</h2>
-          <Link href="/s?sort=newest" className="text-sm text-muted-foreground hover:text-foreground">
+          <h2 className="text-[22px] font-bold text-gray-900 dark:text-white">Recently listed</h2>
+          <Link href="/s?sort=newest" className="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">
             View all
           </Link>
         </div>
@@ -104,8 +107,8 @@ async function CategoriesTabContent() {
       {featuredPicks.length > 0 && (
         <section>
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Featured picks</h2>
-            <Link href="/s" className="text-sm text-muted-foreground hover:text-foreground">
+            <h2 className="text-[22px] font-bold text-gray-900 dark:text-white">Featured picks</h2>
+            <Link href="/s" className="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400">
               Explore more
             </Link>
           </div>
@@ -116,7 +119,15 @@ async function CategoriesTabContent() {
   );
 }
 
-/* ── Tab data fetcher ── */
+/* -- Category row data fetcher -- */
+
+async function CategoryRowSection() {
+  const categories = await getHomepageCategories();
+  if (categories.length === 0) return null;
+  return <HomepageCategoryRow categories={categories} />;
+}
+
+/* -- Tab data fetcher -- */
 
 async function HomeTabsSection() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -160,7 +171,7 @@ async function HomeTabsSection() {
   );
 }
 
-/* ── Page ── */
+/* -- Page -- */
 
 export default function HomePage() {
   const jsonLd = {
@@ -181,50 +192,60 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/<\//g, '<\\/') }}
       />
-      <div className="flex flex-col gap-12">
-        {/* Hero — renders instantly, no data needed */}
-        <section className="flex flex-col items-center gap-6 py-12 text-center md:py-16">
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            Buy and sell secondhand. Better.
-          </h1>
-          <p className="max-w-lg text-muted-foreground">
-            The marketplace with built-in seller tools.
-          </p>
-          <div className="w-full max-w-xl">
-            <SearchBar placeholder="Search for brands, items, or styles..." />
-          </div>
-          <div className="flex flex-wrap justify-center gap-2">
-            {TRENDING_SEARCHES.map((item) => (
-              <Link
-                key={item.query}
-                href={`/s?q=${encodeURIComponent(item.query)}`}
-                className="rounded-full border bg-background px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
+
+      {/* Hero + Quick Actions (V2 gradient style) */}
+      <HomepageHero trendingSearches={TRENDING_SEARCHES} />
+
+      {/* Category Row */}
+      <Suspense fallback={
+        <section className="border-b border-gray-200 dark:border-gray-700">
+          <div className="mx-auto max-w-[1584px] px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex gap-6 overflow-x-auto sm:gap-8">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="flex flex-shrink-0 flex-col items-center gap-2 animate-pulse">
+                  <div className="h-[88px] w-[88px] rounded-full bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
+      }>
+        <CategoryRowSection />
+      </Suspense>
 
-        {/* Recently viewed — above tabs, shown when logged in */}
-        <Suspense>
-          <RecentlyViewedSection />
-        </Suspense>
+      {/* Recently viewed */}
+      <Suspense>
+        <RecentlyViewedSection />
+      </Suspense>
 
-        {/* Tab system: For You / Explore / Categories */}
+      {/* Trust / Value Props Bar */}
+      <HomepageTrustBar />
+
+      {/* Tab system: For You / Explore / Categories */}
+      <section className="mx-auto max-w-[1584px] px-4 py-8 sm:px-6 lg:px-8">
         <Suspense fallback={<CardSkeleton count={12} columns="grid-cols-2 md:grid-cols-3 lg:grid-cols-4" />}>
           <HomeTabsSection />
         </Suspense>
+      </section>
 
-        {/* Newsletter */}
-        <section className="flex flex-col items-center gap-4 py-8 text-center">
-          <h2 className="text-lg font-semibold">Stay in the loop</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Get seller tips, feature updates, and trending picks — straight to your inbox.
-          </p>
-          <NewsletterSignup source="HOMEPAGE_SECTION" />
-        </section>
-      </div>
+      {/* Seller Spotlight Banner */}
+      <HomepageSellerSpotlight />
+
+      {/* Newsletter */}
+      <section className="border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+        <div className="mx-auto max-w-[1584px] px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-xl text-center">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Stay in the loop</h2>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Get seller tips, feature updates, and trending picks -- straight to your inbox.
+            </p>
+            <div className="mt-4 flex justify-center">
+              <NewsletterSignup source="HOMEPAGE_SECTION" />
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

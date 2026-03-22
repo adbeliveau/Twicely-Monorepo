@@ -38,10 +38,10 @@ export default async function MarketplaceLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
       <SkipNav />
       <MarketplaceHeader />
-      <main id="main-content" tabIndex={-1} className="container flex-1 px-4 py-6 pb-16 md:px-6 md:pb-6">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 pb-16 md:pb-0">{children}</main>
       <MarketplaceFooter />
       <MobileBottomNav />
       <CookieConsentBanner

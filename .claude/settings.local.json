@@ -301,7 +301,13 @@
       "Bash(pnpm run:*)",
       "Bash(pnpm --version)",
       "Bash(head:*)",
-      "Bash(npx create-expo-app@latest mobile --template blank-typescript)"
+      "Bash(npx create-expo-app@latest mobile --template blank-typescript)",
+      "Bash(cp \"/c/Users/XPS-15/Projects/Twicely-V2/apps/web/app/globals.css\" app/globals.css)",
+      "Bash(cp \"/c/Users/XPS-15/Projects/Twicely-V2/apps/web/app/layout.tsx\" app/v2-layout-reference.tsx)",
+      "Bash(rm src/app/v2-layout-reference.tsx)",
+      "Bash(rm -rf src/components/charts src/components/tables src/components/form/example-form src/components/form/form-elements src/components/form/group-input src/components/form/date-picker.tsx src/components/form/MultiSelect.tsx src/components/corp/GmvTrendChart.tsx src/components/corp/OrderVolumeChart.tsx src/components/common/TableDropdown.tsx)",
+      "Bash(mkdir -p components/ui/dropdown)",
+      "Bash(cp \"/c/Users/XPS-15/Projects/Twicely-V2/apps/web/components/ui/dropdown/Dropdown.tsx\" components/ui/dropdown/Dropdown.tsx)"
     ],
     "additionalDirectories": [
       "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts"

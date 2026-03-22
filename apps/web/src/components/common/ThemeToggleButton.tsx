@@ -1,8 +1,15 @@
 "use client";
 import { useTheme } from "../../context/ThemeContext";
+import { useFeatureFlag } from "../../context/FeatureFlagContext";
 
 export const ThemeToggleButton: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const { enabled: darkModeEnabled, isLoading } = useFeatureFlag("dark_mode");
+
+  // Don't render if dark_mode feature flag is disabled
+  if (!isLoading && !darkModeEnabled) {
+    return null;
+  }
 
   return (
     <button

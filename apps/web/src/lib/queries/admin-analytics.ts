@@ -6,7 +6,7 @@
 import { db } from '@twicely/db';
 import { order, user, listing, ledgerEntry, sellerProfile, sellerPerformance } from '@twicely/db/schema';
 import type { InferSelectModel } from 'drizzle-orm';
-import { sql, gte, and, eq, count, desc, asc, ilike, or } from 'drizzle-orm';
+import { sql, gte, lt, and, eq, count, desc, asc, ilike, or } from 'drizzle-orm';
 
 type PerformanceBand = InferSelectModel<typeof sellerProfile>['performanceBand'];
 type StoreTier = InferSelectModel<typeof sellerProfile>['storeTier'];
@@ -120,7 +120,7 @@ export async function getAnalyticsSummary(periodDays: number): Promise<Analytics
       .where(and(
         sql`${order.status} IN ('COMPLETED', 'DELIVERED')`,
         gte(order.createdAt, prevStart),
-        sql`${order.createdAt} < ${prevEnd}`
+        lt(order.createdAt, prevEnd)
       )),
     db.select({ cnt: sql<string>`COUNT(*)` })
       .from(order)
@@ -133,7 +133,7 @@ export async function getAnalyticsSummary(periodDays: number): Promise<Analytics
       .where(and(
         sql`${order.status} != 'CANCELED'`,
         gte(order.createdAt, prevStart),
-        sql`${order.createdAt} < ${prevEnd}`
+        lt(order.createdAt, prevEnd)
       )),
     db.select({ cnt: sql<string>`COUNT(*)` })
       .from(user)
@@ -142,7 +142,7 @@ export async function getAnalyticsSummary(periodDays: number): Promise<Analytics
       .from(user)
       .where(and(
         gte(user.createdAt, prevStart),
-        sql`${user.createdAt} < ${prevEnd}`
+        lt(user.createdAt, prevEnd)
       )),
     db.select({ cnt: sql<string>`COUNT(*)` })
       .from(user)
@@ -322,10 +322,10 @@ export async function getUserCohortRetention(months: number): Promise<CohortRow[
             .where(and(
               sql`${order.buyerId} IN (
                 SELECT id FROM "user"
-                WHERE created_at >= ${cohortStart} AND created_at < ${cohortEnd}
+                WHERE created_at >= ${cohortStart.toISOString()} AND created_at < ${cohortEnd.toISOString()}
               )`,
               gte(order.createdAt, subStart),
-              sql`${order.createdAt} < ${subEnd}`
+              lt(order.createdAt, subEnd)
             ));
 
           const retained = Number(retainedRows[0]?.cnt ?? 0);

@@ -9,22 +9,42 @@ function VerifyEmailContent() {
   const email = searchParams.get('email');
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-8 text-center">
-      <h1 className="text-2xl font-bold mb-4">Check Your Email</h1>
+    <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
+      <div className="mb-6 flex justify-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+          <svg
+            className="h-8 w-8 text-green-600 dark:text-green-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+      </div>
 
-      <p className="text-gray-600 mb-6">
+      <h1 className="mb-2 text-center text-2xl font-bold text-gray-900 dark:text-white">
+        Check Your Email
+      </h1>
+
+      <p className="mb-6 text-center text-gray-600 dark:text-gray-400">
         We&apos;ve sent a verification link to{' '}
-        <span className="font-medium">{email || 'your email address'}</span>.
+        <strong>{email || 'your email address'}</strong>.
         Click the link in the email to verify your account.
       </p>
 
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="mb-6 text-center text-sm text-gray-500 dark:text-gray-500">
         Didn&apos;t receive the email? Check your spam folder or try signing up again.
       </p>
 
       <Link
         href="/auth/login?callbackUrl=/auth/onboarding"
-        className="inline-block py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+        className="block w-full rounded-lg bg-blue-600 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700"
       >
         Back to Sign In
       </Link>
@@ -34,7 +54,11 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="bg-white rounded-lg shadow-md p-8 text-center">Loading...</div>}>
+    <Suspense fallback={
+      <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800 text-center">
+        Loading...
+      </div>
+    }>
       <VerifyEmailContent />
     </Suspense>
   );

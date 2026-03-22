@@ -123,11 +123,11 @@
   display:flex; flex-direction:column; overflow:hidden;
   background:rgb(var(--hd-bg-panel));
 }
-.hd-workspace-center { flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+.hd-workspace-center { flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
 .hd-workspace-right {
   width:clamp(280px, 22vw, 340px); flex-shrink:0;
   border-left:1px solid rgb(var(--hd-border));
-  display:flex; flex-direction:column; overflow:hidden;
+  display:flex; flex-direction:column; overflow-y:auto;
   background:rgb(var(--hd-bg-panel));
 }
 @media (max-width:1024px) { .hd-workspace-left { display:none; } }
