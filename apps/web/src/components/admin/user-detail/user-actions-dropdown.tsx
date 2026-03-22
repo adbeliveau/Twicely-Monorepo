@@ -19,8 +19,8 @@ interface UserActionsDropdownProps {
 
 export function UserActionsDropdown({
   userId, isBanned, canImpersonate = false,
-  isSeller = false, payoutsEnabled = false,
-  canUpdateUser = false, canUpdateSeller = false,
+  isSeller: _isSeller = false, payoutsEnabled = false,
+  canUpdateUser = false, canUpdateSeller: _canUpdateSeller = false,
 }: UserActionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -75,7 +75,7 @@ export function UserActionsDropdown({
     });
   }
 
-  function handleHoldRelease() {
+  function _handleHoldRelease() {
     setIsOpen(false);
     if (payoutsEnabled) {
       const reason = prompt('Reason for holding payouts:');
@@ -92,7 +92,7 @@ export function UserActionsDropdown({
     }
   }
 
-  function handleResetPassword() {
+  function _handleResetPassword() {
     if (!confirm('Send password reset for this user?')) return;
     setIsOpen(false);
     startTransition(async () => {
@@ -101,7 +101,7 @@ export function UserActionsDropdown({
     });
   }
 
-  function handleBandOverride() {
+  function _handleBandOverride() {
     const band = prompt('New band (EMERGING, ESTABLISHED, TOP_RATED, POWER_SELLER):');
     if (!band) return;
     const reason = prompt('Reason:');
@@ -121,11 +121,11 @@ export function UserActionsDropdown({
     <div className="flex items-center gap-2">
       {/* Edit button */}
       <button
-        className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+        className="rounded-lg border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
         disabled={pending}
-        onClick={handleResetPassword}
+        onClick={() => { window.location.href = `/usr/${userId}/edit`; }}
       >
-        Reset Password
+        Edit
       </button>
 
       {/* Actions Dropdown */}
@@ -151,17 +151,15 @@ export function UserActionsDropdown({
               <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 Communication
               </div>
-              {canUpdateUser && (
-                <button
-                  onClick={handleWarn}
-                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  <svg className="h-4 w-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                  Send Warning
-                </button>
-              )}
+              <button
+                className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                onClick={() => { setIsOpen(false); window.location.href = `/my/messages?to=${userId}`; }}
+              >
+                <svg className="h-4 w-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Send Message
+              </button>
 
               {/* Access */}
               {canImpersonate && (
@@ -182,33 +180,29 @@ export function UserActionsDropdown({
               )}
 
               {/* Moderation */}
-              {(canUpdateUser || canUpdateSeller) && (
+              {canUpdateUser && (
                 <>
                   <div className="mt-1 border-t border-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
                     Moderation
                   </div>
-                  {canUpdateSeller && isSeller && (
-                    <>
-                      <button
-                        onClick={handleHoldRelease}
-                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                      >
-                        <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {payoutsEnabled ? 'Hold Payouts' : 'Release Payouts'}
-                      </button>
-                      <button
-                        onClick={handleBandOverride}
-                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                      >
-                        <svg className="h-4 w-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                        </svg>
-                        Override Band
-                      </button>
-                    </>
-                  )}
+                  <button
+                    onClick={handleWarn}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Issue Warning
+                  </button>
+                  <button
+                    onClick={() => { setIsOpen(false); window.location.href = `/mod/enforcement/new?userId=${userId}`; }}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    <svg className="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    Apply Restriction
+                  </button>
                 </>
               )}
 
@@ -220,28 +214,32 @@ export function UserActionsDropdown({
                   </div>
                   <button
                     onClick={handleSuspendToggle}
-                    className={`flex w-full items-center gap-3 px-4 py-2 text-sm ${
-                      isBanned
-                        ? 'text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
-                        : 'text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
-                    }`}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"
                   >
-                    {isBanned ? (
-                      <>
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Activate Account
-                      </>
-                    ) : (
-                      <>
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                        Suspend Account
-                      </>
-                    )}
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {isBanned ? 'Activate Account' : 'Suspend Account'}
                   </button>
+                  {!isBanned && (
+                    <button
+                      onClick={() => {
+                        const reason = prompt('Reason for banning:');
+                        if (!reason) return;
+                        setIsOpen(false);
+                        startTransition(async () => {
+                          const res = await suspendUserAction({ userId, reason, permanent: true });
+                          setResult(res.error ?? 'Account banned');
+                        });
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      Ban Account
+                    </button>
+                  )}
                 </>
               )}
             </div>
