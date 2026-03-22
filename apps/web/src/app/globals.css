@@ -4,12 +4,101 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ─── TailAdmin Semantic Color Scales ─────────────────────────────────────────
- * Provides success/error/warning/orange semantic tokens from TailAdmin Pro.
- * Usage: bg-success-50, text-error-600, border-warning-200, etc.
- * These coexist with shadcn/ui's primary/secondary/destructive variables.
+/* ─── TailAdmin V2 Theme ────────────────────────────────────────────────────
+ * Full TailAdmin Pro theme: font, breakpoints, text sizes, color scales,
+ * shadows, z-index tokens. Coexists with shadcn/ui variables below.
  * ──────────────────────────────────────────────────────────────────────────── */
 @theme {
+  /* ── Font ─────────────────────────────────────────────────────────────── */
+  --font-outfit: Outfit, sans-serif;
+
+  /* ── Breakpoints ──────────────────────────────────────────────────────── */
+  --breakpoint-2xsm: 375px;
+  --breakpoint-xsm: 425px;
+  --breakpoint-3xl: 2000px;
+
+  /* ── Text sizes ───────────────────────────────────────────────────────── */
+  --text-title-2xl: 72px;
+  --text-title-2xl--line-height: 90px;
+  --text-title-xl: 60px;
+  --text-title-xl--line-height: 72px;
+  --text-title-lg: 48px;
+  --text-title-lg--line-height: 60px;
+  --text-title-md: 36px;
+  --text-title-md--line-height: 44px;
+  --text-title-sm: 30px;
+  --text-title-sm--line-height: 38px;
+  --text-theme-xl: 20px;
+  --text-theme-xl--line-height: 30px;
+  --text-theme-sm: 14px;
+  --text-theme-sm--line-height: 20px;
+  --text-theme-xs: 12px;
+  --text-theme-xs--line-height: 18px;
+
+  /* ── Base colors ──────────────────────────────────────────────────────── */
+  --color-current: currentColor;
+  --color-transparent: transparent;
+  --color-white: #ffffff;
+  --color-black: #101828;
+
+  /* ── Brand (purple) ───────────────────────────────────────────────────── */
+  --color-brand-25: #faf5ff;
+  --color-brand-50: #f5f0ff;
+  --color-brand-100: #ede5ff;
+  --color-brand-200: #ddd0fe;
+  --color-brand-300: #c4a8fd;
+  --color-brand-400: #a67afb;
+  --color-brand-500: #7c3aed;
+  --color-brand-600: #6d28d9;
+  --color-brand-700: #5b21b6;
+  --color-brand-800: #4c1d95;
+  --color-brand-900: #3b1578;
+  --color-brand-950: #2e1065;
+
+  /* ── Blue-light ───────────────────────────────────────────────────────── */
+  --color-blue-light-25: #f5fbff;
+  --color-blue-light-50: #f0f9ff;
+  --color-blue-light-100: #e0f2fe;
+  --color-blue-light-200: #b9e6fe;
+  --color-blue-light-300: #7cd4fd;
+  --color-blue-light-400: #36bffa;
+  --color-blue-light-500: #0ba5ec;
+  --color-blue-light-600: #0086c9;
+  --color-blue-light-700: #026aa2;
+  --color-blue-light-800: #065986;
+  --color-blue-light-900: #0b4a6f;
+  --color-blue-light-950: #062c41;
+
+  /* ── Gray ──────────────────────────────────────────────────────────────── */
+  --color-gray-25: #fcfcfd;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f2f4f7;
+  --color-gray-200: #e4e7ec;
+  --color-gray-300: #d0d5dd;
+  --color-gray-400: #98a2b3;
+  --color-gray-500: #667085;
+  --color-gray-600: #475467;
+  --color-gray-700: #344054;
+  --color-gray-800: #1d2939;
+  --color-gray-900: #101828;
+  --color-gray-950: #0c111d;
+  --color-gray-dark: #1a2231;
+
+  /* ── Orange ───────────────────────────────────────────────────────────── */
+  --color-orange-25: #fffaf5;
+  --color-orange-50: #fff6ed;
+  --color-orange-100: #ffead5;
+  --color-orange-200: #fddcab;
+  --color-orange-300: #feb273;
+  --color-orange-400: #fd853a;
+  --color-orange-500: #fb6514;
+  --color-orange-600: #ec4a0a;
+  --color-orange-700: #c4320a;
+  --color-orange-800: #9c2a10;
+  --color-orange-900: #7e2410;
+  --color-orange-950: #511c10;
+
+  /* ── Success ──────────────────────────────────────────────────────────── */
   --color-success-25: #f6fef9;
   --color-success-50: #ecfdf3;
   --color-success-100: #d1fadf;
@@ -21,7 +110,9 @@
   --color-success-700: #027a48;
   --color-success-800: #05603a;
   --color-success-900: #054f31;
+  --color-success-950: #053321;
 
+  /* ── Error ────────────────────────────────────────────────────────────── */
   --color-error-25: #fffbfa;
   --color-error-50: #fef3f2;
   --color-error-100: #fee4e2;
@@ -33,7 +124,9 @@
   --color-error-700: #b42318;
   --color-error-800: #912018;
   --color-error-900: #7a271a;
+  --color-error-950: #55160c;
 
+  /* ── Warning ──────────────────────────────────────────────────────────── */
   --color-warning-25: #fffcf5;
   --color-warning-50: #fffaeb;
   --color-warning-100: #fef0c7;
@@ -45,7 +138,9 @@
   --color-warning-700: #b54708;
   --color-warning-800: #93370d;
   --color-warning-900: #7a2e0e;
+  --color-warning-950: #4e1d09;
 
+  /* ── Info ──────────────────────────────────────────────────────────────── */
   --color-info-25: #f5fbff;
   --color-info-50: #f0f9ff;
   --color-info-100: #e0f2fe;
@@ -57,6 +152,40 @@
   --color-info-700: #026aa2;
   --color-info-800: #065986;
   --color-info-900: #0b4a6f;
+
+  /* ── Accent theme colors ──────────────────────────────────────────────── */
+  --color-theme-pink-500: #ee46bc;
+  --color-theme-purple-500: #7a5af8;
+
+  /* ── TailAdmin shadows ────────────────────────────────────────────────── */
+  --shadow-theme-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1),
+    0px 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --shadow-theme-lg: 0px 12px 16px -4px rgba(16, 24, 40, 0.08),
+    0px 4px 6px -2px rgba(16, 24, 40, 0.03);
+  --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1),
+    0px 1px 2px 0px rgba(16, 24, 40, 0.06);
+  --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  --shadow-theme-xl: 0px 20px 24px -4px rgba(16, 24, 40, 0.08),
+    0px 8px 8px -4px rgba(16, 24, 40, 0.03);
+  --shadow-datepicker: -5px 0 0 #262d3c, 5px 0 0 #262d3c;
+  --shadow-focus-ring: 0px 0px 0px 4px rgba(70, 95, 255, 0.12);
+  --shadow-slider-navigation: 0px 1px 2px 0px rgba(16, 24, 40, 0.1),
+    0px 1px 3px 0px rgba(16, 24, 40, 0.1);
+  --shadow-tooltip: 0px 4px 6px -2px rgba(16, 24, 40, 0.05),
+    -8px 0px 20px 8px rgba(16, 24, 40, 0.05);
+
+  /* ── Drop shadow ──────────────────────────────────────────────────────── */
+  --drop-shadow-4xl: 0 35px 35px rgba(0, 0, 0, 0.25),
+    0 45px 65px rgba(0, 0, 0, 0.15);
+
+  /* ── Z-index ──────────────────────────────────────────────────────────── */
+  --z-index-1: 1;
+  --z-index-9: 9;
+  --z-index-99: 99;
+  --z-index-999: 999;
+  --z-index-9999: 9999;
+  --z-index-99999: 99999;
+  --z-index-999999: 999999;
 }
 
 @theme inline {
@@ -215,18 +344,71 @@
   --shadow-xl: 0 1px 3px 0px oklch(0.00 0 0 / 0.10), 0 8px 10px -1px oklch(0.00 0 0 / 0.10);
 }
 
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+*/
 @layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+
   .container {
     margin-left: auto;
     margin-right: auto;
     max-width: 1400px;
+  }
+
+  /* ── Helpdesk theme variables (light) ─────────────────────────────────── */
+  :root {
+    --hd-bg-deep: #f8fafc;
+    --hd-bg-panel: #ffffff;
+    --hd-bg-card: #f1f5f9;
+    --hd-bg-hover: #e2e8f0;
+    --hd-border: #e2e8f0;
+    --hd-border-light: #cbd5e1;
+    --hd-text-primary: #0f172a;
+    --hd-text-secondary: #475569;
+    --hd-text-muted: #64748b;
+
+    --hd-font-xs: 12px;
+    --hd-font-sm: 13px;
+    --hd-font-base: 14px;
+    --hd-font-md: 15px;
+    --hd-font-lg: 17px;
+    --hd-font-xl: 20px;
+  }
+
+  /* ── Helpdesk theme variables (dark) ──────────────────────────────────── */
+  .dark {
+    --hd-bg-deep: #020617;
+    --hd-bg-panel: #0a0f1e;
+    --hd-bg-card: #0f172a;
+    --hd-bg-hover: #131d33;
+    --hd-border: #1e293b;
+    --hd-border-light: #334155;
+    --hd-text-primary: #e2e8f0;
+    --hd-text-secondary: #94a3b8;
+    --hd-text-muted: #64748b;
   }
 }
 
@@ -243,12 +425,85 @@
 
 /* ─── TailAdmin Custom Utilities ──────────────────────────────────────────── */
 
+@utility menu-item {
+  @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
+}
+
+@utility menu-item-active {
+  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+}
+
+@utility menu-item-inactive {
+  @apply text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300;
+}
+
+@utility menu-item-icon {
+  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
+}
+
+@utility menu-item-icon-active {
+  @apply text-brand-500 dark:text-brand-400;
+}
+
+@utility menu-item-icon-inactive {
+  @apply text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300;
+}
+
+@utility menu-item-arrow {
+  @apply relative;
+}
+
+@utility menu-item-arrow-active {
+  @apply rotate-180 text-brand-500 dark:text-brand-400;
+}
+
+@utility menu-item-arrow-inactive {
+  @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+}
+
+@utility menu-dropdown-item {
+  @apply relative text-sm flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium;
+}
+
+@utility menu-dropdown-item-active {
+  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+}
+
+@utility menu-dropdown-item-inactive {
+  @apply text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300;
+}
+
+@utility menu-dropdown-badge {
+  @apply text-success-600 dark:text-success-500 block rounded-full px-2.5 py-0.5 text-xs font-medium uppercase;
+}
+
+@utility menu-dropdown-badge-active {
+  @apply bg-success-100 dark:bg-success-500/20;
+}
+
+@utility menu-dropdown-badge-inactive {
+  @apply bg-success-50 group-hover:bg-success-100 dark:bg-success-500/15 dark:group-hover:bg-success-500/20;
+}
+
+@utility menu-dropdown-badge-pro {
+  @apply text-brand-600 dark:text-brand-500 block rounded-full px-2.5 py-0.5 text-xs font-medium uppercase;
+}
+
+@utility menu-dropdown-badge-pro-active {
+  @apply bg-brand-100 dark:bg-brand-500/20;
+}
+
+@utility menu-dropdown-badge-pro-inactive {
+  @apply bg-brand-50 group-hover:bg-brand-100 dark:bg-brand-500/15 dark:group-hover:bg-brand-500/20;
+}
+
 @utility no-scrollbar {
+  /* Chrome, Safari and Opera */
   &::-webkit-scrollbar {
     display: none;
   }
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 @utility custom-scrollbar {
@@ -259,6 +514,395 @@
     @apply rounded-full;
   }
   &::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-gray-200 dark:bg-gray-700;
+    @apply bg-gray-200 rounded-full dark:bg-gray-700;
   }
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #344054;
+}
+
+@layer utilities {
+  /* Remove date input icons */
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="time"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+  }
+}
+
+/* ─── Third-Party Library Styles (ApexCharts) ────────────────────────────── */
+
+.apexcharts-legend-text {
+  @apply !text-gray-700 dark:!text-gray-400;
+}
+
+.apexcharts-text {
+  @apply !fill-gray-700 dark:!fill-gray-400;
+}
+
+.apexcharts-tooltip.apexcharts-theme-light {
+  @apply gap-1 !rounded-lg !border-gray-200 p-3 !shadow-theme-sm dark:!border-gray-800 dark:!bg-gray-900;
+}
+
+.apexcharts-tooltip-marker {
+  margin-right: 6px;
+  height: 6px;
+  width: 6px;
+}
+.apexcharts-legend-text {
+  @apply !pl-5 !text-gray-700 dark:!text-gray-400;
+}
+.apexcharts-tooltip-series-group {
+  @apply !p-0;
+}
+.apexcharts-tooltip-y-group {
+  @apply !p-0;
+}
+.apexcharts-tooltip-title {
+  @apply !mb-0 !border-b-0 !bg-transparent !p-0 !text-[10px] !leading-4 !text-gray-800 dark:!text-white/90;
+}
+.apexcharts-tooltip-text {
+  @apply !text-theme-xs !text-gray-700 dark:!text-white/90;
+}
+.apexcharts-tooltip-text-y-value {
+  @apply !font-medium;
+}
+
+.apexcharts-gridline {
+  @apply !stroke-gray-100 dark:!stroke-gray-800;
+}
+#chartTwo .apexcharts-datalabels-group {
+  @apply !-translate-y-24;
+}
+#chartTwo .apexcharts-datalabels-group .apexcharts-text {
+  @apply !fill-gray-800 !font-semibold dark:!fill-white/90;
+}
+
+#chartDarkStyle .apexcharts-datalabels-group .apexcharts-text {
+  @apply !fill-gray-800 !font-semibold dark:!fill-white/90;
+}
+
+.chartDarkStyle .apexcharts-datalabels-group .apexcharts-text {
+  @apply !fill-gray-800 !font-semibold dark:!fill-white/90;
+}
+
+/* ─── Helpdesk Component Styles ──────────────────────────────────────────── */
+
+.hd-layout {
+  @apply flex h-screen overflow-hidden;
+  background: var(--hd-bg-deep);
+}
+
+.hd-sidebar {
+  @apply flex flex-col w-56 shrink-0 border-r;
+  background: var(--hd-bg-panel);
+  border-color: var(--hd-border);
+}
+
+.hd-main {
+  @apply flex-1 flex flex-col min-w-0 overflow-hidden;
+}
+
+.hd-main-full {
+  @apply w-full;
+}
+
+.hd-topbar {
+  @apply h-14 flex items-center justify-between px-4 border-b shrink-0;
+  background: var(--hd-bg-panel);
+  border-color: var(--hd-border);
+}
+
+.hd-content {
+  @apply flex-1 overflow-auto;
+  background: var(--hd-bg-deep);
+}
+
+.hd-nav-item {
+  @apply flex items-center gap-3 px-4 py-2 text-sm cursor-pointer transition-colors duration-150;
+  color: var(--hd-text-secondary);
+}
+
+.hd-nav-item:hover {
+  background: var(--hd-bg-hover);
+  color: var(--hd-text-primary);
+}
+
+.hd-nav-item-active {
+  @apply border-r-2 border-blue-500;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.hd-nav-section {
+  @apply px-4 py-2 text-[10px] font-semibold uppercase tracking-wider;
+  color: var(--hd-text-muted);
+}
+
+/* Priority Badges */
+.hd-badge-critical {
+  @apply inline-flex items-center gap-1 font-semibold uppercase tracking-wide rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-sm);
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.hd-badge-urgent {
+  @apply inline-flex items-center gap-1 font-semibold uppercase tracking-wide rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-sm);
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.hd-badge-high {
+  @apply inline-flex items-center gap-1 font-semibold uppercase tracking-wide rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-sm);
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.hd-badge-normal {
+  @apply inline-flex items-center gap-1 font-semibold uppercase tracking-wide rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-sm);
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.hd-badge-low {
+  @apply inline-flex items-center gap-1 font-semibold uppercase tracking-wide rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-sm);
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Status Badges */
+.hd-status-new {
+  @apply font-medium rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-base);
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
+
+.hd-status-open {
+  @apply font-medium rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-base);
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.hd-status-pending {
+  @apply font-medium rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-base);
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.hd-status-escalated {
+  @apply font-medium rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-base);
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.hd-status-resolved {
+  @apply font-medium rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-base);
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}
+
+.hd-status-closed {
+  @apply font-medium rounded;
+  padding: 5px 12px;
+  font-size: var(--hd-font-base);
+  background: rgba(71, 85, 105, 0.2);
+  color: #64748b;
+}
+
+/* Message Bubbles */
+.hd-msg-inbound {
+  @apply rounded-lg p-4 border-l-4 border-l-blue-500;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid var(--hd-border);
+}
+
+.hd-msg-outbound {
+  @apply rounded-lg p-4 border-l-4 border-l-emerald-500;
+  background: rgba(6, 78, 59, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.hd-msg-internal {
+  @apply rounded-lg p-4 border-l-4 border-l-amber-500;
+  background: rgba(120, 53, 15, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.hd-msg-system {
+  @apply flex items-center gap-2 text-xs py-2;
+  color: var(--hd-text-muted);
+}
+
+/* SLA Timer */
+.hd-sla {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-md;
+  font-size: var(--hd-font-sm);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  background: var(--hd-bg-card);
+  border: 1px solid var(--hd-border);
+  color: var(--hd-text-secondary);
+}
+
+.hd-sla-warning {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-md;
+  font-size: var(--hd-font-sm);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.hd-sla-breach {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-md animate-pulse;
+  font-size: var(--hd-font-sm);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+/* Reply Mode Toggle */
+.hd-mode-btn {
+  @apply px-4 py-2 font-medium transition-colors;
+  font-size: var(--hd-font-base);
+  background: var(--hd-bg-card);
+  border: 1px solid var(--hd-border);
+  color: var(--hd-text-secondary);
+}
+
+.hd-mode-btn:hover {
+  background: var(--hd-bg-hover);
+}
+
+.hd-mode-btn-active-reply {
+  @apply px-4 py-2 font-medium;
+  font-size: var(--hd-font-base);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: #60a5fa;
+}
+
+.hd-mode-btn-active-internal {
+  @apply px-4 py-2 font-medium;
+  font-size: var(--hd-font-base);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+}
+
+/* Case Card in Queue */
+.hd-case-card {
+  @apply p-4 cursor-pointer transition-all duration-150;
+  border-bottom: 1px solid var(--hd-border);
+}
+
+.hd-case-card:hover {
+  background: var(--hd-bg-hover);
+}
+
+.hd-case-card-active {
+  @apply border-l-2 border-l-blue-500;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Context Panel */
+.hd-context-section {
+  @apply p-4 border-b;
+  border-color: var(--hd-border);
+}
+
+.hd-context-label {
+  @apply text-[10px] font-semibold uppercase tracking-wider mb-2;
+  color: var(--hd-text-muted);
+}
+
+/* Agent Status Indicator */
+.hd-status-online {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium;
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+}
+
+.hd-status-online::before {
+  content: '';
+  @apply w-2 h-2 rounded-full bg-green-500;
+}
+
+.hd-status-away {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium;
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+}
+
+.hd-status-away::before {
+  content: '';
+  @apply w-2 h-2 rounded-full bg-amber-500;
+}
+
+.hd-status-offline {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium;
+  background: rgba(100, 116, 139, 0.1);
+  color: #94a3b8;
+}
+
+.hd-status-offline::before {
+  content: '';
+  @apply w-2 h-2 rounded-full bg-slate-500;
+}
+
+/* Keyboard Shortcut Badge */
+.hd-kbd {
+  @apply inline-flex items-center justify-center rounded;
+  padding: 3px 6px;
+  font-size: var(--hd-font-xs);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  background: var(--hd-bg-card);
+  border: 1px solid var(--hd-border);
+  color: var(--hd-text-muted);
+}
+
+/* Scrollbar for Helpdesk */
+.hd-scrollbar::-webkit-scrollbar {
+  @apply w-1.5;
+}
+
+.hd-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hd-scrollbar::-webkit-scrollbar-thumb {
+  @apply rounded-full;
+  background: var(--hd-border);
+}
+
+.hd-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--hd-border-light);
 }

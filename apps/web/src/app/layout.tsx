@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Open_Sans, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google';
+import { Open_Sans, Source_Serif_4, IBM_Plex_Mono, Outfit } from 'next/font/google';
 import { Toaster } from 'sonner';
 import { RouteAnnouncer } from '@/components/shared/route-announcer';
 import { Providers } from '@/components/providers';
@@ -21,6 +21,11 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: '--font-mono',
 });
 
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
+
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
@@ -35,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${openSans.variable} ${sourceSerif.variable} ${ibmPlexMono.variable} font-sans`}>
+      <body className={`${openSans.variable} ${sourceSerif.variable} ${ibmPlexMono.variable} ${outfit.variable} font-sans`}>
         <Providers>
           {children}
           <Toaster richColors position="top-right" />
