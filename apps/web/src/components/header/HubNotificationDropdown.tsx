@@ -180,15 +180,17 @@ export function HubNotificationDropdown() {
             )}
           </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700">
-            <Link
-              href="/notifications"
-              onClick={() => setIsOpen(false)}
-              className="block py-3 text-center text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
-            >
-              View All Notifications
-            </Link>
-          </div>
+          {notifications.length > 0 && (
+            <div className="border-t border-gray-200 px-5 py-3 dark:border-gray-700">
+              <button
+                onClick={handleMarkAllRead}
+                disabled={isLoading || unreadCount === 0}
+                className="w-full text-center text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 disabled:text-gray-400 disabled:cursor-default"
+              >
+                {unreadCount > 0 ? 'Mark all as read' : 'All caught up'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
