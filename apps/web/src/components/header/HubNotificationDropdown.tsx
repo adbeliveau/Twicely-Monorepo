@@ -5,10 +5,10 @@ import Link from 'next/link';
 
 export function HubNotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications] = useState<Array<{ id: string; title: string; message: string; time: string; read: boolean }>>([
-    { id: '1', title: 'New support case', message: 'Case #1234 assigned to you', time: '5m ago', read: false },
-    { id: '2', title: 'Seller verification', message: 'New ID verification pending review', time: '1h ago', read: false },
-    { id: '3', title: 'System health', message: 'All systems operational', time: '3h ago', read: true },
+  const [notifications] = useState<Array<{ id: string; title: string; message: string; time: string; read: boolean; link: string }>>([
+    { id: '1', title: 'New support case', message: 'Case #1234 assigned to you', time: '5m ago', read: false, link: '/hd/cases' },
+    { id: '2', title: 'Seller verification', message: 'New ID verification pending review', time: '1h ago', read: false, link: '/usr/sellers/verification' },
+    { id: '3', title: 'System health', message: 'All systems operational', time: '3h ago', read: true, link: '/health' },
   ]);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -54,9 +54,11 @@ export function HubNotificationDropdown() {
 
           <div className="max-h-80 overflow-y-auto">
             {notifications.map((n) => (
-              <div
+              <Link
                 key={n.id}
-                className={`flex gap-3 border-b border-gray-100 px-5 py-3 last:border-0 dark:border-gray-700 ${!n.read ? 'bg-brand-50/30 dark:bg-brand-500/5' : ''}`}
+                href={n.link}
+                onClick={() => setIsOpen(false)}
+                className={`flex gap-3 border-b border-gray-100 px-5 py-3 last:border-0 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50 cursor-pointer ${!n.read ? 'bg-brand-50/30 dark:bg-brand-500/5' : ''}`}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +71,7 @@ export function HubNotificationDropdown() {
                   <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{n.time}</p>
                 </div>
                 {!n.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand-500" />}
-              </div>
+              </Link>
             ))}
           </div>
 
