@@ -2,9 +2,6 @@
 
 import { useState, useRef, useEffect, useTransition } from 'react';
 import { suspendUserAction, unsuspendUserAction, warnUserAction } from '@/lib/actions/admin-users';
-import {
-  holdPayoutsAction, releasePayoutsAction, resetPasswordAction, overridePerformanceBandAction,
-} from '@/lib/actions/admin-users-management';
 
 interface UserActionsDropdownProps {
   userId: string;
@@ -72,48 +69,6 @@ export function UserActionsDropdown({
       } else {
         setResult('Failed to start impersonation');
       }
-    });
-  }
-
-  function _handleHoldRelease() {
-    setIsOpen(false);
-    if (payoutsEnabled) {
-      const reason = prompt('Reason for holding payouts:');
-      if (!reason) return;
-      startTransition(async () => {
-        const res = await holdPayoutsAction({ userId, reason });
-        setResult(res.error ?? 'Payouts held');
-      });
-    } else {
-      startTransition(async () => {
-        const res = await releasePayoutsAction({ userId });
-        setResult(res.error ?? 'Payouts released');
-      });
-    }
-  }
-
-  function _handleResetPassword() {
-    if (!confirm('Send password reset for this user?')) return;
-    setIsOpen(false);
-    startTransition(async () => {
-      const res = await resetPasswordAction({ userId });
-      setResult(res.error ?? 'Password reset initiated');
-    });
-  }
-
-  function _handleBandOverride() {
-    const band = prompt('New band (EMERGING, ESTABLISHED, TOP_RATED, POWER_SELLER):');
-    if (!band) return;
-    const reason = prompt('Reason:');
-    if (!reason) return;
-    setIsOpen(false);
-    startTransition(async () => {
-      const res = await overridePerformanceBandAction({
-        userId,
-        newBand: band as 'EMERGING' | 'ESTABLISHED' | 'TOP_RATED' | 'POWER_SELLER',
-        reason,
-      });
-      setResult(res.error ?? `Band set to ${band}`);
     });
   }
 
