@@ -165,7 +165,7 @@ export default async function StaffListPage({
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {s.roles.length > 0 ? (
-                        s.roles.map((role) => (
+                        [...new Set(s.roles)].map((role) => (
                           <span
                             key={role}
                             className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800"
