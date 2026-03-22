@@ -39,7 +39,7 @@ function HubShellInner({ children }: HubShellProps) {
   };
 
   return (
-    <div className="min-h-screen xl:flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 xl:flex">
       <CorpSidebar />
       <Backdrop />
       <div

@@ -40,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${openSans.variable} ${sourceSerif.variable} ${ibmPlexMono.variable} ${outfit.variable} font-sans`}>
+      <body className={`${openSans.variable} ${sourceSerif.variable} ${ibmPlexMono.variable} ${outfit.variable} font-sans dark:bg-gray-900`}>
         <Providers>
           {children}
           <Toaster richColors position="top-right" />
