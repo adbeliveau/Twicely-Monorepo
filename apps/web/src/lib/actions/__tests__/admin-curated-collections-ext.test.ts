@@ -22,8 +22,11 @@ const mockDbSelect = vi.fn();
 const mockDbInsert = vi.fn();
 const mockDbUpdate = vi.fn();
 const mockDbDelete = vi.fn();
+const mockDbTransaction = vi.fn().mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+  return fn({ select: mockDbSelect, insert: mockDbInsert, update: mockDbUpdate, delete: mockDbDelete });
+});
 vi.mock('@twicely/db', () => ({
-  db: { select: mockDbSelect, insert: mockDbInsert, update: mockDbUpdate, delete: mockDbDelete },
+  db: { select: mockDbSelect, insert: mockDbInsert, update: mockDbUpdate, delete: mockDbDelete, transaction: mockDbTransaction },
 }));
 
 vi.mock('drizzle-orm', () => ({

@@ -24,6 +24,7 @@ const mockSql = Object.assign(
 vi.mock('drizzle-orm', () => ({
   sql: mockSql,
   gte: vi.fn((col, val) => ({ type: 'gte', col, val })),
+  lt: vi.fn((col, val) => ({ type: 'lt', col, val })),
   and: vi.fn((...args) => ({ type: 'and', args })),
   or: vi.fn((...args) => ({ type: 'or', args })),
   eq: vi.fn((col, val) => ({ type: 'eq', col, val })),

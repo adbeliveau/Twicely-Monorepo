@@ -109,8 +109,3 @@ export const localScheduleNudgeWorker = createWorker<LocalScheduleNudgeJobData>(
   async (job) => processScheduleNudge(job.data),
   1,
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localScheduleNudgeWorker.close();
-});

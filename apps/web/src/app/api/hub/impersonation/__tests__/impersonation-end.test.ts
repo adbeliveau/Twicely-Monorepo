@@ -8,10 +8,30 @@ import { NextRequest } from 'next/server';
 const mockGetImpersonationSession = vi.fn();
 const mockDbInsert = vi.fn();
 const mockInsertValues = vi.fn().mockResolvedValue(undefined);
+const mockCookieGet = vi.fn().mockReturnValue({ value: 'staff-token-123' });
+const mockGetStaffSession = vi.fn().mockResolvedValue({
+  staffUserId: 'staff-xyz',
+  email: 'staff@twicely.co',
+  displayName: 'Support Agent',
+});
 
 vi.mock('@twicely/auth/impersonation', () => ({
   getImpersonationSession: (...args: unknown[]) =>
     mockGetImpersonationSession(...args),
+}));
+
+vi.mock('next/headers', () => ({
+  cookies: vi.fn().mockResolvedValue({
+    get: (...args: unknown[]) => mockCookieGet(...args),
+  }),
+}));
+
+vi.mock('@twicely/auth/staff-auth', () => ({
+  getStaffSession: (...args: unknown[]) => mockGetStaffSession(...args),
+}));
+
+vi.mock('@twicely/casl/staff-authorize', () => ({
+  STAFF_TOKEN_COOKIE: 'twicely.staff_token',
 }));
 
 vi.mock('@twicely/db', () => ({

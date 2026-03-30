@@ -58,6 +58,24 @@ vi.mock('@twicely/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn() },
 }));
 
+vi.mock('@twicely/search/typesense-index', () => ({
+  upsertListingDocument: vi.fn().mockResolvedValue(undefined),
+  deleteListingDocument: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/notifications/followed-seller-notifier', () => ({
+  notifyFollowedSellerNewListing: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@twicely/crosslister/services/outbound-sync', () => ({
+  detectOutboundSyncNeeded: vi.fn().mockResolvedValue([]),
+  queueOutboundSync: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
+
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 

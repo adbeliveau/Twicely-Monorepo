@@ -60,7 +60,8 @@ describe('enqueueHelpdeskCsatSend', () => {
     await enqueueHelpdeskCsatSend();
     expect(mockQueueAdd).toHaveBeenCalledWith(
       'csat-send',
-      expect.objectContaining({ triggeredAt: expect.any(String) })
+      expect.objectContaining({ triggeredAt: expect.any(String) }),
+      expect.objectContaining({ jobId: 'helpdesk-csat-send', removeOnComplete: true }),
     );
   });
 

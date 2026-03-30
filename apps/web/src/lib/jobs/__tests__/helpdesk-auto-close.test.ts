@@ -68,7 +68,8 @@ describe('enqueueHelpdeskAutoClose', () => {
     await enqueueHelpdeskAutoClose();
     expect(mockQueueAdd).toHaveBeenCalledWith(
       'auto-close',
-      expect.objectContaining({ triggeredAt: expect.any(String) })
+      expect.objectContaining({ triggeredAt: expect.any(String) }),
+      expect.objectContaining({ jobId: 'helpdesk-auto-close', removeOnComplete: true }),
     );
   });
 

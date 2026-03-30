@@ -10,7 +10,10 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 /**
- * Next.js Middleware — Route protection, auth checks, subdomain routing
+ * Next.js Proxy — Route protection, auth checks, subdomain routing
+ *
+ * Renamed from middleware.ts per Next.js 16 convention.
+ * See: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
  *
  * Route types:
  * - HUB: hub.twicely.co subdomain → staff dashboard
@@ -134,7 +137,7 @@ function handleHub(request: NextRequest): NextResponse {
   return response;
 }
 
-export default function middleware(request: NextRequest): NextResponse {
+export default function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // 0. Hub subdomain — separate routing

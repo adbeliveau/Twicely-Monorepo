@@ -1742,3 +1742,18 @@ pre[class*="language-"].line-numbers {
 .hd-layout * {
   transition-property: background-color, border-color, color, opacity, transform, box-shadow;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ACCESSIBILITY — Reduced Motion
+   ═══════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

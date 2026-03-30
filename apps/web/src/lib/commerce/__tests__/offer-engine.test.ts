@@ -23,6 +23,7 @@ const ins = (r: unknown[]) => ({ values: vi.fn(() => ({ returning: vi.fn(() => P
 const upd = (r: unknown[]) => ({ set: vi.fn(() => ({ where: vi.fn(() => ({ returning: vi.fn(() => Promise.resolve(r)) })) })) });
 const txMock = () => {
   const selectFn = vi.fn()
+    .mockReturnValueOnce({ from: vi.fn(() => ({ where: vi.fn(() => ({ for: vi.fn(() => Promise.resolve([{ id: 'o1', status: 'PENDING' }])) })) })) })
     .mockReturnValueOnce({ from: vi.fn(() => ({ where: vi.fn(() => ({ for: vi.fn(() => Promise.resolve([{ id: 'l1', status: 'ACTIVE', availableQuantity: 1, quantity: 1 }])) })) })) })
     .mockReturnValue({ from: vi.fn(() => ({ where: vi.fn(() => Promise.resolve([])) })) });
   return { select: selectFn, update: vi.fn(() => ({ set: vi.fn(() => ({ where: vi.fn(() => Promise.resolve([])) })) })) };
@@ -102,7 +103,16 @@ describe('Offer Engine', () => {
       mockQueries.getOfferById.mockResolvedValue(offerBase);
       const others = [{ id: 'ot1', stripeHoldId: 'pi_ot1' }, { id: 'ot2', stripeHoldId: 'pi_ot2' }];
       mockDb.transaction.mockImplementation((fn) => {
-        const tx = { select: vi.fn().mockReturnValueOnce({ from: vi.fn(() => ({ where: vi.fn(() => ({ for: vi.fn(() => Promise.resolve([{ id: 'l1', status: 'ACTIVE', availableQuantity: 1, quantity: 1 }])) })) })) }).mockReturnValue({ from: vi.fn(() => ({ where: vi.fn(() => Promise.resolve(others)) })) }), update: vi.fn(() => ({ set: vi.fn(() => ({ where: vi.fn(() => Promise.resolve([])) })) })) };
+        const tx = {
+          select: vi.fn()
+            // 1st call: lock the offer row
+            .mockReturnValueOnce({ from: vi.fn(() => ({ where: vi.fn(() => ({ for: vi.fn(() => Promise.resolve([{ id: 'o1', status: 'PENDING' }])) })) })) })
+            // 2nd call: lock the listing row
+            .mockReturnValueOnce({ from: vi.fn(() => ({ where: vi.fn(() => ({ for: vi.fn(() => Promise.resolve([{ id: 'l1', status: 'ACTIVE', availableQuantity: 1, quantity: 1 }])) })) })) })
+            // 3rd call: get other pending offers
+            .mockReturnValue({ from: vi.fn(() => ({ where: vi.fn(() => Promise.resolve(others)) })) }),
+          update: vi.fn(() => ({ set: vi.fn(() => ({ where: vi.fn(() => Promise.resolve([])) })) })),
+        };
         return fn(tx);
       });
       const { acceptOffer } = await import('@/lib/commerce/offer-engine');

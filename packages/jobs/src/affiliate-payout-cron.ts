@@ -62,8 +62,3 @@ export const affiliatePayoutWorker = createWorker<AffiliatePayoutJobData>(
   },
   1 // single concurrency — avoid duplicate processing
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await affiliatePayoutWorker.close();
-});

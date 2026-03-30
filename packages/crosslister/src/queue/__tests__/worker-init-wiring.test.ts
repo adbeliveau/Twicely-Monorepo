@@ -12,12 +12,16 @@ vi.mock('bullmq', () => ({
   })),
 }));
 
-vi.mock('@/lib/jobs/queue', () => ({
+vi.mock('@twicely/jobs/queue', () => ({
   createQueue: vi.fn().mockImplementation(() => ({
     add: vi.fn().mockResolvedValue({ id: 'q-1' }),
   })),
   createWorker: vi.fn().mockReturnValue({ on: vi.fn(), close: vi.fn() }),
   connection: {},
+}));
+
+vi.mock('@twicely/jobs/shutdown-registry', () => ({
+  registerShutdown: vi.fn(),
 }));
 
 vi.mock('@twicely/logger', () => ({
@@ -28,19 +32,16 @@ const mockRegisterDeadline = vi.fn().mockResolvedValue(undefined);
 const mockRegisterExpiry = vi.fn().mockResolvedValue(undefined);
 const mockRegisterCron = vi.fn().mockResolvedValue(undefined);
 
-vi.mock('@/lib/jobs/shipping-quote-deadline', () => ({
+vi.mock('@twicely/jobs/shipping-quote-deadline', () => ({
   registerShippingQuoteDeadlineJob: mockRegisterDeadline,
-  shippingQuoteDeadlineWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
-vi.mock('@/lib/jobs/expire-free-lister-tier', () => ({
+vi.mock('@twicely/jobs/expire-free-lister-tier', () => ({
   registerExpireFreeListerJob: mockRegisterExpiry,
-  expireFreeListerWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
-vi.mock('@/lib/jobs/cron-jobs', () => ({
+vi.mock('@twicely/jobs/cron-jobs', () => ({
   registerCronJobs: mockRegisterCron,
-  cronWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
 vi.mock('../lister-worker', () => ({

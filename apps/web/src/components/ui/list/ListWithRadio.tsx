@@ -7,7 +7,7 @@ export default function ListWithRadio() {
 
   const handleChange = (value: string) => {
     setSelectedValue(value);
-    console.log("Selected Value:", value);
+    // Selection handled by state update
   };
   return (
     <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] sm:w-fit">

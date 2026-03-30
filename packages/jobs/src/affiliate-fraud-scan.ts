@@ -119,8 +119,3 @@ export const affiliateFraudScanWorker = createWorker<AffiliateFraudScanJobData>(
   },
   1,
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await affiliateFraudScanWorker.close();
-});

@@ -132,8 +132,3 @@ export const shippingQuoteDeadlineWorker =
     },
     1 // single concurrency — avoid duplicate processing
   );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await shippingQuoteDeadlineWorker.close();
-});

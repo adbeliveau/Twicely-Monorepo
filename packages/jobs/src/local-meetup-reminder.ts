@@ -232,8 +232,3 @@ export const localMeetupReminderWorker =
     },
     1,
   );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localMeetupReminderWorker.close();
-});

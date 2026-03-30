@@ -4,7 +4,10 @@ const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
 const mockSelect = vi.fn();
 const mockDelete = vi.fn();
-const mockDb = { insert: mockInsert, update: mockUpdate, select: mockSelect, delete: mockDelete };
+const mockTransaction = vi.fn().mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+  return fn({ insert: mockInsert, update: mockUpdate, select: mockSelect, delete: mockDelete });
+});
+const mockDb = { insert: mockInsert, update: mockUpdate, select: mockSelect, delete: mockDelete, transaction: mockTransaction };
 const mockStaffAuthorize = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));

@@ -19,6 +19,9 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 vi.mock('drizzle-orm', () => ({ eq: vi.fn((a, b) => ({ type: 'eq', a, b })) }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
 vi.mock('@/lib/listings/seller-activate', () => ({
   ensureSellerProfile: vi.fn().mockResolvedValue(undefined),
 }));

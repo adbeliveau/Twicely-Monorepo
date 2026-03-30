@@ -1,4 +1,5 @@
 import { Queue, Worker, type ConnectionOptions, type Processor, type QueueOptions } from 'bullmq';
+import { registerShutdown } from './shutdown-registry';
 
 /**
  * Valkey/Redis connection configuration.
@@ -28,10 +29,12 @@ export function createWorker<T>(
   processor: Processor<T>,
   concurrency = 5
 ): Worker<T> {
-  return new Worker<T>(name, processor, {
+  const worker = new Worker<T>(name, processor, {
     connection,
     concurrency,
   });
+  registerShutdown(() => worker.close());
+  return worker;
 }
 
 export { connection };

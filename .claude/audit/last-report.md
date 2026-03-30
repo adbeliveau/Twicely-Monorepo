@@ -1,68 +1,78 @@
-# Audit Fix Report — Hidden Error Resolution
-**Date:** 2026-03-21
-**Rounds:** 1/3 (clean after round 1)
-**Starting warnings:** 13 | **Resolved:** 13 | **Remaining:** 0
+# Super Audit V2 Report (Post-Fix Verification)
+**Date:** 2026-03-30
+**Mode:** quick (shell streams only — verification pass)
+**Commit:** 6fca99b
+**TypeScript:** 23/23 packages PASS (0 errors)
+**Tests:** 736/736 files, 9231/9232 pass (1 todo)
 
-## Gate Results
-| Check | Result |
-|---|---|
-| TypeScript (`@twicely/web`) | 0 errors |
+## Scorecard
+| # | Stream | Method | PASS | WARN | BLOCK | Status |
+|---|---|---|---|---|---|---|
+| 5 | Money & Terms | Shell | ALL | 0 | 0 | PASS |
+| 7 | Wiring & Side Effects | Shell | ALL | 0* | 0 | PASS |
+| 8 | Stripe & Payments | Shell | ALL | 0 | 0 | PASS |
+| 9 | Code Hygiene | Shell | ALL | 0* | 0 | PASS |
+| 10a | Smoke Tests | Shell | 52/52 | 0 | 0 | PASS |
+| 11 | Runtime Safety | Shell | 7/9 | 0* | 0* | PASS |
+| **TOTAL** | | | **ALL** | **0** | **0** | **CLEAN** |
 
-## All Fixes Applied
+*All raw findings suppressed by known false positives (see below).
 
-### Stripe Error Handling
-| # | Finding | File | Fix |
+## Blockers (must fix)
+**None.** All 0 real blockers.
+
+## Warnings (should fix)
+**None.** All 0 real warnings.
+
+## Suppressed (known false positives)
+<details>
+<summary>12 items suppressed — click to expand</summary>
+
+### Stream 7
+- **FP-064:** Dead exports in commerce/ (Phase G wiring)
+- **FP-065:** Unwired notification templates (Phase G wiring)
+- **FP-074:** buyer-protection.ts createProtectionClaim already has notify() calls
+- **FP-075:** offer-engine.ts acceptOffer already has notifyOfferEvent()
+
+### Stream 9
+- **FP-062:** Files over 300 lines (owner accepts, refactor sprint)
+- **FP-063:** console.error/warn in production code (Phase G logger integration)
+- **FP-066:** Weak ID validation z.string().min(1) (security pass later)
+
+### Stream 11
+- **FP-085:** Browser API in extension/callback/route.ts (HTML template string, not server-side)
+- **FP-070:** eslint-disable @next/next/no-img-element (intentional for CDN/blob URLs)
+- **FP-071:** eslint-disable react-hooks/exhaustive-deps (intentional mount-only effects)
+- **FP-072:** void async calls — 138 occurrences (fire-and-forget with upstream error handling)
+
+</details>
+
+## Fixes Applied This Session
+| # | Finding | Fix Applied | Verified |
 |---|---|---|---|
-| H-01 | `createConnectPaymentIntent` without try/catch | `checkout.ts:266` | Wrapped in try/catch, returns `{ success: false }`, logs error |
-| H-06 | Valkey rate-limit empty catch | `checkout.ts:93` | Added `logger.warn` — keeps fail-open behavior but now observable |
+| 1 | `/my/buying/returns` broken link (404) | → `/my/buying/orders` in h/page.tsx | PASS |
+| 2 | SidebarWidget 3 stale routes | `/seller/boost` → `/my/selling/promoted`, `/corp/settings/platform` → `/cfg/platform`, `/seller/onboarding` → `/my/selling/onboarding` | PASS |
+| 3 | 5x console.log in production | Removed from ListWithRadio, PaginationExample, UserAddressCard, UserInfoCard, UserMetaCard | PASS |
+| 4 | useGoBack.ts missing "use client" | Added directive | PASS |
+| 5 | UserDropdown 7 stale routes | All updated to V3 prefixes | PASS |
+| 6 | NotificationDropdown stale route | `/account/notifications` → `/my/settings/notifications` | PASS |
+| 7 | StaffNotificationDropdown stale routes | All `/helpdesk` → `/hd` | PASS |
+| 8 | Auth ordering: listings-delete.ts | authorize() moved before schema validation | PASS |
+| 9 | Auth ordering: cart.ts (3 functions) | authorize() moved before schema validation in addToCart, removeFromCart, updateCartItemQuantity | PASS |
+| 10 | Auth ordering: staff-notifications.ts | staffAuthorize() moved before schema validation | PASS |
+| 11 | user-cases-tab.tsx wrong href | `/hd?case=${c.id}` → `/hd/cases/${c.id}` | PASS |
+| 12 | Duplicate score.band.* seed keys | Unified to performance.band.* in all code + removed dead seed entries | PASS |
 
-### Race Conditions
-| # | Finding | File | Fix |
-|---|---|---|---|
-| H-03 | Stripe capture before DB transaction | `bundle-offer-response.ts` | Wrapped DB update in `db.transaction()` with its own error surface |
-| H-04 | Parallel category reorder without tx | `admin-categories.ts:257` | Wrapped `Promise.all` in `db.transaction(async (tx) => ...)` |
-| H-05 | Parallel collection reorder without tx | `admin-curated-collections.ts:251` | Wrapped reorder + audit insert in `db.transaction(async (tx) => ...)` |
-
-### Silent Error Swallowing
-| # | Finding | File | Fix |
-|---|---|---|---|
-| H-07 | Subscription change swallows Stripe error | `change-subscription.ts:159` | Added `logger.error` with context (subscriptionId, priceId) |
-| H-08 | 15 empty catches in finance-center actions | 4 files | Added `logger` import + `logger.error('[actionName]', { error })` to all 15 catches |
-
-### Division / Boundary Errors
-| # | Finding | File | Fix |
-|---|---|---|---|
-| H-09 | Etsy normalizer divisor=0 → Infinity | `etsy-normalizer.ts:80` | Changed `?? 100` to `\|\| 100` (catches 0 as falsy) |
-| H-10 | SLA timer dueAt===startedAt → NaN | `sla-timer.tsx:169` | Added `total <= 0 ? 100 :` guard before division |
-
-### Seed Key Alignment
-| # | Finding | File | Fix |
-|---|---|---|---|
-| H-17 | `shipping.freeThresholdCents` abbreviated | `seed-i14-settings.ts:115` | Renamed to `fulfillment.shipping.freeThresholdCents` |
-
-## Files Changed (13 files)
-1. `apps/web/src/lib/actions/checkout.ts` — H-01 + H-06
-2. `apps/web/src/lib/commerce/bundle-offer-response.ts` — H-03
-3. `apps/web/src/lib/actions/admin-categories.ts` — H-04
-4. `apps/web/src/lib/actions/admin-curated-collections.ts` — H-05
-5. `apps/web/src/lib/actions/change-subscription.ts` — H-07 + logger import
-6. `apps/web/src/lib/actions/finance-center.ts` — H-08 (3 catches + logger import)
-7. `apps/web/src/lib/actions/finance-center-reports.ts` — H-08 (4 catches + logger import)
-8. `apps/web/src/lib/actions/finance-center-mileage.ts` — H-08 (4 catches + logger import)
-9. `apps/web/src/lib/actions/finance-center-expenses.ts` — H-08 (4 catches + logger import)
-10. `apps/web/src/lib/crosslister/connectors/etsy-normalizer.ts` — H-09
-11. `apps/web/src/components/helpdesk/sla-timer.tsx` — H-10
-12. `apps/web/src/lib/db/seed/seed-i14-settings.ts` — H-17
-
-## Remaining INFO-Level Items (no fix needed)
-| # | Finding | Status |
+## Comparison vs Last Audit
+| Metric | Before Fixes | After Fixes |
 |---|---|---|
-| H-02 | promo-codes.ts bare Stripe calls | Admin-only, low blast radius — acceptable |
-| H-11 | Orphaned Stripe hold on counterOffer tx fail | Expires in 7d, acceptable tradeoff |
-| H-12 | parseFloat NaN in affiliate UI | Server Zod validates |
-| H-13 | Valkey-down fail-open on idempotency | Documented design decision |
-| H-14 | Placeholder comment in keyword-management | Pre-launch cleanup item |
-| H-15 | /sell skips /become-seller for guests | UX routing decision |
-| H-16 | /m vs /my/messages inconsistency | Both work via redirect |
+| Real Blockers | 4 | 0 |
+| Real Warnings | 8+ | 0 |
+| console.log | 5 violations | 0 |
+| Stale routes | 12+ across 4 files | 0 |
+| Auth ordering | 5 functions wrong | 0 |
+| TypeScript | 23/23 PASS | 23/23 PASS |
+| Tests | 9231/9232 | 9231/9232 |
 
-## Final Verdict: CLEAN — 0 blockers, 0 warnings remaining
+## Verdict: CLEAN
+All 6 shell streams PASS. Zero real blockers. Zero real warnings. All raw findings are covered by known false positives. Codebase is audit-clean.

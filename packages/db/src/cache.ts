@@ -10,15 +10,16 @@
 
 import Redis from 'ioredis';
 import { logger } from '@twicely/logger';
-import { getInfraConfig } from '@twicely/config/infra-config';
 
 let _client: Redis | null = null;
 
 function createClient(): Redis {
-  const cfg = getInfraConfig();
+  // Read Valkey config from process.env to avoid circular dep on @twicely/config.
+  // loadInfraConfig() in instrumentation.ts writes DB-loaded values to process.env
+  // before any workers or cache clients are initialized.
   const client = new Redis({
-    host: cfg.valkeyHost,
-    port: cfg.valkeyPort,
+    host: process.env.VALKEY_HOST ?? '127.0.0.1',
+    port: parseInt(process.env.VALKEY_PORT ?? '6379', 10),
     maxRetriesPerRequest: null,
     enableOfflineQueue: true,
     lazyConnect: true,

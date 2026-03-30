@@ -180,8 +180,3 @@ export const localNoShowCheckWorker = createWorker<LocalNoShowCheckData>(
   },
   1,
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localNoShowCheckWorker.close();
-});

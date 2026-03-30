@@ -81,7 +81,8 @@ describe('enqueueHelpdeskSlaCheck', () => {
     await enqueueHelpdeskSlaCheck();
     expect(mockQueueAdd).toHaveBeenCalledWith(
       'sla-check',
-      expect.objectContaining({ triggeredAt: expect.any(String) })
+      expect.objectContaining({ triggeredAt: expect.any(String) }),
+      expect.objectContaining({ jobId: 'helpdesk-sla-check', removeOnComplete: true }),
     );
   });
 

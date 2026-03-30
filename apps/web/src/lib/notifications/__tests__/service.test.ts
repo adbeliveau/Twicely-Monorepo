@@ -11,6 +11,15 @@ const mockGetOfferWithParties = vi.fn();
 vi.mock('@twicely/db', () => ({ db: mockDb }));
 vi.mock('@twicely/email/send', () => ({ sendEmail: mockSendEmail }));
 vi.mock('@twicely/commerce/offer-queries', () => ({ getOfferWithParties: mockGetOfferWithParties }));
+vi.mock('@twicely/logger', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+}));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue(null),
+}));
 
 // Helper to set up preference + settings query mocks
 const mockPrefs = (prefs: { email: boolean; inApp: boolean } | null) => {

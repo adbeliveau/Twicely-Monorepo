@@ -43,7 +43,7 @@ export default function StaffNotificationDropdown() {
           message: n.body || "",
           read: n.read || false,
           createdAt: n.createdAt,
-          link: n.caseId ? `/helpdesk/cases/${n.caseId}` : "/helpdesk",
+          link: n.caseId ? `/hd/cases/${n.caseId}` : "/hd",
           source: "helpdesk" as const,
         }));
       }
@@ -229,7 +229,7 @@ export default function StaffNotificationDropdown() {
             notifications.map((notification) => (
               <li key={notification.id}>
                 <Link
-                  href={notification.link || "/helpdesk"}
+                  href={notification.link || "/hd"}
                   onClick={closeDropdown}
                   className={`flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
                     !notification.read ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
@@ -275,7 +275,7 @@ export default function StaffNotificationDropdown() {
           )}
         </ul>
         <Link
-          href="/helpdesk"
+          href="/hd"
           onClick={closeDropdown}
           className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         >

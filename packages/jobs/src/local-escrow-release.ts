@@ -134,8 +134,3 @@ export const localEscrowReleaseWorker = createWorker<LocalEscrowReleaseJobData>(
   },
   1,
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localEscrowReleaseWorker.close();
-});

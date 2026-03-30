@@ -29,11 +29,6 @@ export async function addToCart(
   listingId: string,
   quantity: number = 1
 ): Promise<AddToCartResult> {
-  const parsed = addToCartSchema.safeParse({ listingId, quantity });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   const userId = session?.userId ?? null;
   if (!userId) {
@@ -42,6 +37,11 @@ export async function addToCart(
 
   if (!ability.can('update', 'Cart')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = addToCartSchema.safeParse({ listingId, quantity });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Check availability
@@ -146,11 +146,6 @@ export async function addToCart(
  * Remove an item from the cart.
  */
 export async function removeFromCart(cartItemId: string): Promise<CartActionResult> {
-  const parsed = removeFromCartSchema.safeParse({ cartItemId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   const userId = session?.userId ?? null;
   if (!userId) {
@@ -159,6 +154,11 @@ export async function removeFromCart(cartItemId: string): Promise<CartActionResu
 
   if (!ability.can('update', 'Cart')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = removeFromCartSchema.safeParse({ cartItemId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Verify ownership: cartItem -> cart -> userId must match
@@ -195,11 +195,6 @@ export async function updateCartItemQuantity(
   cartItemId: string,
   quantity: number
 ): Promise<CartActionResult> {
-  const parsed = updateCartQuantitySchema.safeParse({ cartItemId, quantity });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   const userId = session?.userId ?? null;
   if (!userId) {
@@ -208,6 +203,11 @@ export async function updateCartItemQuantity(
 
   if (!ability.can('update', 'Cart')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = updateCartQuantitySchema.safeParse({ cartItemId, quantity });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // If quantity is 0 or less, remove the item

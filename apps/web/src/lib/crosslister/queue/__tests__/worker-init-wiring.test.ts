@@ -20,6 +20,10 @@ vi.mock('@twicely/jobs/queue', () => ({
   connection: {},
 }));
 
+vi.mock('@twicely/jobs/shutdown-registry', () => ({
+  registerShutdown: vi.fn(),
+}));
+
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
@@ -30,28 +34,25 @@ const mockRegisterCron = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@twicely/jobs/shipping-quote-deadline', () => ({
   registerShippingQuoteDeadlineJob: mockRegisterDeadline,
-  shippingQuoteDeadlineWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
 vi.mock('@twicely/jobs/expire-free-lister-tier', () => ({
   registerExpireFreeListerJob: mockRegisterExpiry,
-  expireFreeListerWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
 vi.mock('@twicely/jobs/cron-jobs', () => ({
   registerCronJobs: mockRegisterCron,
-  cronWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
-vi.mock('../lister-worker', () => ({
+vi.mock('@twicely/crosslister/queue/lister-worker', () => ({
   listerWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
-vi.mock('../automation-worker', () => ({
+vi.mock('@twicely/crosslister/queue/automation-worker', () => ({
   automationWorker: { on: vi.fn(), close: vi.fn() },
 }));
 
-vi.mock('../scheduler-loop', () => ({
+vi.mock('@twicely/crosslister/queue/scheduler-loop', () => ({
   startSchedulerLoop: vi.fn(),
   stopSchedulerLoop: vi.fn(),
 }));
@@ -96,7 +97,7 @@ describe('worker-init wiring', () => {
 
   it('starts scheduler loop on init', async () => {
     const { initListerWorker } = await import('../worker-init');
-    const { startSchedulerLoop } = await import('../scheduler-loop');
+    const { startSchedulerLoop } = await import('@twicely/crosslister/queue/scheduler-loop');
     initListerWorker();
     expect(startSchedulerLoop).toHaveBeenCalledTimes(1);
   });

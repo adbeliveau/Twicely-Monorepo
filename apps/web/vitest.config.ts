@@ -23,18 +23,27 @@ export default defineConfig({
       // Map all @twicely/* packages to local app files during tests
       // so vi.mock() on @twicely/* paths intercepts the same modules
       // that source code imports via relative or @/ paths.
+      // Subpath aliases must come BEFORE their parent package alias
       '@twicely/db/schema': path.resolve(__dirname, './src/lib/db/schema'),
       '@twicely/db/queries': path.resolve(__dirname, './src/lib/queries'),
       '@twicely/db/cache': path.resolve(__dirname, './src/lib/cache/valkey'),
       '@twicely/db/encryption': path.resolve(__dirname, './src/lib/encryption'),
+      '@twicely/db/channel-types': path.resolve(__dirname, './src/lib/db/channel-types'),
       '@twicely/db': path.resolve(__dirname, './src/lib/db'),
-      '@twicely/commerce': path.resolve(__dirname, './src/lib/commerce'),
+      // Search submodules point to the package source (typesense SDK not installed in apps/web)
+      '@twicely/search/typesense-client': path.resolve(__dirname, '../../packages/search/src/typesense-client'),
+      '@twicely/search/typesense-index': path.resolve(__dirname, '../../packages/search/src/typesense-index'),
+      '@twicely/search/typesense-schema': path.resolve(__dirname, '../../packages/search/src/typesense-schema'),
+      '@twicely/search': path.resolve(__dirname, './src/lib/search'),
+      '@twicely/jobs/shutdown-registry': path.resolve(__dirname, './src/lib/jobs/shutdown-registry'),
       '@twicely/jobs': path.resolve(__dirname, './src/lib/jobs'),
+      '@twicely/finance/expense-categories': path.resolve(__dirname, './src/lib/finance/expense-categories'),
+      '@twicely/finance': path.resolve(__dirname, './src/lib/finance'),
+      '@twicely/commerce': path.resolve(__dirname, './src/lib/commerce'),
       '@twicely/stripe': path.resolve(__dirname, './src/lib/stripe'),
       '@twicely/notifications': path.resolve(__dirname, './src/lib/notifications'),
       '@twicely/crosslister': path.resolve(__dirname, './src/lib/crosslister'),
       '@twicely/subscriptions': path.resolve(__dirname, './src/lib/subscriptions'),
-      '@twicely/finance': path.resolve(__dirname, './src/lib/finance'),
       '@twicely/scoring': path.resolve(__dirname, './src/lib/scoring'),
       '@twicely/auth': path.resolve(__dirname, './src/lib/auth'),
       '@twicely/casl': path.resolve(__dirname, './src/lib/casl'),
@@ -44,7 +53,6 @@ export default defineConfig({
       '@twicely/config': path.resolve(__dirname, './src/lib/config'),
       '@twicely/realtime': path.resolve(__dirname, './src/lib/realtime'),
       '@twicely/storage': path.resolve(__dirname, './src/lib/storage'),
-      '@twicely/search': path.resolve(__dirname, './src/lib/search'),
       '@twicely/shipping': path.resolve(__dirname, './src/lib/shipping'),
       '@twicely/ui': path.resolve(__dirname, './src/components/ui'),
     },

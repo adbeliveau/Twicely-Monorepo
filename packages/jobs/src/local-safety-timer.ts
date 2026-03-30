@@ -221,9 +221,3 @@ export const localSafetyEscalationWorker = createWorker<SafetyEscalationData>(
   async (job) => processEscalation(job.data),
   1,
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localSafetyNudgeWorker.close();
-  await localSafetyEscalationWorker.close();
-});

@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
-    "@twicely/crosslister": "workspace:*",
     "@twicely/db": "workspace:*",
     "@twicely/logger": "workspace:*"
   },

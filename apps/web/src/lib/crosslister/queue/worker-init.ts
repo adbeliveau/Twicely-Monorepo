@@ -14,9 +14,10 @@ import { runPollSchedulerTick } from '../polling/poll-scheduler';
 import { runAutomationTick } from '../automation/automation-scheduler';
 import { logger } from '@twicely/logger';
 import { AUTOMATION_TICK_INTERVAL_MS } from '../automation/constants';
-import { registerShippingQuoteDeadlineJob, shippingQuoteDeadlineWorker } from '@twicely/jobs/shipping-quote-deadline';
-import { registerExpireFreeListerJob, expireFreeListerWorker } from '@twicely/jobs/expire-free-lister-tier';
-import { registerCronJobs, cronWorker } from '@twicely/jobs/cron-jobs';
+import { registerShippingQuoteDeadlineJob } from '@twicely/jobs/shipping-quote-deadline';
+import { registerExpireFreeListerJob } from '@twicely/jobs/expire-free-lister-tier';
+import { registerCronJobs } from '@twicely/jobs/cron-jobs';
+import { registerShutdown } from '@twicely/jobs/shutdown-registry';
 
 let initialized = false;
 
@@ -54,19 +55,15 @@ export function initListerWorker(): void {
   // Start the automation scheduler tick (hourly — runs appropriate engines by UTC hour)
   const automationInterval = setInterval(() => { void runAutomationTick(); }, AUTOMATION_TICK_INTERVAL_MS);
 
-  // Graceful shutdown
-  const shutdown = () => {
+  // Register non-worker cleanup with centralized shutdown registry.
+  // BullMQ workers (lister, automation, cron, etc.) are auto-registered
+  // by createWorker() in @twicely/jobs/queue — only intervals and the
+  // scheduler loop need explicit registration here.
+  registerShutdown(() => {
     clearInterval(pollSchedulerInterval);
     clearInterval(automationInterval);
     stopSchedulerLoop();
-    void listerWorker.close();
-    void automationWorker.close();
-    void shippingQuoteDeadlineWorker.close();
-    void expireFreeListerWorker.close();
-    void cronWorker.close();
-  };
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  });
 
   logger.info('[listerWorker] Initialized: publish(10) + automation(5) + scheduler + poll + cron(4) + deadline + expiry');
 }

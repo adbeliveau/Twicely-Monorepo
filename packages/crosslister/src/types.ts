@@ -3,21 +3,11 @@
  * Source: Lister Canonical Section 9.2
  */
 
-// External channels (all channels except TWICELY)
-export type ExternalChannel =
-  | 'EBAY'
-  | 'POSHMARK'
-  | 'MERCARI'
-  | 'DEPOP'
-  | 'FB_MARKETPLACE'
-  | 'ETSY'
-  | 'GRAILED'
-  | 'THEREALREAL'
-  | 'WHATNOT'
-  | 'SHOPIFY'
-  | 'VESTIAIRE';
-
-export type Channel = 'TWICELY' | ExternalChannel;
+// Import + re-export channel types from @twicely/db (single source of truth).
+// Defined in db to avoid circular dep: finance → crosslister → finance.
+import type { ExternalChannel as _ExternalChannel, Channel as _Channel } from '@twicely/db/channel-types';
+export type ExternalChannel = _ExternalChannel;
+export type Channel = _Channel;
 
 // Connector tier — A (full API), B (standard API), C (session-based)
 // TypeScript-only type; NOT a Drizzle pgEnum

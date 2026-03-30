@@ -110,8 +110,3 @@ export const expireFreeListerWorker = createWorker<ExpireFreeListerJobData>(
   },
   1 // single concurrency — avoid duplicate processing
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await expireFreeListerWorker.close();
-});

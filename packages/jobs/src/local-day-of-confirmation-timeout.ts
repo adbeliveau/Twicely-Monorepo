@@ -166,8 +166,3 @@ export const dayOfConfirmationTimeoutWorker =
     },
     1,
   );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await dayOfConfirmationTimeoutWorker.close();
-});

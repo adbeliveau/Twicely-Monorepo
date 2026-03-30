@@ -51,7 +51,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('creates two ledger entries for an eBay sale', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([])); // no existing entry
@@ -70,7 +70,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('revenue entry has positive salePriceCents', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -94,7 +94,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('fee entry has negative platformFeeCents', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -118,7 +118,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('is idempotent — duplicate externalOrderId skips insert', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     // Simulate existing entry found
@@ -132,7 +132,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('revenue entry metadata includes channel and externalOrderId in memo/reasonCode', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -156,7 +156,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('sellerBalance is NOT updated by off-platform sale', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock; update?: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -177,7 +177,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('Poshmark sale with 20% fee stores correct fee amount', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -206,7 +206,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('both entries are posted inside a single transaction (atomic)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -229,7 +229,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('channel field is set on both entries', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -251,7 +251,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('revenue entry reasonCode uses xsale:{orderId}:revenue format', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));
@@ -273,7 +273,7 @@ describe('postOffPlatformSale', () => {
   });
 
   it('fee entry reasonCode uses xsale:{orderId}:fee format', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbMock = db as unknown as { select: Mock; transaction: Mock };
 
     dbMock.select.mockReturnValue(makeSelectChain([]));

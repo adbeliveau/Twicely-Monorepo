@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { AFFILIATE_TRIAL_SETTINGS } from '../seed-affiliate-settings';
 
 describe('affiliate and trial platform settings seed', () => {
-  it('exports exactly 45 settings', () => {
-    expect(AFFILIATE_TRIAL_SETTINGS).toHaveLength(45);
+  it('exports exactly 47 settings', () => {
+    expect(AFFILIATE_TRIAL_SETTINGS).toHaveLength(47);
   });
 
   it('all keys are unique', () => {
@@ -33,8 +33,8 @@ describe('affiliate and trial platform settings seed', () => {
   describe('affiliate.* settings (33 keys)', () => {
     const affiliateSettings = AFFILIATE_TRIAL_SETTINGS.filter((s) => s.key.startsWith('affiliate.'));
 
-    it('has exactly 33 affiliate settings', () => {
-      expect(affiliateSettings).toHaveLength(33);
+    it('has exactly 35 affiliate settings', () => {
+      expect(affiliateSettings).toHaveLength(35);
     });
 
     it('affiliate.enabled is boolean true', () => {

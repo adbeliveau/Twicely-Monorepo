@@ -44,9 +44,9 @@ async function loadScoreSettings() {
     await Promise.all([
       getPlatformSetting('score.smoothingFactor', 30),
       getPlatformSetting('score.trendModifierMax', 0.05),
-      getPlatformSetting('score.band.powerSeller', 900),
-      getPlatformSetting('score.band.topRated', 750),
-      getPlatformSetting('score.band.established', 550),
+      getPlatformSetting('performance.band.powerSeller', 900),
+      getPlatformSetting('performance.band.topRated', 750),
+      getPlatformSetting('performance.band.established', 550),
       getPlatformSetting('score.weight.onTimeShipping', 0.25),
       getPlatformSetting('score.weight.inadRate', 0.20),
       getPlatformSetting('score.weight.reviewAverage', 0.20),
@@ -181,5 +181,3 @@ export const sellerScoreRecalcWorker = createWorker<RecalcJobData>(
   async () => { await processSellerScoreRecalc(); },
   10,
 );
-
-process.on('SIGTERM', async () => { await sellerScoreRecalcWorker.close(); });

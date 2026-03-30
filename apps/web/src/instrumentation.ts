@@ -33,6 +33,14 @@ export async function register(): Promise<void> {
     // Start offer expiry worker — processes delayed offer expiration jobs
     await import('@/lib/jobs/offer-expiry');
 
+    // In development, drain stale delayed jobs from local-transaction queues.
+    // These accumulate in Valkey across dev server restarts and trigger
+    // "transaction not found" warnings when workers process orphaned jobs.
+    if (process.env.NODE_ENV !== 'production') {
+      const { drainLocalTransactionQueues } = await import('@/lib/jobs/drain-dev-queues');
+      await drainLocalTransactionQueues();
+    }
+
     // Start local-transaction workers — QR escrow, safety, meetup, scheduling
     await import('@/lib/jobs/local-auto-cancel');
     await import('@/lib/jobs/local-escrow-release');
@@ -42,5 +50,12 @@ export async function register(): Promise<void> {
     await import('@/lib/jobs/local-fraud-noshow-relist');
     await import('@/lib/jobs/local-schedule-nudge');
     await import('@/lib/jobs/local-day-of-confirmation-timeout');
+
+    // Install centralized SIGTERM/SIGINT handlers AFTER all workers are created.
+    // Each createWorker() call auto-registers its worker; worker-init.ts registers
+    // intervals. This single handler replaces 16+ individual process.on('SIGTERM')
+    // calls that were exceeding Node.js MaxListeners default of 10.
+    const { installShutdownHandlers } = await import('@twicely/jobs/shutdown-registry');
+    installShutdownHandlers();
   }
 }

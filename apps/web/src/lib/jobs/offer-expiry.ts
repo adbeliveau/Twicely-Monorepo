@@ -66,8 +66,3 @@ export const offerExpiryWorker = createWorker<OfferExpiryJobData>(
     }
   }
 );
-
-// Graceful shutdown handling
-process.on('SIGTERM', async () => {
-  await offerExpiryWorker.close();
-});

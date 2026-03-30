@@ -51,7 +51,7 @@ export function UserCasesTab({ cases }: UserCasesTabProps) {
             {cases.map((c) => (
               <tr key={c.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td className="whitespace-nowrap px-6 py-4">
-                  <Link href={`/hd?case=${c.id}`} className="font-mono text-xs text-brand-600 hover:underline dark:text-brand-400">
+                  <Link href={`/hd/cases/${c.id}`} className="font-mono text-xs text-brand-600 hover:underline dark:text-brand-400">
                     {c.id.slice(0, 12)}
                   </Link>
                 </td>

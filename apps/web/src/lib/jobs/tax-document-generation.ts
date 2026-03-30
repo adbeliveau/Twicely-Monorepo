@@ -157,7 +157,3 @@ export const taxDocumentWorker = createWorker<TaxDocumentJobData>(
   },
   1 // single concurrency
 );
-
-process.on('SIGTERM', async () => {
-  await taxDocumentWorker.close();
-});

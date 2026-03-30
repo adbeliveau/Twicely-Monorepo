@@ -18,13 +18,15 @@
     "@aws-sdk/client-s3": "^3.995.0",
     "@aws-sdk/s3-request-presigner": "^3.995.0",
     "@paralleldrive/cuid2": "^3.3.0",
-    "@twicely/commerce": "workspace:*",
     "@twicely/db": "workspace:*",
     "@twicely/logger": "workspace:*",
     "@twicely/notifications": "workspace:*",
     "@twicely/scoring": "workspace:*",
     "@twicely/storage": "workspace:*",
     "@twicely/utils": "workspace:*"
+  },
+  "peerDependencies": {
+    "@twicely/commerce": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20"

@@ -120,8 +120,8 @@ describe('SEED_I14_SETTINGS', () => {
   });
 
   describe('shipping and tax settings', () => {
-    it('shipping.freeThresholdCents is cents 5000', () => {
-      const s = SEED_I14_SETTINGS.find((s) => s.key === 'shipping.freeThresholdCents')!;
+    it('fulfillment.shipping.freeThresholdCents is cents 5000', () => {
+      const s = SEED_I14_SETTINGS.find((s) => s.key === 'fulfillment.shipping.freeThresholdCents')!;
       expect(s.type).toBe('cents');
       expect(s.value).toBe(5000);
     });

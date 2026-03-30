@@ -21,6 +21,10 @@ vi.mock('@twicely/commerce/review-visibility', () => ({
   updateReviewVisibility: vi.fn(),
 }));
 
+vi.mock('@twicely/commerce/seller-performance', () => ({
+  updateSellerPerformanceAggregates: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn(),
 }));
@@ -29,6 +33,8 @@ import { submitReview } from '../reviews';
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { updateSellerPerformanceAggregates } from '@twicely/commerce/seller-performance';
+import { updateReviewVisibility } from '@twicely/commerce/review-visibility';
 
 // Get mocked functions after imports
 const mockAuthorize = vi.mocked(authorize);
@@ -36,6 +42,8 @@ const mockSelect = vi.mocked(db.select);
 const mockInsert = vi.mocked(db.insert);
 const mockUpdate = vi.mocked(db.update);
 const mockGetPlatformSetting = vi.mocked(getPlatformSetting);
+const mockUpdateSellerPerformance = vi.mocked(updateSellerPerformanceAggregates);
+const mockUpdateReviewVisibility = vi.mocked(updateReviewVisibility);
 
 const validReviewData = {
   rating: 5,
@@ -167,7 +175,7 @@ describe('submitReview', () => {
     });
 
     const oldDate = new Date();
-    oldDate.setDate(oldDate.getDate() - 61); // 61 days ago (beyond 60-day window)
+    oldDate.setDate(oldDate.getDate() - 64); // 64 days ago (beyond 3-day eligibility + 60-day review window)
 
     let selectCallCount = 0;
     mockSelect.mockImplementation(() => ({
@@ -198,7 +206,7 @@ describe('submitReview', () => {
     const result = await submitReview('order1', validReviewData);
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('Review window closed');
+    expect(result.error).toContain('Review window closed. You had 60 days');
   });
 
   it('returns error if review already exists', async () => {
@@ -206,6 +214,9 @@ describe('submitReview', () => {
       session: { userId: 'user1' } as never,
       ability: { can: vi.fn().mockReturnValue(true) } as never,
     });
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 5); // 5 days ago (past 3-day eligibility)
 
     let selectCallCount = 0;
     mockSelect.mockImplementation(() => ({
@@ -220,7 +231,7 @@ describe('submitReview', () => {
                 buyerId: 'user1',
                 sellerId: 'seller1',
                 status: 'COMPLETED',
-                completedAt: new Date(),
+                completedAt: pastDate,
                 deliveredAt: null,
                 totalCents: 5000,
               }]);
@@ -244,6 +255,9 @@ describe('submitReview', () => {
       ability: { can: vi.fn().mockReturnValue(true) } as never,
     });
 
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 5); // 5 days ago (past 3-day eligibility)
+
     let selectCallCount = 0;
     mockSelect.mockImplementation(() => ({
       from: vi.fn().mockReturnValue({
@@ -257,7 +271,7 @@ describe('submitReview', () => {
                   buyerId: 'user1',
                   sellerId: 'seller1',
                   status: 'COMPLETED',
-                  completedAt: new Date(),
+                  completedAt: pastDate,
                   deliveredAt: null,
                   totalCents: 5000,
                 }]);
@@ -295,6 +309,7 @@ describe('submitReview', () => {
 
     expect(result).toEqual({ success: true, reviewId: 'review1' });
     expect(mockInsert).toHaveBeenCalled();
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockUpdateSellerPerformance).toHaveBeenCalledWith('seller1');
+    expect(mockUpdateReviewVisibility).toHaveBeenCalledWith('order1');
   });
 });

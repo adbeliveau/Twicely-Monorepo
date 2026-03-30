@@ -137,8 +137,3 @@ export const localAutoCancelWorker = createWorker<LocalAutoCancelJobData>(
   async (job) => processAutoCancel(job.data),
   1,
 );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localAutoCancelWorker.close();
-});

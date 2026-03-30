@@ -18,7 +18,7 @@ import { db } from '@twicely/db';
 import { ledgerEntry } from '@twicely/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
-import type { ExternalChannel } from '@twicely/crosslister/types';
+import type { ExternalChannel } from '@twicely/db/channel-types';
 
 // Correlation key format for revenue entry
 function revenueKey(externalOrderId: string): string {

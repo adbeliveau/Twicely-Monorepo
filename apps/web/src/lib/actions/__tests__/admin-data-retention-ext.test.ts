@@ -84,15 +84,24 @@ function makeNonAdminSession() {
 // Re-apply stable mock return values after any reset
 function restoreMocks() {
   mockGetPlatformSetting.mockResolvedValue(30);
-  mockGetPlatformSettingsByPrefix.mockResolvedValue(new Map([
-    ['retention.messageDays', 730],
-    ['retention.auditLogDays', 2555],
-    ['retention.searchLogDays', 90],
-    ['retention.webhookLogDays', 90],
-    ['retention.analyticsEventDays', 365],
-    ['retention.notificationLogDays', 180],
-    ['gdpr.deletionGracePeriodDays', 30],
-  ]));
+  mockGetPlatformSettingsByPrefix.mockImplementation((prefix: string) => {
+    if (prefix === 'privacy.retention.') {
+      return Promise.resolve(new Map([
+        ['privacy.retention.messageDays', 730],
+        ['privacy.retention.auditLogDays', 2555],
+        ['privacy.retention.searchLogDays', 90],
+        ['privacy.retention.webhookLogDays', 90],
+        ['privacy.retention.analyticsEventDays', 365],
+        ['privacy.retention.notificationLogDays', 180],
+      ]));
+    }
+    if (prefix === 'privacy.gdpr.') {
+      return Promise.resolve(new Map([
+        ['privacy.gdpr.deletionGracePeriodDays', 30],
+      ]));
+    }
+    return Promise.resolve(new Map());
+  });
 }
 
 // ─── getDataExportRequests ────────────────────────────────────────────────────
@@ -237,8 +246,8 @@ describe('getRetentionDashboard — policy entries', () => {
     const { getRetentionDashboard } = await import('../admin-data-retention');
     const result = await getRetentionDashboard();
     const keys = result.policies.map((p) => p.key);
-    expect(keys).toContain('gdpr.deletionGracePeriodDays');
-    expect(keys).toContain('retention.messageDays');
-    expect(keys).toContain('retention.auditLogDays');
+    expect(keys).toContain('privacy.gdpr.deletionGracePeriodDays');
+    expect(keys).toContain('privacy.retention.messageDays');
+    expect(keys).toContain('privacy.retention.auditLogDays');
   });
 });

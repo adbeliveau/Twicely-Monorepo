@@ -129,7 +129,7 @@ export default async function HelpCenterPage({ searchParams }: Props) {
             <span className="text-sm font-medium text-gray-900 dark:text-white">My Orders</span>
           </Link>
           <Link
-            href="/my/buying/returns"
+            href="/my/buying/orders"
             className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-5 text-center shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
           >
             <svg className="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

@@ -51,7 +51,7 @@ describe('Auth form accessibility — login page', () => {
 });
 
 describe('Auth form accessibility — signup page', () => {
-  const SRC = read('src/app/auth/signup/page.tsx');
+  const SRC = read('src/app/auth/signup/signup-form.tsx');
 
   it('error div has role="alert"', () => {
     expect(SRC).toContain('role="alert"');

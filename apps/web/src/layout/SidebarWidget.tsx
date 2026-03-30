@@ -16,7 +16,7 @@ export default function SidebarWidget() {
             Promote your listings to reach more buyers and increase visibility.
           </p>
           <Link
-            href="/seller/boost"
+            href="/my/selling/promoted"
             className="flex items-center justify-center rounded-lg bg-white p-3 text-sm font-medium text-blue-600 hover:bg-blue-50"
           >
             Boost Listings
@@ -37,7 +37,7 @@ export default function SidebarWidget() {
             Access platform settings and management tools.
           </p>
           <Link
-            href="/corp/settings/platform"
+            href="/cfg/platform"
             className="flex items-center justify-center rounded-lg bg-blue-600 p-3 text-sm font-medium text-white hover:bg-blue-700"
           >
             Platform Settings
@@ -56,7 +56,7 @@ export default function SidebarWidget() {
           Turn your closet into cash! List items in minutes.
         </p>
         <Link
-          href="/seller/onboarding"
+          href="/my/selling/onboarding"
           className="flex items-center justify-center rounded-lg bg-white p-3 text-sm font-medium text-green-600 hover:bg-green-50"
         >
           Become a Seller

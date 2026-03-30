@@ -58,7 +58,9 @@ export default async function HubRouteLayout({
         email={staffSession.email}
         roles={staffSession.roles}
       >
-        {children}
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
       </HubShell>
     </StaffSessionTimeoutProvider>
   );

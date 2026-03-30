@@ -90,17 +90,17 @@ export async function getStaffNotifications(): Promise<{
 export async function markStaffNotificationRead(
   notificationId: string
 ): Promise<ActionResult> {
-  const parsed = markReadSchema.safeParse({ notificationId });
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-
   let session;
   try {
     const result = await staffAuthorize();
     session = result.session;
   } catch {
     return { success: false, error: 'Unauthorized' };
+  }
+
+  const parsed = markReadSchema.safeParse({ notificationId });
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
   }
 
   const [notif] = await db

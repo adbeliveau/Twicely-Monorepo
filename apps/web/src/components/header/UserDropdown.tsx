@@ -89,7 +89,7 @@ export default function UserDropdown() {
               <DropdownItem
                 onItemClick={closeDropdown}
                 tag="a"
-                href="/corp"
+                href="/d"
                 className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               >
                 Dashboard
@@ -99,7 +99,7 @@ export default function UserDropdown() {
               <DropdownItem
                 onItemClick={closeDropdown}
                 tag="a"
-                href="/corp/settings"
+                href="/cfg"
                 className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               >
                 Platform Settings
@@ -121,7 +121,7 @@ export default function UserDropdown() {
   if (!user) {
     return (
       <Link
-        href="/login"
+        href="/auth/login"
         className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
       >
         Sign In
@@ -212,7 +212,7 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              href="/account"
+              href="/my"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
@@ -238,7 +238,7 @@ export default function UserDropdown() {
               <DropdownItem
                 onItemClick={closeDropdown}
                 tag="a"
-                href="/seller"
+                href="/my/selling"
                 className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               >
                 <svg
@@ -265,7 +265,7 @@ export default function UserDropdown() {
               <DropdownItem
                 onItemClick={closeDropdown}
                 tag="a"
-                href="/corp"
+                href="/d"
                 className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               >
                 <svg
@@ -291,7 +291,7 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              href="/account/settings"
+              href="/my/settings"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
@@ -316,7 +316,7 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              href="/account/messages"
+              href="/my/messages"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg

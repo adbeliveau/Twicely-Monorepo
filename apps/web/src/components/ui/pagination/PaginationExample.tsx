@@ -5,8 +5,7 @@ import PaginationWithIcon from "@/components/ui/pagination/PaginationWitIcon";
 import ComponentCard from "@/components/common/ComponentCard";
 
 export default function PaginationExample() {
-  const handlePageChange = (page: number) => {
-    console.log(`Page changed to ${page}`);
+  const handlePageChange = (_page: number) => {
     // Here you would typically fetch data for the new page
   };
   return (

@@ -311,10 +311,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'score.transitionOrderThreshold', value: 50, type: 'number', category: 'trust', description: 'Orders before search multiplier is fully unlocked (no longer clamped to 0.95-1.10)' },
   { key: 'score.downgradeGraceDays', value: 7, type: 'number', category: 'trust', description: 'Consecutive days below threshold before band downgrade is applied' },
 
-  // Band Thresholds (Section 11.2)
-  { key: 'score.band.powerSeller', value: 900, type: 'number', category: 'trust', description: 'Minimum score for POWER_SELLER band' },
-  { key: 'score.band.topRated', value: 750, type: 'number', category: 'trust', description: 'Minimum score for TOP_RATED band' },
-  { key: 'score.band.established', value: 550, type: 'number', category: 'trust', description: 'Minimum score for ESTABLISHED band (below = EMERGING)' },
+  // Band Thresholds — use performance.band.* keys (see lines 124-126)
 
   // Metric Weights (Section 11.3) — must sum to 1.0
   { key: 'score.weight.onTimeShipping', value: 0.25, type: 'number', category: 'trust', description: 'Weight for on-time shipping metric in score calculation' },

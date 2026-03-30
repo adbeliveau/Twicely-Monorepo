@@ -79,8 +79,3 @@ export const localFraudNoshowRelistWorker =
     },
     1,
   );
-
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  await localFraudNoshowRelistWorker.close();
-});

@@ -46,6 +46,13 @@ export async function loadInfraConfig(): Promise<void> {
       centrifugoApiKey: process.env.CENTRIFUGO_API_KEY ?? '',
     };
 
+    // Write DB-loaded values to process.env so downstream packages (e.g. @twicely/db cache,
+    // @twicely/jobs queue) can read them without importing @twicely/config (avoids circular deps).
+    process.env.VALKEY_HOST = _config.valkeyHost;
+    process.env.VALKEY_PORT = String(_config.valkeyPort);
+    if (_config.typesenseUrl) process.env.TYPESENSE_URL = _config.typesenseUrl;
+    if (_config.centrifugoApiUrl) process.env.CENTRIFUGO_API_URL = _config.centrifugoApiUrl;
+
     logger.info('[infraConfig] Loaded infrastructure config from platform_settings', {
       valkeyHost: _config.valkeyHost,
       valkeyPort: _config.valkeyPort,

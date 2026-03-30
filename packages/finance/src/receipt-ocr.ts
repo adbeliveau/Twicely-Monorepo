@@ -1,4 +1,4 @@
-import { EXPENSE_CATEGORIES } from '@/lib/validations/finance-center';
+import { EXPENSE_CATEGORIES } from './expense-categories';
 
 export interface ReceiptOcrResult {
   vendor: string | null;
