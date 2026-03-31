@@ -149,7 +149,7 @@ export async function respondToBundleOffer(
         listingId: offer.listingId,
         buyerId: offer.buyerId,
         sellerId,
-        offerCents: counterPriceCents,
+        offerCents: counterPriceCents!,
         status: 'PENDING',
         type: 'BUNDLE',
         expiresAt,
