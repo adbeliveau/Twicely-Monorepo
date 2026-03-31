@@ -75,6 +75,8 @@
     "@twicely/ui": "workspace:*",
     "@twicely/utils": "workspace:*",
     "@twicely/logger": "workspace:*",
+    "@twicely/geocoding": "workspace:*",
+    "@twicely/sms": "workspace:*",
     "@twicely/storage": "workspace:*",
     "@twicely/realtime": "workspace:*",
     "@twicely/jobs": "workspace:*",

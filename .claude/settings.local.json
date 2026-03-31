@@ -319,7 +319,10 @@
       "Bash(TURBOPACK=0 npx next build)",
       "Bash(NEXT_TURBOPACK_TRACING=1 npx next build)",
       "Bash(pnpm dlx @turbo/codemod@latest update --force)",
-      "Bash(pnpm -v)"
+      "Bash(pnpm -v)",
+      "Bash(grep -n '\"\"@twicely/storage\"\"' package.json)",
+      "Bash(\"packages/logger/src/index.ts\")",
+      "Bash(\"/c/Users/XPS-15/Projects/Twicely Mono/packages/logger/src/index.ts\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts"

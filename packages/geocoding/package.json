@@ -1,5 +1,5 @@
 {
-  "name": "@twicely/logger",
+  "name": "@twicely/geocoding",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -10,14 +10,12 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
-    "pino": "^9.6.0",
-    "pino-loki": "^2.4.1"
+    "@twicely/logger": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "pino-pretty": "^13.0.0"
+    "@types/node": "^20"
   }
 }
