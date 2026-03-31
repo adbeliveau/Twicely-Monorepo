@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@twicely/ui/button';
 import { Tag, Clock } from 'lucide-react';
-import { acceptWatcherOffer } from '@twicely/commerce/watcher-offers';
+import { acceptWatcherOfferAction } from '@/lib/actions/watcher-offers';
 import { formatPrice } from '@twicely/utils/format';
 
 interface WatcherOfferBannerProps {
@@ -75,7 +75,7 @@ export function WatcherOfferBanner({
     setError(null);
 
     startTransition(async () => {
-      const result = await acceptWatcherOffer({
+      const result = await acceptWatcherOfferAction({
         watcherOfferId,
         shippingAddressId: defaultAddressId,
       });

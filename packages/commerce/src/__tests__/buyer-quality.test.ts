@@ -1,180 +1,103 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { formatTrustSignals, type BuyerTrustSignals } from '../buyer-quality';
 
-vi.mock('@twicely/db/queries/platform-settings', () => ({
-  getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
-}));
-
-import {
-  computeBuyerQuality,
-  getBuyerQualityDescription,
-  shouldShowBuyerWarning,
-  type BuyerMetrics,
-} from '../buyer-quality';
-
-describe('computeBuyerQuality', () => {
-  it('returns GREEN for buyer with no issues', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 20,
+describe('formatTrustSignals', () => {
+  it('formats basic trust signals', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 47,
+      memberSince: new Date('2024-03-15'),
+      verified: true,
+      repeatBuyer: false,
       returns90d: 0,
-      cancellations90d: 0,
       disputes90d: 0,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('GREEN');
-    expect(result.visible).toBe(true);
-    expect(result.rates.returnRate).toBe(0);
-    expect(result.rates.cancelRate).toBe(0);
+    expect(formatTrustSignals(signals)).toBe('47 purchases · Member since 2024 · Verified');
   });
 
-  it('returns GREEN with visible=false for buyer with < 5 orders', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 4,
+  it('shows singular purchase', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 1,
+      memberSince: new Date('2025-06-15'),
+      verified: false,
+      repeatBuyer: false,
       returns90d: 0,
-      cancellations90d: 0,
       disputes90d: 0,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('GREEN');
-    expect(result.visible).toBe(false);
+    expect(formatTrustSignals(signals)).toBe('1 purchase · Member since 2025');
   });
 
-  it('returns GREEN for buyer with low return rate', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
-      returns90d: 4,      // 4% return rate
-      cancellations90d: 5, // 5% cancel rate
+  it('includes repeat buyer badge', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 12,
+      memberSince: new Date('2023-06-01'),
+      verified: true,
+      repeatBuyer: true,
+      returns90d: 0,
       disputes90d: 0,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('GREEN');
-    expect(result.rates.returnRate).toBe(0.04);
+    expect(formatTrustSignals(signals)).toBe(
+      '12 purchases · Member since 2023 · Verified · Bought from you before'
+    );
   });
 
-  it('returns YELLOW for buyer with 5-15% return rate', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
-      returns90d: 10,     // 10% return rate
-      cancellations90d: 5,
-      disputes90d: 0,
-    };
-
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('YELLOW');
-    expect(result.flags.highReturnRate).toBe(true);
-  });
-
-  it('returns YELLOW for buyer with 10-25% cancel rate', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
-      returns90d: 2,
-      cancellations90d: 15, // 15% cancel rate
-      disputes90d: 0,
-    };
-
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('YELLOW');
-    expect(result.flags.highCancelRate).toBe(true);
-  });
-
-  it('returns YELLOW for buyer with exactly 1 dispute', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
-      returns90d: 2,
-      cancellations90d: 2,
+  it('shows returns and disputes when present', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 30,
+      memberSince: new Date('2024-06-15'),
+      verified: false,
+      repeatBuyer: false,
+      returns90d: 3,
       disputes90d: 1,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('YELLOW');
-    expect(result.flags.hasDisputes).toBe(true);
+    expect(formatTrustSignals(signals)).toBe(
+      '30 purchases · Member since 2024 · 3 returns · 1 dispute'
+    );
   });
 
-  it('returns RED for buyer with >15% return rate', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
-      returns90d: 20,     // 20% return rate
-      cancellations90d: 0,
-      disputes90d: 0,
+  it('uses singular for 1 return and 1 dispute', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 5,
+      memberSince: new Date('2025-02-01'),
+      verified: true,
+      repeatBuyer: false,
+      returns90d: 1,
+      disputes90d: 1,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('RED');
-    expect(result.flags.highReturnRate).toBe(true);
+    expect(formatTrustSignals(signals)).toBe(
+      '5 purchases · Member since 2025 · Verified · 1 return · 1 dispute'
+    );
   });
 
-  it('returns RED for buyer with >25% cancel rate', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
+  it('shows zero purchases correctly', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 0,
+      memberSince: new Date('2026-03-31'),
+      verified: false,
+      repeatBuyer: false,
       returns90d: 0,
-      cancellations90d: 30, // 30% cancel rate
       disputes90d: 0,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('RED');
-    expect(result.flags.highCancelRate).toBe(true);
+    expect(formatTrustSignals(signals)).toBe('0 purchases · Member since 2026');
   });
 
-  it('returns RED for buyer with 2+ disputes', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 100,
+  it('shows all fields together', () => {
+    const signals: BuyerTrustSignals = {
+      completedPurchases: 100,
+      memberSince: new Date('2022-06-15'),
+      verified: true,
+      repeatBuyer: true,
       returns90d: 2,
-      cancellations90d: 2,
-      disputes90d: 2,
+      disputes90d: 3,
     };
 
-    const result = await computeBuyerQuality(metrics);
-
-    expect(result.tier).toBe('RED');
-    expect(result.flags.hasDisputes).toBe(true);
-  });
-
-  it('returns GREEN with visible=false for buyer with few orders (benefit of doubt)', async () => {
-    const metrics: BuyerMetrics = {
-      totalOrders90d: 2,
-      returns90d: 1,  // Would be 50% rate with more orders
-      cancellations90d: 0,
-      disputes90d: 0,
-    };
-
-    const result = await computeBuyerQuality(metrics);
-
-    // Rate calculation requires minimum 3 orders, visibility requires 5
-    expect(result.tier).toBe('GREEN');
-    expect(result.visible).toBe(false);
-    expect(result.rates.returnRate).toBe(0);
-  });
-});
-
-describe('getBuyerQualityDescription', () => {
-  it('returns correct descriptions', () => {
-    expect(getBuyerQualityDescription('GREEN')).toBe('Good standing');
-    expect(getBuyerQualityDescription('YELLOW')).toBe('Elevated risk');
-    expect(getBuyerQualityDescription('RED')).toBe('High risk');
-  });
-});
-
-describe('shouldShowBuyerWarning', () => {
-  it('returns false for GREEN tier', () => {
-    expect(shouldShowBuyerWarning('GREEN')).toBe(false);
-  });
-
-  it('returns true for YELLOW tier', () => {
-    expect(shouldShowBuyerWarning('YELLOW')).toBe(true);
-  });
-
-  it('returns true for RED tier', () => {
-    expect(shouldShowBuyerWarning('RED')).toBe(true);
+    expect(formatTrustSignals(signals)).toBe(
+      '100 purchases · Member since 2022 · Verified · Bought from you before · 2 returns · 3 disputes'
+    );
   });
 });

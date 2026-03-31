@@ -104,19 +104,8 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'standards.maxDefectRatePercent', value: 2, type: 'number', category: 'trust', description: 'Max transaction defect rate for GOOD standing' },
   { key: 'standards.topRatedMinOrdersYear', value: 100, type: 'number', category: 'trust', description: 'Minimum annual orders for TOP_RATED' },
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // BUYER QUALITY — Buyer quality tier thresholds
-  // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'buyer.quality.yellow.returnRateMin', value: 0.05, type: 'number', category: 'trust', description: 'YELLOW tier min return rate (5%)' },
-  { key: 'buyer.quality.yellow.returnRateMax', value: 0.15, type: 'number', category: 'trust', description: 'YELLOW tier max return rate (15%)' },
-  { key: 'buyer.quality.yellow.cancelRateMin', value: 0.10, type: 'number', category: 'trust', description: 'YELLOW tier min cancel rate (10%)' },
-  { key: 'buyer.quality.yellow.cancelRateMax', value: 0.25, type: 'number', category: 'trust', description: 'YELLOW tier max cancel rate (25%)' },
-  { key: 'buyer.quality.yellow.disputeCount', value: 1, type: 'number', category: 'trust', description: 'YELLOW tier dispute count threshold' },
-  { key: 'buyer.quality.red.returnRate', value: 0.15, type: 'number', category: 'trust', description: 'RED tier return rate threshold (>15%)' },
-  { key: 'buyer.quality.red.cancelRate', value: 0.25, type: 'number', category: 'trust', description: 'RED tier cancel rate threshold (>25%)' },
-  { key: 'buyer.quality.red.disputeCount', value: 2, type: 'number', category: 'trust', description: 'RED tier dispute count threshold (2+)' },
-  { key: 'buyer.quality.minOrdersForRates', value: 3, type: 'number', category: 'trust', description: 'Minimum orders to calculate meaningful buyer quality rates' },
-  { key: 'buyer.quality.minOrdersForVisibility', value: 5, type: 'number', category: 'trust', description: 'Minimum orders before showing buyer quality tier to sellers' },
+  // BUYER QUALITY tier settings REMOVED — Decision #142.
+  // Replaced by buyer trust signals (completedPurchaseCount + computed metrics at query time).
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PERFORMANCE BANDS — Seller score band thresholds

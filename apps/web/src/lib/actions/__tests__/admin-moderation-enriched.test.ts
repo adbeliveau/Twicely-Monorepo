@@ -162,7 +162,7 @@ describe('bulkDismissReportsAction', () => {
 
   it('returns error on empty array', async () => {
     mockCanUpdateReport();
-    const { bulkDismissReportsAction } = await import('../admin-moderation');
+    const { bulkDismissReportsAction } = await import('../admin-moderation-helpers');
     // Zod min(1) catches empty array before we even reach the length check
     expect(await bulkDismissReportsAction({ reportIds: [] })).toEqual({ error: 'Invalid input' });
   });
@@ -172,7 +172,7 @@ describe('bulkDismissReportsAction', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { bulkDismissReportsAction } = await import('../admin-moderation');
+    const { bulkDismissReportsAction } = await import('../admin-moderation-helpers');
     const result = await bulkDismissReportsAction({ reportIds: ['r1', 'r2'] });
 
     expect(result).toEqual({ success: true });
@@ -186,7 +186,7 @@ describe('bulkDismissReportsAction', () => {
 
   it('rejects unknown keys via strict schema', async () => {
     mockCanUpdateReport();
-    const { bulkDismissReportsAction } = await import('../admin-moderation');
+    const { bulkDismissReportsAction } = await import('../admin-moderation-helpers');
     expect(await bulkDismissReportsAction({ reportIds: ['r1'], bad: 'key' })).toEqual({ error: 'Invalid input' });
   });
 });
@@ -217,7 +217,7 @@ describe('flagReviewAction', () => {
 
   it('returns Forbidden when CASL denies', async () => {
     mockForbidden();
-    const { flagReviewAction } = await import('../admin-moderation');
+    const { flagReviewAction } = await import('../admin-moderation-helpers');
     expect(await flagReviewAction({ reviewId: 'rev-1' })).toEqual({ error: 'Forbidden' });
   });
 
@@ -226,7 +226,7 @@ describe('flagReviewAction', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { flagReviewAction } = await import('../admin-moderation');
+    const { flagReviewAction } = await import('../admin-moderation-helpers');
     const result = await flagReviewAction({ reviewId: 'rev-1' });
 
     expect(result).toEqual({ success: true });
@@ -249,7 +249,7 @@ describe('bulkApproveReviewsAction', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { bulkApproveReviewsAction } = await import('../admin-moderation');
+    const { bulkApproveReviewsAction } = await import('../admin-moderation-helpers');
     const result = await bulkApproveReviewsAction({ reviewIds: ['rev-a', 'rev-b'] });
 
     expect(result).toEqual({ success: true });
@@ -271,7 +271,7 @@ describe('bulkRemoveReviewsAction', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { bulkRemoveReviewsAction } = await import('../admin-moderation');
+    const { bulkRemoveReviewsAction } = await import('../admin-moderation-helpers');
     const result = await bulkRemoveReviewsAction({ reviewIds: ['rev-a', 'rev-b'] });
 
     expect(result).toEqual({ success: true });
@@ -294,7 +294,7 @@ describe('removeReviewAction (enhanced)', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     const result = await removeReviewAction({ reviewId: 'rev-1', reason: 'Fake review' });
 
     expect(result).toEqual({ success: true });
@@ -309,7 +309,7 @@ describe('removeReviewAction (enhanced)', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     await removeReviewAction({ reviewId: 'rev-1' });
 
     const updateSet = mockDbUpdate.mock.results[0]!.value.set.mock.calls[0]![0];
@@ -318,7 +318,7 @@ describe('removeReviewAction (enhanced)', () => {
 
   it('returns Forbidden when CASL denies', async () => {
     mockForbidden();
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     expect(await removeReviewAction({ reviewId: 'rev-1' })).toEqual({ error: 'Forbidden' });
   });
 });

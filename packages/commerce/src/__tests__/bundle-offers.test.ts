@@ -240,9 +240,22 @@ describe('Bundle Offers', () => {
       expect(result.error).toContain('cannot respond');
     });
 
-    // Note: Counter price validation happens after bundle item lookup,
-    // which requires complex mock setup. Tested via integration tests.
-    it.todo('rejects counter without price');
+    it('rejects counter without price', async () => {
+      mockGetOfferById.mockResolvedValue({
+        id: 'o1',
+        type: 'BUNDLE',
+        status: 'PENDING',
+        sellerId: 's1',
+        listingId: 'l1',
+        offerCents: 5000,
+        counterCount: 0,
+      });
+
+      const result = await respondToBundleOffer('s1', 'o1', 'counter');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Counter price is required');
+    });
   });
 
   describe('getBundleOfferDetails', () => {

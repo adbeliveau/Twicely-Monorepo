@@ -1,5 +1,4 @@
 import { pgTable, text, boolean, timestamp, jsonb, index, integer, real } from 'drizzle-orm/pg-core';
-import { buyerQualityTierEnum } from './enums';
 
 // §2.1 user
 export const user = pgTable('user', {
@@ -21,7 +20,7 @@ export const user = pgTable('user', {
   avatarUrl:           text('avatar_url'),
   defaultAddressId:    text('default_address_id'),
   isSeller:            boolean('is_seller').notNull().default(false),
-  buyerQualityTier:    buyerQualityTierEnum('buyer_quality_tier').notNull().default('GREEN'),
+  completedPurchaseCount: integer('completed_purchase_count').notNull().default(0), // Decision #142
   dashboardLayoutJson: jsonb('dashboard_layout_json'),
   marketingOptIn:      boolean('marketing_opt_in').notNull().default(false),
   deletionRequestedAt: timestamp('deletion_requested_at', { withTimezone: true }),

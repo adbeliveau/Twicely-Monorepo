@@ -1862,7 +1862,7 @@ Buyer's Description: {{claimDescription}}
 Evidence: {{evidencePhotoCount}} photos attached
 
 Seller Trust Score: {{sellerTrustScore}} ({{sellerPerformanceBand}})
-Buyer Trust Score: {{buyerTrustScore}} ({{buyerQualityTier}})
+Buyer Trust Signals: {{buyerCompletedPurchases}} purchases · {{buyerReturns90d}} returns (90d) · {{buyerDisputes90d}} disputes (90d)
 
 Platform must decide within 48 hours.
 ```

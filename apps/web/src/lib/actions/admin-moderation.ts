@@ -13,15 +13,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 
-// Re-export review actions and bulk operations from helpers
-export {
-  removeReviewAction,
-  approveReviewAction,
-  flagReviewAction,
-  bulkDismissReportsAction,
-  bulkApproveReviewsAction,
-  bulkRemoveReviewsAction,
-} from './admin-moderation-helpers';
+// Review actions and bulk operations are in ./admin-moderation-helpers.ts
+// Import directly from there to avoid Turbopack re-export bundling issues.
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 

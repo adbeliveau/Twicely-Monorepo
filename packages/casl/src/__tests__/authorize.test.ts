@@ -62,7 +62,7 @@ function createMockSession(overrides: { id: string; email: string; isSeller?: bo
       phoneVerified: false,
       avatarUrl: null,
       defaultAddressId: null,
-      buyerQualityTier: 'GREEN',
+      completedPurchaseCount: 0,
       marketingOptIn: false,
       isBanned: false,
       dashboardLayoutJson: null,

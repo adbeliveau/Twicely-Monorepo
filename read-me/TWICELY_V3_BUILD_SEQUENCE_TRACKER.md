@@ -73,7 +73,7 @@
 | C1 | Rating & Review System | ✅ | B4 | C1a-d complete |
 | C1.1 | Trust-weighted reviews | ✅ | C1 | |
 | C1.2 | Seller performance metrics + badges | ✅ | C1 | |
-| C1.3 | Buyer quality tier (GREEN/YELLOW/RED) | ✅ | C1 | |
+| C1.3 | Buyer trust signals (purchase count, returns, disputes, verified) | ✅ | C1 | Decision #142: replaced GREEN/YELLOW/RED tiers with factual trust signals |
 | C1.4 | Deal badges | ✅ | C1 | Badge display done. Full market price index computation (medians, percentiles, cron) deferred to G2. |
 | C1.5 | Seller→buyer reviews + dual-blind | ✅ | C1 | |
 | C1.6 | Buyer block list | ✅ | C1 | |

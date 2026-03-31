@@ -158,13 +158,13 @@ describe('removeReviewAction', () => {
 
   it('returns Forbidden when CASL denies update on Review', async () => {
     mockForbidden();
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     expect(await removeReviewAction({ reviewId: 'rev-1' })).toEqual({ error: 'Forbidden' });
   });
 
   it('returns Invalid input for missing reviewId', async () => {
     mockCanUpdateReview();
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     expect(await removeReviewAction({})).toEqual({ error: 'Invalid input' });
   });
 
@@ -172,7 +172,7 @@ describe('removeReviewAction', () => {
     mockCanUpdateReview();
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     // reason is now a valid field; truly unknown fields are still rejected
     expect(await removeReviewAction({ reviewId: 'rev-1', unknownField: 'bad' })).toEqual({ error: 'Invalid input' });
   });
@@ -182,7 +182,7 @@ describe('removeReviewAction', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { removeReviewAction } = await import('../admin-moderation');
+    const { removeReviewAction } = await import('../admin-moderation-helpers');
     const result = await removeReviewAction({ reviewId: 'rev-1' });
 
     expect(result).toEqual({ success: true });
@@ -204,13 +204,13 @@ describe('approveReviewAction', () => {
 
   it('returns Forbidden when CASL denies', async () => {
     mockForbidden();
-    const { approveReviewAction } = await import('../admin-moderation');
+    const { approveReviewAction } = await import('../admin-moderation-helpers');
     expect(await approveReviewAction({ reviewId: 'rev-1' })).toEqual({ error: 'Forbidden' });
   });
 
   it('returns Invalid input for missing reviewId', async () => {
     mockCanUpdateReview();
-    const { approveReviewAction } = await import('../admin-moderation');
+    const { approveReviewAction } = await import('../admin-moderation-helpers');
     expect(await approveReviewAction({})).toEqual({ error: 'Invalid input' });
   });
 
@@ -219,7 +219,7 @@ describe('approveReviewAction', () => {
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
 
-    const { approveReviewAction } = await import('../admin-moderation');
+    const { approveReviewAction } = await import('../admin-moderation-helpers');
     const result = await approveReviewAction({ reviewId: 'rev-2' });
 
     expect(result).toEqual({ success: true });

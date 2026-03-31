@@ -5,7 +5,7 @@ import { Button } from '@twicely/ui/button';
 import { Input } from '@twicely/ui/input';
 import { Label } from '@twicely/ui/label';
 import { Users, Send, X, Check } from 'lucide-react';
-import { createWatcherOffer, cancelWatcherOffer } from '@twicely/commerce/watcher-offers';
+import { createWatcherOfferAction, cancelWatcherOfferAction } from '@/lib/actions/watcher-offers';
 import { formatPrice } from '@twicely/utils/format';
 
 interface WatcherOfferFormProps {
@@ -50,7 +50,7 @@ export function WatcherOfferForm({
     }
 
     startTransition(async () => {
-      const result = await createWatcherOffer({
+      const result = await createWatcherOfferAction({
         listingId,
         discountedPriceCents,
       });
@@ -77,7 +77,7 @@ export function WatcherOfferForm({
     setError(null);
 
     startTransition(async () => {
-      const result = await cancelWatcherOffer(localActiveOffer.id);
+      const result = await cancelWatcherOfferAction(localActiveOffer.id);
       if (!result.success) {
         setError(result.error ?? 'Failed to cancel offer');
       } else {

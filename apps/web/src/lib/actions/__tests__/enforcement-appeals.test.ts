@@ -89,7 +89,7 @@ describe('submitEnforcementAppealAction', () => {
   it.each([
     ['WARNING'], ['RESTRICTION'], ['SUSPENSION'], ['PRE_SUSPENSION'], ['LISTING_REMOVAL'],
   ])('submits appeal for ACTIVE %s action within window', async (actionType) => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction({ actionType })]) as never);
     mockPlatformSettings();
     mockDbUpdate.mockReturnValue(makeUpdateChain() as never);
@@ -103,7 +103,7 @@ describe('submitEnforcementAppealAction', () => {
 
   it.each([['COACHING'], ['ACCOUNT_BAN'], ['REVIEW_REMOVAL']])(
     'rejects appeal for %s action (not appealable)', async (actionType) => {
-      mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+      mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
       mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction({ actionType })]) as never);
       mockPlatformSettings();
 
@@ -114,7 +114,7 @@ describe('submitEnforcementAppealAction', () => {
     });
 
   it('rejects appeal outside appeal window (expired)', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction({ createdAt: oldDate })]) as never);
     mockPlatformSettings();
@@ -126,7 +126,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('rejects appeal for already-appealed action (one per action)', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction({ appealedAt: new Date() })]) as never);
     mockPlatformSettings();
 
@@ -137,7 +137,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it.each([['EXPIRED'], ['LIFTED']])('rejects appeal for %s enforcement action', async (status) => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction({ status })]) as never);
     mockPlatformSettings();
 
@@ -148,7 +148,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('rejects appeal for action owned by different user (ownership check)', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction({ userId: 'other-user' })]) as never);
     mockPlatformSettings();
 
@@ -159,7 +159,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('rejects unauthenticated user', async () => {
-    mockAuthorize.mockResolvedValue({ session: null, ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: null, ability: { can: vi.fn().mockReturnValue(false) } } as never);
     const result = await submitEnforcementAppealAction({
       enforcementActionId: ACTION_ID, appealNote: 'Unauthenticated appeal attempt.',
     });
@@ -167,13 +167,13 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('rejects invalid input (missing note)', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     const result = await submitEnforcementAppealAction({ enforcementActionId: ACTION_ID });
     expect(result.error).toBe('Invalid input');
   });
 
   it('rejects note that is too short (under 10 chars)', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     const result = await submitEnforcementAppealAction({
       enforcementActionId: ACTION_ID, appealNote: 'Short',
     });
@@ -181,7 +181,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('rejects too many evidence URLs (over 5)', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     const result = await submitEnforcementAppealAction({
       enforcementActionId: ACTION_ID,
       appealNote: 'Valid appeal note with sufficient length.',
@@ -194,7 +194,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('sets enforcement action status to APPEALED', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction()]) as never);
     mockPlatformSettings();
     const updateChain = makeUpdateChain();
@@ -210,7 +210,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('sets appealedAt, appealNote, appealedByUserId, appealEvidenceUrls', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction()]) as never);
     mockPlatformSettings();
     const updateChain = makeUpdateChain();
@@ -231,7 +231,7 @@ describe('submitEnforcementAppealAction', () => {
   });
 
   it('creates audit event with correct fields', async () => {
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction()]) as never);
     mockPlatformSettings();
     mockDbUpdate.mockReturnValue(makeUpdateChain() as never);
@@ -251,7 +251,7 @@ describe('submitEnforcementAppealAction', () => {
 
   it('revalidates performance and enforcement paths', async () => {
     const { revalidatePath } = await import('next/cache');
-    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: {} } as never);
+    mockAuthorize.mockResolvedValue({ session: makeCaslSession(), ability: { can: vi.fn().mockReturnValue(true) } } as never);
     mockDbSelect.mockReturnValue(makeSelectChain([makeActiveAction()]) as never);
     mockPlatformSettings();
     mockDbUpdate.mockReturnValue(makeUpdateChain() as never);

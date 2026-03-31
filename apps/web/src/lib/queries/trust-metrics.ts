@@ -12,7 +12,7 @@ import { user, order, review, returnRequest, dispute, sellerProfile } from '@twi
 import { eq, and, gte, count, avg, sql } from 'drizzle-orm';
 import type { TrustWeightFactors } from '@twicely/commerce/trust-weight';
 import type { SellerMetrics } from '@twicely/commerce/performance-band';
-import type { BuyerMetrics } from '@twicely/commerce/buyer-quality';
+import type { BuyerTrustSignals } from '@twicely/commerce/buyer-quality';
 
 /**
  * Get trust weight factors for a reviewer (buyer).
@@ -171,27 +171,36 @@ export async function getSellerPerformanceMetrics(sellerId: string): Promise<Sel
 }
 
 /**
- * Get buyer quality metrics for tier calculation.
+ * Get buyer trust signals for seller-facing display (Decision #142).
  */
-export async function getBuyerQualityMetrics(buyerId: string): Promise<BuyerMetrics> {
+export async function getBuyerTrustSignals(buyerId: string, sellerId?: string): Promise<BuyerTrustSignals> {
   const now = new Date();
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-  // Get order stats (as buyer)
-  const [orderStats] = await db
+  // Get user data
+  const [userData] = await db
     .select({
-      total: count(),
-      canceled: sql<number>`COUNT(*) FILTER (WHERE ${order.status} = 'CANCELED' AND ${order.cancelInitiator} = 'BUYER')`,
+      completedPurchaseCount: user.completedPurchaseCount,
+      createdAt: user.createdAt,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
     })
-    .from(order)
-    .where(
-      and(
-        eq(order.buyerId, buyerId),
-        gte(order.createdAt, ninetyDaysAgo)
-      )
-    );
+    .from(user)
+    .where(eq(user.id, buyerId))
+    .limit(1);
 
-  // Get return count (buyer-initiated)
+  if (!userData) {
+    return {
+      completedPurchases: 0,
+      memberSince: new Date(),
+      verified: false,
+      repeatBuyer: false,
+      returns90d: 0,
+      disputes90d: 0,
+    };
+  }
+
+  // Get return count (buyer-initiated, trailing 90 days)
   const [returnStats] = await db
     .select({ count: count() })
     .from(returnRequest)
@@ -202,7 +211,7 @@ export async function getBuyerQualityMetrics(buyerId: string): Promise<BuyerMetr
       )
     );
 
-  // Get dispute count
+  // Get dispute count (trailing 90 days)
   const [disputeStats] = await db
     .select({ count: count() })
     .from(dispute)
@@ -213,10 +222,28 @@ export async function getBuyerQualityMetrics(buyerId: string): Promise<BuyerMetr
       )
     );
 
+  // Check if repeat buyer (has prior completed order with this seller)
+  let repeatBuyer = false;
+  if (sellerId) {
+    const [repeatResult] = await db
+      .select({ count: count() })
+      .from(order)
+      .where(
+        and(
+          eq(order.buyerId, buyerId),
+          eq(order.sellerId, sellerId),
+          eq(order.status, 'COMPLETED')
+        )
+      );
+    repeatBuyer = (repeatResult?.count ?? 0) > 0;
+  }
+
   return {
-    totalOrders90d: orderStats?.total ?? 0,
+    completedPurchases: userData.completedPurchaseCount,
+    memberSince: userData.createdAt,
+    verified: userData.emailVerified && userData.phoneVerified,
+    repeatBuyer,
     returns90d: returnStats?.count ?? 0,
-    cancellations90d: Number(orderStats?.canceled ?? 0),
     disputes90d: disputeStats?.count ?? 0,
   };
 }
@@ -240,16 +267,13 @@ export async function updateReviewTrustWeight(
 }
 
 /**
- * Update a user's buyer quality tier.
+ * Increment a user's completed purchase count (called on order completion).
  */
-export async function updateBuyerQualityTier(
-  userId: string,
-  tier: 'GREEN' | 'YELLOW' | 'RED'
-): Promise<void> {
+export async function incrementCompletedPurchaseCount(userId: string): Promise<void> {
   await db
     .update(user)
     .set({
-      buyerQualityTier: tier,
+      completedPurchaseCount: sql`${user.completedPurchaseCount} + 1`,
       updatedAt: new Date(),
     })
     .where(eq(user.id, userId));

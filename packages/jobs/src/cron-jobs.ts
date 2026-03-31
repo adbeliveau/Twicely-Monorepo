@@ -106,10 +106,8 @@ export async function registerCronJobs(): Promise<void> {
   await enqueueHelpdeskRetentionPurge();
   logger.info('[cronJobs] Registered helpdesk retention purge cron job');
 
-  // Buyer quality tier recalculation — daily at 3:30 AM UTC (C1.3)
-  const { registerBuyerQualityRecalcJob } = await import('./buyer-quality-recalc');
-  await registerBuyerQualityRecalcJob();
-  logger.info('[cronJobs] Registered buyer quality recalc cron job');
+  // Buyer quality tier recalc REMOVED — Decision #142.
+  // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }
 
 async function processCronJob(task: CronTask): Promise<void> {

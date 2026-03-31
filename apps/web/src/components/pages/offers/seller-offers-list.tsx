@@ -18,9 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import type { SellerOfferRow, OfferStatus } from '@/lib/queries/offers';
-import { shouldShowBuyerWarning } from '@twicely/commerce/buyer-quality';
-import { BuyerQualityIndicator } from '@/components/seller/buyer-quality-indicator';
-import type { BuyerQualityTier } from '@twicely/commerce/buyer-quality';
+import { BuyerTrustSignals } from '@/components/seller/buyer-quality-indicator';
 import { OfferActions } from './offer-actions';
 
 interface SellerOffersListProps {
@@ -189,15 +187,13 @@ export function SellerOffersList({ offers, total, page, perPage, currentStatus, 
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col gap-0.5">
                       <span>{formatBuyerName(offer.buyerName)}</span>
-                      {shouldShowBuyerWarning(offer.buyerQualityTier as BuyerQualityTier) && (
-                        <BuyerQualityIndicator
-                          tier={offer.buyerQualityTier as BuyerQualityTier}
-                          showLabel
-                          size="sm"
-                        />
-                      )}
+                      <BuyerTrustSignals
+                        completedPurchases={offer.buyerCompletedPurchases}
+                        memberSince={offer.buyerCreatedAt}
+                        verified={offer.buyerVerified}
+                      />
                     </div>
                   </TableCell>
                   <TableCell>

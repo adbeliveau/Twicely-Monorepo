@@ -51,21 +51,29 @@ Buying is **default behavior.**
 
 If a user can authenticate, they can buy. Period.
 
-### Buyer Quality Tier (Computed, Internal)
+### Buyer Trust Signals (Visible to Sellers)
 
-Sellers see a buyer quality signal derived from buyer behavior:
+Sellers see factual trust signals about a buyer — not abstract tiers. The data speaks for itself.
 
-| Tier | Meaning |
-|------|---------|
-| GREEN | Good buyer — few returns, no disputes, pays promptly |
-| YELLOW | Caution — elevated returns or disputes |
-| RED | High risk — pattern of abuse, chargebacks, or fraud flags |
+| Signal | Source | Example |
+|--------|--------|---------|
+| **Completed purchases** | Order count (delivered, not returned) | "47 purchases" |
+| **Member since** | Account creation year | "Member since 2024" |
+| **Verified** | Email + phone verified | Checkmark badge |
+| **Repeat buyer** | Prior order history with this specific seller | "Bought from you before" |
+| **Returns** | Return count (trailing 90 days) | "3 returns" (only shown if > 0) |
+| **Disputes** | Dispute count (trailing 90 days) | "2 disputes" (only shown if > 0) |
 
 **Rules:**
-- Computed from: return rate, dispute rate, chargeback rate, account age, order history
+- Sellers see facts, not judgments — no color tiers, no risk labels
+- Return/dispute counts only shown when > 0 (clean buyers show only positive signals)
+- Buyer CAN see their own purchase count and member-since date (these are positive signals)
+- Buyer CANNOT see their own return/dispute counts as displayed to sellers
 - Individual seller ratings of buyers are NOT publicly visible
-- Buyer CANNOT see their own tier (only sellers see it as a signal)
-- Tier is a recommendation, not a blocking mechanism (sellers can still sell to RED buyers)
+- Platform handles actual fraud/abuse invisibly: purchase rate limits, payment holds, account restrictions
+- If a buyer is too risky to transact, the platform restricts them — sellers should never need to "decide" on risk
+
+> **Decision #142:** Replaced GREEN/YELLOW/RED tier system with factual trust signals. See DECISION_RATIONALE.md.
 
 ---
 
@@ -589,9 +597,9 @@ export const delegationStatusEnum = pgEnum('delegation_status', [
   'PENDING', 'ACTIVE', 'REVOKED', 'EXPIRED'
 ]);
 
-export const buyerQualityTierEnum = pgEnum('buyer_quality_tier', [
-  'GREEN', 'YELLOW', 'RED'
-]);
+// buyerQualityTierEnum REMOVED — Decision #142.
+// Replaced by factual trust signals: completedPurchaseCount (integer on user table)
+// + computed returns/disputes from order history. No enum needed.
 
 // Category buckets (retained from v2 for listing categorization — NOT used for TF calculation in v3.2.
 // Progressive volume brackets replaced category-based rates. See Pricing Canonical v3.2 §2.)

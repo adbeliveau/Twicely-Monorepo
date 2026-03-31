@@ -5323,3 +5323,79 @@ Schema Addendum A2.4 specified two tables (`extensionInstallation`, `extensionJo
 - No code changes needed (tables were never built)
 - Update Schema Addendum A2.4: remove `extensionInstallation`, `extensionJob`, and 3 enum definitions
 - Add note: "Extension tracking handled via stateless JWT + Valkey. See Decision #141."
+
+---
+
+## 142. Replace Buyer Quality Tiers (GREEN/YELLOW/RED) with Factual Trust Signals
+
+**Date:** 2026-03-31
+**Status:** ACTIVE
+**Builds in:** C1.3 (retrofit)
+
+### The Problem
+
+The C1.3 buyer quality tier system used GREEN/YELLOW/RED labels to categorize buyers for sellers. This had multiple problems:
+
+1. **Unintuitive.** Even the founder didn't understand what a colored dot meant at first glance. If the person who designed the system can't parse it, users won't either.
+2. **No industry precedent.** Research across 8 major resale platforms (eBay, Mercari, Poshmark, Etsy, Depop, Vinted, StockX, Grailed) found zero that use risk tiers. All use positive signals (transaction count, ratings, badges) and handle risk internally.
+3. **Adversarial by design.** Labeling buyers as "RED" or "YELLOW" stigmatizes them and creates bias — sellers decline offers from labeled buyers even when the underlying behavior was legitimate (returns for damaged items, size issues, etc.).
+4. **Shifts platform responsibility to sellers.** If a buyer is dangerous enough to warrant a warning, the platform should restrict their account — not pass the problem to sellers with a colored dot.
+5. **No recovery path.** A buyer who has a bad streak gets branded, and there's no clear way to earn back "GREEN" status.
+
+### Competitive Analysis
+
+| Platform | What Sellers See About Buyers | Risk Tiers? |
+|----------|-------------------------------|-------------|
+| eBay | Feedback score, member since, positive % | No |
+| Mercari | Star rating, "Known for" compliments | No |
+| Poshmark | Almost nothing. 5-star ratings become "Love Notes" | No |
+| Etsy | Nothing official. Removed seller-rates-buyer years ago | No |
+| Depop | Transaction count on profile | No |
+| Vinted | Mutual ratings, member since | No |
+| StockX | Nothing. Fully anonymous. Sellers don't know who the buyer is | No |
+| Grailed | Transaction count + feedback from past sellers | No |
+
+**Conclusion:** The industry consensus is unanimous — platforms absorb buyer risk internally and show positive signals to sellers.
+
+### The Decision
+
+**Replace the GREEN/YELLOW/RED tier system with factual buyer trust signals.**
+
+What sellers see:
+- **Completed purchases** — integer count of delivered, non-returned orders
+- **Member since** — account creation year
+- **Verified** — checkmark if email + phone verified
+- **Repeat buyer** — "Bought from you before" if prior orders with this seller
+- **Returns** — count (trailing 90 days), only shown if > 0
+- **Disputes** — count (trailing 90 days), only shown if > 0
+
+What the platform handles invisibly:
+- Serial returner (>20% return rate): purchase rate limits, payment holds
+- Chargeback abuser (>2 in 90 days): account restricted
+- Confirmed fraud: account suspended — cannot transact at all
+
+**Key principle:** If they're allowed to buy, don't warn about them. If they're too risky, don't let them buy.
+
+### Schema Changes
+
+- **Remove:** `buyerQualityTierEnum` pgEnum (`'GREEN' | 'YELLOW' | 'RED'`)
+- **Remove:** `buyerQualityTier` column from `user` table
+- **Add:** `completedPurchaseCount` integer column on `user` table (default 0, incremented on order completion)
+- Returns/disputes are computed from order history at query time (no denormalized column needed for low-frequency reads)
+
+### Code Changes
+
+- Remove: `packages/commerce/src/buyer-quality.ts` (tier computation logic)
+- Remove: `apps/web/src/components/seller/buyer-quality-indicator.tsx` (traffic light UI)
+- Remove: `packages/jobs/src/buyer-quality-recalc.ts` (cron recalculation)
+- Add: `getBuyerTrustSignals()` query — returns { completedPurchases, memberSince, verified, repeatBuyer, returns90d, disputes90d }
+- Add: `<BuyerTrustSignals />` component — renders compact stat line
+- Update: offer views, admin user detail, helpdesk templates
+
+### Implementation
+
+- DB migration: drop `buyer_quality_tier` enum + column, add `completed_purchase_count` integer
+- Replace all `buyerQualityTier` references in code with trust signal queries
+- Update 8+ canonical docs to reflect new system
+- Update platform_settings: remove `buyer.quality.*` threshold keys
+- Update seed data: remove `buyerQualityTier: 'GREEN'` from user seeds

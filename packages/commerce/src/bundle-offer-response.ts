@@ -38,6 +38,11 @@ export async function respondToBundleOffer(
   if (offer.status !== 'PENDING') return { success: false, error: 'Offer is no longer pending' };
   if (offer.sellerId !== sellerId) return { success: false, error: 'You cannot respond to this offer' };
 
+  // Validate counter price before expensive DB queries
+  if (action === 'counter' && !counterPriceCents) {
+    return { success: false, error: 'Counter price is required' };
+  }
+
   // Get bundle items
   const bundleItems = await db
     .select({ listingId: offerBundleItem.listingId })
@@ -110,9 +115,6 @@ export async function respondToBundleOffer(
   }
 
   if (action === 'counter') {
-    if (!counterPriceCents) {
-      return { success: false, error: 'Counter price is required' };
-    }
     if (counterPriceCents === offer.offerCents) {
       return { success: false, error: 'Counter must be a different amount' };
     }

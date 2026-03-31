@@ -25,7 +25,7 @@ export interface OfferWithListing {
 }
 
 export interface OfferWithDetails extends OfferWithListing {
-  buyer?: { id: string; name: string | null; buyerQualityTier: string };
+  buyer?: { id: string; name: string | null; completedPurchaseCount: number; createdAt: Date; emailVerified: boolean; phoneVerified: boolean };
   seller?: { id: string; name: string | null; email: string | null };
 }
 
@@ -54,7 +54,7 @@ const listingFields = {
   listing: { id: listing.id, title: listing.title, slug: listing.slug, priceCents: listing.priceCents, status: listing.status },
 };
 
-const buyerFields = { buyer: { id: user.id, name: user.name, buyerQualityTier: user.buyerQualityTier } };
+const buyerFields = { buyer: { id: user.id, name: user.name, completedPurchaseCount: user.completedPurchaseCount, createdAt: user.createdAt, emailVerified: user.emailVerified, phoneVerified: user.phoneVerified } };
 
 /** Walk parentOfferId up to root, return ordered array (oldest first) */
 export async function getOfferChain(offerId: string): Promise<OfferWithListing[]> {

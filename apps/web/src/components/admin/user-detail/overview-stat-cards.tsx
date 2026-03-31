@@ -147,8 +147,8 @@ export function OverviewStatCards({ user: u, orderCount = 0 }: Props) {
         />
       ) : (
         <StatCard
-          label="Buyer Quality"
-          value={u.buyerQualityTier}
+          label="Purchases"
+          value={u.completedPurchaseCount ?? 0}
           subtitle={u.marketingOptIn ? 'Marketing opt-in' : 'No marketing'}
           icon={<ClockIcon />}
           iconBg="bg-gray-100 dark:bg-gray-700"

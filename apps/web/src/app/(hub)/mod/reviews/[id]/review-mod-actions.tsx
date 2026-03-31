@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { approveReviewAction, removeReviewAction, flagReviewAction } from '@/lib/actions/admin-moderation';
+import { approveReviewAction, removeReviewAction, flagReviewAction } from '@/lib/actions/admin-moderation-helpers';
 
 interface Props { reviewId: string; }
 

@@ -27,6 +27,14 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn((col, val) => ({ col, val })),
 }));
 
+vi.mock('@twicely/auth', () => ({
+  auth: {
+    api: {
+      requestPasswordReset: vi.fn().mockResolvedValue(undefined),
+    },
+  },
+}));
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeUpdateChain() {

@@ -22,7 +22,9 @@ export interface BuyerOfferRow {
 export interface SellerOfferRow extends BuyerOfferRow {
   buyerId: string;
   buyerName: string | null;
-  buyerQualityTier: string;
+  buyerCompletedPurchases: number;
+  buyerCreatedAt: Date;
+  buyerVerified: boolean;
 }
 
 interface GetOffersOptions {
@@ -86,7 +88,9 @@ export async function getSellerOffers(
     listing: { id: o.listing.id, title: o.listing.title, slug: o.listing.slug, priceCents: o.listing.priceCents },
     thumbnail: thumbMap.get(o.listingId) ?? null, orderId: null,
     buyerName: o.buyer?.name ?? null,
-    buyerQualityTier: o.buyer?.buyerQualityTier ?? 'GREEN',
+    buyerCompletedPurchases: o.buyer?.completedPurchaseCount ?? 0,
+    buyerCreatedAt: o.buyer?.createdAt ?? new Date(),
+    buyerVerified: (o.buyer?.emailVerified ?? false) && (o.buyer?.phoneVerified ?? false),
     counterByRole: o.counterByRole, parentOfferId: o.parentOfferId,
   }));
   return { offers, total: status === 'all' ? rawTotal : filtered.length, page, perPage };

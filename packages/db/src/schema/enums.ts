@@ -88,7 +88,7 @@ export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'CO
 
 // §1.7 Reviews
 export const reviewStatusEnum = pgEnum('review_status', ['PENDING', 'APPROVED', 'FLAGGED', 'REMOVED']);
-export const buyerQualityTierEnum = pgEnum('buyer_quality_tier', ['GREEN', 'YELLOW', 'RED']);
+// buyerQualityTierEnum REMOVED — Decision #142. Replaced by buyer trust signals.
 
 // §1.8 Messaging & Notifications
 export const conversationStatusEnum = pgEnum('conversation_status', ['OPEN', 'READ_ONLY', 'ARCHIVED']);

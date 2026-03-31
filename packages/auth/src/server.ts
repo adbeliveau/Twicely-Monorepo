@@ -45,10 +45,10 @@ export const auth = betterAuth({
         required: false,
         defaultValue: false,
       },
-      buyerQualityTier: {
-        type: 'string',
+      completedPurchaseCount: {
+        type: 'number',
         required: false,
-        defaultValue: 'GREEN',
+        defaultValue: 0,
       },
       marketingOptIn: {
         type: 'boolean',
@@ -142,7 +142,7 @@ export interface UserAdditionalFields {
   avatarUrl?: string | null;
   defaultAddressId?: string | null;
   isSeller?: boolean;
-  buyerQualityTier?: string;
+  completedPurchaseCount?: number;
   marketingOptIn?: boolean;
   isBanned?: boolean;
   dashboardLayoutJson?: string | null;

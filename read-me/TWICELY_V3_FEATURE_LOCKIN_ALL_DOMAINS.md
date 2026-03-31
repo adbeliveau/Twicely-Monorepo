@@ -152,17 +152,18 @@ After an order completes, the seller can rate the buyer on:
 2. **Communication** — 1-5 stars. Was the buyer reasonable and responsive?
 3. **Return Behavior** — 1-5 stars. If a return happened, was it legitimate?
 
-### Buyer Trust Score Impact
-- Buyer ratings feed into the buyer's internal trust score (not publicly displayed as a number).
-- Low buyer trust score effects:
-  - Serial returner flag (>20% return rate) shown to sellers on offers.
-  - Chargeback abuser flag (>2 chargebacks in 90 days) restricts buyer's account.
-  - Sellers see a buyer quality indicator (green/yellow/red) when receiving offers. NOT the score, just a tier.
+### Buyer Trust Signals (Decision #142)
+- Seller ratings feed into buyer trust signals — factual data shown to sellers, not abstract tiers.
+- What sellers see on offers: completed purchase count, member since, verified badge, return count (if > 0), dispute count (if > 0), "Bought from you before" (if repeat buyer).
+- Platform-only actions (invisible to sellers):
+  - Serial returner (>20% return rate): purchase rate limits, payment holds.
+  - Chargeback abuser (>2 chargebacks in 90 days): account restricted.
+  - Confirmed fraud: account suspended — cannot make offers at all.
 
 ### Privacy
 - Individual seller ratings of buyers are NOT publicly visible.
-- Only the aggregate quality tier is visible to sellers.
-- Buyer cannot see individual ratings from sellers, only their tier.
+- Sellers see factual signals (purchase count, returns, disputes) — not scores or tiers.
+- Buyer can see their own purchase count and member-since date. Cannot see how return/dispute counts appear to sellers.
 
 ---
 
@@ -1204,7 +1205,7 @@ Some categories may add conditions beyond the standard set:
 
 ### Offer History
 - Buyer sees their full offer history at `/my/buying/offers`: all offers sent, status, outcome.
-- Seller sees all offers received on their listings: amount, buyer quality tier, timestamp, status.
+- Seller sees all offers received on their listings: amount, buyer trust signals (purchase count, member since, verified, returns/disputes if any), timestamp, status.
 - Both parties see the counter-offer chain on a specific listing.
 - Offer amounts are private between buyer and seller — other buyers cannot see what offers have been made, only that "X offers received."
 

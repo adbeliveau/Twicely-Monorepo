@@ -2,7 +2,7 @@
 
 import { useTransition, useState } from 'react';
 import { removeListingAction, clearListingFlagAction } from '@/lib/actions/admin-moderation';
-import { removeReviewAction, approveReviewAction } from '@/lib/actions/admin-moderation';
+import { removeReviewAction, approveReviewAction } from '@/lib/actions/admin-moderation-helpers';
 
 interface ListingActionsProps { listingId: string; }
 

@@ -44,7 +44,7 @@ export interface UserDetailFull {
   isBanned: boolean;
   bannedAt: Date | null;
   bannedReason: string | null;
-  buyerQualityTier: string;
+  completedPurchaseCount: number;
   marketingOptIn: boolean;
   creditBalanceCents: number;
   deletionRequestedAt: Date | null;
@@ -190,7 +190,7 @@ export async function getAdminUserDetail(userId: string): Promise<UserDetailFull
       displayName: user.displayName, phone: user.phone, phoneVerified: user.phoneVerified,
       emailVerified: user.emailVerified, avatarUrl: user.avatarUrl,
       isSeller: user.isSeller, isBanned: user.isBanned, bannedAt: user.bannedAt,
-      bannedReason: user.bannedReason, buyerQualityTier: user.buyerQualityTier,
+      bannedReason: user.bannedReason, completedPurchaseCount: user.completedPurchaseCount,
       marketingOptIn: user.marketingOptIn, creditBalanceCents: user.creditBalanceCents,
       deletionRequestedAt: user.deletionRequestedAt, createdAt: user.createdAt,
     })

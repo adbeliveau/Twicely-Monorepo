@@ -142,7 +142,7 @@ export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'CO
 
 ```typescript
 export const reviewStatusEnum = pgEnum('review_status', ['PENDING', 'APPROVED', 'FLAGGED', 'REMOVED']);
-export const buyerQualityTierEnum = pgEnum('buyer_quality_tier', ['GREEN', 'YELLOW', 'RED']);
+// buyerQualityTierEnum REMOVED — Decision #142. Replaced by buyer trust signals (completedPurchaseCount + computed metrics).
 ```
 
 ### 1.8 Messaging & Notifications
@@ -294,7 +294,7 @@ export const user = pgTable('user', {
   avatarUrl:           text('avatar_url'),
   defaultAddressId:    text('default_address_id'),
   isSeller:            boolean('is_seller').notNull().default(false),
-  buyerQualityTier:    buyerQualityTierEnum('buyer_quality_tier').notNull().default('GREEN'),
+  completedPurchaseCount: integer('completed_purchase_count').notNull().default(0), // Decision #142: replaces buyerQualityTier
   dashboardLayoutJson: jsonb('dashboard_layout_json'),
   marketingOptIn:      boolean('marketing_opt_in').notNull().default(false),
   deletionRequestedAt: timestamp('deletion_requested_at', { withTimezone: true }),
@@ -3931,7 +3931,7 @@ export const liveSessionProduct = pgTable('live_session_product', {
 |-------|---------------------------|--------|------|
 | `listings` | title (5), description (1), brand (4), tags (3), categoryPath (2) | category, condition, brand, priceRange, freeShipping, sellerStoreName | priceCents, createdAt, relevance, soldQuantity |
 | `kb_articles` | title (5), excerpt (3), body (1), tags (4), searchKeywords (4) | category, audience | viewCount, helpfulRatio, publishedAt, relevance |
-| `users` (admin) | name (3), email (5), username (4), phone (2) | isSeller, isBanned, buyerQualityTier | createdAt |
+| `users` (admin) | name (3), email (5), username (4), phone (2) | isSeller, isBanned | createdAt |
 | `stores` | storeName (5), storeDescription (2), sellerUsername (3) | performanceBand, storeTier | averageRating, totalOrders |
 
 Listing index updated on: listing create/update/delete, status change, boost change, price change.  

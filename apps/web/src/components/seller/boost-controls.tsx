@@ -10,8 +10,12 @@ import { Button } from '@twicely/ui/button';
 import { Input } from '@twicely/ui/input';
 import { formatPrice } from '@twicely/utils/format';
 import { activateBoost, deactivateBoost, updateBoostRate } from '@/lib/actions/boosting';
-import { calculateBoostFee } from '@twicely/commerce/boosting';
 import { Loader2, Rocket, X } from 'lucide-react';
+
+/** Client-safe fee calculation — rate% of sale price in cents. */
+function calculateBoostFeeClient(salePriceCents: number, ratePercent: number): number {
+  return Math.round(salePriceCents * (ratePercent / 100));
+}
 
 interface BoostControlsProps {
   listingId: string;
@@ -38,7 +42,7 @@ export function BoostControls({
   const isBoosted = isActive && currentBoostPercent !== null;
 
   // Example fee calculation for $100 sale
-  const exampleFeeCents = calculateBoostFee(10000, rate);
+  const exampleFeeCents = calculateBoostFeeClient(10000, rate);
 
   function handleRateChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = parseFloat(e.target.value);

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { bulkApproveReviewsAction, bulkRemoveReviewsAction } from '@/lib/actions/admin-moderation';
+import { bulkApproveReviewsAction, bulkRemoveReviewsAction } from '@/lib/actions/admin-moderation-helpers';
 
 export function ReviewsBulkActions() {
   const router = useRouter();

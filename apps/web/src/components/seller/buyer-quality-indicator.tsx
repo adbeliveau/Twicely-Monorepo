@@ -1,106 +1,63 @@
-import { type BuyerQualityTier, getBuyerQualityDescription } from '@twicely/commerce/buyer-quality';
 import { cn } from '@twicely/utils';
+import { CheckCircle2 } from 'lucide-react';
 
-interface BuyerQualityIndicatorProps {
-  tier: BuyerQualityTier;
-  showLabel?: boolean;
-  size?: 'sm' | 'md';
+/**
+ * Buyer Trust Signals — Decision #142
+ *
+ * Replaces the old GREEN/YELLOW/RED tier indicator with factual data:
+ * purchase count, member since, verified badge, returns/disputes if any.
+ */
+
+export interface BuyerTrustSignalsProps {
+  completedPurchases: number;
+  memberSince: Date;
+  verified: boolean;
+  repeatBuyer?: boolean;
+  returns90d?: number;
+  disputes90d?: number;
   className?: string;
 }
 
-const tierColors = {
-  GREEN: {
-    dot: 'bg-green-500',
-    bg: 'bg-green-50',
-    text: 'text-green-700',
-    border: 'border-green-200',
-  },
-  YELLOW: {
-    dot: 'bg-yellow-500',
-    bg: 'bg-yellow-50',
-    text: 'text-yellow-700',
-    border: 'border-yellow-200',
-  },
-  RED: {
-    dot: 'bg-red-500',
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    border: 'border-red-200',
-  },
-} as const;
-
-export function BuyerQualityIndicator({
-  tier,
-  showLabel = false,
-  size = 'sm',
+export function BuyerTrustSignals({
+  completedPurchases,
+  memberSince,
+  verified,
+  repeatBuyer,
+  returns90d = 0,
+  disputes90d = 0,
   className,
-}: BuyerQualityIndicatorProps) {
-  const colors = tierColors[tier];
-  const description = getBuyerQualityDescription(tier);
-
-  if (!showLabel) {
-    // Just the dot
-    return (
-      <span
-        title={description}
-        className={cn(
-          'inline-block rounded-full',
-          size === 'sm' ? 'h-2 w-2' : 'h-3 w-3',
-          colors.dot,
-          className
-        )}
-      />
-    );
-  }
+}: BuyerTrustSignalsProps) {
+  const year = memberSince.getFullYear();
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border',
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
-        colors.bg,
-        colors.text,
-        colors.border,
-        className
+    <span className={cn('inline-flex items-center gap-1.5 text-xs text-muted-foreground', className)}>
+      <span>{completedPurchases} purchase{completedPurchases !== 1 ? 's' : ''}</span>
+      <span className="text-muted-foreground/40">·</span>
+      <span>Since {year}</span>
+      {verified && (
+        <>
+          <span className="text-muted-foreground/40">·</span>
+          <CheckCircle2 className="h-3 w-3 text-blue-500" />
+        </>
       )}
-    >
-      <span className={cn('rounded-full', size === 'sm' ? 'h-2 w-2' : 'h-2.5 w-2.5', colors.dot)} />
-      {description}
+      {repeatBuyer && (
+        <>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-blue-600 font-medium">Repeat buyer</span>
+        </>
+      )}
+      {returns90d > 0 && (
+        <>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-amber-600">{returns90d} return{returns90d !== 1 ? 's' : ''}</span>
+        </>
+      )}
+      {disputes90d > 0 && (
+        <>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-red-600">{disputes90d} dispute{disputes90d !== 1 ? 's' : ''}</span>
+        </>
+      )}
     </span>
-  );
-}
-
-interface BuyerQualityWarningProps {
-  tier: BuyerQualityTier;
-  className?: string;
-}
-
-export function BuyerQualityWarning({ tier, className }: BuyerQualityWarningProps) {
-  if (tier === 'GREEN') return null;
-
-  const colors = tierColors[tier];
-  const description = getBuyerQualityDescription(tier);
-
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-2 rounded-lg border p-3',
-        colors.bg,
-        colors.border,
-        className
-      )}
-    >
-      <span className={cn('h-3 w-3 rounded-full', colors.dot)} />
-      <div className="flex-1">
-        <p className={cn('text-sm font-medium', colors.text)}>
-          {tier === 'YELLOW' ? 'Caution' : 'Warning'}: Buyer has {description.toLowerCase()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {tier === 'YELLOW'
-            ? 'This buyer has some elevated risk indicators.'
-            : 'This buyer has high risk indicators. Consider carefully.'}
-        </p>
-      </div>
-    </div>
   );
 }
