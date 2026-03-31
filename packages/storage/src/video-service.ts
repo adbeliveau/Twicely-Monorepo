@@ -5,7 +5,7 @@
  */
 
 import { uploadToR2, deleteFromR2, extractKeyFromUrl } from './r2-client';
-import { getVideoExtension, getVideoContentType } from '@/lib/upload/validate-video';
+import { getVideoExtension, getVideoContentType } from './validate-video';
 import type { UploadResult } from './image-service';
 
 export interface VideoUploadResult {

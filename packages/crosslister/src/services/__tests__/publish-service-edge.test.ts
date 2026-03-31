@@ -46,7 +46,7 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
-vi.mock('@/lib/services/feature-flags', () => ({
+vi.mock('@twicely/config/feature-flags', () => ({
   isFeatureEnabled: vi.fn().mockResolvedValue(true),
 }));
 

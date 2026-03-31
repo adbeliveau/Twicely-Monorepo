@@ -22,7 +22,7 @@ import {
 } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
-import { isFeatureEnabled } from '@/lib/services/feature-flags';
+import { isFeatureEnabled } from '@twicely/config/feature-flags';
 import { getChannelMetadata } from '../channel-registry';
 import { transformListingForChannel } from './listing-transform';
 import { validateForChannel } from './policy-validator';

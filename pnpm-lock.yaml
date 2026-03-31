@@ -581,6 +581,9 @@ importers:
       '@twicely/logger':
         specifier: workspace:*
         version: link:../logger
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.1(@opentelemetry/api@1.9.0)(kysely@0.28.14)(postgres@3.4.8)
     devDependencies:
       '@types/node':
         specifier: ^20
@@ -588,6 +591,9 @@ importers:
 
   packages/crosslister:
     dependencies:
+      '@twicely/config':
+        specifier: workspace:*
+        version: link:../config
       '@twicely/db':
         specifier: workspace:*
         version: link:../db
@@ -715,6 +721,9 @@ importers:
       '@twicely/storage':
         specifier: workspace:*
         version: link:../storage
+      '@twicely/stripe':
+        specifier: workspace:*
+        version: link:../stripe
       '@twicely/utils':
         specifier: workspace:*
         version: link:../utils
@@ -865,12 +874,28 @@ importers:
 
   packages/subscriptions:
     dependencies:
+      '@twicely/crosslister':
+        specifier: workspace:*
+        version: link:../crosslister
       '@twicely/db':
         specifier: workspace:*
         version: link:../db
       '@twicely/logger':
         specifier: workspace:*
         version: link:../logger
+      '@twicely/stripe':
+        specifier: workspace:*
+        version: link:../stripe
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.1(@opentelemetry/api@1.9.0)(kysely@0.28.14)(postgres@3.4.8)
+      stripe:
+        specifier: ^20.3.1
+        version: 20.4.1(@types/node@20.19.37)
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.37
 
   packages/ui:
     dependencies:

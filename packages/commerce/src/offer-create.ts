@@ -8,8 +8,8 @@ import {
   countActiveOffersByBuyerForListing,
   hasRecentDeclinedOffer,
 } from './offer-queries';
-import { isBuyerBlocked } from '@/lib/queries/buyer-block';
-import { updateEngagement } from '@/lib/actions/browsing-history-helpers';
+import { isBuyerBlocked } from './buyer-block';
+import { updateEngagement } from './browsing-history-helpers';
 import { notifyOfferEvent } from './offer-notifications';
 import { createOrderFromOffer } from './offer-to-order';
 import { scheduleOfferExpiry } from '@twicely/jobs/offer-expiry';

@@ -5,7 +5,7 @@
  */
 
 import { uploadToR2, deleteFromR2, extractKeyFromUrl, R2_PUBLIC_URL } from './r2-client';
-import { validateImageBytes, detectImageType, getExtension } from '@/lib/upload/validate';
+import { validateImageBytes, detectImageType, getExtension } from './validate';
 
 export interface UploadResult {
   success: boolean;

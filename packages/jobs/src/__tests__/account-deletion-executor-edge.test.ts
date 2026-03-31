@@ -47,7 +47,7 @@ vi.mock('@twicely/storage/image-service', () => ({
   deleteImage: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/gdpr/pseudonymize', () => ({
+vi.mock('../gdpr-pseudonymize', () => ({
   generatePseudonym: vi.fn(() => 'deleted_user_' + 'b'.repeat(64)),
   pseudonymizeOrders: vi.fn().mockResolvedValue(0),
   pseudonymizeLedgerEntries: vi.fn().mockResolvedValue(0),
@@ -173,7 +173,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
 
   it('is idempotent: processing already-pseudonymized user does not re-pseudonymize', async () => {
     const { db } = await import('@twicely/db');
-    const { pseudonymizeOrders } = await import('@/lib/gdpr/pseudonymize');
+    const { pseudonymizeOrders } = await import('../gdpr-pseudonymize');
 
     // First run
     setupFullDeletionMocks(db, 'user-idempotent-1');

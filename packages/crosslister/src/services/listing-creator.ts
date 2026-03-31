@@ -10,7 +10,7 @@
 
 import { db } from '@twicely/db';
 import { listing, listingImage } from '@twicely/db/schema';
-import { generateListingSlug } from '@/lib/listings/slug';
+import { generateListingSlug } from '../slug';
 import type { ExternalListing, ExternalChannel } from '../types';
 
 export interface ListingCreatorResult {

@@ -9,7 +9,7 @@
 
 import nacl from 'tweetnacl';
 import { decodeBase64 } from 'tweetnacl-util';
-import type { LocalTransactionTokenPayload } from '@/lib/types/local-token';
+import type { LocalTransactionTokenPayload } from './local-token-types';
 
 export type { LocalTransactionTokenPayload };
 

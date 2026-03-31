@@ -10,9 +10,9 @@ import { order, orderItem, listing } from '@twicely/db/schema';
 import { eq, and, lt } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
-import { recordPurchaseSignal } from '@/lib/personalization/signals';
+import { recordPurchaseSignal } from './personalization-signals';
 import { detectSameListingSold } from '@twicely/commerce/local-fraud-detection';
-import { updateThresholdFlag } from '@/lib/tax/threshold-tracker';
+import { updateThresholdFlag } from './tax-threshold-tracker';
 
 interface MarkOrderCompletedResult {
   success: boolean;

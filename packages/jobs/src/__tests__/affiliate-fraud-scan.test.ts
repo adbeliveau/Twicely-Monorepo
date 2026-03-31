@@ -44,11 +44,11 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
   getPlatformSetting: (...args: unknown[]) => mockGetPlatformSetting(...args),
 }));
 
-vi.mock('@/lib/affiliate/fraud-detection', () => ({
+vi.mock('../affiliate-fraud-detection', () => ({
   runAllFraudChecks: (...args: unknown[]) => mockRunAllFraudChecks(...args),
 }));
 
-vi.mock('@/lib/affiliate/fraud-escalation', () => ({
+vi.mock('../affiliate-fraud-escalation', () => ({
   escalateAffiliate: (...args: unknown[]) => mockEscalateAffiliate(...args),
 }));
 

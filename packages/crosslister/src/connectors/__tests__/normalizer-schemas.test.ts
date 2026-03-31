@@ -192,7 +192,7 @@ describe('Normalizer Zod Schemas', () => {
 describe('normalizeExternalListing integration', () => {
   it('returns null for invalid EBAY input (missing sku)', async () => {
     const { normalizeExternalListing } = await import(
-      '@/lib/crosslister/services/normalizer-dispatch'
+      '@twicely/crosslister/services/normalizer-dispatch'
     );
     const result = normalizeExternalListing({ title: 'No SKU' }, 'EBAY');
     expect(result).toBeNull();
@@ -200,7 +200,7 @@ describe('normalizeExternalListing integration', () => {
 
   it('returns ExternalListing for valid EBAY input', async () => {
     const { normalizeExternalListing } = await import(
-      '@/lib/crosslister/services/normalizer-dispatch'
+      '@twicely/crosslister/services/normalizer-dispatch'
     );
     const result = normalizeExternalListing({ sku: 'SKU-VALID' }, 'EBAY');
     expect(result).not.toBeNull();
@@ -209,7 +209,7 @@ describe('normalizeExternalListing integration', () => {
 
   it('returns null for invalid THEREALREAL input (missing id)', async () => {
     const { normalizeExternalListing } = await import(
-      '@/lib/crosslister/services/normalizer-dispatch'
+      '@twicely/crosslister/services/normalizer-dispatch'
     );
     const result = normalizeExternalListing(
       { title: 'No ID', price: '100.00' },
@@ -220,7 +220,7 @@ describe('normalizeExternalListing integration', () => {
 
   it('returns null when raw is empty object for any channel', async () => {
     const { normalizeExternalListing } = await import(
-      '@/lib/crosslister/services/normalizer-dispatch'
+      '@twicely/crosslister/services/normalizer-dispatch'
     );
     const result = normalizeExternalListing({}, 'POSHMARK');
     expect(result).toBeNull();

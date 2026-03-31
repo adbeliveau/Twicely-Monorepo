@@ -11,7 +11,7 @@ vi.mock('../r2-client', () => ({
   R2_PUBLIC_URL: 'https://cdn.twicely.com',
 }));
 
-vi.mock('@/lib/upload/validate', () => ({
+vi.mock('../validate', () => ({
   validateImageBytes: vi.fn().mockReturnValue({ valid: true }),
   detectImageType: vi.fn().mockReturnValue('jpeg'),
   getExtension: vi.fn().mockReturnValue('jpg'),
@@ -39,7 +39,7 @@ describe('uploadMeetupPhoto', () => {
   });
 
   it('validates image bytes before uploading', async () => {
-    const { validateImageBytes } = await import('@/lib/upload/validate');
+    const { validateImageBytes } = await import('../validate');
     const { uploadMeetupPhoto } = await import('../image-service');
 
     const buffer = Buffer.from('fake image data');
@@ -52,7 +52,7 @@ describe('uploadMeetupPhoto', () => {
   });
 
   it('rejects invalid image types', async () => {
-    const { validateImageBytes } = await import('@/lib/upload/validate');
+    const { validateImageBytes } = await import('../validate');
     vi.mocked(validateImageBytes).mockReturnValueOnce({ valid: false, error: 'File too large' });
 
     const { uploadMeetupPhoto } = await import('../image-service');

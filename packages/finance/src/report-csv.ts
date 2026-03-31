@@ -3,7 +3,7 @@
  * Pure functions — no I/O, no side effects.
  * All monetary values formatted as dollars.
  */
-import type { PnlReportData, BalanceSheetData, CashFlowData } from '@/lib/queries/finance-center-reports';
+import type { PnlReportData, BalanceSheetData, CashFlowData } from './report-types';
 import { formatCentsToDollars } from './format';
 
 function row(...cells: (string | number)[]): string {

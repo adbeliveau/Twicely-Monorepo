@@ -35,8 +35,8 @@ export async function registerAffiliatePayoutJob(): Promise<void> {
  * Exported for testability.
  */
 export async function processAffiliatePayouts(): Promise<void> {
-  const { graduateCommissions } = await import('@/lib/affiliate/commission-graduation');
-  const { executeAffiliatePayouts } = await import('@/lib/affiliate/affiliate-payout-service');
+  const { graduateCommissions } = await import('./affiliate-commission-graduation');
+  const { executeAffiliatePayouts } = await import('./affiliate-payout-service');
 
   const graduation = await graduateCommissions();
   logger.info('[affiliatePayoutCron] Graduation complete', {

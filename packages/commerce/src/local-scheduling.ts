@@ -7,7 +7,7 @@
  * Per TWICELY_V3_LOCAL_CANONICAL_ADDENDUM_v1_1.md §A6
  */
 
-import type { LocalTransactionRow } from '@/lib/queries/local-transaction';
+import type { LocalTransactionRow } from './local-transaction-types';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 
 /** Terminal statuses — no scheduling actions allowed */

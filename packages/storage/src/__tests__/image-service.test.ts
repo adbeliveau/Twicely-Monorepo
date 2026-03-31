@@ -13,7 +13,7 @@ vi.mock('../r2-client', () => ({
 }));
 
 // Mock the validation module
-vi.mock('@/lib/upload/validate', () => ({
+vi.mock('../validate', () => ({
   validateImageBytes: vi.fn().mockReturnValue({ valid: true }),
   detectImageType: vi.fn().mockReturnValue('jpeg'),
   getExtension: vi.fn().mockReturnValue('jpg'),
@@ -29,7 +29,7 @@ describe('Image Service', () => {
 
   describe('uploadListingImage', () => {
     it('validates image type and size', async () => {
-      const { validateImageBytes } = await import('@/lib/upload/validate');
+      const { validateImageBytes } = await import('../validate');
       const { uploadListingImage } = await import('../image-service');
 
       const buffer = Buffer.from('fake image data');
@@ -42,7 +42,7 @@ describe('Image Service', () => {
     });
 
     it('returns error for invalid image', async () => {
-      const { validateImageBytes } = await import('@/lib/upload/validate');
+      const { validateImageBytes } = await import('../validate');
       vi.mocked(validateImageBytes).mockReturnValueOnce({
         valid: false,
         error: 'File too large',
@@ -92,7 +92,7 @@ describe('Image Service', () => {
     });
 
     it('returns error for undetectable image type', async () => {
-      const { detectImageType } = await import('@/lib/upload/validate');
+      const { detectImageType } = await import('../validate');
       vi.mocked(detectImageType).mockReturnValueOnce(null);
 
       const { uploadAvatar } = await import('../image-service');

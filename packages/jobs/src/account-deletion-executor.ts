@@ -35,7 +35,7 @@ import {
   pseudonymizeMessages,
   pseudonymizeAuditEvents,
   pseudonymizeAffiliateRecords,
-} from '@/lib/gdpr/pseudonymize';
+} from './gdpr-pseudonymize';
 
 export const CLEANUP_QUEUE_NAME = 'cleanup';
 

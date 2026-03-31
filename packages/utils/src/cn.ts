@@ -1,4 +1,4 @@
-// Utility for merging classnames - shadcn components expect @/lib/utils
+// Utility for merging classnames — shadcn UI components import from @twicely/utils/cn
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

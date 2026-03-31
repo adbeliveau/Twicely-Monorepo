@@ -53,7 +53,7 @@ import {
   generateOfflineCode,
   generateTokenPair,
 } from '../local-token';
-import type { LocalTransactionTokenPayload } from '@/lib/types/local-token';
+import type { LocalTransactionTokenPayload } from '../local-token-types';
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 

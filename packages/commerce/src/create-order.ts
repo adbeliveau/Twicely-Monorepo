@@ -3,7 +3,7 @@ import { order, orderItem, cart, cartItem, listing, category, sellerProfile, shi
 import { eq, and, inArray } from 'drizzle-orm';
 import { generateOrderNumber } from './order-number';
 import { calculateTf, getTfBrackets, getMinimumTfCents } from './tf-calculator';
-import { calculateCombinedShipping, type CombinedShippingItem, type CombinedShippingMode } from '@/lib/services/combined-shipping';
+import { calculateCombinedShipping, type CombinedShippingItem, type CombinedShippingMode } from './combined-shipping';
 import { getAuthOfferConfig } from '@twicely/commerce/auth-offer';
 import { getSellerMonthlyGmv } from './order-gmv';
 import type { CreateOrderInput, OrderCreationResult, CartItemWithDetails } from './order-gmv';

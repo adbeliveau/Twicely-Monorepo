@@ -8,7 +8,7 @@
  */
 
 import { get, set, del } from 'idb-keyval';
-import type { PreloadedTokenData } from '@/lib/types/local-token';
+import type { PreloadedTokenData } from './local-token-types';
 
 export type { PreloadedTokenData };
 

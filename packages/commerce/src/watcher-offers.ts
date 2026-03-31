@@ -11,7 +11,7 @@ import {
   createWatcherOfferSchema,
   acceptWatcherOfferSchema,
   cancelWatcherOfferSchema,
-} from '@/lib/validations/watcher-offers';
+} from './watcher-offers-validation';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
 

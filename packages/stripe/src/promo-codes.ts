@@ -1,6 +1,9 @@
 import { stripe } from './server';
 import type Stripe from 'stripe';
-import type { PromoCodeRow } from '@/lib/queries/promo-codes';
+import type { promoCode } from '@twicely/db/schema';
+
+/** Row type for the promo_code table (inferred from Drizzle schema). */
+export type PromoCodeRow = typeof promoCode.$inferSelect;
 
 export interface StripePromoCodeIds {
   stripeCouponId: string;

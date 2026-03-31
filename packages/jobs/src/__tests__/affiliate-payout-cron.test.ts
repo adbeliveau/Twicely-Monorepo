@@ -16,11 +16,11 @@ vi.mock('../queue', () => ({
   createWorker: vi.fn().mockReturnValue({ close: mockWorkerClose }),
 }));
 
-vi.mock('@/lib/affiliate/commission-graduation', () => ({
+vi.mock('../affiliate-commission-graduation', () => ({
   graduateCommissions: vi.fn().mockResolvedValue({ graduatedCount: 3, totalCents: 1500 }),
 }));
 
-vi.mock('@/lib/affiliate/affiliate-payout-service', () => ({
+vi.mock('../affiliate-payout-service', () => ({
   executeAffiliatePayouts: vi.fn().mockResolvedValue({
     payoutCount: 2,
     totalPaidCents: 8000,
@@ -100,8 +100,8 @@ describe('processAffiliatePayouts — orchestration', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('calls graduateCommissions before executeAffiliatePayouts', async () => {
-    const { graduateCommissions } = await import('@/lib/affiliate/commission-graduation');
-    const { executeAffiliatePayouts } = await import('@/lib/affiliate/affiliate-payout-service');
+    const { graduateCommissions } = await import('../affiliate-commission-graduation');
+    const { executeAffiliatePayouts } = await import('../affiliate-payout-service');
     const { processAffiliatePayouts } = await import('../affiliate-payout-cron');
 
     await processAffiliatePayouts();
@@ -111,8 +111,8 @@ describe('processAffiliatePayouts — orchestration', () => {
   });
 
   it('calls executeAffiliatePayouts after graduation completes', async () => {
-    const { graduateCommissions } = await import('@/lib/affiliate/commission-graduation');
-    const { executeAffiliatePayouts } = await import('@/lib/affiliate/affiliate-payout-service');
+    const { graduateCommissions } = await import('../affiliate-commission-graduation');
+    const { executeAffiliatePayouts } = await import('../affiliate-payout-service');
     const { processAffiliatePayouts } = await import('../affiliate-payout-cron');
 
     const callOrder: string[] = [];

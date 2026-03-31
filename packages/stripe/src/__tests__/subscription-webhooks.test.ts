@@ -8,10 +8,10 @@ import { mapStripeStatus } from '../subscription-webhooks';
 import {
   createMockSubscription,
   createMockSubscriptionEvent,
-} from '@/lib/__tests__/helpers/stripe-mocks';
+} from './helpers/stripe-mocks';
 
 // Mock the mutation functions
-vi.mock('@/lib/mutations/subscriptions', () => ({
+vi.mock('@twicely/subscriptions/mutations', () => ({
   upsertStoreSubscription: vi.fn(),
   upsertListerSubscription: vi.fn(),
   upsertAutomationSubscription: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock('@/lib/mutations/subscriptions', () => ({
 }));
 
 // Mock the lookup functions
-vi.mock('@/lib/queries/subscription-lookups', () => ({
+vi.mock('@twicely/subscriptions/queries', () => ({
   findSellerByStripeCustomerId: vi.fn(),
   findSubscriptionByStripeId: vi.fn(),
 }));
@@ -31,7 +31,7 @@ vi.mock('@twicely/subscriptions/price-map', () => ({
 }));
 
 // Mock pending downgrade handler (D3-S4)
-vi.mock('@/lib/mutations/apply-pending-downgrade', () => ({
+vi.mock('@twicely/subscriptions/apply-pending-downgrade', () => ({
   applyPendingDowngradeIfNeeded: vi.fn(),
 }));
 
@@ -86,7 +86,7 @@ describe('D3-S2: Subscription Webhooks', () => {
   describe('handleSubscriptionUpsert routing', () => {
     it('routes store subscription to upsertStoreSubscription', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
-      const { upsertStoreSubscription } = await import('@/lib/mutations/subscriptions');
+      const { upsertStoreSubscription } = await import('@twicely/subscriptions/mutations');
       const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
@@ -112,7 +112,7 @@ describe('D3-S2: Subscription Webhooks', () => {
 
     it('routes lister subscription to upsertListerSubscription', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
-      const { upsertListerSubscription } = await import('@/lib/mutations/subscriptions');
+      const { upsertListerSubscription } = await import('@twicely/subscriptions/mutations');
       const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
@@ -137,7 +137,7 @@ describe('D3-S2: Subscription Webhooks', () => {
 
     it('routes automation subscription to upsertAutomationSubscription', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
-      const { upsertAutomationSubscription } = await import('@/lib/mutations/subscriptions');
+      const { upsertAutomationSubscription } = await import('@twicely/subscriptions/mutations');
       const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
@@ -158,7 +158,7 @@ describe('D3-S2: Subscription Webhooks', () => {
 
     it('routes finance subscription to upsertFinanceSubscription', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
-      const { upsertFinanceSubscription } = await import('@/lib/mutations/subscriptions');
+      const { upsertFinanceSubscription } = await import('@twicely/subscriptions/mutations');
       const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
@@ -183,9 +183,9 @@ describe('D3-S2: Subscription Webhooks', () => {
 
     it('uses resolveStripePriceId when metadata is missing', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
-      const { upsertAutomationSubscription } = await import('@/lib/mutations/subscriptions');
+      const { upsertAutomationSubscription } = await import('@twicely/subscriptions/mutations');
       const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
-      const { findSellerByStripeCustomerId } = await import('@/lib/queries/subscription-lookups');
+      const { findSellerByStripeCustomerId } = await import('@twicely/subscriptions/queries');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
         product: 'automation',
@@ -215,8 +215,8 @@ describe('D3-S2: Subscription Webhooks', () => {
   describe('handleSubscriptionDeleted', () => {
     it('calls cancelSubscription when subscription is found', async () => {
       const { handleSubscriptionDeleted } = await import('../subscription-webhooks');
-      const { cancelSubscription } = await import('@/lib/mutations/subscriptions');
-      const { findSubscriptionByStripeId } = await import('@/lib/queries/subscription-lookups');
+      const { cancelSubscription } = await import('@twicely/subscriptions/mutations');
+      const { findSubscriptionByStripeId } = await import('@twicely/subscriptions/queries');
 
       vi.mocked(findSubscriptionByStripeId).mockResolvedValue({
         product: 'store',
@@ -237,7 +237,7 @@ describe('D3-S2: Subscription Webhooks', () => {
 
     it('does not throw when subscription is not found', async () => {
       const { handleSubscriptionDeleted } = await import('../subscription-webhooks');
-      const { findSubscriptionByStripeId } = await import('@/lib/queries/subscription-lookups');
+      const { findSubscriptionByStripeId } = await import('@twicely/subscriptions/queries');
 
       vi.mocked(findSubscriptionByStripeId).mockResolvedValue(null);
 
@@ -267,14 +267,14 @@ describe('D3-S2: Subscription Webhooks', () => {
       await handleSubscriptionWebhook(mockEvent);
 
       // Verify upsert was called (via mock)
-      const { upsertStoreSubscription } = await import('@/lib/mutations/subscriptions');
+      const { upsertStoreSubscription } = await import('@twicely/subscriptions/mutations');
       expect(upsertStoreSubscription).toHaveBeenCalled();
     });
 
     it('dispatches customer.subscription.deleted to handleSubscriptionDeleted', async () => {
       const { handleSubscriptionWebhook } = await import('../subscription-webhooks');
-      const { findSubscriptionByStripeId } = await import('@/lib/queries/subscription-lookups');
-      const { cancelSubscription } = await import('@/lib/mutations/subscriptions');
+      const { findSubscriptionByStripeId } = await import('@twicely/subscriptions/queries');
+      const { cancelSubscription } = await import('@twicely/subscriptions/mutations');
 
       vi.mocked(findSubscriptionByStripeId).mockResolvedValue({
         product: 'lister',

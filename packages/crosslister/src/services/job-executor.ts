@@ -17,7 +17,7 @@ import { eq, and } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getConnector } from '../connector-registry';
 import { transformListingForChannel } from './listing-transform';
-import { getListingForPublish } from '@/lib/queries/crosslister';
+import { getListingForPublish } from '../queries';
 import { recordSuccess, recordFailure } from '../queue/circuit-breaker';
 import type { ExternalChannel, ExternalCategoryMapping } from '../types';
 import type { ChannelOverrides } from './listing-transform';

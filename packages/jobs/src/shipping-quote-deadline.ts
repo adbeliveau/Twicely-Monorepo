@@ -4,7 +4,7 @@ import { combinedShippingQuote, order } from '@twicely/db/schema';
 import { eq, and, lt } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { formatPrice } from '@twicely/utils/format';
-import { resolveQuoteFinalPrice } from '@/lib/services/shipping-quote-resolver';
+import { resolveQuoteFinalPrice } from './shipping-quote-resolver';
 
 const QUEUE_NAME = 'shipping-quote-deadline';
 

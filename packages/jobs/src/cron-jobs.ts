@@ -110,26 +110,26 @@ export async function registerCronJobs(): Promise<void> {
 async function processCronJob(task: CronTask): Promise<void> {
   switch (task) {
     case 'orders': {
-      const { autoCompleteDeliveredOrders } = await import('@/lib/commerce/shipping');
+      const { autoCompleteDeliveredOrders } = await import('@twicely/commerce/shipping');
       const count = await autoCompleteDeliveredOrders();
       logger.info('[cronJobs] orders complete', { autoCompleted: count });
       break;
     }
     case 'returns': {
-      const { autoApproveOverdueReturns } = await import('@/lib/commerce/returns');
+      const { autoApproveOverdueReturns } = await import('@twicely/commerce/returns');
       const count = await autoApproveOverdueReturns();
       logger.info('[cronJobs] returns complete', { autoApproved: count });
       break;
     }
     case 'shipping': {
-      const { scanForShippingExceptions } = await import('@/lib/commerce/shipping-exceptions');
+      const { scanForShippingExceptions } = await import('@twicely/commerce/shipping-exceptions');
       const found = await scanForShippingExceptions();
       logger.info('[cronJobs] shipping complete', { exceptionsFound: found });
       break;
     }
     case 'health': {
-      const { runAllChecks } = await import('@/lib/monitoring/doctor-runner');
-      const { sendSlackAlert } = await import('@/lib/monitoring/slack-alert');
+      const { runAllChecks } = await import('./doctor-runner');
+      const { sendSlackAlert } = await import('./slack-alert');
       const summary = await runAllChecks();
       const failed = summary.checks.filter((c) => c.status !== 'HEALTHY');
       if (failed.length > 0) {
@@ -139,13 +139,13 @@ async function processCronJob(task: CronTask): Promise<void> {
       break;
     }
     case 'vacation': {
-      const { processVacationAutoEnd } = await import('@/lib/commerce/vacation-cron');
+      const { processVacationAutoEnd } = await import('@twicely/commerce/vacation-cron');
       const count = await processVacationAutoEnd();
       logger.info('[cronJobs] vacation complete', { vacationsEnded: count });
       break;
     }
     case 'seller-score-recalc': {
-      const { processSellerScoreRecalc } = await import('@/lib/jobs/seller-score-recalc');
+      const { processSellerScoreRecalc } = await import('@twicely/jobs/seller-score-recalc');
       await processSellerScoreRecalc();
       logger.info('[cronJobs] seller-score-recalc complete');
       break;

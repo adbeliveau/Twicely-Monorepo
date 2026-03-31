@@ -13,7 +13,7 @@ import { resolveStripePriceId } from '@twicely/subscriptions/price-map';
 import {
   findSellerByStripeCustomerId,
   findSubscriptionByStripeId,
-} from '@/lib/queries/subscription-lookups';
+} from '@twicely/subscriptions/queries';
 import {
   upsertStoreSubscription,
   upsertListerSubscription,
@@ -21,8 +21,8 @@ import {
   upsertFinanceSubscription,
   upsertBundleSubscription,
   cancelSubscription,
-} from '@/lib/mutations/subscriptions';
-import { applyPendingDowngradeIfNeeded } from '@/lib/mutations/apply-pending-downgrade';
+} from '@twicely/subscriptions/mutations';
+import { applyPendingDowngradeIfNeeded } from '@twicely/subscriptions/apply-pending-downgrade';
 import type { StoreTier, ListerTier, FinanceTier, BundleTier, SubscriptionStatus } from '@/types/enums';
 
 // ─── Stripe Status → Twicely Status Mapping ─────────────────────────────────

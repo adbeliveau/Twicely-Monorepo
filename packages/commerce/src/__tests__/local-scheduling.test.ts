@@ -9,7 +9,7 @@ import {
 vi.mock('@twicely/db/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key: string, defaultValue: number) => Promise.resolve(defaultValue)),
 }));
-import type { LocalTransactionRow } from '@/lib/queries/local-transaction';
+import type { LocalTransactionRow } from '../local-transaction-types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

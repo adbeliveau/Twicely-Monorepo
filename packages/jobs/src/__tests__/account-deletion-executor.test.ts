@@ -42,7 +42,7 @@ vi.mock('@twicely/notifications/service', () => ({
   notify: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/gdpr/pseudonymize', () => ({
+vi.mock('../gdpr-pseudonymize', () => ({
   generatePseudonym: vi.fn(() => 'deleted_user_' + 'a'.repeat(64)),
   pseudonymizeOrders: vi.fn().mockResolvedValue(2),
   pseudonymizeLedgerEntries: vi.fn().mockResolvedValue(5),
@@ -164,7 +164,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
 
   it('pseudonymizes order buyer/seller IDs', async () => {
     const { db } = await import('@twicely/db');
-    const { pseudonymizeOrders } = await import('@/lib/gdpr/pseudonymize');
+    const { pseudonymizeOrders } = await import('../gdpr-pseudonymize');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -185,7 +185,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
 
   it('pseudonymizes ledger entry userIds', async () => {
     const { db } = await import('@twicely/db');
-    const { pseudonymizeLedgerEntries } = await import('@/lib/gdpr/pseudonymize');
+    const { pseudonymizeLedgerEntries } = await import('../gdpr-pseudonymize');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -206,7 +206,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
 
   it('pseudonymizes payout ownerIds', async () => {
     const { db } = await import('@twicely/db');
-    const { pseudonymizePayouts } = await import('@/lib/gdpr/pseudonymize');
+    const { pseudonymizePayouts } = await import('../gdpr-pseudonymize');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {

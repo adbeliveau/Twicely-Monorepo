@@ -35,7 +35,7 @@ function clearTestEnv() {
 
 import { signToken } from '../local-token';
 import { verifyTokenClient, getPublicKeyBytes } from '../local-token-client';
-import type { LocalTransactionTokenPayload } from '@/lib/types/local-token';
+import type { LocalTransactionTokenPayload } from '../local-token-types';
 
 function makePayload(overrides: Partial<LocalTransactionTokenPayload> = {}): LocalTransactionTokenPayload {
   return {

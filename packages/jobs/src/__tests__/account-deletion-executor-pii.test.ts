@@ -47,7 +47,7 @@ vi.mock('@twicely/storage/image-service', () => ({
   deleteImage: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/gdpr/pseudonymize', () => ({
+vi.mock('../gdpr-pseudonymize', () => ({
   generatePseudonym: vi.fn(() => 'deleted_user_' + 'a'.repeat(64)),
   pseudonymizeOrders: vi.fn().mockResolvedValue(2),
   pseudonymizeLedgerEntries: vi.fn().mockResolvedValue(5),
@@ -105,7 +105,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
 
   it('pseudonymizes message senderIds', async () => {
     const { db } = await import('@twicely/db');
-    const { pseudonymizeMessages } = await import('@/lib/gdpr/pseudonymize');
+    const { pseudonymizeMessages } = await import('../gdpr-pseudonymize');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -126,7 +126,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
 
   it('pseudonymizes audit event actorIds', async () => {
     const { db } = await import('@twicely/db');
-    const { pseudonymizeAuditEvents } = await import('@/lib/gdpr/pseudonymize');
+    const { pseudonymizeAuditEvents } = await import('../gdpr-pseudonymize');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {

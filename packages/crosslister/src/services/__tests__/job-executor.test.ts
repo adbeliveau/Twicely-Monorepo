@@ -56,7 +56,7 @@ vi.mock('../listing-transform', () => ({
   }),
 }));
 
-vi.mock('@/lib/queries/crosslister', () => ({
+vi.mock('@twicely/crosslister/queries', () => ({
   getListingForPublish: vi.fn().mockResolvedValue({
     listing: {
       id: 'lst-1', ownerUserId: 'user-1', status: 'ACTIVE', title: 'Test', description: 'Desc',
@@ -169,7 +169,7 @@ describe('executeCreateJob', () => {
   });
 
   it('returns error when listing not found', async () => {
-    const { getListingForPublish } = await import('@/lib/queries/crosslister');
+    const { getListingForPublish } = await import('@twicely/crosslister/queries');
     (getListingForPublish as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
 
     const { executeCreateJob } = await import('../job-executor');

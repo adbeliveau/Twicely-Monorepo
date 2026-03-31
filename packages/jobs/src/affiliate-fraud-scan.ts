@@ -12,8 +12,8 @@ import { createQueue, createWorker } from './queue';
 import { db } from '@twicely/db';
 import { affiliate, referral } from '@twicely/db/schema';
 import { eq, and, gte, inArray } from 'drizzle-orm';
-import { runAllFraudChecks } from '@/lib/affiliate/fraud-detection';
-import { escalateAffiliate } from '@/lib/affiliate/fraud-escalation';
+import { runAllFraudChecks } from './affiliate-fraud-detection';
+import { escalateAffiliate } from './affiliate-fraud-escalation';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
 

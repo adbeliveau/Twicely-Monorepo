@@ -11,7 +11,7 @@
 
 import { sign, verify, createPrivateKey, createPublicKey } from 'crypto';
 import { createId } from '@paralleldrive/cuid2';
-import type { LocalTransactionTokenPayload } from '@/lib/types/local-token';
+import type { LocalTransactionTokenPayload } from './local-token-types';
 
 export type { LocalTransactionTokenPayload };
 

@@ -23,6 +23,7 @@
     "@twicely/notifications": "workspace:*",
     "@twicely/scoring": "workspace:*",
     "@twicely/storage": "workspace:*",
+    "@twicely/stripe": "workspace:*",
     "@twicely/utils": "workspace:*"
   },
   "peerDependencies": {

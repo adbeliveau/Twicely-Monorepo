@@ -23,6 +23,7 @@
     "bullmq": "^5.69.3",
     "drizzle-orm": "^0.45.1",
     "zod": "^4.3.6",
+    "@twicely/config": "workspace:*",
     "@twicely/db": "workspace:*",
     "@twicely/finance": "workspace:*",
     "@twicely/jobs": "workspace:*",

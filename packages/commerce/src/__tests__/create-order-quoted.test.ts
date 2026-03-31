@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateCombinedShipping,
   type CombinedShippingInput,
-} from '@/lib/services/combined-shipping';
+} from '../combined-shipping';
 
 /**
  * Integration tests for order creation logic with QUOTED mode.

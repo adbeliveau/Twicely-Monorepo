@@ -15,7 +15,7 @@ const mockValidateImageBytes = vi.fn();
 const mockDetectImageType = vi.fn();
 const mockGetExtension = vi.fn();
 
-vi.mock('@/lib/upload/validate', () => ({
+vi.mock('../validate', () => ({
   validateImageBytes: (...args: unknown[]) => mockValidateImageBytes(...args),
   detectImageType: (...args: unknown[]) => mockDetectImageType(...args),
   getExtension: (...args: unknown[]) => mockGetExtension(...args),

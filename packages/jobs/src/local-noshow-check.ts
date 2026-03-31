@@ -17,7 +17,7 @@ import { canTransition } from '@twicely/commerce/local-state-machine';
 import { postReliabilityMark } from '@twicely/commerce/local-reliability';
 import { unreserveListingForLocalTransaction } from '@twicely/commerce/local-reserve';
 import { enqueueNoshowRelistCheck } from '@twicely/jobs/local-fraud-noshow-relist';
-import { sendLocalAutoMessage } from '@/lib/messaging/local-auto-messages';
+import { sendLocalAutoMessage } from './local-auto-messages';
 import { logger } from '@twicely/logger';
 
 const QUEUE_NAME = 'local-noshow-check';

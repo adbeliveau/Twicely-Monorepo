@@ -3,7 +3,7 @@
  * Returns self-contained <!DOCTYPE html> documents.
  * Users download the HTML file and print to PDF via their browser.
  */
-import type { PnlReportData, BalanceSheetData, CashFlowData } from '@/lib/queries/finance-center-reports';
+import type { PnlReportData, BalanceSheetData, CashFlowData } from './report-types';
 import { formatCentsToDollars } from './format';
 
 function escapeHtml(s: string): string {

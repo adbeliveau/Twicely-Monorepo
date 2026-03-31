@@ -58,7 +58,7 @@ vi.mock('@twicely/jobs/local-fraud-noshow-relist', () => ({
   enqueueNoshowRelistCheck: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/messaging/local-auto-messages', () => ({
+vi.mock('../local-auto-messages', () => ({
   sendLocalAutoMessage: vi.fn().mockResolvedValue(undefined),
 }));
 

@@ -81,9 +81,9 @@ export async function processTaxDocumentGeneration(
   targetUserId?: string
 ): Promise<{ k1099Count: number; nec1099Count: number }> {
   const { generateAll1099KReports, generate1099KData, store1099KReport } =
-    await import('@/lib/tax/form-1099k-generator');
+    await import('./tax-form-1099k');
   const { generateAll1099NECReports } =
-    await import('@/lib/tax/form-1099nec-generator');
+    await import('./tax-form-1099nec');
 
   let k1099Count = 0;
   let nec1099Count = 0;

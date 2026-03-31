@@ -12,8 +12,8 @@ vi.mock('@twicely/commerce/offer-queries', () => mockQueries);
 vi.mock('@twicely/commerce/offer-to-order', () => ({ createOrderFromOffer: mockCreateOrder }));
 vi.mock('@twicely/jobs/offer-expiry', () => ({ scheduleOfferExpiry: mockScheduleExpiry, cancelOfferExpiry: mockCancelExpiry }));
 vi.mock('@twicely/commerce/offer-notifications', () => ({ notifyOfferEvent: mockNotifyOfferEvent }));
-vi.mock('@/lib/queries/buyer-block', () => ({ isBuyerBlocked: vi.fn().mockResolvedValue(false) }));
-vi.mock('@/lib/actions/browsing-history-helpers', () => ({ updateEngagement: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('../buyer-block', () => ({ isBuyerBlocked: vi.fn().mockResolvedValue(false) }));
+vi.mock('../browsing-history-helpers', () => ({ updateEngagement: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@twicely/db/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
 }));

@@ -13,7 +13,7 @@ vi.mock('idb-keyval', () => ({
 
 import { get, set, del } from 'idb-keyval';
 import { storeTokens, getStoredTokens, clearStoredTokens } from '../local-token-store';
-import type { PreloadedTokenData } from '@/lib/types/local-token';
+import type { PreloadedTokenData } from '../local-token-types';
 
 const TX_ID = 'tx-store-001';
 
