@@ -5,6 +5,7 @@ import { db } from '@twicely/db';
 import { helpdeskCase, caseMessage } from '@twicely/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { generateSuggestion, assistReply } from '@/lib/helpdesk/ai-service';
 import type { AssistAction } from '@/lib/helpdesk/ai-service';
 
@@ -19,7 +20,7 @@ interface ActionResult<T = undefined> {
 // =============================================================================
 
 const getAiSuggestionSchema = z.object({
-  caseId: z.string().min(1),
+  caseId: zodId,
 }).strict();
 
 const getAiAssistSchema = z.object({

@@ -10,11 +10,12 @@
  */
 
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { computeAndStoreSellerScore } from '@twicely/commerce/seller-score-compute';
 
 const refreshSellerScoreSchema = z.object({
-  sellerId: z.string().min(1),
+  sellerId: zodId,
 }).strict();
 
 export async function refreshSellerScore(input: unknown) {

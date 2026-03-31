@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useTransition } from 'react';
 import { suspendUserAction, unsuspendUserAction, warnUserAction } from '@/lib/actions/admin-users';
+import { resetPasswordAction } from '@/lib/actions/admin-users-management';
 
 interface UserActionsDropdownProps {
   userId: string;
@@ -51,6 +52,15 @@ export function UserActionsDropdown({
     startTransition(async () => {
       const res = await warnUserAction({ userId, message: msg });
       setResult(res.error ?? 'Warning sent');
+    });
+  }
+
+  function handleResetPassword() {
+    if (!confirm('Send password reset email for this user?')) return;
+    setIsOpen(false);
+    startTransition(async () => {
+      const res = await resetPasswordAction({ userId });
+      setResult(res.error ?? 'Password reset email sent');
     });
   }
 
@@ -167,6 +177,15 @@ export function UserActionsDropdown({
                   <div className="mt-1 border-t border-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
                     Account Status
                   </div>
+                  <button
+                    onClick={handleResetPassword}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    Reset Password
+                  </button>
                   <button
                     onClick={handleSuspendToggle}
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"

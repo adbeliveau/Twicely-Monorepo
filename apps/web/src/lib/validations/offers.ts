@@ -1,14 +1,15 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 /**
  * Schema for creating a new offer (buyer → seller)
  */
 export const createOfferSchema = z.object({
-  listingId: z.string().min(1, 'Listing ID is required'),
+  listingId: zodId,
   offerCents: z.number().int().positive('Offer must be a positive amount'),
   message: z.string().max(500, 'Message must be 500 characters or less').optional(),
-  paymentMethodId: z.string().min(1, 'Payment method is required'),
-  shippingAddressId: z.string().min(1, 'Shipping address is required'),
+  paymentMethodId: zodId,
+  shippingAddressId: zodId,
 }).strict();
 
 export type CreateOfferInput = z.infer<typeof createOfferSchema>;
@@ -17,7 +18,7 @@ export type CreateOfferInput = z.infer<typeof createOfferSchema>;
  * Schema for countering an offer (seller or buyer)
  */
 export const counterOfferSchema = z.object({
-  offerId: z.string().min(1, 'Offer ID is required'),
+  offerId: zodId,
   counterCents: z.number().int().positive('Counter amount must be positive'),
   message: z.string().max(500, 'Message must be 500 characters or less').optional(),
 }).strict();
@@ -86,10 +87,10 @@ export function counterOfferSchemaWithValidation(currentOfferCents: number) {
  * Schema for creating a bundle offer (multiple items from same seller)
  */
 export const createBundleOfferSchema = z.object({
-  listingIds: z.array(z.string().min(1)).min(2, 'Bundle must contain at least 2 items').max(10, 'Bundle cannot exceed 10 items'),
+  listingIds: z.array(zodId).min(2, 'Bundle must contain at least 2 items').max(10, 'Bundle cannot exceed 10 items'),
   offeredPriceCents: z.number().int().positive('Offer must be a positive amount'),
-  shippingAddressId: z.string().min(1, 'Shipping address is required'),
-  paymentMethodId: z.string().min(1, 'Payment method is required'),
+  shippingAddressId: zodId,
+  paymentMethodId: zodId,
   message: z.string().max(500, 'Message must be 500 characters or less').optional(),
 }).strict();
 
@@ -99,7 +100,7 @@ export type CreateBundleOfferInput = z.infer<typeof createBundleOfferSchema>;
  * Schema for responding to a bundle offer
  */
 export const respondBundleOfferSchema = z.object({
-  offerId: z.string().min(1, 'Offer ID is required'),
+  offerId: zodId,
   action: z.enum(['accept', 'decline', 'counter']),
   counterPriceCents: z.number().int().positive().optional(),
 }).strict().refine(

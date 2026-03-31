@@ -20,6 +20,7 @@ import { ShippingAddressCard } from './_components/shipping-address-card';
 import { getLocalTransactionByOrderId } from '@/lib/queries/local-transaction';
 import { LocalMeetupCard } from '@/components/local/local-meetup-card';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getReliabilityDisplay } from '@twicely/commerce/local-reliability';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,20 +62,8 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
   const nameParts = buyer.name.split(' ');
   const buyerDisplayName = nameParts[0] + (nameParts[1]?.[0] ? ` ${nameParts[1][0]}.` : '');
 
-  // Fetch review for this order (if COMPLETED or DELIVERED)
-  let orderReview: {
-    id: string;
-    rating: number;
-    title: string | null;
-    body: string | null;
-    createdAt: Date;
-  } | null = null;
-
-  let existingResponse: {
-    id: string;
-    body: string;
-    createdAt: Date;
-  } | null = null;
+  let orderReview: { id: string; rating: number; title: string | null; body: string | null; createdAt: Date } | null = null;
+  let existingResponse: { id: string; body: string; createdAt: Date } | null = null;
 
   if (ord.status === 'COMPLETED' || ord.status === 'DELIVERED') {
     // Dual-blind: only show review if visibleAt has passed
@@ -117,10 +106,11 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
     }
   }
 
-  const [shippingQuote, localTransaction, maxAdjustmentPercent] = await Promise.all([
+  const [shippingQuote, localTransaction, maxAdjustmentPercent, buyerReliability] = await Promise.all([
     getShippingQuoteByOrderId(orderId, session.user.id),
     ord.isLocalPickup ? getLocalTransactionByOrderId(orderId) : Promise.resolve(null),
     getPlatformSetting<number>('commerce.local.maxAdjustmentPercent', 33),
+    ord.isLocalPickup ? getReliabilityDisplay(ord.buyerId) : Promise.resolve(null),
   ]);
 
   // Calculate if response is still editable (24-hour window per spec §Seller Response)
@@ -207,7 +197,7 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
 
         {ord.isLocalPickup && ( /* G2.3: Local Pickup */
           localTransaction
-            ? <LocalMeetupCard transaction={localTransaction} role="SELLER" currentUserId={session.user.id} otherPartyName={buyerDisplayName} originalPriceCents={ord.itemSubtotalCents} maxDiscountPercent={maxAdjustmentPercent} />
+            ? <LocalMeetupCard transaction={localTransaction} role="SELLER" currentUserId={session.user.id} otherPartyName={buyerDisplayName} originalPriceCents={ord.itemSubtotalCents} maxDiscountPercent={maxAdjustmentPercent} counterpartyReliability={buyerReliability} />
             : <div className="rounded-lg border p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📍</span>

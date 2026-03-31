@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const feeBucketValues = ['ELECTRONICS', 'APPAREL_ACCESSORIES', 'HOME_GENERAL', 'COLLECTIBLES_LUXURY'] as const;
@@ -19,7 +20,7 @@ export const createCategorySchema = z.object({
 }).strict();
 
 export const updateCategorySchema = z.object({
-  id: z.string().min(1),
+  id: zodId,
   name: z.string().min(1).max(100).optional(),
   slug: z.string().min(1).max(100).regex(slugPattern).optional(),
   parentId: z.string().nullable().optional(),
@@ -34,11 +35,11 @@ export const updateCategorySchema = z.object({
 }).strict();
 
 export const reorderCategoriesSchema = z.object({
-  orderedIds: z.array(z.string().min(1)).min(1),
+  orderedIds: z.array(zodId).min(1),
 }).strict();
 
 export const createAttributeSchemaInput = z.object({
-  categoryId: z.string().min(1),
+  categoryId: zodId,
   name: z.string().min(1).max(100),
   label: z.string().min(1).max(100),
   fieldType: z.enum(fieldTypeValues),
@@ -52,7 +53,7 @@ export const createAttributeSchemaInput = z.object({
 }).strict();
 
 export const updateAttributeSchemaInput = z.object({
-  id: z.string().min(1),
+  id: zodId,
   name: z.string().min(1).max(100).optional(),
   label: z.string().min(1).max(100).optional(),
   fieldType: z.enum(fieldTypeValues).optional(),

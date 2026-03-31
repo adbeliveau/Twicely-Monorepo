@@ -7,9 +7,10 @@ import { eq, and } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { TEMPLATES, type TemplateKey } from '@twicely/notifications/templates';
 import { z } from 'zod';
+import { zodId } from '@/lib/validation/schemas';
 
 const markAsReadSchema = z.object({
-  notificationId: z.string().cuid2(),
+  notificationId: zodId,
 }).strict();
 
 const updatePreferencesSchema = z.object({

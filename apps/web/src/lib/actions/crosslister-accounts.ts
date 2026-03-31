@@ -18,10 +18,11 @@ import { EbayConnector } from '@twicely/crosslister/connectors/ebay-connector';
 import { getConnector } from '@twicely/crosslister/connector-registry';
 import { logger } from '@twicely/logger';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { createId } from '@paralleldrive/cuid2';
 import type { ExternalChannel } from '@twicely/crosslister/types';
 
-const refreshAccountSchema = z.object({ accountId: z.string().min(1) }).strict();
+const refreshAccountSchema = z.object({ accountId: zodId }).strict();
 
 const connectPlatformSchema = z.object({
   channel: z.enum(['EBAY', 'POSHMARK', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'THEREALREAL']),

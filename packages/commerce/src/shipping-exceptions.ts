@@ -19,8 +19,8 @@ import { notify } from '@twicely/notifications/service';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 
 // Exception thresholds
-export const LOST_IN_TRANSIT_DAYS = 7;
-export const SIGNIFICANT_DELAY_DAYS = 14;
+const LOST_IN_TRANSIT_DAYS = 7;
+const SIGNIFICANT_DELAY_DAYS = 14;
 
 export type ShippingExceptionType = 'LOST_IN_TRANSIT' | 'DELIVERY_EXCEPTION' | 'SIGNIFICANT_DELAY';
 

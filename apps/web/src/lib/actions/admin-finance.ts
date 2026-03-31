@@ -9,9 +9,10 @@ import { db } from '@twicely/db';
 import { ledgerEntry, auditEvent } from '@twicely/db/schema';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const manualAdjustmentSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   amountCents: z.number().int().positive(),
   type: z.enum(['MANUAL_CREDIT', 'MANUAL_DEBIT']),
   reasonCode: z.enum(['GOODWILL_CREDIT', 'ERROR_CORRECTION', 'PROMOTIONAL', 'OTHER']),

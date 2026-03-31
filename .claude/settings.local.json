@@ -307,7 +307,19 @@
       "Bash(rm src/app/v2-layout-reference.tsx)",
       "Bash(rm -rf src/components/charts src/components/tables src/components/form/example-form src/components/form/form-elements src/components/form/group-input src/components/form/date-picker.tsx src/components/form/MultiSelect.tsx src/components/corp/GmvTrendChart.tsx src/components/corp/OrderVolumeChart.tsx src/components/common/TableDropdown.tsx)",
       "Bash(mkdir -p components/ui/dropdown)",
-      "Bash(cp \"/c/Users/XPS-15/Projects/Twicely-V2/apps/web/components/ui/dropdown/Dropdown.tsx\" components/ui/dropdown/Dropdown.tsx)"
+      "Bash(cp \"/c/Users/XPS-15/Projects/Twicely-V2/apps/web/components/ui/dropdown/Dropdown.tsx\" components/ui/dropdown/Dropdown.tsx)",
+      "Read(//c/Users/XPS-15/Projects/Twicely Mono/packages/$pkg/**)",
+      "Read(//c/Users/XPS-15/Projects/Twicely Mono/apps/web/**)",
+      "Read(//c/Users/XPS-15/Projects/Twicely Mono/**)",
+      "Bash(pnpm --filter @twicely/crosslister exec vitest run --reporter=verbose src/queue/__tests__/fairness-quota.test.ts)",
+      "Bash(then echo \"NEEDS_SQL: $f\")",
+      "Bash(basedir=node_modules/.pnpm/better-auth@1.5.5_drizzle-kit@0.31.10_drizzle-orm@0.45.1_@opentelemetry+api@1.9.0_kysely@0.28_7hxxe2y42pezwrroeenp645xim/node_modules/better-auth)",
+      "Read(//c/Users/XPS-15/Projects/Twicely Mono/$basedir/**)",
+      "Bash(BAPATH=\"C:/Users/XPS-15/Projects/Twicely Mono/node_modules/.pnpm/better-auth@1.5.5_drizzle-kit@0.31.10_drizzle-orm@0.45.1_@opentelemetry+api@1.9.0_kysely@0.28_7hxxe2y42pezwrroeenp645xim/node_modules/better-auth\")",
+      "Bash(TURBOPACK=0 npx next build)",
+      "Bash(NEXT_TURBOPACK_TRACING=1 npx next build)",
+      "Bash(pnpm dlx @turbo/codemod@latest update --force)",
+      "Bash(pnpm -v)"
     ],
     "additionalDirectories": [
       "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts"

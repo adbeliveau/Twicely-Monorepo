@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
 import { slugify } from '@twicely/utils/format';
 import { searchListingsForCollection } from '@/lib/queries/admin-curated-collections';
+import { zodId } from '@/lib/validation/schemas';
 import {
   createCollectionSchema,
   updateCollectionSchema,
@@ -280,7 +281,7 @@ export async function reorderCollectionItemsAction(input: unknown) {
 
 const searchListingsSchema = z.object({
   query: z.string().min(1).max(200),
-  excludeListingIds: z.array(z.string()).default([]),
+  excludeListingIds: z.array(zodId).default([]),
 }).strict();
 
 export async function searchListingsForCollectionAction(input: unknown) {

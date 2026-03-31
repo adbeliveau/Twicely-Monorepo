@@ -47,6 +47,7 @@ const INITIAL_FORM_DATA: ShippingFormData = {
 export function ShippingProfileForm({ open, onOpenChange, profile }: ShippingProfileFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setShippingFormData] = useState<ShippingFormData>(INITIAL_FORM_DATA);
 
   // Reset form when dialog opens/closes or profile changes
@@ -76,6 +77,7 @@ export function ShippingProfileForm({ open, onOpenChange, profile }: ShippingPro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormError(null);
 
     try {
       // Build submit data based on mode
@@ -133,11 +135,11 @@ export function ShippingProfileForm({ open, onOpenChange, profile }: ShippingPro
         onOpenChange(false);
         router.refresh();
       } else {
-        // TODO: Show error toast
-        alert(result.error || 'Failed to save shipping profile');
+        setFormError(result.error || 'Failed to save shipping profile');
       }
-    } catch {
-      alert('An unexpected error occurred');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setFormError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -156,6 +158,12 @@ export function ShippingProfileForm({ open, onOpenChange, profile }: ShippingPro
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {formError && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              {formError}
+            </div>
+          )}
+
           {/* Profile Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Profile Name *</Label>

@@ -198,6 +198,12 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.explore.trendingWindowDays', value: 7, type: 'number', category: 'discovery', description: 'Number of days to compute trending velocity over' },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // PERSONALIZATION — Purchase Signals
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'discovery.personalization.purchaseWeight', value: 2.0, type: 'number', category: 'discovery', description: 'Weight assigned to purchase-based interest signals' },
+  { key: 'discovery.personalization.purchaseExpiryDays', value: 90, type: 'number', category: 'discovery', description: 'Days before a purchase-based interest signal expires' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // TAX & COMPLIANCE — G5
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'tax.facilitatorEnabled', value: true, type: 'boolean', category: 'tax', description: 'Enable marketplace facilitator tax collection' },
@@ -221,6 +227,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'retention.webhookLogDays', value: 90, type: 'number', category: 'privacy', description: 'Webhook log retention (days)' },
   { key: 'retention.analyticsEventDays', value: 365, type: 'number', category: 'privacy', description: 'Analytics event retention (1 year)' },
   { key: 'retention.notificationLogDays', value: 180, type: 'number', category: 'privacy', description: 'Notification log retention (days)' },
+  { key: 'retention.exportExpiryDays', value: 7, type: 'number', category: 'privacy', description: 'Data export file retention before purge (days)' },
   { key: 'gdpr.exportFormats', value: ['json', 'csv'], type: 'array', category: 'privacy', description: 'Available data export formats' },
   { key: 'privacy.dataExportMaxHours', value: 48, type: 'number', category: 'privacy', description: 'Maximum hours to generate a data export (SLA)' },
 

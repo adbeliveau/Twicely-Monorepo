@@ -11,11 +11,12 @@ import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
 
 const updateSettingSchema = z.object({
-  settingId: z.string().min(1),
+  settingId: zodId,
   value: z.unknown(),
   reason: z.string().min(1).max(500),
 }).strict();

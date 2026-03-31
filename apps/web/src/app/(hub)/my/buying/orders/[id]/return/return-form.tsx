@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@twicely/ui/button';
 import { Label } from '@twicely/ui/label';
@@ -23,10 +23,12 @@ const RETURN_REASONS = [
 
 export function ReturnRequestForm({ orderId, buyerId }: ReturnRequestFormProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [reason, setReason] = useState<string>('');
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const needsPhotos = ['INAD', 'DAMAGED', 'COUNTERFEIT'].includes(reason);
@@ -79,11 +81,29 @@ export function ReturnRequestForm({ orderId, buyerId }: ReturnRequestFormProps) 
     }
   }
 
-  // Placeholder for photo upload - would integrate with actual upload service
-  function handlePhotoUpload() {
-    // In real implementation, this would open a file picker and upload to S3/Cloudflare
-    const mockUrl = `https://placeholder.com/photo-${Date.now()}.jpg`;
-    setPhotos([...photos, mockUrl]);
+  async function handlePhotoUpload(files: FileList) {
+    setIsUploading(true);
+    setError(null);
+    const remaining = 5 - photos.length;
+    const filesToUpload = Array.from(files).slice(0, remaining);
+
+    for (const file of filesToUpload) {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'listing');
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const json = await res.json() as { success: boolean; image?: { url?: string }; error?: string };
+        if (json.success && json.image?.url) {
+          setPhotos((prev) => [...prev, json.image!.url!]);
+        } else {
+          setError(json.error ?? 'Failed to upload photo');
+        }
+      } catch {
+        setError('Failed to upload photo');
+      }
+    }
+    setIsUploading(false);
   }
 
   function removePhoto(index: number) {
@@ -175,14 +195,32 @@ export function ReturnRequestForm({ orderId, buyerId }: ReturnRequestFormProps) 
             {photos.length < 5 && (
               <button
                 type="button"
-                onClick={handlePhotoUpload}
-                className="h-20 w-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="h-20 w-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
               >
-                <Upload className="h-5 w-5" />
-                <span className="text-xs">Upload</span>
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Upload className="h-5 w-5" />
+                )}
+                <span className="text-xs">{isUploading ? 'Uploading' : 'Upload'}</span>
               </button>
             )}
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handlePhotoUpload(e.target.files);
+              }
+              e.target.value = '';
+            }}
+          />
         </div>
       )}
 

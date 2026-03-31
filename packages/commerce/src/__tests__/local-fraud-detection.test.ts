@@ -42,7 +42,6 @@ import { stripe } from '@twicely/stripe/server';
 import {
   detectSameListingSold,
   checkNoshowRelist,
-  checkPhashDuplicate,
 } from '../local-fraud-detection';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -273,11 +272,3 @@ describe('checkNoshowRelist', () => {
   });
 });
 
-// ─── checkPhashDuplicate ──────────────────────────────────────────────────────
-
-describe('checkPhashDuplicate', () => {
-  it('returns { duplicate: false } (deferred)', () => {
-    const result = checkPhashDuplicate();
-    expect(result.duplicate).toBe(false);
-  });
-});

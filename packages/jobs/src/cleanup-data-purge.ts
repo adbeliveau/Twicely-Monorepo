@@ -17,9 +17,6 @@ import { logger } from '@twicely/logger';
 import { upsertPlatformSetting } from '@twicely/jobs/cleanup-helpers';
 import { sql } from 'drizzle-orm';
 
-// Data export files expire after 7 days (hard-coded per spec)
-const EXPORT_EXPIRY_DAYS = 7;
-
 interface PurgeResult {
   category: string;
   purged: number;
@@ -57,7 +54,11 @@ async function purgeTableGracefully(
  * Purge expired data export requests and delete their R2 files.
  */
 async function purgeExpiredDataExports(): Promise<number> {
-  const cutoff = new Date(Date.now() - EXPORT_EXPIRY_DAYS * 86400000);
+  const exportExpiryDays = await getPlatformSetting<number>(
+    'retention.exportExpiryDays',
+    7
+  );
+  const cutoff = new Date(Date.now() - exportExpiryDays * 86400000);
 
   const expiredExports = await db
     .select({ id: dataExportRequest.id, downloadUrl: dataExportRequest.downloadUrl })

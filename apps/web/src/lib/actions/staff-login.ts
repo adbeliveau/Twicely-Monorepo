@@ -61,7 +61,7 @@ export async function logoutStaffAction(): Promise<void> {
   const token = cookieStore.get(STAFF_TOKEN_COOKIE)?.value;
 
   if (token) {
-    const { logoutStaff } = await import('@/lib/auth/staff-auth');
+    const { logoutStaff } = await import('@twicely/auth/staff-auth');
     await logoutStaff(token);
   }
 

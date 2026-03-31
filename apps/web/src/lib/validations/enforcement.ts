@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 // Target types for content reports
 const contentReportTargetTypeEnum = z.enum(['LISTING', 'REVIEW', 'MESSAGE', 'USER']);
@@ -26,37 +27,37 @@ const performanceBandEnum = z.enum(['EMERGING', 'ESTABLISHED', 'TOP_RATED', 'POW
 /** User-submitted content report */
 export const contentReportSchema = z.object({
   targetType:  contentReportTargetTypeEnum,
-  targetId:    z.string().min(1),
+  targetId:    zodId,
   reason:      contentReportReasonEnum,
   description: z.string().max(1000).optional(),
 }).strict();
 
 /** Staff reviewing a content report */
 export const reviewContentReportSchema = z.object({
-  reportId:    z.string().min(1),
+  reportId:    zodId,
   status:      z.enum(['CONFIRMED', 'DISMISSED']),
   reviewNotes: z.string().max(2000).optional(),
 }).strict();
 
 /** Staff issuing an enforcement action */
 export const issueEnforcementActionSchema = z.object({
-  userId:          z.string().min(1),
+  userId:          zodId,
   actionType:      enforcementActionTypeEnum,
   trigger:         staffTriggerEnum,
   reason:          z.string().min(1).max(2000),
-  contentReportId: z.string().min(1).optional(),
+  contentReportId: zodId.optional(),
   expiresAt:       z.string().datetime().optional(),
 }).strict();
 
 /** Staff lifting an enforcement action */
 export const liftEnforcementActionSchema = z.object({
-  actionId:     z.string().min(1),
+  actionId:     zodId,
   liftedReason: z.string().min(1).max(2000),
 }).strict();
 
 /** Admin updating seller enforcement level and/or band override */
 export const updateSellerEnforcementSchema = z.object({
-  userId:              z.string().min(1),
+  userId:              zodId,
   enforcementLevel:    z.enum(['COACHING', 'WARNING', 'RESTRICTION', 'PRE_SUSPENSION']).nullable().optional(),
   bandOverride:        performanceBandEnum.optional(),
   bandOverrideReason:  z.string().max(500).optional(),
@@ -70,14 +71,14 @@ export type UpdateSellerEnforcementInput = z.infer<typeof updateSellerEnforcemen
 
 /** Seller submitting an appeal on an enforcement action */
 export const submitAppealSchema = z.object({
-  enforcementActionId: z.string().min(1),
+  enforcementActionId: zodId,
   appealNote:          z.string().min(10).max(2000),
   appealEvidenceUrls:  z.array(z.string().url()).max(5).optional(),
 }).strict();
 
 /** Staff reviewing an enforcement appeal */
 export const reviewAppealSchema = z.object({
-  enforcementActionId: z.string().min(1),
+  enforcementActionId: zodId,
   decision:            z.enum(['APPROVED', 'DENIED']),
   reviewNote:          z.string().min(1).max(2000),
 }).strict();

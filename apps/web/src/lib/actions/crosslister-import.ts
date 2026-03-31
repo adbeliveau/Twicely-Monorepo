@@ -22,6 +22,7 @@ import { normalizeExternalListing } from '@twicely/crosslister/services/normaliz
 import { createImportedListing } from '@twicely/crosslister/services/listing-creator';
 import { generateFingerprint, findDedupeMatch } from '@twicely/crosslister/services/dedupe-service';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import type { ImportBatch, ImportRecord } from '@twicely/crosslister/db-types';
 import type { ExternalChannel } from '@twicely/crosslister/types';
 
@@ -42,13 +43,13 @@ function getImportFlagKey(channel: ExternalChannel): string {
   return map[channel];
 }
 
-const batchIdSchema = z.object({ batchId: z.string().min(1) }).strict();
+const batchIdSchema = z.object({ batchId: zodId }).strict();
 const issuesSchema = z.object({
-  batchId: z.string().min(1),
+  batchId: zodId,
   page: z.number().int().min(1).optional(),
   limit: z.number().int().min(1).max(100).optional(),
 }).strict();
-const recordIdSchema = z.object({ recordId: z.string().min(1) }).strict();
+const recordIdSchema = z.object({ recordId: zodId }).strict();
 
 interface ActionResult<T = undefined> {
   success: boolean;

@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth } from '@twicely/auth';
 import { getReturnDetails } from '@/lib/queries/returns';
+import { canEscalate } from '@twicely/commerce/disputes';
 import { formatPrice, formatDate } from '@twicely/utils/format';
-import { Button } from '@twicely/ui/button';
+import { EscalateForm } from '@/components/pages/returns/escalate-form';
 import { Package, AlertTriangle, CheckCircle, XCircle, Clock, Truck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -95,7 +96,8 @@ export default async function ReturnDetailPage({ params }: PageProps) {
 
   const status = STATUS_CONFIG[returnData.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.CLOSED;
   const StatusIcon = status.icon;
-  const canEscalate = returnData.status === 'DECLINED' && !returnData.disputeId;
+  const escalateCheck = await canEscalate(returnId);
+  const showEscalate = escalateCheck.canEscalate && !returnData.disputeId;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -124,20 +126,9 @@ export default async function ReturnDetailPage({ params }: PageProps) {
         <p className="text-gray-700">{status.description}</p>
       </div>
 
-      {/* Escalate button if declined */}
-      {canEscalate && (
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 mb-6">
-          <h3 className="font-medium text-orange-800 mb-2">Not satisfied with the outcome?</h3>
-          <p className="text-sm text-orange-700 mb-3">
-            If you believe the seller&apos;s decision was unfair, you can escalate this to our team for review.
-          </p>
-          <Link href="/h/contact">
-            <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-100">
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Contact Support to Escalate
-            </Button>
-          </Link>
-        </div>
+      {/* Escalate to dispute */}
+      {showEscalate && (
+        <EscalateForm returnId={returnId} />
       )}
 
       <div className="space-y-6">

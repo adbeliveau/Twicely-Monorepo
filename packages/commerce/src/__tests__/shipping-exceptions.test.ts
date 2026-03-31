@@ -9,15 +9,6 @@ describe('Shipping Exceptions Module', () => {
     vi.resetModules();
   });
 
-  describe('Constants', () => {
-    it('defines correct thresholds', async () => {
-      const { LOST_IN_TRANSIT_DAYS, SIGNIFICANT_DELAY_DAYS } = await import('@twicely/commerce/shipping-exceptions');
-
-      expect(LOST_IN_TRANSIT_DAYS).toBe(7);
-      expect(SIGNIFICANT_DELAY_DAYS).toBe(14);
-    });
-  });
-
   describe('Module exports', () => {
     it('exports expected functions', async () => {
       const mod = await import('@twicely/commerce/shipping-exceptions');

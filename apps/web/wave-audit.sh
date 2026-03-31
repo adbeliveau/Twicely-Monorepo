@@ -139,8 +139,8 @@ section "TIER 6: Side-Effect Wiring"
 DEFINED=$(grep -oP "'[a-z]+\.[a-z_.]+'" src/lib/notifications/templates.ts 2>/dev/null | sort -u)
 DEFINED_COUNT=$(echo "$DEFINED" | wc -l)
 
-# Only search business logic dirs for actual notify() calls with template keys
-TRIGGER_DIRS="src/lib/commerce src/lib/actions src/app src/lib/stripe"
+# Search business logic dirs AND notifier helpers for actual notify() calls with template keys
+TRIGGER_DIRS="src/lib/commerce src/lib/actions src/app src/lib/stripe src/lib/notifications"
 UNWIRED=0
 
 while IFS= read -r TPL; do

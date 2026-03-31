@@ -10,9 +10,10 @@ import { user, sellerProfile, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const suspendUserSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   reason: z.string().min(1).max(500),
 }).strict();
 
@@ -48,7 +49,7 @@ export async function unsuspendUserAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
-  const parsed = z.object({ userId: z.string().min(1) }).strict().safeParse(input);
+  const parsed = z.object({ userId: zodId }).strict().safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
 
   await db.update(user).set({ isBanned: false }).where(eq(user.id, parsed.data.userId));
@@ -67,7 +68,7 @@ export async function unsuspendUserAction(input: unknown) {
 }
 
 const restrictSellingSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   reason: z.string().min(1).max(500),
 }).strict();
 
@@ -101,7 +102,7 @@ export async function restrictSellingAction(input: unknown) {
 }
 
 const warnUserSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   message: z.string().min(1).max(1000),
 }).strict();
 

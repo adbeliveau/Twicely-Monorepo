@@ -9,6 +9,7 @@ import { canUseFeature } from '@twicely/utils/tier-gates';
 import { validateCouponCodeFormat, normalizeCouponCode } from '@twicely/commerce/promotions';
 import { couponCodeExists, countActivePromotions } from '@/lib/queries/promotions';
 import { z } from 'zod';
+import { zodId } from '@/lib/validation/schemas';
 
 const createPromotionSchema = z.object({
   name: z.string().min(1).max(100),
@@ -51,7 +52,7 @@ const updatePromotionSchema = z.object({
 }).strict();
 
 const updatePromotionIdSchema = z.object({
-  promotionId: z.string().min(1, 'Promotion ID is required'),
+  promotionId: zodId,
 }).strict();
 
 interface ActionResult { success: boolean; error?: string }

@@ -105,6 +105,11 @@ export async function registerCronJobs(): Promise<void> {
   const { enqueueHelpdeskRetentionPurge } = await import('./helpdesk-retention-purge');
   await enqueueHelpdeskRetentionPurge();
   logger.info('[cronJobs] Registered helpdesk retention purge cron job');
+
+  // Buyer quality tier recalculation — daily at 3:30 AM UTC (C1.3)
+  const { registerBuyerQualityRecalcJob } = await import('./buyer-quality-recalc');
+  await registerBuyerQualityRecalcJob();
+  logger.info('[cronJobs] Registered buyer quality recalc cron job');
 }
 
 async function processCronJob(task: CronTask): Promise<void> {

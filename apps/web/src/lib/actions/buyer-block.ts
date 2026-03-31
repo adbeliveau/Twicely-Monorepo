@@ -20,14 +20,15 @@ import { eq, and } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { logger } from '@twicely/logger';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const blockBuyerSchema = z.object({
-  buyerId: z.string().min(1),
+  buyerId: zodId,
   reason: z.string().max(500).optional(),
 }).strict();
 
 const unblockBuyerSchema = z.object({
-  buyerId: z.string().min(1),
+  buyerId: zodId,
 }).strict();
 
 interface ActionResult {

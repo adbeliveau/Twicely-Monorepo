@@ -5,16 +5,10 @@
  * NOT a 'use server' file — plain TypeScript module.
  * Self-registers at module load: registerConnector(new DepopConnector()).
  *
- * Auth URL: https://www.depop.com/oauth/authorize
- * Token URL: https://www.depop.com/oauth/token
- * API base: https://api.depop.com/api/v2
- *
- * TODO: Token encryption must be added before production.
+ * Auth helpers extracted to depop-auth.ts.
+ * Normalizer functions in @twicely/crosslister depop-normalizer.ts.
  */
 
-import { db } from '@twicely/db';
-import { platformSetting } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import type { PlatformConnector } from '../connector-interface';
 import type { CrosslisterAccount } from '../db-types';
@@ -35,11 +29,14 @@ import type {
 } from '../types';
 import { registerConnector } from '../connector-registry';
 import { normalizeDepopListing, toExternalListing } from '@twicely/crosslister/connectors/depop-normalizer';
-import type { DepopProductsResponse, DepopTokenResponse, DepopUserProfile } from '@twicely/crosslister/connectors/depop-types';
-
-const DEPOP_AUTH_URL = 'https://www.depop.com/oauth/authorize';
-const DEPOP_TOKEN_URL = 'https://www.depop.com/oauth/token';
-const DEPOP_API_BASE = 'https://api.depop.com/api/v2';
+import type { DepopProductsResponse } from '@twicely/crosslister/connectors/depop-types';
+import {
+  DEPOP_API_BASE,
+  depopBuildAuthUrl,
+  depopAuthenticate,
+  depopRefreshAuth,
+  depopRevokeAuth,
+} from './depop-auth';
 
 const DEPOP_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,
@@ -57,220 +54,26 @@ const DEPOP_CAPABILITIES: ConnectorCapabilities = {
   supportedImageFormats: ['jpg', 'jpeg', 'png'],
 };
 
-interface DepopConfig {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-}
-
-async function loadDepopConfig(): Promise<DepopConfig> {
-  const rows = await db
-    .select({ key: platformSetting.key, value: platformSetting.value })
-    .from(platformSetting)
-    .where(eq(platformSetting.category, 'crosslister'));
-
-  const settingsMap = new Map<string, unknown>(rows.map((r) => [r.key, r.value]));
-
-  return {
-    clientId: String(settingsMap.get('crosslister.depop.clientId') ?? ''),
-    clientSecret: String(settingsMap.get('crosslister.depop.clientSecret') ?? ''),
-    redirectUri: String(
-      settingsMap.get('crosslister.depop.redirectUri') ??
-        'https://twicely.co/api/crosslister/depop/callback',
-    ),
-  };
-}
-
 export class DepopConnector implements PlatformConnector {
   readonly channel: ExternalChannel = 'DEPOP';
   readonly tier: ConnectorTier = 'B';
   readonly version = '1.0.0';
   readonly capabilities: ConnectorCapabilities = DEPOP_CAPABILITIES;
 
-  /**
-   * Build the Depop OAuth authorization URL for a seller to visit.
-   */
   async buildAuthUrl(state: string): Promise<string> {
-    const config = await loadDepopConfig();
-    const params = new URLSearchParams({
-      client_id: config.clientId,
-      redirect_uri: config.redirectUri,
-      response_type: 'code',
-      state,
-    });
-    return `${DEPOP_AUTH_URL}?${params.toString()}`;
+    return depopBuildAuthUrl(state);
   }
 
   async authenticate(credentials: AuthInput): Promise<AuthResult> {
-    if (credentials.method !== 'OAUTH') {
-      return {
-        success: false,
-        externalAccountId: null,
-        externalUsername: null,
-        accessToken: null,
-        refreshToken: null,
-        sessionData: null,
-        tokenExpiresAt: null,
-        capabilities: DEPOP_CAPABILITIES,
-        error: 'Depop connector only supports OAUTH auth method',
-      };
-    }
-
-    const config = await loadDepopConfig();
-
-    try {
-      const response = await fetch(DEPOP_TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          code: credentials.code,
-          redirect_uri: credentials.redirectUri ?? config.redirectUri,
-        }).toString(),
-      });
-
-      const data: DepopTokenResponse = await response.json() as DepopTokenResponse;
-
-      if (!response.ok || data.error) {
-        logger.error('[DepopConnector.authenticate] Token exchange failed', {
-          status: response.status,
-          error: data.error,
-          description: data.error_description,
-        });
-        return {
-          success: false,
-          externalAccountId: null,
-          externalUsername: null,
-          accessToken: null,
-          refreshToken: null,
-          sessionData: null,
-          tokenExpiresAt: null,
-          capabilities: DEPOP_CAPABILITIES,
-          error: data.error_description ?? 'OAuth token exchange failed',
-        };
-      }
-
-      const tokenExpiresAt = new Date(Date.now() + data.expires_in * 1000);
-
-      // Fetch user profile to get account id and username
-      let externalAccountId: string | null = null;
-      let externalUsername: string | null = null;
-      try {
-        const profileResponse = await fetch(`${DEPOP_API_BASE}/auth/users/me`, {
-          headers: { Authorization: `Bearer ${data.access_token}` },
-        });
-        if (profileResponse.ok) {
-          const profile: DepopUserProfile = await profileResponse.json() as DepopUserProfile;
-          externalAccountId = profile.id;
-          externalUsername = profile.username;
-        }
-      } catch (profileErr) {
-        logger.warn('[DepopConnector.authenticate] Failed to fetch profile', { error: String(profileErr) });
-      }
-
-      return {
-        success: true,
-        externalAccountId,
-        externalUsername,
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token ?? null,
-        sessionData: null,
-        tokenExpiresAt,
-        capabilities: DEPOP_CAPABILITIES,
-      };
-    } catch (err) {
-      logger.error('[DepopConnector.authenticate] Network error', { error: String(err) });
-      return {
-        success: false,
-        externalAccountId: null,
-        externalUsername: null,
-        accessToken: null,
-        refreshToken: null,
-        sessionData: null,
-        tokenExpiresAt: null,
-        capabilities: DEPOP_CAPABILITIES,
-        error: 'Network error during authentication',
-      };
-    }
+    return depopAuthenticate(credentials, DEPOP_CAPABILITIES);
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
-    if (!account.refreshToken) {
-      return {
-        success: false,
-        externalAccountId: account.externalAccountId,
-        externalUsername: account.externalUsername,
-        accessToken: null,
-        refreshToken: null,
-        sessionData: null,
-        tokenExpiresAt: null,
-        capabilities: DEPOP_CAPABILITIES,
-        error: 'No refresh token available',
-      };
-    }
-
-    const config = await loadDepopConfig();
-
-    try {
-      const response = await fetch(DEPOP_TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          refresh_token: account.refreshToken,
-        }).toString(),
-      });
-
-      const data: DepopTokenResponse = await response.json() as DepopTokenResponse;
-
-      if (!response.ok || data.error) {
-        return {
-          success: false,
-          externalAccountId: account.externalAccountId,
-          externalUsername: account.externalUsername,
-          accessToken: null,
-          refreshToken: null,
-          sessionData: null,
-          tokenExpiresAt: null,
-          capabilities: DEPOP_CAPABILITIES,
-          error: data.error_description ?? 'Token refresh failed',
-        };
-      }
-
-      const tokenExpiresAt = new Date(Date.now() + data.expires_in * 1000);
-
-      return {
-        success: true,
-        externalAccountId: account.externalAccountId,
-        externalUsername: account.externalUsername,
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token ?? account.refreshToken,
-        sessionData: null,
-        tokenExpiresAt,
-        capabilities: DEPOP_CAPABILITIES,
-      };
-    } catch (err) {
-      logger.error('[DepopConnector.refreshAuth] Network error', { error: String(err) });
-      return {
-        success: false,
-        externalAccountId: account.externalAccountId,
-        externalUsername: account.externalUsername,
-        accessToken: null,
-        refreshToken: null,
-        sessionData: null,
-        tokenExpiresAt: null,
-        capabilities: DEPOP_CAPABILITIES,
-        error: 'Network error during token refresh',
-      };
-    }
+    return depopRefreshAuth(account, DEPOP_CAPABILITIES);
   }
 
   async revokeAuth(_account: CrosslisterAccount): Promise<void> {
-    logger.info('[DepopConnector.revokeAuth] Account revoked (no revoke endpoint available)');
+    depopRevokeAuth();
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {

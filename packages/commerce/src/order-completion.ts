@@ -13,6 +13,7 @@ import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { recordPurchaseSignal } from './personalization-signals';
 import { detectSameListingSold } from '@twicely/commerce/local-fraud-detection';
 import { updateThresholdFlag } from './tax-threshold-tracker';
+import { recordBoostAttribution } from './boost-attribution';
 
 interface MarkOrderCompletedResult {
   success: boolean;
@@ -98,6 +99,9 @@ export async function markOrderCompleted(
 
     // Fire-and-forget: update 1099-K threshold flag for seller (G5.3)
     updateThresholdFlag(orderData.sellerId).catch(() => {});
+
+    // Fire-and-forget: record boost attribution fee if listing was boosted (D2.4)
+    recordBoostAttribution(orderId, now).catch(() => {});
 
     return { success: true };
   } catch (error) {

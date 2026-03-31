@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const permissionSchema = z.object({
   subject: z.string().min(1),
@@ -21,7 +22,7 @@ export const createCustomRoleSchema = z.object({
 }).strict();
 
 export const updateCustomRoleSchema = z.object({
-  customRoleId: z.string().min(1),
+  customRoleId: zodId,
   name: z
     .string()
     .min(3)
@@ -33,15 +34,15 @@ export const updateCustomRoleSchema = z.object({
 }).strict();
 
 export const deleteCustomRoleSchema = z.object({
-  customRoleId: z.string().min(1),
+  customRoleId: zodId,
 }).strict();
 
 export const assignCustomRoleSchema = z.object({
-  staffUserId: z.string().min(1),
-  customRoleId: z.string().min(1),
+  staffUserId: zodId,
+  customRoleId: zodId,
 }).strict();
 
 export const revokeCustomRoleSchema = z.object({
-  staffUserId: z.string().min(1),
-  customRoleId: z.string().min(1),
+  staffUserId: zodId,
+  customRoleId: zodId,
 }).strict();

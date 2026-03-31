@@ -39,11 +39,14 @@ export default function SettingsSecurityPage() {
   const loadSessions = useCallback(async () => {
     try {
       const result = await authClient.listSessions();
-      if (result.data) {
+      if (result.error) {
+        setError(result.error.message || 'Failed to load sessions');
+      } else if (result.data) {
         setSessions(result.data as SessionData[]);
       }
-    } catch {
-      setError('Failed to load sessions');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load sessions';
+      setError(message);
     } finally {
       setIsLoadingSessions(false);
     }
@@ -56,11 +59,16 @@ export default function SettingsSecurityPage() {
   async function handleRevokeSession(token: string, sessionId: string) {
     setRevokingSessionId(sessionId);
     try {
-      await authClient.revokeSession({ token });
+      const result = await authClient.revokeSession({ token });
+      if (result.error) {
+        setError(result.error.message || 'Failed to revoke session');
+        return;
+      }
       setSessions(sessions.filter(s => s.id !== sessionId));
       setMessage('Session revoked successfully');
-    } catch {
-      setError('Failed to revoke session');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to revoke session';
+      setError(message);
     } finally {
       setRevokingSessionId(null);
     }
@@ -69,11 +77,16 @@ export default function SettingsSecurityPage() {
   async function handleRevokeAllOther() {
     setIsRevokingAll(true);
     try {
-      await authClient.revokeOtherSessions();
+      const result = await authClient.revokeOtherSessions();
+      if (result.error) {
+        setError(result.error.message || 'Failed to revoke sessions');
+        return;
+      }
       await loadSessions();
       setMessage('All other sessions revoked successfully');
-    } catch {
-      setError('Failed to revoke sessions');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to revoke sessions';
+      setError(message);
     } finally {
       setIsRevokingAll(false);
     }
@@ -113,8 +126,9 @@ export default function SettingsSecurityPage() {
       setNewPassword('');
       setConfirmPassword('');
       setIsLoading(false);
-    } catch {
-      setError('An unexpected error occurred');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(message);
       setIsLoading(false);
     }
   }

@@ -8,6 +8,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { canUseFeature } from '@twicely/utils/tier-gates';
 import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import {
   type ActionResult,
   EMPTY_PUCK_DATA,
@@ -45,12 +46,12 @@ const puckDataSchema = z.object({
 }).passthrough();
 
 const savePuckDataSchema = z.object({
-  pageId: z.string().min(1),
+  pageId: zodId,
   puckData: puckDataSchema,
 }).strict();
 
 const reorderPagesSchema = z.object({
-  pageIds: z.array(z.string().min(1)),
+  pageIds: z.array(zodId),
 }).strict();
 
 // ─── ACTION 1: createPage ───────────────────────────────────────────────

@@ -10,9 +10,10 @@ import { order, auditEvent, ledgerEntry } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const refundOrderSchema = z.object({
-  orderId: z.string().min(1),
+  orderId: zodId,
   amountCents: z.number().int().positive(),
   reason: z.string().min(1).max(500),
   isPartial: z.boolean(),
@@ -68,7 +69,7 @@ export async function refundOrderAction(input: unknown) {
 }
 
 const cancelOrderSchema = z.object({
-  orderId: z.string().min(1),
+  orderId: zodId,
   reason: z.string().min(1).max(500),
 }).strict();
 
@@ -104,7 +105,7 @@ const ORDER_STATUSES = [
 ] as const;
 
 const overrideStatusSchema = z.object({
-  orderId: z.string().min(1),
+  orderId: zodId,
   newStatus: z.enum(ORDER_STATUSES),
   reason: z.string().min(1).max(500),
 }).strict();

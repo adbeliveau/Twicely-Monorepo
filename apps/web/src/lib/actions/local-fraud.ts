@@ -10,6 +10,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { db } from '@twicely/db';
 import {
   localFraudFlag,
@@ -28,12 +29,12 @@ import { logger } from '@twicely/logger';
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const reportLocalFraudSchema = z.object({
-  localTransactionId: z.string().min(1),
+  localTransactionId: zodId,
   description: z.string().min(10).max(2000),
 }).strict();
 
 const resolveLocalFraudFlagSchema = z.object({
-  flagId: z.string().min(1),
+  flagId: zodId,
   resolution: z.enum(['CONFIRMED', 'DISMISSED']),
   note: z.string().min(1).max(2000),
   applyConsequences: z.boolean(),

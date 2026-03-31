@@ -91,8 +91,9 @@ export default function SettingsProfilePage() {
 
       setMessage('Profile updated successfully');
       setIsLoading(false);
-    } catch {
-      setError('An unexpected error occurred');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(message);
       setIsLoading(false);
     }
   }

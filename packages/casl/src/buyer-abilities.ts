@@ -43,9 +43,10 @@ export function defineBuyerAbilities(
   can('read', 'Order', { buyerId: userId });
   can('create', 'Order');
 
-  // Returns and disputes - buyer can create/read their own
+  // Returns and disputes - buyer can create/read/update their own
   can('create', 'Return', { buyerId: userId });
   can('read', 'Return', { buyerId: userId });
+  can('update', 'Return', { buyerId: userId });
   can('create', 'Dispute', { buyerId: userId });
   can('read', 'Dispute', { buyerId: userId });
 

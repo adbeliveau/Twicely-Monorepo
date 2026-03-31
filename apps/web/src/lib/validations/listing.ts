@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 /**
  * Zod schema for uploaded image data sent to server actions.
@@ -6,7 +7,7 @@ import { z } from 'zod';
  * they are not serializable over the wire.
  */
 const uploadedImageSchema = z.object({
-  id: z.string().min(1),
+  id: zodId,
   url: z.string().url(),
   position: z.number().int().nonnegative(),
 }).strict();
@@ -15,7 +16,7 @@ const uploadedImageSchema = z.object({
  * Zod schema for CategorySearchResult sent from the form.
  */
 const categorySearchResultSchema = z.object({
-  id: z.string().min(1),
+  id: zodId,
   name: z.string(),
   slug: z.string(),
   parentId: z.string().nullable(),

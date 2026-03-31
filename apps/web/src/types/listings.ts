@@ -58,6 +58,7 @@ export interface ListingDetailData {
     averageRating: number | null;
     totalReviews: number;
     memberSince: Date;
+    performanceBand: string;
   };
   category: {
     id: string;

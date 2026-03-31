@@ -10,6 +10,7 @@ import { db } from '@twicely/db';
 import { shipment } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const fetchRatesSchema = z.object({
   orderId: z.string().cuid2(),
@@ -17,7 +18,7 @@ const fetchRatesSchema = z.object({
 
 const purchaseLabelSchema = z.object({
   orderId: z.string().cuid2(),
-  rateObjectId: z.string().min(1),
+  rateObjectId: zodId,
 }).strict();
 
 export interface FetchShippingRatesResult {

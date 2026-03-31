@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 export const submitBuyerReviewSchema = z.object({
-  orderId: z.string().min(1),
+  orderId: zodId,
   ratingPayment: z.number().int().min(1).max(5),
   ratingCommunication: z.number().int().min(1).max(5),
   ratingReturnBehavior: z.number().int().min(1).max(5).nullable(),
@@ -9,7 +10,7 @@ export const submitBuyerReviewSchema = z.object({
 }).strict();
 
 export const updateBuyerReviewSchema = z.object({
-  reviewId: z.string().min(1),
+  reviewId: zodId,
   ratingPayment: z.number().int().min(1).max(5),
   ratingCommunication: z.number().int().min(1).max(5),
   ratingReturnBehavior: z.number().int().min(1).max(5).nullable(),

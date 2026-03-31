@@ -10,6 +10,7 @@ import { safeMeetupLocation, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const createLocationSchema = z.object({
   name: z.string().min(1).max(200),
@@ -71,7 +72,7 @@ export async function createMeetupLocationAction(input: unknown) {
 }
 
 const toggleLocationSchema = z.object({
-  locationId: z.string().min(1),
+  locationId: zodId,
   isActive: z.boolean(),
 }).strict();
 
@@ -103,7 +104,7 @@ export async function toggleMeetupLocationAction(input: unknown) {
 }
 
 const updateLocationSchema = z.object({
-  locationId: z.string().min(1),
+  locationId: zodId,
   name: z.string().min(1).max(200).optional(),
   address: z.string().min(1).max(500).optional(),
   city: z.string().min(1).max(100).optional(),

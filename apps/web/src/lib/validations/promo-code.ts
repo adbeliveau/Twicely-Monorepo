@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 const codeField = z
   .string()
@@ -30,7 +31,7 @@ export const createPromoCodeSchema = z
 
 export const updatePromoCodeSchema = z
   .object({
-    id: z.string().min(1),
+    id: zodId,
     isActive: z.boolean().optional(),
     usageLimit: z.number().int().positive().optional().nullable(),
     expiresAt: z.string().datetime().optional().nullable(),

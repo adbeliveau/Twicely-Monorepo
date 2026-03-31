@@ -38,6 +38,8 @@ export interface ListingCardData {
   sellerTotalReviews: number;
   sellerShowStars: boolean;
   storefrontCategoryId?: string | null;
+  /** True when this listing occupies a promoted slot (D2.4 boost) */
+  isBoosted?: boolean;
 }
 
 /**

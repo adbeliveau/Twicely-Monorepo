@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import {
   getCommissionsForAdmin,
@@ -14,14 +15,14 @@ import {
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const fetchCommissionsSchema = z.object({
-  affiliateId: z.string().min(1),
+  affiliateId: zodId,
   status: z.string().optional(),
   page: z.number().int().min(1),
   pageSize: z.number().int().min(1).max(100),
 }).strict();
 
 const fetchPayoutsSchema = z.object({
-  affiliateId: z.string().min(1),
+  affiliateId: zodId,
   page: z.number().int().min(1),
   pageSize: z.number().int().min(1).max(100),
 }).strict();

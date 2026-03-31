@@ -5,16 +5,10 @@
  * NOT a 'use server' file — plain TypeScript module.
  * Self-registers at module load: registerConnector(new FbMarketplaceConnector()).
  *
- * Auth URL: https://www.facebook.com/v18.0/dialog/oauth
- * Token URL: https://graph.facebook.com/v18.0/oauth/access_token
- * API base: https://graph.facebook.com/v18.0
- *
- * TODO: Token encryption must be added before production.
+ * Auth helpers extracted to fb-marketplace-auth.ts.
+ * Normalizer functions in fb-marketplace-normalizer.ts.
  */
 
-import { db } from '@twicely/db';
-import { platformSetting } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import type { PlatformConnector } from '../connector-interface';
 import type { CrosslisterAccount } from '../db-types';
@@ -35,13 +29,14 @@ import type {
 } from '../types';
 import { registerConnector } from '../connector-registry';
 import { normalizeFbMarketplaceListing, toExternalListing } from './fb-marketplace-normalizer';
-import type { FbCommerceListingsResponse, FbOAuthTokenResponse, FbUserProfile } from './fb-marketplace-types';
-
-const FB_AUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth';
-const FB_TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token';
-const FB_API_BASE = 'https://graph.facebook.com/v18.0';
-
-const FB_SCOPES = ['commerce_account_manage_orders', 'catalog_management'].join(',');
+import type { FbCommerceListingsResponse } from './fb-marketplace-types';
+import {
+  FB_API_BASE,
+  fbMarketplaceBuildAuthUrl,
+  fbMarketplaceAuthenticate,
+  fbMarketplaceRefreshAuth,
+  fbMarketplaceRevokeAuth,
+} from './fb-marketplace-auth';
 
 const FB_MARKETPLACE_CAPABILITIES: ConnectorCapabilities = {
   canImport: true,
@@ -59,164 +54,26 @@ const FB_MARKETPLACE_CAPABILITIES: ConnectorCapabilities = {
   supportedImageFormats: ['jpg', 'jpeg', 'png'],
 };
 
-interface FbMarketplaceConfig {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-}
-
-async function loadFbMarketplaceConfig(): Promise<FbMarketplaceConfig> {
-  const rows = await db
-    .select({ key: platformSetting.key, value: platformSetting.value })
-    .from(platformSetting)
-    .where(eq(platformSetting.category, 'crosslister'));
-
-  const settingsMap = new Map<string, unknown>(rows.map((r) => [r.key, r.value]));
-
-  return {
-    clientId: String(settingsMap.get('crosslister.fbMarketplace.clientId') ?? ''),
-    clientSecret: String(settingsMap.get('crosslister.fbMarketplace.clientSecret') ?? ''),
-    redirectUri: String(
-      settingsMap.get('crosslister.fbMarketplace.redirectUri') ??
-        'https://twicely.co/api/crosslister/fb-marketplace/callback',
-    ),
-  };
-}
-
 export class FbMarketplaceConnector implements PlatformConnector {
   readonly channel: ExternalChannel = 'FB_MARKETPLACE';
   readonly tier: ConnectorTier = 'B';
   readonly version = '1.0.0';
   readonly capabilities: ConnectorCapabilities = FB_MARKETPLACE_CAPABILITIES;
 
-  /**
-   * Build the Facebook OAuth authorization URL for a seller to visit.
-   */
   async buildAuthUrl(state: string): Promise<string> {
-    const config = await loadFbMarketplaceConfig();
-    const params = new URLSearchParams({
-      client_id: config.clientId,
-      redirect_uri: config.redirectUri,
-      response_type: 'code',
-      scope: FB_SCOPES,
-      state,
-    });
-    return `${FB_AUTH_URL}?${params.toString()}`;
+    return fbMarketplaceBuildAuthUrl(state);
   }
 
   async authenticate(credentials: AuthInput): Promise<AuthResult> {
-    if (credentials.method !== 'OAUTH') {
-      return {
-        success: false,
-        externalAccountId: null,
-        externalUsername: null,
-        accessToken: null,
-        refreshToken: null,
-        sessionData: null,
-        tokenExpiresAt: null,
-        capabilities: FB_MARKETPLACE_CAPABILITIES,
-        error: 'Facebook Marketplace connector only supports OAUTH auth method',
-      };
-    }
-
-    const config = await loadFbMarketplaceConfig();
-
-    try {
-      const params = new URLSearchParams({
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        redirect_uri: credentials.redirectUri ?? config.redirectUri,
-        code: credentials.code,
-      });
-
-      const response = await fetch(`${FB_TOKEN_URL}?${params.toString()}`, {
-        method: 'GET',
-      });
-
-      const data: FbOAuthTokenResponse = await response.json() as FbOAuthTokenResponse;
-
-      if (!response.ok || data.error) {
-        logger.error('[FbMarketplaceConnector.authenticate] Token exchange failed', {
-          status: response.status,
-          error: data.error,
-        });
-        return {
-          success: false,
-          externalAccountId: null,
-          externalUsername: null,
-          accessToken: null,
-          refreshToken: null,
-          sessionData: null,
-          tokenExpiresAt: null,
-          capabilities: FB_MARKETPLACE_CAPABILITIES,
-          error: data.error?.message ?? 'OAuth token exchange failed',
-        };
-      }
-
-      // Facebook long-lived tokens don't always have expires_in
-      const tokenExpiresAt = data.expires_in
-        ? new Date(Date.now() + data.expires_in * 1000)
-        : null;
-
-      // Fetch user profile to get account identity
-      let externalAccountId: string | null = null;
-      let externalUsername: string | null = null;
-      try {
-        const profileResponse = await fetch(`${FB_API_BASE}/me?fields=id,name`, {
-          headers: { Authorization: `Bearer ${data.access_token}` },
-        });
-        if (profileResponse.ok) {
-          const profile: FbUserProfile = await profileResponse.json() as FbUserProfile;
-          externalAccountId = profile.id;
-          externalUsername = profile.name;
-        }
-      } catch (profileErr) {
-        logger.warn('[FbMarketplaceConnector.authenticate] Failed to fetch profile', { error: String(profileErr) });
-      }
-
-      return {
-        success: true,
-        externalAccountId,
-        externalUsername,
-        accessToken: data.access_token,
-        refreshToken: null, // Facebook uses long-lived tokens, not refresh tokens
-        sessionData: null,
-        tokenExpiresAt,
-        capabilities: FB_MARKETPLACE_CAPABILITIES,
-      };
-    } catch (err) {
-      logger.error('[FbMarketplaceConnector.authenticate] Network error', { error: String(err) });
-      return {
-        success: false,
-        externalAccountId: null,
-        externalUsername: null,
-        accessToken: null,
-        refreshToken: null,
-        sessionData: null,
-        tokenExpiresAt: null,
-        capabilities: FB_MARKETPLACE_CAPABILITIES,
-        error: 'Network error during authentication',
-      };
-    }
+    return fbMarketplaceAuthenticate(credentials, FB_MARKETPLACE_CAPABILITIES);
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
-    // Facebook uses long-lived tokens; re-auth required when expired
-    return {
-      success: false,
-      externalAccountId: account.externalAccountId,
-      externalUsername: account.externalUsername,
-      accessToken: null,
-      refreshToken: null,
-      sessionData: null,
-      tokenExpiresAt: null,
-      capabilities: FB_MARKETPLACE_CAPABILITIES,
-      error: 'Facebook tokens cannot be refreshed. Please reconnect.',
-    };
+    return fbMarketplaceRefreshAuth(account, FB_MARKETPLACE_CAPABILITIES);
   }
 
   async revokeAuth(_account: CrosslisterAccount): Promise<void> {
-    logger.info('[FbMarketplaceConnector.revokeAuth] Account revoked (no revoke endpoint used)');
+    fbMarketplaceRevokeAuth();
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {

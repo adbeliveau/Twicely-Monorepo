@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { eq } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { db } from '@twicely/db';
@@ -23,11 +24,11 @@ export interface SerializedPaymentMethod {
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const RemovePaymentMethodSchema = z.object({
-  paymentMethodId: z.string().min(1).max(100),
+  paymentMethodId: zodId,
 }).strict();
 
 const SetDefaultSchema = z.object({
-  paymentMethodId: z.string().min(1).max(100),
+  paymentMethodId: zodId,
 }).strict();
 
 // ─── Internal helper (NOT exported) ──────────────────────────────────────────

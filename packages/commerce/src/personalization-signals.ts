@@ -2,9 +2,7 @@ import { db } from '@twicely/db';
 import { userInterest, interestTag } from '@twicely/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-
-const PURCHASE_WEIGHT = 2.0;
-const PURCHASE_EXPIRY_DAYS = 90;
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 
 /**
  * Record a purchase signal for interest tracking.
@@ -29,8 +27,11 @@ export async function recordPurchaseSignal(userId: string, categoryId: string): 
 
   if (matchingTags.length === 0) return; // No match = silent return
 
+  const purchaseWeight = await getPlatformSetting<number>('discovery.personalization.purchaseWeight', 2.0);
+  const purchaseExpiryDays = await getPlatformSetting<number>('discovery.personalization.purchaseExpiryDays', 90);
+
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + PURCHASE_EXPIRY_DAYS);
+  expiresAt.setDate(expiresAt.getDate() + purchaseExpiryDays);
 
   // Upsert interest for each matching tag
   for (const tag of matchingTags) {
@@ -40,7 +41,7 @@ export async function recordPurchaseSignal(userId: string, categoryId: string): 
         id: createId(),
         userId,
         tagSlug: tag.slug,
-        weight: PURCHASE_WEIGHT.toString(),
+        weight: purchaseWeight.toString(),
         source: 'PURCHASE',
         expiresAt,
       })

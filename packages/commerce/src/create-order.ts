@@ -186,9 +186,10 @@ export async function createOrdersFromCart(
           shippingSavingsCents = shippingResult.savingsCents;
         }
 
-        // Add authentication fee if buyer opted in
+        // Add authentication fee if buyer opted in and at least one item qualifies
         const authConfig = await getAuthOfferConfig();
-        const authFeeCents = authenticationRequested ? authConfig.buyerFeeCents : 0;
+        const anyQualifies = sellerItems.some((item) => item.priceCents >= authConfig.thresholdCents);
+        const authFeeCents = authenticationRequested && anyQualifies ? authConfig.buyerFeeCents : 0;
         const totalCents = itemSubtotalCents + orderShippingCents + authFeeCents;
 
         // Calculate handling due date
@@ -287,10 +288,7 @@ export async function createOrdersFromCart(
         totalCents: result.totalCents, shippingSavingsCents: result.shippingSavingsCents,
       });
     } catch (error) {
-      results.push({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create order',
-      });
+      results.push({ success: false, error: error instanceof Error ? error.message : 'Failed to create order' });
     }
   }
 

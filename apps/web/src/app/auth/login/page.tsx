@@ -44,8 +44,9 @@ function LoginForm() {
 
       router.push(callbackUrl);
       router.refresh();
-    } catch {
-      setError('An unexpected error occurred');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(message);
       setIsLoading(false);
     }
   }

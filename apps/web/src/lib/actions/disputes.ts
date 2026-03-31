@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import {
   assignDispute,
@@ -16,25 +17,25 @@ import { processProtectionClaim } from '@twicely/commerce/buyer-protection';
 // ─── Zod Schemas ────────────────────────────────────────────────────────────
 
 const assignDisputeSchema = z.object({
-  disputeId: z.string().min(1),
+  disputeId: zodId,
 }).strict();
 
 const resolveDisputeSchema = z.object({
-  disputeId: z.string().min(1),
+  disputeId: zodId,
   resolution: z.enum(['RESOLVED_BUYER', 'RESOLVED_SELLER', 'RESOLVED_PARTIAL']),
   resolutionNote: z.string().min(1),
   resolutionAmountCents: z.number().int().positive().optional(),
 }).strict();
 
 const processClaimSchema = z.object({
-  claimId: z.string().min(1),
+  claimId: zodId,
   approved: z.boolean(),
   resolutionNote: z.string().min(1),
   refundAmountCents: z.number().int().positive().optional(),
 }).strict();
 
 const getDisputeSchema = z.object({
-  disputeId: z.string().min(1),
+  disputeId: zodId,
 }).strict();
 
 interface ActionResult {

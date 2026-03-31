@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 export const QUOTE_STATUSES = [
   'PENDING_SELLER',
@@ -13,7 +14,7 @@ export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
 
 export const submitShippingQuoteSchema = z
   .object({
-    quoteId: z.string().min(1),
+    quoteId: zodId,
     quotedShippingCents: z.number().int().min(0).max(999999),
   })
   .strict();
@@ -22,7 +23,7 @@ export type SubmitShippingQuoteInput = z.infer<typeof submitShippingQuoteSchema>
 
 export const respondToShippingQuoteSchema = z
   .object({
-    quoteId: z.string().min(1),
+    quoteId: zodId,
     action: z.enum(['ACCEPT', 'DISPUTE']),
   })
   .strict();

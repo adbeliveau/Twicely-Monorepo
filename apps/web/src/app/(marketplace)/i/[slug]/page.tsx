@@ -29,6 +29,7 @@ import { getConversationForListing } from '@/lib/queries/messaging';
 import { getListingAffiliateInfo } from '@/lib/queries/affiliate-listing';
 import { AffiliateClickTracker } from '@/components/affiliate/affiliate-click-tracker';
 import { AffiliateLinkButton } from '@/components/affiliate/affiliate-link-button';
+import { getTrustBadge, type PerformanceBand } from '@twicely/commerce/performance-band';
 import { CONDITION_LABELS } from './constants';
 
 export const revalidate = 300; // 5 min ISR
@@ -106,16 +107,11 @@ export default async function ListingPage({ params, searchParams }: ListingPageP
 
   const isUnavailable = listing.status === 'SOLD' || listing.status === 'ENDED' || listing.status === 'RESERVED';
   const isReserved = listing.status === 'RESERVED';
-
-  const existingConvId =
-    currentUserId && !isOwnListing
-      ? await getConversationForListing(listing.id, currentUserId)
-      : null;
+  const existingConvId = currentUserId && !isOwnListing
+    ? await getConversationForListing(listing.id, currentUserId) : null;
 
   // Fire-and-forget: record view in browsing history
-  if (currentUserId && !isOwnListing) {
-    recordViewAction(listing.id).catch(() => {});
-  }
+  if (currentUserId && !isOwnListing) recordViewAction(listing.id).catch(() => {});
 
   // Build breadcrumbs
   const breadcrumbItems = buildBreadcrumbs(listing);
@@ -228,6 +224,7 @@ export default async function ListingPage({ params, searchParams }: ListingPageP
             <div className="mt-6">
               <SellerCard
                 seller={listing.seller}
+                trustBadge={getTrustBadge(listing.seller.performanceBand as PerformanceBand)}
                 localMetrics={localMetrics.hasLocalActivity ? localMetrics : null}
                 fulfillmentType={listing.fulfillmentType}
               />

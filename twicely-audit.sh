@@ -187,7 +187,7 @@ run_wiring() {
     UNWIRED=0
     while IFS= read -r TPL; do
       [ -z "$TPL" ] && continue
-      HITS=$(grep -rn "$TPL" src/lib/commerce src/lib/actions src/app src/lib/stripe \
+      HITS=$(grep -rn "$TPL" src/lib/commerce src/lib/actions src/app src/lib/stripe src/lib/notifications \
         --include="*.ts" --include="*.tsx" 2>/dev/null | \
         grep -v "templates\.ts\|service\.tsx\|seed-\|test\|__tests__\|email/" | \
         grep -c "notify\|sendNotification\|triggerNotification" || true)
@@ -251,9 +251,14 @@ run_wiring() {
       [[ "$FILE" == *"test"* || "$FILE" == *"__tests__"* || "$FILE" == *"index"* ]] && continue
       grep -oE "export (async )?function [a-zA-Z]+" "$FILE" 2>/dev/null | \
         sed 's/export //; s/async //; s/function //' | while read -r FUNC; do
-        REFS=$(grep -rn "\b$FUNC\b" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
+        # Check for references outside this file (true dead = never imported elsewhere)
+        # Search both apps/web/src/ and packages/ for callers
+        EXTERNAL_REFS=$(grep -rn "\b$FUNC\b" src/ ../../packages/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
           grep -v "$FILE" | grep -v "__tests__\|\.test\." | wc -l || true)
-        if [ "$REFS" -eq 0 ]; then
+        # Check for internal calls within the same file (exclude the export definition line)
+        INTERNAL_REFS=$(grep -n "\b$FUNC\b" "$FILE" 2>/dev/null | \
+          grep -v "export.*function $FUNC" | wc -l || true)
+        if [ "$EXTERNAL_REFS" -eq 0 ] && [ "$INTERNAL_REFS" -eq 0 ]; then
           warning "Dead export: $FUNC() in $(basename $FILE)"
           DEAD_COUNT=$((DEAD_COUNT + 1))
         fi

@@ -13,6 +13,7 @@ import { auth } from '@twicely/auth';
 import { revalidatePath } from 'next/cache';
 import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -23,28 +24,28 @@ const createUserSchema = z.object({
 }).strict();
 
 const holdPayoutsSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   reason: z.string().min(1).max(500),
 }).strict();
 
 const releasePayoutsSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
 }).strict();
 
 const overrideBandSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   newBand: z.enum(['EMERGING', 'ESTABLISHED', 'TOP_RATED', 'POWER_SELLER']),
   reason: z.string().min(1).max(500),
   expiresInDays: z.number().int().min(1).max(90).optional().default(90),
 }).strict();
 
 const addNoteSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   content: z.string().min(1).max(2000),
 }).strict();
 
 const resetPasswordSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
 }).strict();
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
@@ -250,7 +251,7 @@ export async function resetPasswordAction(input: unknown) {
 // ─── Admin Edit User ────────────────────────────────────────────────────────
 
 const adminEditUserSchema = z.object({
-  userId: z.string().min(1),
+  userId: zodId,
   name: z.string().min(1).max(100),
   displayName: z.string().max(100).optional().nullable(),
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional().nullable(),

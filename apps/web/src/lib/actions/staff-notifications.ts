@@ -12,9 +12,10 @@ import { notification } from '@twicely/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const markReadSchema = z.object({
-  notificationId: z.string().min(1),
+  notificationId: zodId,
 }).strict();
 
 export interface StaffNotificationItem {

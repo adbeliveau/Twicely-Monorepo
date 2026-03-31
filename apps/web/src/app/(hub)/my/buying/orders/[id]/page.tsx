@@ -16,6 +16,7 @@ import { getShippingQuoteByOrderId } from '@/lib/queries/shipping-quote';
 import { getLocalTransactionByOrderId } from '@/lib/queries/local-transaction';
 import { LocalMeetupCard } from '@/components/local/local-meetup-card';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getReliabilityDisplay } from '@twicely/commerce/local-reliability';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,10 +48,11 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
   // Fetch combined shipping quote if present
   const shippingQuote = await getShippingQuoteByOrderId(orderId, session.user.id);
 
-  // Fetch local transaction for local pickup orders
-  const [localTransaction, maxAdjustmentPercent] = await Promise.all([
+  // Fetch local transaction and counterparty reliability for local pickup orders
+  const [localTransaction, maxAdjustmentPercent, sellerReliability] = await Promise.all([
     ord.isLocalPickup ? getLocalTransactionByOrderId(orderId) : Promise.resolve(null),
     getPlatformSetting<number>('commerce.local.maxAdjustmentPercent', 33),
+    ord.isLocalPickup ? getReliabilityDisplay(ord.sellerId) : Promise.resolve(null),
   ]);
 
   const shippingAddress = ord.shippingAddressJson as {
@@ -106,6 +108,7 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
               otherPartyName={seller.storeName ?? seller.name}
               originalPriceCents={ord.itemSubtotalCents}
               maxDiscountPercent={maxAdjustmentPercent}
+              counterpartyReliability={sellerReliability}
             />
           ) : (
             <div className="rounded-lg border p-4 space-y-2">

@@ -4,6 +4,24 @@ import { eq, and, or, ilike, gte, lte, inArray, desc, asc, sql } from 'drizzle-o
 import { mapToListingCard, type ListingCardData, type SearchFilters, type SearchResult } from './shared';
 import { getTypesenseClient } from './typesense-client';
 import { LISTINGS_COLLECTION, DEFAULT_QUERY_BY, DEFAULT_QUERY_WEIGHTS } from './typesense-schema';
+import { calculatePromotedSlots } from '@twicely/commerce/boosting';
+
+/**
+ * Enforce the 30% promoted listings cap (D2.4).
+ * Separates boosted from organic, caps boosted count,
+ * and returns boosted-first ordering.
+ */
+async function enforcePromotedCap(listings: ListingCardData[]): Promise<ListingCardData[]> {
+  const maxSlots = await calculatePromotedSlots(listings.length);
+  const boosted = listings.filter((l) => l.isBoosted);
+  const organic = listings.filter((l) => !l.isBoosted);
+
+  // Keep only up to maxSlots promoted listings; demote the rest to organic
+  const keptBoosted = boosted.slice(0, maxSlots);
+  const demoted = boosted.slice(maxSlots).map((l) => ({ ...l, isBoosted: false }));
+
+  return [...keptBoosted, ...demoted, ...organic];
+}
 
 /**
  * Search listings with Typesense (primary) or PostgreSQL ILIKE (fallback).
@@ -111,10 +129,14 @@ async function searchWithTypesense(filters: SearchFilters): Promise<SearchResult
       sellerTotalReviews: Number(doc.sellerTotalReviews ?? 0),
       sellerShowStars: Boolean(doc.sellerShowStars),
       storefrontCategoryId: doc.storefrontCategoryId ? String(doc.storefrontCategoryId) : null,
+      isBoosted: Number(doc.boostPercent ?? 0) > 0,
     };
   });
 
-  return { listings, totalCount, page, totalPages, filters };
+  // D2.4: enforce 30% cap on promoted listings
+  const capped = await enforcePromotedCap(listings);
+
+  return { listings: capped, totalCount, page, totalPages, filters };
 }
 
 // ── PostgreSQL fallback (original ILIKE search) ─────────────────────────────
@@ -177,6 +199,7 @@ async function searchWithPostgres(filters: SearchFilters): Promise<SearchResult>
       sellerAverageRating: sellerPerformance.averageRating,
       sellerTotalReviews: sellerPerformance.totalReviews,
       sellerShowStars: sellerPerformance.showStars,
+      boostPercent: listing.boostPercent,
     })
     .from(listing)
     .leftJoin(user, eq(listing.ownerUserId, user.id))
@@ -188,8 +211,16 @@ async function searchWithPostgres(filters: SearchFilters): Promise<SearchResult>
     .limit(limit)
     .offset(offset);
 
+  const mapped = rows.map((row) => ({
+    ...mapToListingCard(row),
+    isBoosted: (row.boostPercent ?? 0) > 0,
+  }));
+
+  // D2.4: enforce 30% cap on promoted listings
+  const capped = await enforcePromotedCap(mapped);
+
   return {
-    listings: rows.map(mapToListingCard),
+    listings: capped,
     totalCount, page,
     totalPages: Math.ceil(totalCount / limit),
     filters,

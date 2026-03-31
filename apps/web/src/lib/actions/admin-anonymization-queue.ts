@@ -13,9 +13,9 @@ import { eq, and, isNotNull, lt } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { ForbiddenError } from '@twicely/casl';
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
-const userIdSchema = z.string().min(1);
+const userIdSchema = zodId;
 
 type ActionResult = { success: true } | { error: string };
 

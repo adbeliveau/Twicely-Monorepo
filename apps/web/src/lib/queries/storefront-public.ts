@@ -13,6 +13,8 @@ import { eq, and, desc, asc, sql, inArray, ilike } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { mapToListingCard } from './shared';
 import { getSellerLocalMetrics } from './local-metrics';
+import { getTrustBadge } from '@twicely/commerce/performance-band';
+import type { PerformanceBand } from '@twicely/commerce/performance-band';
 import type { ListingCardData } from '@/types/listings';
 import type { SellerLocalMetrics } from './local-metrics';
 
@@ -52,6 +54,8 @@ export interface StorefrontStats {
   followerCount: number;
   averageRating: number | null;
   totalReviews: number;
+  // C1.2 — Trust Badge derived from performance band
+  trustBadge: string | null;
   // G2.17 — Local Seller Metrics
   localMetrics: SellerLocalMetrics | null;
 }
@@ -119,7 +123,7 @@ function buildEmptyResult(
 ): StorefrontData {
   return {
     seller: mapSellerRow(sellerRow),
-    stats: { listingCount: 0, followerCount: 0, averageRating: perfRow?.averageRating ?? null, totalReviews: perfRow?.totalReviews ?? 0, localMetrics: null },
+    stats: { listingCount: 0, followerCount: 0, averageRating: perfRow?.averageRating ?? null, totalReviews: perfRow?.totalReviews ?? 0, trustBadge: getTrustBadge(sellerRow.performanceBand as PerformanceBand), localMetrics: null },
     listings: [], featuredListings: [], customCategories, totalListings: 0, page, pageSize, totalPages: 0,
   };
 }
@@ -272,6 +276,7 @@ export async function getStorefrontBySlug(
       followerCount: followerCountRow?.count ?? 0,
       averageRating: perfRow?.averageRating ?? null,
       totalReviews: perfRow?.totalReviews ?? 0,
+      trustBadge: getTrustBadge(sellerRow.performanceBand as PerformanceBand),
       localMetrics,
     },
     listings: listingRows.map(mapToListingCard),

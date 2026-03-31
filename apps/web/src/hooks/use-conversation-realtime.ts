@@ -31,7 +31,14 @@ export function useConversationRealtime({
 }: UseConversationRealtimeProps): UseConversationRealtimeResult {
   const [isConnected, setIsConnected] = useState(false);
   const centrifugeRef = useRef<Centrifuge | null>(null);
+  const onNewMessageRef = useRef(onNewMessage);
+  const onTypingRef = useRef(onTyping);
   const channel = `private-conversation.${conversationId}`;
+
+  // Keep refs in sync so the subscription handler always calls the latest callbacks
+  // without requiring a reconnect when callback identity changes
+  useEffect(() => { onNewMessageRef.current = onNewMessage; }, [onNewMessage]);
+  useEffect(() => { onTypingRef.current = onTyping; }, [onTyping]);
 
   useEffect(() => {
     const centrifugoUrl = process.env.NEXT_PUBLIC_CENTRIFUGO_URL;
@@ -74,9 +81,9 @@ export function useConversationRealtime({
         const data = ctx.data as { type: string; message?: MessageItem; userId?: string };
 
         if (data.type === 'message' && data.message) {
-          onNewMessage(data.message);
+          onNewMessageRef.current(data.message);
         } else if (data.type === 'typing' && data.userId && data.userId !== currentUserId) {
-          onTyping(data.userId);
+          onTypingRef.current(data.userId);
         }
       });
 
@@ -103,8 +110,6 @@ export function useConversationRealtime({
       }
       setIsConnected(false);
     };
-    // onNewMessage and onTyping are intentionally excluded — callers should stabilize them
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, currentUserId, channel]);
 
   return { isConnected };

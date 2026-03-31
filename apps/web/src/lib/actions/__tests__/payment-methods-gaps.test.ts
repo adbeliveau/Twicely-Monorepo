@@ -330,11 +330,11 @@ describe('removePaymentMethod — Zod validation', () => {
     expect(result.error).toBe('Invalid payment method ID');
   });
 
-  it('rejects paymentMethodId over 100 characters', async () => {
+  it('rejects paymentMethodId over 128 characters', async () => {
     mockAuthorize.mockResolvedValue(makeSession());
 
     const { removePaymentMethod } = await import('../payment-methods');
-    const result = await removePaymentMethod('a'.repeat(101));
+    const result = await removePaymentMethod('a'.repeat(129));
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Invalid payment method ID');
@@ -436,11 +436,11 @@ describe('setDefaultPaymentMethod — Zod validation', () => {
     expect(result.error).toBe('Invalid payment method ID');
   });
 
-  it('rejects paymentMethodId over 100 characters', async () => {
+  it('rejects paymentMethodId over 128 characters', async () => {
     mockAuthorize.mockResolvedValue(makeSession());
 
     const { setDefaultPaymentMethod } = await import('../payment-methods');
-    const result = await setDefaultPaymentMethod('x'.repeat(101));
+    const result = await setDefaultPaymentMethod('x'.repeat(129));
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Invalid payment method ID');

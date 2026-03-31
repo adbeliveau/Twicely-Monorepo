@@ -10,7 +10,7 @@ import { db } from '@twicely/db';
 import { enforcementAction, sellerProfile, listing, contentReport, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { authorize } from '@twicely/casl/authorize';
+import { authorize, sub } from '@twicely/casl';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { submitAppealSchema, reviewAppealSchema } from '@/lib/validations/enforcement';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
@@ -19,8 +19,11 @@ import { notify } from '@twicely/notifications/service';
 // ─── submitEnforcementAppealAction ────────────────────────────────────────────
 
 export async function submitEnforcementAppealAction(input: unknown) {
-  const { session } = await authorize();
+  const { ability, session } = await authorize();
   if (!session) return { error: 'Unauthenticated' };
+  if (!ability.can('update', sub('EnforcementAction', { userId: session.userId }))) {
+    return { error: 'Forbidden' };
+  }
 
   const parsed = submitAppealSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };

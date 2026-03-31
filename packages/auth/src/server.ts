@@ -122,8 +122,12 @@ export const auth = betterAuth({
     useSecureCookies: process.env.NODE_ENV === 'production',
   },
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL || 'http://localhost:3000',
-  ],
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    ...(process.env.NODE_ENV !== 'production'
+      ? ['http://localhost:*', 'http://twicely.co:*', 'http://hub.twicely.co:*']
+      : []),
+  ].filter((v): v is string => Boolean(v)),
 });
 
 export type Session = typeof auth.$Infer.Session;

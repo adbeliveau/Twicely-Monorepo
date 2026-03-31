@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 export const PLATFORM_ROLES = [
   'HELPDESK_AGENT', 'HELPDESK_LEAD', 'HELPDESK_MANAGER',
@@ -20,31 +21,31 @@ export const createStaffUserSchema = z.object({
 }).strict();
 
 export const updateStaffUserSchema = z.object({
-  staffUserId: z.string().min(1),
+  staffUserId: zodId,
   displayName: z.string().min(1).max(100).optional(),
   email: z.string().email().max(255).optional(),
 }).strict();
 
 export const grantSystemRoleSchema = z.object({
-  staffUserId: z.string().min(1),
+  staffUserId: zodId,
   role: z.enum(PLATFORM_ROLES),
 }).strict();
 
 export const revokeSystemRoleSchema = z.object({
-  staffUserId: z.string().min(1),
+  staffUserId: zodId,
   role: z.enum(PLATFORM_ROLES),
 }).strict();
 
 export const deactivateStaffSchema = z.object({
-  staffUserId: z.string().min(1),
+  staffUserId: zodId,
   reason: z.string().min(1).max(500),
 }).strict();
 
 export const reactivateStaffSchema = z.object({
-  staffUserId: z.string().min(1),
+  staffUserId: zodId,
 }).strict();
 
 export const resetStaffPasswordSchema = z.object({
-  staffUserId: z.string().min(1),
+  staffUserId: zodId,
   newPassword: z.string().min(10).max(128),
 }).strict();

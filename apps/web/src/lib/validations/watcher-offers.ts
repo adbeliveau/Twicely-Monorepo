@@ -1,16 +1,17 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 export const createWatcherOfferSchema = z.object({
-  listingId: z.string().min(1),
+  listingId: zodId,
   discountedPriceCents: z.number().int().positive(),
   message: z.string().max(500).optional(),
 }).strict();
 
 export const acceptWatcherOfferSchema = z.object({
-  watcherOfferId: z.string().min(1),
-  shippingAddressId: z.string().min(1),
+  watcherOfferId: zodId,
+  shippingAddressId: zodId,
 }).strict();
 
 export const cancelWatcherOfferSchema = z.object({
-  watcherOfferId: z.string().min(1),
+  watcherOfferId: zodId,
 }).strict();

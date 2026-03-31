@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@twicely/ui/avatar';
 import { formatDate } from '@twicely/utils/format';
+import { ShieldCheck } from 'lucide-react';
 import { LocalMeetupStats } from '@/components/local/local-meetup-stats';
 import type { SellerLocalMetrics } from '@/lib/queries/local-metrics';
 
@@ -16,11 +17,12 @@ interface SellerCardProps {
     totalReviews: number;
     memberSince: Date;
   };
+  trustBadge?: string | null;
   localMetrics?: SellerLocalMetrics | null;
   fulfillmentType?: string;
 }
 
-export function SellerCard({ seller, localMetrics, fulfillmentType }: SellerCardProps) {
+export function SellerCard({ seller, trustBadge, localMetrics, fulfillmentType }: SellerCardProps) {
   const initials = seller.displayName
     .split(' ')
     .map((n) => n[0])
@@ -42,6 +44,14 @@ export function SellerCard({ seller, localMetrics, fulfillmentType }: SellerCard
           <h3 className="font-medium truncate">
             {seller.storeName ?? seller.displayName}
           </h3>
+
+          {/* Trust Badge */}
+          {trustBadge && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 mt-0.5">
+              <ShieldCheck className="h-3 w-3" />
+              {trustBadge}
+            </span>
+          )}
 
           {/* Rating */}
           <div className="mt-1 text-sm text-muted-foreground">

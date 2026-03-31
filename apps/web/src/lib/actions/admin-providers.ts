@@ -18,9 +18,10 @@ import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const createInstanceSchema = z.object({
-  adapterId: z.string().min(1),
+  adapterId: zodId,
   name: z.string().min(1).max(100),
   displayName: z.string().min(1).max(200),
   priority: z.number().int().min(0).max(1000).default(100),
@@ -74,7 +75,7 @@ export async function createInstance(input: unknown) {
 }
 
 const updateInstanceSchema = z.object({
-  instanceId: z.string().min(1),
+  instanceId: zodId,
   displayName: z.string().min(1).max(200).optional(),
   status: z.enum(['ACTIVE', 'DISABLED', 'TESTING']).optional(),
   priority: z.number().int().min(0).max(1000).optional(),
@@ -156,8 +157,8 @@ const createMappingSchema = z.object({
   usageKey: z.string().min(1),
   description: z.string().optional(),
   serviceType: z.enum(['STORAGE', 'EMAIL', 'SEARCH', 'SMS', 'PUSH', 'PAYMENTS', 'SHIPPING', 'REALTIME', 'CACHE']),
-  primaryInstanceId: z.string().min(1),
-  fallbackInstanceId: z.string().nullable().optional(),
+  primaryInstanceId: zodId,
+  fallbackInstanceId: zodId.nullable().optional(),
   autoFailover: z.boolean().default(false),
 }).strict();
 
@@ -186,7 +187,7 @@ export async function createUsageMapping(input: unknown) {
 }
 
 const saveConfigSchema = z.object({
-  instanceId: z.string().min(1),
+  instanceId: zodId,
   configJson: z.record(z.string(), z.unknown()),
   secrets: z.record(z.string(), z.string()),
 }).strict();
@@ -233,9 +234,9 @@ export async function saveInstanceConfig(input: unknown) {
 }
 
 const updateMappingSchema = z.object({
-  mappingId: z.string().min(1),
-  primaryInstanceId: z.string().min(1).optional(),
-  fallbackInstanceId: z.string().nullable().optional(),
+  mappingId: zodId,
+  primaryInstanceId: zodId.optional(),
+  fallbackInstanceId: zodId.nullable().optional(),
   autoFailover: z.boolean().optional(),
   enabled: z.boolean().optional(),
 }).strict();

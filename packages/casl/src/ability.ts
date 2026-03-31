@@ -47,7 +47,8 @@ function defineSellerAbilities(
   can('create', 'Review', { sellerId });
   can('update', 'Review', { sellerId });
 
-  // Returns - seller side (approve/reject)
+  // Returns - seller side (read own + approve/reject)
+  can('read', 'Return', { sellerId });
   can('update', 'Return', { sellerId });
 
   // Disputes - seller side (respond)
@@ -142,6 +143,10 @@ function defineSellerAbilities(
   // Tax info — seller can read and update own tax info (G5)
   can('read', 'TaxInfo', { userId });
   can('update', 'TaxInfo', { userId });
+
+  // G4.2 — Enforcement appeals: seller can update (appeal) own enforcement actions
+  can('read', 'EnforcementAction', { userId });
+  can('update', 'EnforcementAction', { userId });
 
   // G6 — Identity verification + data export (own records only)
   can('read', 'IdentityVerification', { userId });

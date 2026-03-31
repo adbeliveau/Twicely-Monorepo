@@ -67,13 +67,20 @@ export function KeywordManagement({ canEdit }: { canEdit: boolean }) {
 
   async function handleToggle(id: string, isActive: boolean) {
     try {
-      await fetch(`/api/platform/messaging/keywords/${id}`, {
+      const res = await fetch(`/api/platform/messaging/keywords/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !isActive }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Failed to update keyword' }));
+        setError(data.error ?? 'Failed to update keyword');
+        return;
+      }
       fetchKeywords();
-    } catch { /* API may not be wired yet */ }
+    } catch {
+      setError('Failed to update keyword');
+    }
   }
 
   if (loading) {

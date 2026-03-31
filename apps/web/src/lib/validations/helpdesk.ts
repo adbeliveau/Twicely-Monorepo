@@ -1,8 +1,8 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 // Internal IDs (case, staff, team, etc.) may be cuid2 or seed-format strings.
-// These are server-rendered props, not raw user input — min(1) is sufficient.
-const internalId = z.string().min(1);
+const internalId = zodId;
 
 const attachmentSchema = z.object({
   url: z.string().url(),

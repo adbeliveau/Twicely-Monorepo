@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import Image from 'next/image';
-import { Star } from 'lucide-react';
+import { Star, ShieldCheck } from 'lucide-react';
 import { toggleFollow } from '@/lib/actions/follow';
 import { Button } from '@twicely/ui/button';
 import { LocalMeetupStats } from '@/components/local/local-meetup-stats';
@@ -109,9 +109,17 @@ export function StorefrontHeader({
 
             {/* Store name and stats (desktop) */}
             <div className="hidden sm:block pb-1">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {seller.storeName}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {seller.storeName}
+                </h1>
+                {stats.trustBadge && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    {stats.trustBadge}
+                  </span>
+                )}
+              </div>
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                 {stats.averageRating !== null ? (
                   <>
@@ -158,9 +166,17 @@ export function StorefrontHeader({
         {/* Mobile: Store name, stats, and follow button */}
         <div className="mt-3 sm:hidden">
           <div className="flex items-start justify-between gap-2">
-            <h1 className="text-lg font-bold text-gray-900">
-              {seller.storeName}
-            </h1>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">
+                {seller.storeName}
+              </h1>
+              {stats.trustBadge && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 mt-0.5">
+                  <ShieldCheck className="h-3 w-3" />
+                  {stats.trustBadge}
+                </span>
+              )}
+            </div>
             <Button
               onClick={handleFollowClick}
               disabled={isPending}

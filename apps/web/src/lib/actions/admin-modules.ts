@@ -10,9 +10,10 @@ import { moduleRegistry, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validations/shared';
 
 const toggleSchema = z.object({
-  moduleId: z.string().min(1),
+  moduleId: zodId,
   enabled: z.boolean(),
 }).strict();
 
@@ -55,7 +56,7 @@ export async function toggleModule(input: unknown) {
 }
 
 const uninstallSchema = z.object({
-  moduleId: z.string().min(1),
+  moduleId: zodId,
   confirmText: z.literal('DELETE'),
 }).strict();
 

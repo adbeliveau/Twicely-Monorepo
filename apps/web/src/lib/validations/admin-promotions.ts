@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { zodId } from './shared';
 
 export const adminPromotionIdSchema = z.object({
-  promotionId: z.string().min(1),
+  promotionId: zodId,
 }).strict();
 
 export const adminPromotionsFilterSchema = z.object({

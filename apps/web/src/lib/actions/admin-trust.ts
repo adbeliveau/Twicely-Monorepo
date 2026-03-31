@@ -13,6 +13,7 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
+import { zodId } from '@/lib/validation/schemas';
 
 const updateTrustSchema = z.object({
   key: z.string().min(1),
@@ -74,14 +75,14 @@ export async function updateTrustSettings(input: unknown) {
 // ─── Band Override Schemas (I7) ───────────────────────────────────────────────
 
 const updateBandOverrideSchema = z.object({
-  userId: z.string(),
+  userId: zodId,
   newBand: z.enum(['POWER_SELLER', 'TOP_RATED', 'ESTABLISHED', 'EMERGING']),
   reason: z.string().min(10).max(500),
   expiresInDays: z.number().int().min(1).max(365).optional().default(90),
 }).strict();
 
 const revokeBandOverrideSchema = z.object({
-  userId: z.string(),
+  userId: zodId,
   reason: z.string().min(5),
 }).strict();
 

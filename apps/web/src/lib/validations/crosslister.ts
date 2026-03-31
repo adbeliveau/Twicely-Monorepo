@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { zodId } from './shared';
 
 // The 8 external channels supported by the crosslister
 const externalChannelEnum = z.enum([
@@ -40,7 +41,7 @@ export type ConnectAccountInput = z.infer<typeof connectAccountSchema>;
  * Disconnect an existing channel account.
  */
 export const disconnectAccountSchema = z.object({
-  accountId: z.string().min(1),
+  accountId: zodId,
 }).strict();
 
 export type DisconnectAccountInput = z.infer<typeof disconnectAccountSchema>;
@@ -49,7 +50,7 @@ export type DisconnectAccountInput = z.infer<typeof disconnectAccountSchema>;
  * Start an import batch from a connected account.
  */
 export const startImportSchema = z.object({
-  accountId: z.string().min(1),
+  accountId: zodId,
 }).strict();
 
 export type StartImportInput = z.infer<typeof startImportSchema>;
@@ -60,7 +61,7 @@ export type StartImportInput = z.infer<typeof startImportSchema>;
  * the seller's monthly publish limit for their ListerTier.
  */
 export const publishListingsSchema = z.object({
-  listingIds: z.array(z.string().min(1)).min(1).max(500),
+  listingIds: z.array(zodId).min(1).max(500),
   channels: z.array(externalChannelEnum).min(1),
 }).strict();
 
@@ -71,7 +72,7 @@ export type PublishListingsInput = z.infer<typeof publishListingsSchema>;
  * Title max 80 chars matches the Lister Canonical Section 19.2 constraint.
  */
 export const updateProjectionOverridesSchema = z.object({
-  projectionId: z.string().min(1),
+  projectionId: zodId,
   titleOverride: z.string().max(80).optional().nullable(),
   descriptionOverride: z.string().max(5000).optional().nullable(),
   priceCentsOverride: z.number().int().min(1).optional().nullable(),
@@ -83,7 +84,7 @@ export type UpdateProjectionOverridesInput = z.infer<typeof updateProjectionOver
  * Cancel a pending or queued cross job.
  */
 export const cancelJobSchema = z.object({
-  jobId: z.string().min(1),
+  jobId: zodId,
 }).strict();
 
 export type CancelJobInput = z.infer<typeof cancelJobSchema>;

@@ -4,6 +4,7 @@ import { combinedShippingQuote, order } from '@twicely/db/schema';
 import { eq, and, lt } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { formatPrice } from '@twicely/utils/format';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { resolveQuoteFinalPrice } from './shipping-quote-resolver';
 
 const QUEUE_NAME = 'shipping-quote-deadline';
@@ -53,7 +54,7 @@ async function processExpiredQuotes(): Promise<void> {
     );
 
   for (const quote of expired) {
-    const penaltyDiscountPercent = quote.penaltyDiscountPercent ?? 25;
+    const penaltyDiscountPercent = quote.penaltyDiscountPercent ?? await getPlatformSetting<number>('commerce.shipping.penaltyDiscountPercent', 25);
 
     const resolution = resolveQuoteFinalPrice({
       maxShippingCents: quote.maxShippingCents,

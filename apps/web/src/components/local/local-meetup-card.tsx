@@ -20,6 +20,8 @@ import { CancelMeetupButton } from './cancel-meetup-button';
 import { DayOfConfirmation } from './day-of-confirmation';
 import { STATUS_LABELS, STATUS_VARIANT } from './local-meetup-status';
 import { MeetupPhotoCapture } from './meetup-photo-capture';
+import { ReliabilityBadge } from './reliability-badge';
+import type { CounterpartyReliability } from './reliability-badge';
 
 const MeetupMap = dynamic(
   () => import('./meetup-map').then((m) => m.MeetupMap),
@@ -28,26 +30,18 @@ const MeetupMap = dynamic(
 
 interface LocalMeetupCardProps {
   transaction: LocalTransactionWithLocation;
-  /** Viewer perspective — determines which actions are shown */
   role: 'BUYER' | 'SELLER';
-  /** Current user's userId — required for scheduling UI */
   currentUserId: string;
-  /** Display name of the other party — required for scheduling UI */
   otherPartyName: string;
-  /** Optional buyer coordinates — map renders only when all four coords are provided */
   buyerLat?: number;
   buyerLng?: number;
-  /** Optional seller coordinates — map renders only when all four coords are provided */
   sellerLat?: number;
   sellerLng?: number;
-  /** Original item price (from order.itemSubtotalCents) for price adjustment UI */
   originalPriceCents?: number;
-  /** Max allowed discount percent (from platform_settings) */
   maxDiscountPercent?: number;
-  /** Max free reschedules from platform_settings (commerce.local.rescheduleMaxCount) */
   rescheduleMaxCount?: number;
-  /** Day-of confirmation window hours from platform_settings */
   dayOfConfirmationWindowHours?: number;
+  counterpartyReliability?: CounterpartyReliability | null;
 }
 
 const FMT_DATE = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -66,6 +60,7 @@ export function LocalMeetupCard({
   maxDiscountPercent = 33,
   rescheduleMaxCount,
   dayOfConfirmationWindowHours,
+  counterpartyReliability,
 }: LocalMeetupCardProps) {
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -120,6 +115,11 @@ export function LocalMeetupCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Counterparty reliability — G2.8 */}
+        {counterpartyReliability && (
+          <ReliabilityBadge reliability={counterpartyReliability} viewerRole={role} />
+        )}
+
         {/* Scheduled date/time — only shown when scheduledAt is set */}
         {tx.scheduledAt !== null && (
           <div className="flex items-center gap-2 text-sm">
