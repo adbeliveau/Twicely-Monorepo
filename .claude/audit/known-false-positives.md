@@ -195,6 +195,15 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   They execute in the user's browser when the HTML is rendered, not on the Node.js server.
   The shell regex matched the string literals within the template. Not a server-side SSR crash risk.
 
+## Auth & CASL (Stream 2) — continued
+
+- **FP-086:** `staff-notifications.ts` — all 4 functions (`getStaffNotifications`,
+  `markStaffNotificationRead`, `markAllStaffNotificationsRead`, `clearStaffNotifications`)
+  use `staffAuthorize()` but have no `ability.can()` CASL gate.
+  — Self-service staff data pattern (same as FP-004 for buyer personal data).
+  All queries are scoped to `session.staffUserId` — staff can only read/clear their own
+  notifications. No CASL gate needed; this is not a role-gated operation.
+
 ---
 
 ## How to add entries

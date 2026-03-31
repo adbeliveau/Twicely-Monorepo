@@ -302,7 +302,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
       { key: 'cfg-overview', label: 'Overview', href: '/cfg', icon: 'Settings', roles: ['ADMIN'] },
       { key: 'cfg-platform', label: 'Platform Config', href: '/cfg/platform', icon: 'Sliders', roles: ['ADMIN'] },
       { key: 'cfg-monetization', label: 'Monetization', href: '/cfg/monetization', icon: 'Coins', roles: ['ADMIN'] },
-      { key: 'cfg-trust', label: 'Trust Settings', href: '/cfg/trust', icon: 'ShieldCheck', roles: ['ADMIN'] },
+      { key: 'cfg-trust', label: 'Trust & Moderation', href: '/cfg/trust', icon: 'ShieldCheck', roles: ['ADMIN'] },
       { key: 'cfg-stripe', label: 'Stripe Payments', href: '/cfg/stripe', icon: 'CreditCard', roles: ['ADMIN'] },
       { key: 'cfg-shippo', label: 'Shippo Shipping', href: '/cfg/shippo', icon: 'Truck', roles: ['ADMIN'] },
       { key: 'cfg-meetup', label: 'Meetup Locations', href: '/cfg/meetup-locations', icon: 'MapPin', roles: ['ADMIN'] },

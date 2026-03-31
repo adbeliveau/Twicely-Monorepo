@@ -78,7 +78,7 @@ export function StoreTierGrid({ tiers, showUpgradeCta, isBusinessSeller }: Store
             Unlimited listings, dedicated account manager, custom integrations.
           </p>
           <Link
-            href="mailto:enterprise@twicely.com"
+            href="mailto:enterprise@twicely.co"
             className="mt-auto text-sm font-medium text-primary hover:underline"
           >
             Contact us

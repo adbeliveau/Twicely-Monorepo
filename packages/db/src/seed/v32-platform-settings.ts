@@ -17,7 +17,7 @@ export const V32_PLATFORM_SETTINGS: PlatformSettingSeed[] = [
   // GENERAL / ENVIRONMENT (Settings Hub)
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'general.siteName', value: 'Twicely', type: 'string', category: 'general', description: 'Platform name displayed to users' },
-  { key: 'general.supportEmail', value: 'support@twicely.com', type: 'string', category: 'general', description: 'Support contact email address' },
+  { key: 'general.supportEmail', value: 'support@twicely.co', type: 'string', category: 'general', description: 'Support contact email address' },
   { key: 'general.siteDescription', value: 'Buy and sell pre-loved items', type: 'string', category: 'general', description: 'Platform description' },
   { key: 'general.maintenanceMode', value: false, type: 'boolean', category: 'general', description: 'Disable public access to the platform' },
   { key: 'general.registrationEnabled', value: true, type: 'boolean', category: 'general', description: 'Allow new users to register' },
@@ -296,6 +296,7 @@ export const V32_PLATFORM_SETTINGS: PlatformSettingSeed[] = [
   { key: 'overage.bgRemovals.cents', value: 900, type: 'cents', category: 'overage', description: 'BG removals pack price ($9.00)' },
   { key: 'overage.automation.qty', value: 1000, type: 'number', category: 'overage', description: 'Automation actions per overage pack' },
   { key: 'overage.automation.cents', value: 900, type: 'cents', category: 'overage', description: 'Automation pack price ($9.00)' },
+  { key: 'overage.autoMaxPacksPerMonth', value: 3, type: 'number', category: 'overage', description: 'Maximum auto-purchased overage packs per month' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AUTHENTICATION (Section 14)

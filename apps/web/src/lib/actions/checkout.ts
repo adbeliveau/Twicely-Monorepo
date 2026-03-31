@@ -27,7 +27,7 @@ interface InitiateCheckoutInput {
   cartId: string;
   shippingAddress: ShippingAddressJson;
   buyerNote?: string;
-  /** If true, this is a local pickup order (no shipping, 5% flat TF) */
+  /** If true, this is a local pickup order (no shipping, standard progressive TF brackets) */
   isLocalPickup?: boolean;
   /** If true, buyer opted into authentication ($19.99 fee added to total) */
   authenticationRequested?: boolean;

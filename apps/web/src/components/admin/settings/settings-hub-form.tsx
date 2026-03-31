@@ -28,7 +28,7 @@ type FormState = {
 
 const DEFAULTS: FormState = {
   siteName: 'Twicely',
-  supportEmail: 'support@twicely.com',
+  supportEmail: 'support@twicely.co',
   siteDescription: 'Buy and sell pre-loved items',
   maintenanceMode: false,
   registrationEnabled: true,

@@ -16,8 +16,8 @@ export default function MaintenancePage() {
         </p>
         <p className="text-sm text-gray-400">
           If you need immediate help, email{' '}
-          <a href="mailto:support@twicely.com" className="text-primary hover:underline">
-            support@twicely.com
+          <a href="mailto:support@twicely.co" className="text-primary hover:underline">
+            support@twicely.co
           </a>
         </p>
       </div>
