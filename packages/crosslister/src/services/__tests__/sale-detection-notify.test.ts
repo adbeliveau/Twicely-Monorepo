@@ -22,6 +22,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
   ne: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock('@twicely/notifications/service', () => ({
   notify: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/realtime/centrifugo-publisher', () => ({
+vi.mock('@twicely/realtime/centrifugo-publisher', () => ({
   publishToChannel: vi.fn().mockResolvedValue(undefined),
   sellerChannel: vi.fn((id: string) => `private-user.${id}`),
 }));
@@ -46,7 +47,7 @@ vi.mock('../../queue/emergency-delist-queue', () => ({
   },
 }));
 
-vi.mock('@/lib/finance/post-off-platform-sale', () => ({
+vi.mock('@twicely/finance/post-off-platform-sale', () => ({
   postOffPlatformSale: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -111,7 +112,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('notifies seller when sale is detected', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -121,7 +122,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
     setupUpdateMock(db);
     setupInsertMock(db);
 
-    const { notify } = await import('@/lib/notifications/service');
+    const { notify } = await import('@twicely/notifications/service');
     const { handleDetectedSale } = await import('../sale-detection');
     await handleDetectedSale(BASE_SALE);
 
@@ -136,7 +137,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('emits sale.detected Centrifugo event on channel private-user.{sellerId}', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -146,7 +147,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
     setupUpdateMock(db);
     setupInsertMock(db);
 
-    const { publishToChannel } = await import('@/lib/realtime/centrifugo-publisher');
+    const { publishToChannel } = await import('@twicely/realtime/centrifugo-publisher');
     const { handleDetectedSale } = await import('../sale-detection');
     await handleDetectedSale(BASE_SALE);
 
@@ -162,7 +163,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('creates no delist jobs when listing has no other projections', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -180,19 +181,19 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('calculates eBay platform fee at 12.9% correctly', async () => {
-    const { calculatePlatformFee } = await import('@/lib/crosslister/services/platform-fees');
+    const { calculatePlatformFee } = await import('@twicely/crosslister/services/platform-fees');
     const fee = calculatePlatformFee(10000, 1290);
     expect(fee).toBe(1290);
   });
 
   it('calculates Poshmark platform fee at 20% correctly', async () => {
-    const { calculatePlatformFee } = await import('@/lib/crosslister/services/platform-fees');
+    const { calculatePlatformFee } = await import('@twicely/crosslister/services/platform-fees');
     const fee = calculatePlatformFee(5000, 2000);
     expect(fee).toBe(1000);
   });
 
   it('gracefully skips when projection not found', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [],
@@ -206,7 +207,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('stores soldPriceCents as integer cents (not float)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock; insert: Mock };
 
     setupSelectSequence(db, [
@@ -233,7 +234,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('double-sell does NOT create new delist jobs (delists already running from first sale)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],

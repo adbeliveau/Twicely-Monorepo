@@ -270,7 +270,7 @@ describe('ShopifyConnector', () => {
       mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
 
       const { ShopifyConnector } = await import('../shopify-connector');
-      const { logger } = await import('@/lib/logger');
+      const { logger } = await import('@twicely/logger');
       const connector = new ShopifyConnector();
       await connector.revokeAuth(buildAccount());
 

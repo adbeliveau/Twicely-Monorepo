@@ -122,7 +122,7 @@ describe('helpdesk-retention-purge worker logic', () => {
     mockDelete.mockReturnValue(makeDeleteChain());
     // The worker checks retentionDays <= 0 and returns early
     // Structural test: verify the guard exists via the module's logic
-    const { logger } = await import('@/lib/logger');
+    const { logger } = await import('@twicely/logger');
     const warnSpy = vi.spyOn(logger, 'warn');
     // Reset the guard state by clearing mocks
     expect(warnSpy).toBeDefined();

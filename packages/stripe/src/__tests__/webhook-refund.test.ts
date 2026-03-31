@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@twicely/db/cache/valkey', () => ({
+vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn().mockReturnValue({ set: vi.fn().mockResolvedValue('OK') }),
 }));
 
@@ -23,6 +23,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((col, val) => ({ col, val })),
 }));
 
@@ -236,7 +237,7 @@ describe('handlePlatformWebhook — charge.refunded', () => {
 
     expect(result).toEqual({ handled: false, error: 'DB connection lost' });
 
-    const { logger } = await import('@/lib/logger');
+    const { logger } = await import('@twicely/logger');
     expect(logger.error).toHaveBeenCalledWith(
       'Error handling charge.refunded',
       expect.objectContaining({ error: expect.any(Error) }),

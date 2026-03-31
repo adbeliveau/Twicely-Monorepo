@@ -13,7 +13,7 @@ vi.mock('bullmq', () => ({
   })),
 }));
 
-vi.mock('@/lib/jobs/queue', () => ({
+vi.mock('@twicely/jobs/queue', () => ({
   createQueue: vi.fn().mockReturnValue({
     add: vi.fn().mockResolvedValue({ id: 'bq-1' }),
     remove: vi.fn(),
@@ -44,6 +44,7 @@ vi.mock('@twicely/db/schema', () => ({
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
   and: vi.fn(),
+  sql: vi.fn(),
 }));
 
 vi.mock('@twicely/logger', () => ({
@@ -88,12 +89,12 @@ describe('listerWorker — CREATE job', () => {
 
   it('calls executeCreateJob for CREATE jobType', async () => {
     const { executeCreateJob } = await import('../../services/job-executor');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
 
-    const { createWorker } = await import('@/lib/jobs/queue');
+    const { createWorker } = await import('@twicely/jobs/queue');
     await import('../lister-worker');
 
     const workerInstance = (createWorker as ReturnType<typeof vi.fn>).mock.results[0]?.value as { processor?: unknown };
@@ -108,7 +109,7 @@ describe('listerWorker — CREATE job', () => {
   });
 
   it('marks crossJob IN_PROGRESS at start', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const setCalls: unknown[] = [];
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockImplementation((vals: unknown) => {
@@ -117,7 +118,7 @@ describe('listerWorker — CREATE job', () => {
       }),
     });
 
-    const { createWorker } = await import('@/lib/jobs/queue');
+    const { createWorker } = await import('@twicely/jobs/queue');
     await import('../lister-worker');
 
     const workerInstance = (createWorker as ReturnType<typeof vi.fn>).mock.results[0]?.value as { processor?: unknown };
@@ -143,7 +144,7 @@ describe('listerWorker — UPDATE job', () => {
 
   it('calls executeUpdateJob for UPDATE jobType', async () => {
     const { executeUpdateJob } = await import('../../services/job-executor');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
@@ -153,7 +154,7 @@ describe('listerWorker — UPDATE job', () => {
       limit: vi.fn().mockResolvedValue([{ externalId: 'ext-1' }]),
     });
 
-    const { createWorker } = await import('@/lib/jobs/queue');
+    const { createWorker } = await import('@twicely/jobs/queue');
     await import('../lister-worker');
 
     const workerInstance = (createWorker as ReturnType<typeof vi.fn>).mock.results[0]?.value as { processor?: unknown };
@@ -172,7 +173,7 @@ describe('listerWorker — DELIST job', () => {
 
   it('calls executeDelistJob for DELIST jobType', async () => {
     const { executeDelistJob } = await import('../../services/job-executor');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
@@ -182,7 +183,7 @@ describe('listerWorker — DELIST job', () => {
       limit: vi.fn().mockResolvedValue([{ externalId: 'ext-1' }]),
     });
 
-    const { createWorker } = await import('@/lib/jobs/queue');
+    const { createWorker } = await import('@twicely/jobs/queue');
     await import('../lister-worker');
 
     const workerInstance = (createWorker as ReturnType<typeof vi.fn>).mock.results[0]?.value as { processor?: unknown };
@@ -205,7 +206,7 @@ describe('listerWorker — failure handling', () => {
       success: false, externalId: null, externalUrl: null, error: 'Connector error', retryable: false,
     });
 
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const setCalls: unknown[] = [];
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockImplementation((vals: unknown) => {
@@ -214,7 +215,7 @@ describe('listerWorker — failure handling', () => {
       }),
     });
 
-    const { createWorker } = await import('@/lib/jobs/queue');
+    const { createWorker } = await import('@twicely/jobs/queue');
     await import('../lister-worker');
 
     const workerInstance = (createWorker as ReturnType<typeof vi.fn>).mock.results[0]?.value as { processor?: unknown };
@@ -233,12 +234,12 @@ describe('listerWorker — failure handling', () => {
     const { getDelayMs } = await import('../rate-limiter');
     (getDelayMs as ReturnType<typeof vi.fn>).mockReturnValueOnce(5000);
 
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
 
-    const { createWorker } = await import('@/lib/jobs/queue');
+    const { createWorker } = await import('@twicely/jobs/queue');
     await import('../lister-worker');
 
     const workerInstance = (createWorker as ReturnType<typeof vi.fn>).mock.results[0]?.value as { processor?: unknown };

@@ -29,6 +29,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((col, val) => ({ op: 'eq', col, val })),
 }));
 

@@ -23,6 +23,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((col, val) => ({ op: 'eq', col, val })),
   and: vi.fn((...args) => ({ op: 'and', args })),
   lt: vi.fn((col, val) => ({ op: 'lt', col, val })),
@@ -129,8 +130,8 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('skips users with open buyer orders (both buy-side and sell-side blockers checked)', async () => {
-    const { db } = await import('@/lib/db');
-    const { logger } = await import('@/lib/logger');
+    const { db } = await import('@twicely/db');
+    const { logger } = await import('@twicely/logger');
 
     // Variant: seller orders empty, buyer orders non-empty → still blocked
     let selectCallCount = 0;
@@ -158,7 +159,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('handles user with no orders/listings/messages gracefully (no-data user)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupFullDeletionMocks(db, 'user-empty-data');
 
@@ -171,7 +172,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('is idempotent: processing already-pseudonymized user does not re-pseudonymize', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizeOrders } = await import('@/lib/gdpr/pseudonymize');
 
     // First run
@@ -193,8 +194,8 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('logs info about Typesense removal being skipped (not yet wired)', async () => {
-    const { db } = await import('@/lib/db');
-    const { logger } = await import('@/lib/logger');
+    const { db } = await import('@twicely/db');
+    const { logger } = await import('@twicely/logger');
 
     setupFullDeletionMocks(db, 'user-typesense-log');
 
@@ -208,8 +209,8 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('skips processing when user is not found in DB', async () => {
-    const { db } = await import('@/lib/db');
-    const { logger } = await import('@/lib/logger');
+    const { db } = await import('@twicely/db');
+    const { logger } = await import('@twicely/logger');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {

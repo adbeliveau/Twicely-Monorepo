@@ -110,7 +110,7 @@ describe('transformListingForChannel', () => {
   });
 
   it('truncates title to channel max length', async () => {
-    const { getChannelMetadata } = await import('@/lib/crosslister/channel-registry');
+    const { getChannelMetadata } = await import('@twicely/crosslister/channel-registry');
     (getChannelMetadata as ReturnType<typeof vi.fn>).mockReturnValue({
       channel: 'EBAY',
       displayName: 'eBay',
@@ -129,7 +129,7 @@ describe('transformListingForChannel', () => {
   });
 
   it('limits images to channel max count', async () => {
-    const { getChannelMetadata } = await import('@/lib/crosslister/channel-registry');
+    const { getChannelMetadata } = await import('@twicely/crosslister/channel-registry');
     (getChannelMetadata as ReturnType<typeof vi.fn>).mockReturnValue({
       channel: 'DEPOP',
       displayName: 'Depop',

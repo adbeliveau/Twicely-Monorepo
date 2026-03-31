@@ -30,6 +30,7 @@ vi.mock('@twicely/db', () => ({
 // Mock db schema
 vi.mock('@twicely/db/schema', () => ({
   sellerProfile: { id: 'id', userId: 'user_id' },
+  delegatedAccess: { id: 'id', sellerId: 'seller_id', userId: 'user_id', status: 'status', expiresAt: 'expires_at', scopes: 'scopes' },
 }));
 
 // Mock db schema/subscriptions (delegatedAccess)
@@ -119,7 +120,7 @@ describe('authorize', () => {
   });
 
   test('returns guest ability when no session', async () => {
-    const { auth } = await import('@/lib/auth/server');
+    const { auth } = await import('@twicely/auth/server');
     vi.mocked(auth.api.getSession).mockResolvedValue(null);
 
     const { authorize } = await import('../authorize');
@@ -135,7 +136,7 @@ describe('authorize', () => {
   });
 
   test('returns buyer ability for authenticated non-seller', async () => {
-    const { auth } = await import('@/lib/auth/server');
+    const { auth } = await import('@twicely/auth/server');
     vi.mocked(auth.api.getSession).mockResolvedValue(
       createMockSession({
         id: 'user-123',
@@ -167,7 +168,7 @@ describe('authorize', () => {
   test('returns buyer ability for isSeller=true but no sellerId yet', async () => {
     // In A4, isSeller might be true but sellerId is looked up separately
     // Until B2 wires up sellerId lookup, sellers get buyer abilities
-    const { auth } = await import('@/lib/auth/server');
+    const { auth } = await import('@twicely/auth/server');
     vi.mocked(auth.api.getSession).mockResolvedValue(
       createMockSession({
         id: 'seller-123',
@@ -191,7 +192,7 @@ describe('authorize', () => {
   });
 
   test('session has correct shape for delegation fields', async () => {
-    const { auth } = await import('@/lib/auth/server');
+    const { auth } = await import('@twicely/auth/server');
     vi.mocked(auth.api.getSession).mockResolvedValue(
       createMockSession({
         id: 'user-789',

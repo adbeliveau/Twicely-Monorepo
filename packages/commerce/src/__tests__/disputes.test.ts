@@ -12,7 +12,7 @@ describe('Disputes Module', () => {
 
   describe('Module exports', () => {
     it('exports expected functions', async () => {
-      const mod = await import('@/lib/commerce/disputes');
+      const mod = await import('@twicely/commerce/disputes');
 
       expect(typeof mod.canEscalate).toBe('function');
       expect(typeof mod.escalateToDispute).toBe('function');
@@ -26,13 +26,13 @@ describe('Disputes Module', () => {
 
   describe('Type exports', () => {
     it('exports EscalateToDisputeInput interface shape', async () => {
-      const mod = await import('@/lib/commerce/disputes');
+      const mod = await import('@twicely/commerce/disputes');
       // TypeScript interface check - function exists and accepts the right shape
       expect(typeof mod.escalateToDispute).toBe('function');
     });
 
     it('exports ResolveDisputeInput interface shape', async () => {
-      const mod = await import('@/lib/commerce/disputes');
+      const mod = await import('@twicely/commerce/disputes');
       expect(typeof mod.resolveDispute).toBe('function');
     });
   });

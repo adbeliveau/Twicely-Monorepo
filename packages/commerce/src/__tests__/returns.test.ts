@@ -20,7 +20,7 @@ describe('Returns Module', () => {
 
   describe('isWithinReturnWindow', () => {
     it('returns true when within 30 days of delivery', async () => {
-      const { isWithinReturnWindow } = await import('@/lib/commerce/returns');
+      const { isWithinReturnWindow } = await import('@twicely/commerce/returns');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 15); // 15 days ago
 
@@ -28,7 +28,7 @@ describe('Returns Module', () => {
     });
 
     it('returns false when beyond 30 days for standard reasons', async () => {
-      const { isWithinReturnWindow } = await import('@/lib/commerce/returns');
+      const { isWithinReturnWindow } = await import('@twicely/commerce/returns');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 35); // 35 days ago
 
@@ -36,7 +36,7 @@ describe('Returns Module', () => {
     });
 
     it('returns true for counterfeit within 60 days', async () => {
-      const { isWithinReturnWindow } = await import('@/lib/commerce/returns');
+      const { isWithinReturnWindow } = await import('@twicely/commerce/returns');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 45); // 45 days ago
 
@@ -44,7 +44,7 @@ describe('Returns Module', () => {
     });
 
     it('returns false for counterfeit beyond 60 days', async () => {
-      const { isWithinReturnWindow } = await import('@/lib/commerce/returns');
+      const { isWithinReturnWindow } = await import('@twicely/commerce/returns');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 65); // 65 days ago
 
@@ -52,7 +52,7 @@ describe('Returns Module', () => {
     });
 
     it('returns false when no delivery date', async () => {
-      const { isWithinReturnWindow } = await import('@/lib/commerce/returns');
+      const { isWithinReturnWindow } = await import('@twicely/commerce/returns');
       await expect(isWithinReturnWindow(null, 'INAD')).resolves.toBe(false);
     });
   });
@@ -68,7 +68,7 @@ describe('Returns Module', () => {
     });
 
     it('returns date 3 business days from now', async () => {
-      const { calculateSellerResponseDue } = await import('@/lib/commerce/returns');
+      const { calculateSellerResponseDue } = await import('@twicely/commerce/returns');
       const dueDate = await calculateSellerResponseDue();
       const now = new Date();
 
@@ -83,7 +83,7 @@ describe('Returns Module', () => {
 
   describe('REASON_FAULT_MAP', () => {
     it('maps seller fault reasons correctly', async () => {
-      const { REASON_FAULT_MAP } = await import('@/lib/commerce/returns');
+      const { REASON_FAULT_MAP } = await import('@twicely/commerce/returns');
 
       expect(REASON_FAULT_MAP.INAD).toBe('SELLER');
       expect(REASON_FAULT_MAP.WRONG_ITEM).toBe('SELLER');
@@ -92,19 +92,19 @@ describe('Returns Module', () => {
     });
 
     it('maps buyer remorse correctly', async () => {
-      const { REASON_FAULT_MAP } = await import('@/lib/commerce/returns');
+      const { REASON_FAULT_MAP } = await import('@twicely/commerce/returns');
       expect(REASON_FAULT_MAP.REMORSE).toBe('BUYER');
     });
 
     it('maps damaged to carrier fault', async () => {
-      const { REASON_FAULT_MAP } = await import('@/lib/commerce/returns');
+      const { REASON_FAULT_MAP } = await import('@twicely/commerce/returns');
       expect(REASON_FAULT_MAP.DAMAGED).toBe('CARRIER');
     });
   });
 
   describe('REASON_BUCKET_MAP', () => {
     it('maps reasons to correct buckets', async () => {
-      const { REASON_BUCKET_MAP } = await import('@/lib/commerce/returns');
+      const { REASON_BUCKET_MAP } = await import('@twicely/commerce/returns');
 
       expect(REASON_BUCKET_MAP.INAD).toBe('SELLER_FAULT');
       expect(REASON_BUCKET_MAP.COUNTERFEIT).toBe('SELLER_FAULT');
@@ -117,7 +117,7 @@ describe('Returns Module', () => {
 
   describe('RETURN_SHIPPING_PAYER', () => {
     it('maps return shipping responsibility correctly', async () => {
-      const { RETURN_SHIPPING_PAYER } = await import('@/lib/commerce/returns');
+      const { RETURN_SHIPPING_PAYER } = await import('@twicely/commerce/returns');
 
       expect(RETURN_SHIPPING_PAYER.INAD).toBe('SELLER');
       expect(RETURN_SHIPPING_PAYER.COUNTERFEIT).toBe('SELLER');
@@ -129,7 +129,7 @@ describe('Returns Module', () => {
 
   describe('Configurable Settings (platform_settings)', () => {
     it('returns correct default return window days', async () => {
-      const { getReturnWindowDays, getCounterfeitWindowDays, getSellerResponseDays } = await import('@/lib/commerce/returns');
+      const { getReturnWindowDays, getCounterfeitWindowDays, getSellerResponseDays } = await import('@twicely/commerce/returns');
 
       await expect(getReturnWindowDays()).resolves.toBe(30);
       await expect(getCounterfeitWindowDays()).resolves.toBe(60);
@@ -139,19 +139,19 @@ describe('Returns Module', () => {
 
   describe('isValidINRClaim', () => {
     it('returns true when order not delivered', async () => {
-      const { isValidINRClaim } = await import('@/lib/commerce/returns');
+      const { isValidINRClaim } = await import('@twicely/commerce/returns');
 
       expect(isValidINRClaim(null, null)).toBe(true);
     });
 
     it('returns false when order already delivered', async () => {
-      const { isValidINRClaim } = await import('@/lib/commerce/returns');
+      const { isValidINRClaim } = await import('@twicely/commerce/returns');
 
       expect(isValidINRClaim(new Date(), null)).toBe(false);
     });
 
     it('returns false when before expected delivery', async () => {
-      const { isValidINRClaim } = await import('@/lib/commerce/returns');
+      const { isValidINRClaim } = await import('@twicely/commerce/returns');
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 5);
 
@@ -159,7 +159,7 @@ describe('Returns Module', () => {
     });
 
     it('returns true when past expected delivery', async () => {
-      const { isValidINRClaim } = await import('@/lib/commerce/returns');
+      const { isValidINRClaim } = await import('@twicely/commerce/returns');
       const pastDate = new Date();
       pastDate.setDate(pastDate.getDate() - 5);
 
@@ -206,7 +206,7 @@ describe('Returns Module', () => {
       mockNotify.mockResolvedValue(undefined);
       mockProcessReturnRefund.mockResolvedValue({ success: true });
 
-      const { markReturnReceived } = await import('@/lib/commerce/returns');
+      const { markReturnReceived } = await import('@twicely/commerce/returns');
       const result = await markReturnReceived('seller1', 'ret1');
 
       expect(result.success).toBe(true);
@@ -249,7 +249,7 @@ describe('Returns Module', () => {
       mockNotify.mockResolvedValue(undefined);
       mockProcessReturnRefund.mockResolvedValue({ success: false, error: 'Stripe error' });
 
-      const { markReturnReceived } = await import('@/lib/commerce/returns');
+      const { markReturnReceived } = await import('@twicely/commerce/returns');
       const result = await markReturnReceived('seller1', 'ret1');
 
       expect(result.success).toBe(true);
@@ -273,7 +273,7 @@ describe('Returns Module', () => {
         })),
       });
 
-      const { markReturnReceived } = await import('@/lib/commerce/returns');
+      const { markReturnReceived } = await import('@twicely/commerce/returns');
       const result = await markReturnReceived('seller1', 'ret1');
 
       expect(result.success).toBe(false);

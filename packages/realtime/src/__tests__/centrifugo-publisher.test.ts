@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('@/lib/config/infra-config', () => ({
+vi.mock('@twicely/config/infra-config', () => ({
   getInfraConfig: vi.fn(),
 }));
 vi.mock('@twicely/logger', () => ({

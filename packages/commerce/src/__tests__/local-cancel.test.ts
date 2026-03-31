@@ -30,10 +30,10 @@ vi.mock('@twicely/commerce/local-ledger', () => ({
   createLocalCancelRefundLedgerEntry: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/jobs/local-auto-cancel', () => ({ localAutoCancelQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
-vi.mock('@/lib/jobs/local-noshow-check', () => ({ localNoShowCheckQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
-vi.mock('@/lib/jobs/local-schedule-nudge', () => ({ localScheduleNudgeQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
-vi.mock('@/lib/jobs/local-meetup-reminder', () => ({ localMeetupReminderQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
+vi.mock('@twicely/jobs/local-auto-cancel', () => ({ localAutoCancelQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
+vi.mock('@twicely/jobs/local-noshow-check', () => ({ localNoShowCheckQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
+vi.mock('@twicely/jobs/local-schedule-nudge', () => ({ localScheduleNudgeQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
+vi.mock('@twicely/jobs/local-meetup-reminder', () => ({ localMeetupReminderQueue: { getJob: vi.fn().mockResolvedValue(null) } }));
 vi.mock('@twicely/notifications/service', () => ({ notify: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@twicely/logger', () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock('@twicely/stripe/server', () => ({ stripe: { refunds: { create: vi.fn().mockResolvedValue({ id: 'ref_001' }) } } }));

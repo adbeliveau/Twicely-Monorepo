@@ -7,7 +7,7 @@ vi.mock('bullmq', () => ({
   Worker: vi.fn().mockImplementation(() => ({ on: vi.fn(), close: vi.fn() })),
 }));
 
-vi.mock('@/lib/jobs/queue', () => ({
+vi.mock('@twicely/jobs/queue', () => ({
   createQueue: vi.fn().mockImplementation(() => ({ add: mockQueueAdd })),
   createWorker: vi.fn().mockReturnValue({ on: vi.fn(), close: vi.fn() }),
   connection: {},
@@ -31,6 +31,7 @@ vi.mock('@twicely/db/schema', () => ({
   caseCsat: { caseId: 'case_id' },
 }));
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   and: vi.fn(), eq: vi.fn(), gte: vi.fn(), lt: vi.fn(), lte: vi.fn(), isNotNull: vi.fn(), inArray: vi.fn(),
 }));
 vi.mock('@twicely/db/queries/platform-settings', () => ({

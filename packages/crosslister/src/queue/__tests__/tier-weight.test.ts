@@ -60,7 +60,7 @@ describe('tier-weight', () => {
   });
 
   it('falls back to hardcoded values when setting is missing', async () => {
-    const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
+    const { getPlatformSetting } = await import('@twicely/db/queries/platform-settings');
     (getPlatformSetting as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
     resetTierWeightCache();
     const weights = await loadTierWeights();

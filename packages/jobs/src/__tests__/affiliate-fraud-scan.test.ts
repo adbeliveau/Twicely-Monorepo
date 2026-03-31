@@ -33,6 +33,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   and: vi.fn((...args: unknown[]) => ({ type: 'and', args })),
   eq: vi.fn((a: unknown, b: unknown) => ({ type: 'eq', a, b })),
   gte: vi.fn((a: unknown, b: unknown) => ({ type: 'gte', a, b })),

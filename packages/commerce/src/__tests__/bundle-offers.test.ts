@@ -20,7 +20,7 @@ vi.mock('@twicely/stripe/server', () => ({
   },
 }));
 
-vi.mock('@/lib/jobs/offer-expiry', () => ({
+vi.mock('@twicely/jobs/offer-expiry', () => ({
   scheduleOfferExpiry: vi.fn(),
   cancelOfferExpiry: vi.fn(),
 }));

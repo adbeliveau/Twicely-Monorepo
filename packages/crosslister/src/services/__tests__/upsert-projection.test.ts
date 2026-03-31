@@ -56,7 +56,7 @@ describe('upsertProjection', () => {
   });
 
   it('inserts a new projection and returns it', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const mockOnConflict = vi.fn().mockReturnThis();
     const mockReturning = vi.fn().mockResolvedValue([BASE_PROJECTION]);
     (db.insert as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -74,7 +74,7 @@ describe('upsertProjection', () => {
   });
 
   it('returns upserted row on conflict (same sellerId, channel, externalId)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const updatedProjection = { ...BASE_PROJECTION, pollTier: 'HOT' as const };
     const mockOnConflict = vi.fn().mockReturnThis();
     const mockReturning = vi.fn().mockResolvedValue([updatedProjection]);
@@ -92,7 +92,7 @@ describe('upsertProjection', () => {
   });
 
   it('onConflictDoUpdate targets sellerId, channel, externalId columns', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const capturedConflictArgs: unknown[] = [];
     const mockOnConflict = vi.fn().mockImplementation((args: unknown) => {
       capturedConflictArgs.push(args);
@@ -114,7 +114,7 @@ describe('upsertProjection', () => {
   });
 
   it('onConflictDoUpdate set includes pollTier and nextPollAt but not overridesJson', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const capturedConflictArgs: unknown[] = [];
     const mockOnConflict = vi.fn().mockImplementation((args: unknown) => {
       capturedConflictArgs.push(args);
@@ -138,7 +138,7 @@ describe('upsertProjection', () => {
   });
 
   it('creates a distinct row when externalId differs', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const proj1 = { ...BASE_PROJECTION, id: 'proj-1', externalId: 'ext-111' };
     const proj2 = { ...BASE_PROJECTION, id: 'proj-2', externalId: 'ext-222' };
 

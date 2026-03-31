@@ -26,6 +26,7 @@ vi.mock('@twicely/db/schema/subscriptions', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
 }));

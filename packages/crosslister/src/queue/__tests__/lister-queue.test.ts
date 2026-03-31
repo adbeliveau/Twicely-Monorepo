@@ -13,7 +13,7 @@ vi.mock('bullmq', () => ({
   })),
 }));
 
-vi.mock('@/lib/jobs/queue', () => ({
+vi.mock('@twicely/jobs/queue', () => ({
   createQueue: vi.fn().mockImplementation((name: string) => ({
     name,
     add: vi.fn().mockResolvedValue({ id: 'bullmq-job-1' }),
@@ -32,7 +32,7 @@ describe('listerPublishQueue', () => {
   });
 
   it('is created with name lister:publish', async () => {
-    const { createQueue } = await import('@/lib/jobs/queue');
+    const { createQueue } = await import('@twicely/jobs/queue');
     await import('../lister-queue');
     expect(createQueue).toHaveBeenCalledWith('lister-publish');
   });

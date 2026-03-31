@@ -22,6 +22,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
   ne: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock('@twicely/notifications/service', () => ({
   notify: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/realtime/centrifugo-publisher', () => ({
+vi.mock('@twicely/realtime/centrifugo-publisher', () => ({
   publishToChannel: vi.fn().mockResolvedValue(undefined),
   sellerChannel: vi.fn((id: string) => `private-user.${id}`),
 }));
@@ -46,7 +47,7 @@ vi.mock('../../queue/emergency-delist-queue', () => ({
   },
 }));
 
-vi.mock('@/lib/finance/post-off-platform-sale', () => ({
+vi.mock('@twicely/finance/post-off-platform-sale', () => ({
   postOffPlatformSale: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -111,7 +112,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('marks listing status SOLD when sale is detected', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock; insert: Mock };
 
     setupSelectSequence(db, [
@@ -138,7 +139,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('marks selling projection status SOLD', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock; insert: Mock };
 
     setupSelectSequence(db, [
@@ -165,7 +166,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('creates emergency delist jobs for other ACTIVE projections', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -194,7 +195,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('does not create delist job for the sold projection itself', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -217,7 +218,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('does not create delist jobs when no other ACTIVE projections exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -235,7 +236,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('is idempotent when projection is already SOLD (duplicate sale)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock };
 
     setupSelectSequence(db, [
@@ -251,7 +252,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('detects double-sell when listing is already SOLD', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -268,7 +269,7 @@ describe('handleDetectedSale — core status updates', () => {
   });
 
   it('flags POTENTIAL_DOUBLE_SELL via audit event on double-sell', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { insert: Mock };
 
     setupSelectSequence(db, [

@@ -8,7 +8,7 @@ vi.mock('@twicely/db', () => ({
   },
 }));
 
-vi.mock('@/lib/finance/format', () => ({
+vi.mock('@twicely/finance/format', () => ({
   formatCentsToDollars: vi.fn((cents: number) => `$${(cents / 100).toFixed(2)}`),
 }));
 
@@ -34,7 +34,7 @@ vi.mock('@twicely/commerce/local-reserve', () => ({
   markListingSoldForLocalTransaction: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/jobs/local-escrow-release', () => ({
+vi.mock('@twicely/jobs/local-escrow-release', () => ({
   enqueueLocalEscrowRelease: vi.fn().mockResolvedValue(undefined),
 }));
 

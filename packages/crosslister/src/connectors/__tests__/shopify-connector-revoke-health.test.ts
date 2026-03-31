@@ -97,7 +97,7 @@ describe('ShopifyConnector — revokeAuth no-op paths', () => {
     mockFetch.mockRejectedValueOnce(new Error('Connection refused'));
 
     const { ShopifyConnector } = await import('../shopify-connector');
-    const { logger } = await import('@/lib/logger');
+    const { logger } = await import('@twicely/logger');
     const connector = new ShopifyConnector();
 
     // Must NOT throw — revokeAuth is best-effort

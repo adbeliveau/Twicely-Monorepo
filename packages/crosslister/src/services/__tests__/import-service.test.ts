@@ -17,7 +17,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 vi.mock('@twicely/logger', () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } }));
 vi.mock('@twicely/crosslister/connectors', () => ({}));
-vi.mock('@twicely/crosslister/connector-registry', () => ({ getConnector: vi.fn() }));
+vi.mock('@twicely/crosslister/connector-registry', () => ({ getConnector: vi.fn(), registerConnector: vi.fn() }));
 vi.mock('@twicely/crosslister/connectors/ebay-normalizer', () => ({ normalizeEbayListing: vi.fn() }));
 vi.mock('@twicely/crosslister/services/normalizer-dispatch', () => ({ normalizeExternalListing: vi.fn() }));
 vi.mock('@twicely/crosslister/services/dedupe-service', () => ({
@@ -69,7 +69,7 @@ describe('processImportBatch', () => {
   it('sets batch to FAILED when batch not found', async () => {
     mockDbSelect.mockReturnValue(makeDrizzleChain([]));
 
-    const { processImportBatch } = await import('@/lib/crosslister/services/import-service');
+    const { processImportBatch } = await import('@twicely/crosslister/services/import-service');
     await processImportBatch('batch-notfound');
 
     // Should have logged an error, not updated batch
@@ -83,14 +83,14 @@ describe('processImportBatch', () => {
       .mockReturnValueOnce(makeDrizzleChain([]));               // account not found
     mockDbUpdate.mockReturnValue(updateChain);
 
-    const { processImportBatch } = await import('@/lib/crosslister/services/import-service');
+    const { processImportBatch } = await import('@twicely/crosslister/services/import-service');
     await processImportBatch('batch-1');
 
     expect(mockDbUpdate).toHaveBeenCalled();
   });
 
   it('creates canonical listings with ACTIVE status (never DRAFT)', async () => {
-    const { createImportedListing } = await import('@/lib/crosslister/services/listing-creator');
+    const { createImportedListing } = await import('@twicely/crosslister/services/listing-creator');
     (createImportedListing as ReturnType<typeof vi.fn>).mockResolvedValue({ listingId: 'new-listing-1' });
     expect(createImportedListing).toBeDefined();
   });
@@ -102,7 +102,7 @@ describe('processImportBatch', () => {
   });
 
   it('marks items with missing title as failed (validated in stageTransform)', async () => {
-    const { normalizeEbayListing } = await import('@/lib/crosslister/connectors/ebay-normalizer');
+    const { normalizeEbayListing } = await import('@twicely/crosslister/connectors/ebay-normalizer');
     (normalizeEbayListing as ReturnType<typeof vi.fn>).mockReturnValue({
       title: '',
       priceCents: 1000,
@@ -113,7 +113,7 @@ describe('processImportBatch', () => {
   });
 
   it('marks items with zero price as failed', async () => {
-    const { normalizeEbayListing } = await import('@/lib/crosslister/connectors/ebay-normalizer');
+    const { normalizeEbayListing } = await import('@twicely/crosslister/connectors/ebay-normalizer');
     (normalizeEbayListing as ReturnType<typeof vi.fn>).mockReturnValue({
       title: 'Valid Title',
       priceCents: 0,
@@ -124,7 +124,7 @@ describe('processImportBatch', () => {
   });
 
   it('marks items with no images as failed', async () => {
-    const { normalizeEbayListing } = await import('@/lib/crosslister/connectors/ebay-normalizer');
+    const { normalizeEbayListing } = await import('@twicely/crosslister/connectors/ebay-normalizer');
     (normalizeEbayListing as ReturnType<typeof vi.fn>).mockReturnValue({
       title: 'Valid Title',
       priceCents: 1000,
@@ -165,7 +165,7 @@ describe('processImportBatch', () => {
   });
 
   it('handles deduplicated items (links projection to existing listing)', async () => {
-    const { findDedupeMatch } = await import('@/lib/crosslister/services/dedupe-service');
+    const { findDedupeMatch } = await import('@twicely/crosslister/services/dedupe-service');
     (findDedupeMatch as ReturnType<typeof vi.fn>).mockResolvedValue({
       matchListingId: 'existing-listing',
       confidence: 95,
@@ -180,7 +180,7 @@ describe('processImportBatch', () => {
     mockDbSelect
       .mockReturnValueOnce(makeDrizzleChain([buildBatch()]))
       .mockReturnValueOnce(makeDrizzleChain([])); // no account
-    const { processImportBatch } = await import('@/lib/crosslister/services/import-service');
+    const { processImportBatch } = await import('@twicely/crosslister/services/import-service');
     await processImportBatch('batch-err');
     expect(mockDbUpdate).toHaveBeenCalled();
   });

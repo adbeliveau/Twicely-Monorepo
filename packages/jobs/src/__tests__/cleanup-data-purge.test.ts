@@ -50,7 +50,7 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('@/lib/jobs/cleanup-helpers', () => ({
+vi.mock('@twicely/jobs/cleanup-helpers', () => ({
   upsertPlatformSetting: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -74,8 +74,8 @@ describe('runDataPurge', () => {
   });
 
   it('reads retention settings from platform_settings', async () => {
-    const { db } = await import('@/lib/db');
-    const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
+    const { db } = await import('@twicely/db');
+    const { getPlatformSetting } = await import('@twicely/db/queries/platform-settings');
 
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
     vi.mocked(db.delete).mockReturnValue(makeDeleteChain() as unknown as ReturnType<typeof db.delete>);
@@ -90,8 +90,8 @@ describe('runDataPurge', () => {
   });
 
   it('gracefully skips tables that do not exist', async () => {
-    const { db } = await import('@/lib/db');
-    const { logger } = await import('@/lib/logger');
+    const { db } = await import('@twicely/db');
+    const { logger } = await import('@twicely/logger');
 
     vi.mocked(db.execute).mockRejectedValue(new Error('relation "search_log" does not exist'));
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
@@ -107,7 +107,7 @@ describe('runDataPurge', () => {
   });
 
   it('purges expired data export requests', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(db.execute).mockResolvedValue({ count: 0, rows: [] } as unknown as Awaited<ReturnType<typeof db.execute>>);
 
@@ -122,8 +122,8 @@ describe('runDataPurge', () => {
   });
 
   it('deletes R2 files for expired exports that have a downloadUrl', async () => {
-    const { db } = await import('@/lib/db');
-    const { deleteFromR2 } = await import('@/lib/storage/r2-client');
+    const { db } = await import('@twicely/db');
+    const { deleteFromR2 } = await import('@twicely/storage/r2-client');
 
     vi.mocked(db.execute).mockResolvedValue({ count: 0, rows: [] } as unknown as Awaited<ReturnType<typeof db.execute>>);
 
@@ -138,8 +138,8 @@ describe('runDataPurge', () => {
   });
 
   it('writes lastRunAt and lastResult to platform_settings', async () => {
-    const { db } = await import('@/lib/db');
-    const { upsertPlatformSetting } = await import('@/lib/jobs/cleanup-helpers');
+    const { db } = await import('@twicely/db');
+    const { upsertPlatformSetting } = await import('@twicely/jobs/cleanup-helpers');
 
     vi.mocked(db.execute).mockResolvedValue({ count: 0, rows: [] } as unknown as Awaited<ReturnType<typeof db.execute>>);
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
@@ -159,7 +159,7 @@ describe('runDataPurge', () => {
   });
 
   it('does not throw when no expired exports exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(db.execute).mockResolvedValue({ count: 5, rows: [] } as unknown as Awaited<ReturnType<typeof db.execute>>);
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);

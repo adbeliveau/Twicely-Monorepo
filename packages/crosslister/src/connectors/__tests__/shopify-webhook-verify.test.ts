@@ -23,6 +23,7 @@ vi.mock('@twicely/logger', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((_col: unknown, _val: unknown) => ({ col: _col, val: _val })),
 }));
 

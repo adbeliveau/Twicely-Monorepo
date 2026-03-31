@@ -13,6 +13,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   and: vi.fn((...args: unknown[]) => ({ and: args })),
   eq: vi.fn((col: unknown, val: unknown) => ({ col, val })),
 }));

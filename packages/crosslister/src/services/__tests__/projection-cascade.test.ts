@@ -25,6 +25,7 @@ vi.mock('@twicely/crosslister/polling/poll-tier-manager', () => ({
   getTierInterval: vi.fn().mockResolvedValue(2_700_000),
 }));
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((col, val) => ({ op: 'eq', col, val })),
   and: vi.fn((...args) => ({ op: 'and', args })),
   inArray: vi.fn((col, vals) => ({ op: 'inArray', col, vals })),

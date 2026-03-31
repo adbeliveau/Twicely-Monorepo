@@ -25,7 +25,7 @@ describe('Buyer Protection Module', () => {
   describe('isWithinClaimWindow', () => {
     it('returns true for INR without delivery date', async () => {
       setupClaimWindowDefaults();
-      const { isWithinClaimWindow } = await import('@/lib/commerce/buyer-protection');
+      const { isWithinClaimWindow } = await import('@twicely/commerce/buyer-protection');
 
       const result = await isWithinClaimWindow(null, 'INR');
       expect(result.withinWindow).toBe(true);
@@ -34,7 +34,7 @@ describe('Buyer Protection Module', () => {
 
     it('returns true within 30 days for standard claims', async () => {
       setupClaimWindowDefaults();
-      const { isWithinClaimWindow } = await import('@/lib/commerce/buyer-protection');
+      const { isWithinClaimWindow } = await import('@twicely/commerce/buyer-protection');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 15);
 
@@ -45,7 +45,7 @@ describe('Buyer Protection Module', () => {
 
     it('returns false after 30 days for standard claims', async () => {
       setupClaimWindowDefaults();
-      const { isWithinClaimWindow } = await import('@/lib/commerce/buyer-protection');
+      const { isWithinClaimWindow } = await import('@twicely/commerce/buyer-protection');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 35);
 
@@ -56,7 +56,7 @@ describe('Buyer Protection Module', () => {
 
     it('allows 60 days for counterfeit claims', async () => {
       setupClaimWindowDefaults();
-      const { isWithinClaimWindow, DEFAULT_COUNTERFEIT_CLAIM_WINDOW_DAYS } = await import('@/lib/commerce/buyer-protection');
+      const { isWithinClaimWindow, DEFAULT_COUNTERFEIT_CLAIM_WINDOW_DAYS } = await import('@twicely/commerce/buyer-protection');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 45);
 
@@ -67,7 +67,7 @@ describe('Buyer Protection Module', () => {
 
     it('returns false after 60 days for counterfeit', async () => {
       setupClaimWindowDefaults();
-      const { isWithinClaimWindow } = await import('@/lib/commerce/buyer-protection');
+      const { isWithinClaimWindow } = await import('@twicely/commerce/buyer-protection');
       const deliveredAt = new Date();
       deliveredAt.setDate(deliveredAt.getDate() - 65);
 
@@ -77,7 +77,7 @@ describe('Buyer Protection Module', () => {
 
     it('returns false for non-INR claims without delivery date', async () => {
       setupClaimWindowDefaults();
-      const { isWithinClaimWindow } = await import('@/lib/commerce/buyer-protection');
+      const { isWithinClaimWindow } = await import('@twicely/commerce/buyer-protection');
 
       const result = await isWithinClaimWindow(null, 'INAD');
       expect(result.withinWindow).toBe(false);
@@ -86,7 +86,7 @@ describe('Buyer Protection Module', () => {
 
   describe('PROTECTION_ELIGIBLE_REASONS', () => {
     it('includes the correct claim types', async () => {
-      const { PROTECTION_ELIGIBLE_REASONS } = await import('@/lib/commerce/buyer-protection');
+      const { PROTECTION_ELIGIBLE_REASONS } = await import('@twicely/commerce/buyer-protection');
 
       expect(PROTECTION_ELIGIBLE_REASONS).toContain('INAD');
       expect(PROTECTION_ELIGIBLE_REASONS).toContain('DAMAGED');
@@ -96,14 +96,14 @@ describe('Buyer Protection Module', () => {
     });
 
     it('has exactly 5 eligible reasons', async () => {
-      const { PROTECTION_ELIGIBLE_REASONS } = await import('@/lib/commerce/buyer-protection');
+      const { PROTECTION_ELIGIBLE_REASONS } = await import('@twicely/commerce/buyer-protection');
       expect(PROTECTION_ELIGIBLE_REASONS).toHaveLength(5);
     });
   });
 
   describe('Constants', () => {
     it('defines correct default claim window days', async () => {
-      const { DEFAULT_STANDARD_CLAIM_WINDOW_DAYS, DEFAULT_COUNTERFEIT_CLAIM_WINDOW_DAYS } = await import('@/lib/commerce/buyer-protection');
+      const { DEFAULT_STANDARD_CLAIM_WINDOW_DAYS, DEFAULT_COUNTERFEIT_CLAIM_WINDOW_DAYS } = await import('@twicely/commerce/buyer-protection');
 
       expect(DEFAULT_STANDARD_CLAIM_WINDOW_DAYS).toBe(30);
       expect(DEFAULT_COUNTERFEIT_CLAIM_WINDOW_DAYS).toBe(60);
@@ -113,7 +113,7 @@ describe('Buyer Protection Module', () => {
       mockGetPlatformSetting
         .mockResolvedValueOnce(45)   // custom standard window
         .mockResolvedValueOnce(90);  // custom counterfeit window
-      const { getClaimWindows } = await import('@/lib/commerce/buyer-protection');
+      const { getClaimWindows } = await import('@twicely/commerce/buyer-protection');
 
       const windows = await getClaimWindows();
       expect(windows.standardDays).toBe(45);

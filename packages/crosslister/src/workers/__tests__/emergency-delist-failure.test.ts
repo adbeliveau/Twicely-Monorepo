@@ -20,6 +20,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
   ne: vi.fn(),
@@ -33,7 +34,7 @@ vi.mock('@twicely/notifications/service', () => ({
   notify: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/realtime/centrifugo-publisher', () => ({
+vi.mock('@twicely/realtime/centrifugo-publisher', () => ({
   publishToChannel: vi.fn().mockResolvedValue(undefined),
   sellerChannel: vi.fn((id: string) => `private-user.${id}`),
 }));
@@ -44,7 +45,7 @@ vi.mock('../../connector-registry', () => ({
   }),
 }));
 
-vi.mock('@/lib/jobs/queue', () => ({
+vi.mock('@twicely/jobs/queue', () => ({
   createWorker: vi.fn().mockReturnValue({
     on: vi.fn(),
     close: vi.fn(),
@@ -111,7 +112,7 @@ function setupSelectSequence(dbMock: unknown, results: unknown[][]): void {
 }
 
 async function getProcessor(): Promise<((job: MockJob) => Promise<void>) | undefined> {
-  const { createWorker } = await import('@/lib/jobs/queue');
+  const { createWorker } = await import('@twicely/jobs/queue');
   const { createEmergencyDelistWorker } = await import('../emergency-delist-worker');
   createEmergencyDelistWorker();
   const calls = (createWorker as Mock).mock.calls;
@@ -124,7 +125,7 @@ describe('emergency delist processor — failure paths', () => {
   });
 
   it('throws on connector failure to trigger BullMQ retry', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -147,7 +148,7 @@ describe('emergency delist processor — failure paths', () => {
   });
 
   it('marks ERROR and notifies seller after 3 failed attempts', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock };
 
     setupSelectSequence(db, [
@@ -173,7 +174,7 @@ describe('emergency delist processor — failure paths', () => {
       }),
     });
 
-    const { notify } = await import('@/lib/notifications/service');
+    const { notify } = await import('@twicely/notifications/service');
     const processor = await getProcessor();
     if (processor) {
       try {

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
+vi.mock('@twicely/notifications/service', () => ({ notify: vi.fn() }));
+
 vi.mock('@twicely/casl/authorize', () => ({
   authorize: vi.fn(),
 }));

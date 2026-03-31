@@ -11,7 +11,7 @@ describe('Shipping Exceptions Module', () => {
 
   describe('Constants', () => {
     it('defines correct thresholds', async () => {
-      const { LOST_IN_TRANSIT_DAYS, SIGNIFICANT_DELAY_DAYS } = await import('@/lib/commerce/shipping-exceptions');
+      const { LOST_IN_TRANSIT_DAYS, SIGNIFICANT_DELAY_DAYS } = await import('@twicely/commerce/shipping-exceptions');
 
       expect(LOST_IN_TRANSIT_DAYS).toBe(7);
       expect(SIGNIFICANT_DELAY_DAYS).toBe(14);
@@ -20,7 +20,7 @@ describe('Shipping Exceptions Module', () => {
 
   describe('Module exports', () => {
     it('exports expected functions', async () => {
-      const mod = await import('@/lib/commerce/shipping-exceptions');
+      const mod = await import('@twicely/commerce/shipping-exceptions');
 
       expect(typeof mod.detectShippingException).toBe('function');
       expect(typeof mod.autoCreateClaim).toBe('function');

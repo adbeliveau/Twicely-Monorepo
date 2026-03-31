@@ -81,7 +81,7 @@ describe('fairness-quota', () => {
   });
 
   it('getMaxJobsPerSellerPerMinute returns default 10 when setting is invalid', async () => {
-    const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
+    const { getPlatformSetting } = await import('@twicely/db/queries/platform-settings');
     (getPlatformSetting as ReturnType<typeof vi.fn>).mockResolvedValueOnce(-5);
     resetAllQuotas(); // clear cache
     const result = await getMaxJobsPerSellerPerMinute();

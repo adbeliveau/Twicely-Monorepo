@@ -36,6 +36,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
   inArray: vi.fn(),
@@ -150,7 +151,7 @@ describe('publishListingToChannel — REQUIRE_FIELDS policy', () => {
       status: 'REQUIRE_FIELDS',
       fields: ['brand', 'condition'],
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(buildSelectMock());
 
     const { publishListingToChannel } = await import('../publish-service');
@@ -171,7 +172,7 @@ describe('publishListingToChannel — REQUIRE_CHANGES proceeds', () => {
       status: 'REQUIRE_CHANGES',
       changes: [{ field: 'title', guidance: 'Will be truncated' }],
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(buildSelectMock());
     (db.insert as ReturnType<typeof vi.fn>).mockReturnValue({
       values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 'job-1' }]) }),
@@ -195,7 +196,7 @@ describe('publishListingToChannel — re-publish after ERROR', () => {
   it('resets existing ERROR projection to PUBLISHING and re-enqueues', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     // Override call #7: existing projection with ERROR status
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(
       buildSelectMock({
@@ -232,10 +233,10 @@ describe('publishListingToChannel — BullMQ enqueue failure', () => {
   it('reverts projection to ERROR when BullMQ add fails', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { listerPublishQueue } = await import('@/lib/crosslister/queue/lister-queue');
+    const { listerPublishQueue } = await import('@twicely/crosslister/queue/lister-queue');
     (listerPublishQueue.add as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Valkey connection refused'));
 
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(buildSelectMock());
     (db.insert as ReturnType<typeof vi.fn>).mockReturnValue({
       values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 'job-fail' }]) }),

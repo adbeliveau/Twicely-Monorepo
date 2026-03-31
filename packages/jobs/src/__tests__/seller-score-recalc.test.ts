@@ -45,7 +45,7 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
 }));
 
-vi.mock('@/lib/scoring/metric-queries', () => ({
+vi.mock('@twicely/scoring/metric-queries', () => ({
   getOnTimeShippingRate: vi.fn().mockResolvedValue(0.95),
   getInadClaimRate: vi.fn().mockResolvedValue(0.02),
   getReturnRate: vi.fn().mockResolvedValue(0.03),
@@ -55,7 +55,7 @@ vi.mock('@/lib/scoring/metric-queries', () => ({
   getPlatformMeanScore: vi.fn().mockResolvedValue(600),
 }));
 
-vi.mock('@/lib/scoring/metric-queries-messaging', () => ({
+vi.mock('@twicely/scoring/metric-queries-messaging', () => ({
   getReviewAverage: vi.fn().mockResolvedValue(4.5),
   getMedianResponseTime: vi.fn().mockResolvedValue(8),
 }));
@@ -150,7 +150,7 @@ describe('seller-score-recalc', () => {
   });
 
   it('marks new sellers (< 10 orders) as isNew without scoring', async () => {
-    const { getCompletedOrderCount } = await import('@/lib/scoring/metric-queries');
+    const { getCompletedOrderCount } = await import('@twicely/scoring/metric-queries');
     vi.mocked(getCompletedOrderCount).mockResolvedValueOnce(5);
 
     const sellers = makeSellerList();

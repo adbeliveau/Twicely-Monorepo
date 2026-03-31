@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@twicely/db/cache/valkey', () => ({
+vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn().mockReturnValue({ set: vi.fn().mockResolvedValue('OK') }),
 }));
 
@@ -41,6 +41,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((col, val) => ({ op: 'eq', col, val })),
 }));
 
@@ -77,7 +78,7 @@ describe('handleVerificationWebhook — no record found', () => {
 
   it('logs warning and returns without updating when record not found', async () => {
     mockDbSelect.mockReturnValue(makeSelectChain([]));
-    const { logger } = await import('@/lib/logger');
+    const { logger } = await import('@twicely/logger');
 
     const { handleVerificationWebhook } = await import('../identity-service');
     const event = {

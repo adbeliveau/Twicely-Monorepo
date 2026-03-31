@@ -23,8 +23,15 @@ vi.mock('drizzle-orm', () => ({
   sql: Object.assign(vi.fn((strings: TemplateStringsArray) => strings[0]), { raw: vi.fn() }),
 }));
 
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue({
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+  }),
+}));
+
 vi.mock('@twicely/logger', () => ({
-  logger: { error: vi.fn() },
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 // ─── Helper ─────────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   lt: vi.fn((col, val) => ({ op: 'lt', col, val })),
 }));
 
@@ -18,7 +19,7 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/lib/jobs/cleanup-helpers', () => ({
+vi.mock('@twicely/jobs/cleanup-helpers', () => ({
   upsertPlatformSetting: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -33,7 +34,7 @@ describe('runSessionCleanup', () => {
   });
 
   it('deletes expired sessions from the session table', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.delete).mockReturnValue(makeDeleteChain(8) as unknown as ReturnType<typeof db.delete>);
 
     const { runSessionCleanup } = await import('../cleanup-session');
@@ -43,7 +44,7 @@ describe('runSessionCleanup', () => {
   });
 
   it('returns count of purged sessions', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.delete).mockReturnValue(makeDeleteChain(12) as unknown as ReturnType<typeof db.delete>);
 
     const { runSessionCleanup } = await import('../cleanup-session');
@@ -53,7 +54,7 @@ describe('runSessionCleanup', () => {
   });
 
   it('returns 0 when no expired sessions', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.delete).mockReturnValue(makeDeleteChain(0) as unknown as ReturnType<typeof db.delete>);
 
     const { runSessionCleanup } = await import('../cleanup-session');
@@ -63,8 +64,8 @@ describe('runSessionCleanup', () => {
   });
 
   it('writes lastRunAt and lastResult to platform_settings', async () => {
-    const { db } = await import('@/lib/db');
-    const { upsertPlatformSetting } = await import('@/lib/jobs/cleanup-helpers');
+    const { db } = await import('@twicely/db');
+    const { upsertPlatformSetting } = await import('@twicely/jobs/cleanup-helpers');
     vi.mocked(db.delete).mockReturnValue(makeDeleteChain(3) as unknown as ReturnType<typeof db.delete>);
 
     const { runSessionCleanup } = await import('../cleanup-session');
@@ -81,8 +82,8 @@ describe('runSessionCleanup', () => {
   });
 
   it('logs purge count', async () => {
-    const { db } = await import('@/lib/db');
-    const { logger } = await import('@/lib/logger');
+    const { db } = await import('@twicely/db');
+    const { logger } = await import('@twicely/logger');
     vi.mocked(db.delete).mockReturnValue(makeDeleteChain(5) as unknown as ReturnType<typeof db.delete>);
 
     const { runSessionCleanup } = await import('../cleanup-session');

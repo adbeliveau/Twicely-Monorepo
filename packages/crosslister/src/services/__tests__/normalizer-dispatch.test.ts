@@ -148,7 +148,7 @@ vi.mock('@twicely/crosslister/connectors/vestiaire-normalizer', () => ({
 describe('normalizeExternalListing', () => {
   it('dispatches to eBay normalizer for channel EBAY', async () => {
     const { normalizeExternalListing } = await import('../normalizer-dispatch');
-    const { normalizeEbayListing } = await import('@/lib/crosslister/connectors/ebay-normalizer');
+    const { normalizeEbayListing } = await import('@twicely/crosslister/connectors/ebay-normalizer');
 
     const raw = { sku: 'SKU-001' };
     normalizeExternalListing(raw as Record<string, unknown>, 'EBAY');
@@ -158,7 +158,7 @@ describe('normalizeExternalListing', () => {
 
   it('dispatches to Poshmark normalizer for channel POSHMARK', async () => {
     const { normalizeExternalListing } = await import('../normalizer-dispatch');
-    const { normalizePoshmarkListing } = await import('@/lib/crosslister/connectors/poshmark-normalizer');
+    const { normalizePoshmarkListing } = await import('@twicely/crosslister/connectors/poshmark-normalizer');
 
     const raw = { id: 'pm-1', title: 'Test' };
     normalizeExternalListing(raw as Record<string, unknown>, 'POSHMARK');
@@ -168,7 +168,7 @@ describe('normalizeExternalListing', () => {
 
   it('dispatches to Mercari normalizer for channel MERCARI', async () => {
     const { normalizeExternalListing } = await import('../normalizer-dispatch');
-    const { normalizeMercariListing } = await import('@/lib/crosslister/connectors/mercari-normalizer');
+    const { normalizeMercariListing } = await import('@twicely/crosslister/connectors/mercari-normalizer');
 
     const raw = { id: 'mc-1', name: 'Test' };
     normalizeExternalListing(raw as Record<string, unknown>, 'MERCARI');
@@ -203,7 +203,7 @@ describe('normalizeExternalListing', () => {
 
   it('dispatches to Shopify normalizer for SHOPIFY channel', async () => {
     const { normalizeExternalListing } = await import('../normalizer-dispatch');
-    const { normalizeShopifyProduct } = await import('@/lib/crosslister/connectors/shopify-normalizer');
+    const { normalizeShopifyProduct } = await import('@twicely/crosslister/connectors/shopify-normalizer');
 
     // Valid Shopify product data that passes ShopifyProductSchema
     const raw = {
@@ -228,7 +228,7 @@ describe('normalizeExternalListing', () => {
 
   it('dispatches to Whatnot normalizer for WHATNOT channel', async () => {
     const { normalizeExternalListing } = await import('../normalizer-dispatch');
-    const { normalizeWhatnotListing } = await import('@/lib/crosslister/connectors/whatnot-normalizer');
+    const { normalizeWhatnotListing } = await import('@twicely/crosslister/connectors/whatnot-normalizer');
 
     // Valid Whatnot listing data that passes WhatnotListingSchema
     const raw = {
@@ -259,7 +259,7 @@ describe('normalizeExternalListing', () => {
 
   it('dispatches to Vestiaire normalizer for VESTIAIRE channel', async () => {
     const { normalizeExternalListing } = await import('../normalizer-dispatch');
-    const { normalizeVestiaireListing } = await import('@/lib/crosslister/connectors/vestiaire-normalizer');
+    const { normalizeVestiaireListing } = await import('@twicely/crosslister/connectors/vestiaire-normalizer');
     const raw = { id: 'vc-1', title: 'Chanel Bag' };
     const result = normalizeExternalListing(raw as Record<string, unknown>, 'VESTIAIRE');
     expect(normalizeVestiaireListing).toHaveBeenCalled();

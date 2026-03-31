@@ -22,6 +22,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((col, val) => ({ op: 'eq', col, val })),
   and: vi.fn((...args) => ({ op: 'and', args })),
   lt: vi.fn((col, val) => ({ op: 'lt', col, val })),
@@ -98,8 +99,8 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('reads gracePeriodDays from platform settings', async () => {
-    const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
-    const { db } = await import('@/lib/db');
+    const { getPlatformSetting } = await import('@twicely/db/queries/platform-settings');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
     const { runAccountDeletionBatch } = await import('../account-deletion-executor');
@@ -109,7 +110,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('skips users still in cooling-off period', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
     const { runAccountDeletionBatch } = await import('../account-deletion-executor');
@@ -119,8 +120,8 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('skips users with open orders', async () => {
-    const { db } = await import('@/lib/db');
-    const { logger } = await import('@/lib/logger');
+    const { db } = await import('@twicely/db');
+    const { logger } = await import('@twicely/logger');
 
     let selectCallCount = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -141,8 +142,8 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('sends confirmation email before clearing PII', async () => {
-    const { db } = await import('@/lib/db');
-    const { notify } = await import('@/lib/notifications/service');
+    const { db } = await import('@twicely/db');
+    const { notify } = await import('@twicely/notifications/service');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -162,7 +163,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('pseudonymizes order buyer/seller IDs', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizeOrders } = await import('@/lib/gdpr/pseudonymize');
 
     let n = 0;
@@ -183,7 +184,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('pseudonymizes ledger entry userIds', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizeLedgerEntries } = await import('@/lib/gdpr/pseudonymize');
 
     let n = 0;
@@ -204,7 +205,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
   });
 
   it('pseudonymizes payout ownerIds', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizePayouts } = await import('@/lib/gdpr/pseudonymize');
 
     let n = 0;

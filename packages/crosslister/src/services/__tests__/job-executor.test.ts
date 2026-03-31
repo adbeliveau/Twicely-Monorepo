@@ -19,6 +19,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
 }));
@@ -76,8 +77,8 @@ describe('executeCreateJob', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('calls connector.createListing with transformed data', async () => {
-    const { getConnector } = await import('@/lib/crosslister/connector-registry');
-    const { db } = await import('@/lib/db');
+    const { getConnector } = await import('@twicely/crosslister/connector-registry');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -95,7 +96,7 @@ describe('executeCreateJob', () => {
   });
 
   it('updates projection to ACTIVE on success', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -118,11 +119,11 @@ describe('executeCreateJob', () => {
   });
 
   it('updates projection to ERROR on non-retryable failure', async () => {
-    const { getConnector } = await import('@/lib/crosslister/connector-registry');
+    const { getConnector } = await import('@twicely/crosslister/connector-registry');
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue({
       createListing: vi.fn().mockResolvedValue({ success: false, externalId: null, externalUrl: null, error: 'Bad creds', retryable: false }),
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -145,11 +146,11 @@ describe('executeCreateJob', () => {
   });
 
   it('returns retryable=true for transient errors (thrown)', async () => {
-    const { getConnector } = await import('@/lib/crosslister/connector-registry');
+    const { getConnector } = await import('@twicely/crosslister/connector-registry');
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue({
       createListing: vi.fn().mockRejectedValue(new Error('Network timeout')),
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -183,12 +184,12 @@ describe('executeUpdateJob', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('calls connector.updateListing', async () => {
-    const { getConnector } = await import('@/lib/crosslister/connector-registry');
+    const { getConnector } = await import('@twicely/crosslister/connector-registry');
     const mockConnector = {
       updateListing: vi.fn().mockResolvedValue({ success: true, retryable: false }),
     };
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue(mockConnector);
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -210,12 +211,12 @@ describe('executeDelistJob', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('calls connector.delistListing', async () => {
-    const { getConnector } = await import('@/lib/crosslister/connector-registry');
+    const { getConnector } = await import('@twicely/crosslister/connector-registry');
     const mockConnector = {
       delistListing: vi.fn().mockResolvedValue({ success: true, retryable: false }),
     };
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue(mockConnector);
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -233,7 +234,7 @@ describe('executeDelistJob', () => {
   });
 
   it('updates projection to DELISTED on success', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),

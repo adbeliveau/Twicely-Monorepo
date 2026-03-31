@@ -16,6 +16,8 @@ const mockCalculateSlaDue = vi.fn();
 const mockGenerateCaseNumber = vi.fn();
 const mockGetPlatformSetting = vi.fn();
 
+vi.mock('@twicely/notifications/service', () => ({ notify: vi.fn() }));
+
 vi.mock('@twicely/db', () => ({ db: mockDb }));
 vi.mock('@twicely/casl', () => ({ authorize: mockAuthorize, sub: (...args: unknown[]) => args }));
 vi.mock('@twicely/casl/staff-authorize', () => ({ staffAuthorize: mockStaffAuthorize }));

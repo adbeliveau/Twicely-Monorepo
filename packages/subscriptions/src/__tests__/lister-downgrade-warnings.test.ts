@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from 'vitest';
  * to prevent it from breaking when subscription-engine loads.
  */
 
-vi.mock('@/lib/subscriptions/price-map', () => ({
+vi.mock('@twicely/subscriptions/price-map', () => ({
   getPricing: vi.fn(),
   resolveStripePriceId: vi.fn(),
   getStripePriceId: vi.fn(),

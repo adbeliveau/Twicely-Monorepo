@@ -54,7 +54,7 @@ vi.mock('@twicely/commerce/local-reserve', () => ({
   unreserveListingForLocalTransaction: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/jobs/local-fraud-noshow-relist', () => ({
+vi.mock('@twicely/jobs/local-fraud-noshow-relist', () => ({
   enqueueNoshowRelistCheck: vi.fn().mockResolvedValue(undefined),
 }));
 

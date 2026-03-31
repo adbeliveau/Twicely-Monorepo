@@ -33,16 +33,16 @@ const mockNoShowGetJob = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const mockNudgeGetJob = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const mockReminderGetJob = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 
-vi.mock('@/lib/jobs/local-auto-cancel', () => ({
+vi.mock('@twicely/jobs/local-auto-cancel', () => ({
   localAutoCancelQueue: { getJob: mockAutoCancelGetJob },
 }));
-vi.mock('@/lib/jobs/local-noshow-check', () => ({
+vi.mock('@twicely/jobs/local-noshow-check', () => ({
   localNoShowCheckQueue: { getJob: mockNoShowGetJob },
 }));
-vi.mock('@/lib/jobs/local-schedule-nudge', () => ({
+vi.mock('@twicely/jobs/local-schedule-nudge', () => ({
   localScheduleNudgeQueue: { getJob: mockNudgeGetJob },
 }));
-vi.mock('@/lib/jobs/local-meetup-reminder', () => ({
+vi.mock('@twicely/jobs/local-meetup-reminder', () => ({
   localMeetupReminderQueue: { getJob: mockReminderGetJob },
   enqueueLocalMeetupReminders: vi.fn().mockResolvedValue(undefined),
   removeLocalMeetupReminders: vi.fn().mockResolvedValue(undefined),

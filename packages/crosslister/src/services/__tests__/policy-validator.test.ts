@@ -16,6 +16,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn(),
   and: vi.fn(),
 }));
@@ -65,7 +66,7 @@ function makeImages(count: number = 2) {
 }
 
 async function mockDbNoRules() {
-  const { db } = await import('@/lib/db');
+  const { db } = await import('@twicely/db');
   (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue([]),
@@ -73,7 +74,7 @@ async function mockDbNoRules() {
 }
 
 async function mockDbWithRules(rules: unknown[]) {
-  const { db } = await import('@/lib/db');
+  const { db } = await import('@twicely/db');
   (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue(rules),
@@ -138,7 +139,7 @@ describe('validateForChannel', () => {
   });
 
   it('returns REQUIRE_CHANGES when title exceeds channel max length', async () => {
-    const { getChannelMetadata } = await import('@/lib/crosslister/channel-registry');
+    const { getChannelMetadata } = await import('@twicely/crosslister/channel-registry');
     (getChannelMetadata as ReturnType<typeof vi.fn>).mockReturnValue({
       channel: 'EBAY',
       displayName: 'eBay',
@@ -158,7 +159,7 @@ describe('validateForChannel', () => {
   });
 
   it('returns REQUIRE_CHANGES when too many images', async () => {
-    const { getChannelMetadata } = await import('@/lib/crosslister/channel-registry');
+    const { getChannelMetadata } = await import('@twicely/crosslister/channel-registry');
     (getChannelMetadata as ReturnType<typeof vi.fn>).mockReturnValue({
       channel: 'DEPOP',
       displayName: 'Depop',

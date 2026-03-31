@@ -759,6 +759,9 @@ importers:
         specifier: 19.2.3
         version: 19.2.3
     devDependencies:
+      '@twicely/commerce':
+        specifier: workspace:*
+        version: link:../commerce
       '@types/node':
         specifier: ^20
         version: 20.19.37

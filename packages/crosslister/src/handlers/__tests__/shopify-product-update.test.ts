@@ -34,11 +34,12 @@ vi.mock('@twicely/logger', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
+  sql: vi.fn(),
   eq: vi.fn((_a: unknown, _b: unknown) => ({ type: 'eq', a: _a, b: _b })),
   and: vi.fn((...args: unknown[]) => ({ type: 'and', args })),
 }));
 
-vi.mock('@/lib/realtime/centrifugo-publisher', () => ({
+vi.mock('@twicely/realtime/centrifugo-publisher', () => ({
   publishToChannel: vi.fn().mockResolvedValue(undefined),
   sellerChannel: vi.fn((id: string) => `private-user.${id}`),
 }));

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockAuthorize = vi.fn();
+vi.mock('@twicely/notifications/service', () => ({ notify: vi.fn() }));
+
 vi.mock('@twicely/casl', () => ({
   authorize: mockAuthorize,
   sub: (...args: unknown[]) => args,

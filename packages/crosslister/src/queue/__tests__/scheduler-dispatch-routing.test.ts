@@ -15,7 +15,7 @@ vi.mock('bullmq', () => ({
   })),
 }));
 
-vi.mock('@/lib/jobs/queue', () => ({
+vi.mock('@twicely/jobs/queue', () => ({
   createQueue: vi.fn().mockImplementation(() => ({
     add: vi.fn().mockResolvedValue({ id: 'q-1' }),
   })),

@@ -9,7 +9,7 @@ const mockSendEmail = vi.fn().mockResolvedValue({ success: true });
 const mockGetOfferWithParties = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
-vi.mock('@/lib/email/send', () => ({ sendEmail: mockSendEmail }));
+vi.mock('@twicely/email/send', () => ({ sendEmail: mockSendEmail }));
 vi.mock('@twicely/commerce/offer-queries', () => ({ getOfferWithParties: mockGetOfferWithParties }));
 
 // Helper to set up preference + settings query mocks
@@ -220,7 +220,7 @@ describe('Notification Service', () => {
         listing: { title: 'Test Item', slug: 'test-item' },
         buyer: { name: 'Buyer' }, seller: { name: 'Seller' },
       });
-      const { notifyOfferEvent } = await import('@/lib/commerce/offer-notifications');
+      const { notifyOfferEvent } = await import('@twicely/commerce/offer-notifications');
       notifyOfferEvent('created', 'offer-1');
       // Wait for async
       await new Promise((r) => setTimeout(r, 10));
@@ -233,7 +233,7 @@ describe('Notification Service', () => {
         listing: { title: 'Declined Item', slug: 'declined-item' },
         buyer: { name: 'Bob' }, seller: { name: 'Sue' },
       });
-      const { notifyOfferEvent } = await import('@/lib/commerce/offer-notifications');
+      const { notifyOfferEvent } = await import('@twicely/commerce/offer-notifications');
       notifyOfferEvent('declined', 'offer-2');
       await new Promise((r) => setTimeout(r, 10));
       expect(mockGetOfferWithParties).toHaveBeenCalledWith('offer-2');

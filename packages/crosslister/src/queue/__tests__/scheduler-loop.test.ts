@@ -104,7 +104,7 @@ describe('scheduler-loop', () => {
 
   it('runTick skips job when rate limit exhausted', async () => {
     const { checkRateLimit } = await import('../rate-limiter');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
     // Return one pending job
@@ -134,7 +134,7 @@ describe('scheduler-loop', () => {
   it('runTick skips job when fairness quota exhausted', async () => {
     const { checkRateLimit } = await import('../rate-limiter');
     const { hasQuota } = await import('../fairness-quota');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (hasQuota as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
@@ -165,7 +165,7 @@ describe('scheduler-loop', () => {
     const { checkRateLimit } = await import('../rate-limiter');
     const { hasQuota } = await import('../fairness-quota');
     const { canDispatch } = await import('../circuit-breaker');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (hasQuota as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (canDispatch as ReturnType<typeof vi.fn>).mockReturnValue(false);
@@ -197,7 +197,7 @@ describe('scheduler-loop', () => {
     const { checkRateLimit } = await import('../rate-limiter');
     const { hasQuota } = await import('../fairness-quota');
     const { canDispatch } = await import('../circuit-breaker');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (hasQuota as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (canDispatch as ReturnType<typeof vi.fn>).mockReturnValue(true);
@@ -229,7 +229,7 @@ describe('scheduler-loop', () => {
     const { checkRateLimit } = await import('../rate-limiter');
     const { hasQuota, recordDispatch } = await import('../fairness-quota');
     const { canDispatch } = await import('../circuit-breaker');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (hasQuota as ReturnType<typeof vi.fn>).mockReturnValue(true);
     (canDispatch as ReturnType<typeof vi.fn>).mockReturnValue(true);
@@ -257,7 +257,7 @@ describe('scheduler-loop', () => {
   });
 
   it('runTick does not throw on DB error', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
