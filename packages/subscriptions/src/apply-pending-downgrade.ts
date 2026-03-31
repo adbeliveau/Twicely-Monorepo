@@ -22,7 +22,7 @@ import { stripe } from '@twicely/stripe/server';
 import { getStripePriceId } from './price-map';
 import { getBillingIntervalFromPriceId } from './subscription-engine';
 import { resolveBundleComponents } from './bundle-resolution';
-import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@/types/enums';
+import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@twicely/db/types';
 import type { BillingInterval } from './price-map';
 
 // ─── Types ──────────────────────────────────────────────────────────────────

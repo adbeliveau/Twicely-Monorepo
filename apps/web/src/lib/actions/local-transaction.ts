@@ -22,11 +22,6 @@ import {
 } from '@/lib/validations/local';
 import { z } from 'zod';
 
-// Re-export offline confirmation actions from split module
-export {
-  confirmReceiptOfflineAction,
-  confirmReceiptOfflineDualCodeAction,
-} from './local-transaction-offline';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

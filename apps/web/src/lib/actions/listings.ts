@@ -7,6 +7,6 @@ export { createListing } from './listings-create';
 export {
   updateListing,
   updateListingStatus,
-  deleteListing,
   getListingForEdit,
 } from './listings-update';
+export { deleteListing } from './listings-delete';

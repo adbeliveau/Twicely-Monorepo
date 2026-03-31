@@ -15,7 +15,7 @@ import {
   bundleSubscription,
 } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import type { StoreTier, ListerTier, FinanceTier } from '@/types/enums';
+import type { StoreTier, ListerTier, FinanceTier } from '@twicely/db/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

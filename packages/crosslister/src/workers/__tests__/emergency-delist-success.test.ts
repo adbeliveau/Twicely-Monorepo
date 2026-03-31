@@ -133,14 +133,14 @@ describe('createEmergencyDelistWorker', () => {
     vi.clearAllMocks();
   });
 
-  it('creates a BullMQ worker for lister:emergency-delist', async () => {
+  it('creates a BullMQ worker for lister-emergency-delist', async () => {
     const { createEmergencyDelistWorker } = await import('../emergency-delist-worker');
     const { createWorker } = await import('@twicely/jobs/queue');
 
     createEmergencyDelistWorker();
 
     expect(createWorker).toHaveBeenCalledWith(
-      'lister:emergency-delist',
+      'lister-emergency-delist',
       expect.any(Function),
       expect.any(Number),
     );

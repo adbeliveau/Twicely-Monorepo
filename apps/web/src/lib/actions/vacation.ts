@@ -249,6 +249,3 @@ export async function adminForceDeactivateVacation(
   return { success: true };
 }
 
-// Re-export queries for use in vacation settings UI
-export { getUnfulfilledOrderCount } from '@/lib/queries/vacation';
-export { getSellerPendingOffersCount } from '@/lib/queries/vacation';

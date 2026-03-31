@@ -7,7 +7,7 @@
  * Consumed by subscription-engine.ts (which re-exports everything here).
  */
 
-import type { StoreTier, ListerTier, BundleTier } from '@/types/enums';
+import type { StoreTier, ListerTier, BundleTier } from '@twicely/db/types';
 
 // ─── Tier Ordering ──────────────────────────────────────────────────────────
 

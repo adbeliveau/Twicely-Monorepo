@@ -4,7 +4,7 @@ import { eq, and, inArray, sql, gte } from 'drizzle-orm';
 import { generateOrderNumber } from './order-number';
 import { calculateTf, getTfBrackets, getMinimumTfCents } from './tf-calculator';
 import { getOfferById } from './offer-queries';
-import type { FeeBucket } from '@/types/enums';
+import type { FeeBucket } from '@twicely/db/types';
 import { logger } from '@twicely/logger';
 
 interface CreateOrderFromOfferInput {

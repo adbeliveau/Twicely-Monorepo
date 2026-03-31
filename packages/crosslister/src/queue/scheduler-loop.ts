@@ -19,7 +19,7 @@ import { effectiveQuota, loadTierWeights } from './tier-weight';
 import { listerPublishQueue } from './lister-queue';
 import { automationQueue } from './automation-queue';
 import type { ExternalChannel } from '../types';
-import type { ListerTier } from '@/types/enums';
+import type { ListerTier } from '@twicely/db/types';
 
 const TICK_INTERVAL_MS = 5_000;
 const BATCH_PULL_SIZE = 50;

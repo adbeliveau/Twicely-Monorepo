@@ -4,7 +4,7 @@
  * Maps bundle tiers to their individual entitlements and component tiers.
  */
 
-import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@/types/enums';
+import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@twicely/db/types';
 import { getPricing } from './price-map';
 import type { BillingInterval } from './price-map';
 

@@ -9,7 +9,7 @@
 
 import { createQueue } from '@twicely/jobs/queue';
 
-export const EMERGENCY_DELIST_QUEUE = 'lister:emergency-delist';
+export const EMERGENCY_DELIST_QUEUE = 'lister-emergency-delist';
 
 export interface EmergencyDelistJobData {
   /** PK of the channel_projection to delist */

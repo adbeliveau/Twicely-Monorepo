@@ -1,3 +1,24 @@
+export interface SearchFilters {
+  q?: string;
+  categoryId?: string;
+  condition?: ('NEW_WITH_TAGS' | 'NEW_WITHOUT_TAGS' | 'NEW_WITH_DEFECTS' | 'LIKE_NEW' | 'VERY_GOOD' | 'GOOD' | 'ACCEPTABLE')[];
+  minPrice?: number;
+  maxPrice?: number;
+  freeShipping?: boolean;
+  brand?: string;
+  sort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchResult {
+  listings: ListingCardData[];
+  totalCount: number;
+  page: number;
+  totalPages: number;
+  filters: SearchFilters;
+}
+
 export interface ListingCardData {
   id: string;
   slug: string;

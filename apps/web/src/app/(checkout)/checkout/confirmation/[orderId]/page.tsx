@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@twicely/auth';
 import { getOrderById, getOrdersByPaymentIntent } from '@/lib/queries/order-detail';
-import { finalizeOrder } from '@/lib/actions/checkout';
+import { finalizeOrder } from '@/lib/actions/checkout-finalize';
 import { OrderConfirmation } from '@/components/pages/checkout/order-confirmation';
 
 export const dynamic = 'force-dynamic';

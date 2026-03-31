@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@twic
 import { Button } from '@twicely/ui/button';
 import { Badge } from '@twicely/ui/badge';
 import { Pencil, Trash2, Star } from 'lucide-react';
-import { deleteShippingProfile, setDefaultShippingProfile } from '@/lib/actions/shipping-profiles';
+import { deleteShippingProfile, setDefaultShippingProfile } from '@/lib/actions/shipping-profile-manage';
 import { useRouter } from 'next/navigation';
 import type { ShippingProfileData } from '@/lib/queries/shipping-profiles';
 

@@ -6,7 +6,7 @@
  * when products are created in the Stripe Dashboard.
  */
 
-import type { StoreTier, ListerTier, FinanceTier } from '@/types/enums';
+import type { StoreTier, ListerTier, FinanceTier } from '@twicely/db/types';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@
  * Source: Pricing Canonical §6, Lister Canonical §7.3
  */
 
-import type { ListerTier } from '@/types/enums';
+import type { ListerTier } from '@twicely/db/types';
 import { compareListerTiers } from './subscription-engine';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

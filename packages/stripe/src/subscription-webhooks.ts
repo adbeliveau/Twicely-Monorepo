@@ -23,7 +23,7 @@ import {
   cancelSubscription,
 } from '@twicely/subscriptions/mutations';
 import { applyPendingDowngradeIfNeeded } from '@twicely/subscriptions/apply-pending-downgrade';
-import type { StoreTier, ListerTier, FinanceTier, BundleTier, SubscriptionStatus } from '@/types/enums';
+import type { StoreTier, ListerTier, FinanceTier, BundleTier, SubscriptionStatus } from '@twicely/db/types';
 
 // ─── Stripe Status → Twicely Status Mapping ─────────────────────────────────
 

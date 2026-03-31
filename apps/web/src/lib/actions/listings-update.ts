@@ -328,9 +328,6 @@ export async function updateListingStatus(
   }
 }
 
-// Re-export deleteListing from its dedicated module
-export { deleteListing } from './listings-delete';
-
 /**
  * Get a listing by ID for editing (with ownership check).
  */

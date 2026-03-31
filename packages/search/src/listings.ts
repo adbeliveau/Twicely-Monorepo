@@ -1,8 +1,7 @@
 import { db } from '@twicely/db';
 import { listing, listingImage, user, sellerProfile, category, sellerPerformance } from '@twicely/db/schema';
 import { eq, and, or, ilike, gte, lte, inArray, desc, asc, sql } from 'drizzle-orm';
-import type { SearchFilters, SearchResult } from '@/types/listings';
-import { mapToListingCard, type ListingCardData } from './shared';
+import { mapToListingCard, type ListingCardData, type SearchFilters, type SearchResult } from './shared';
 import { getTypesenseClient } from './typesense-client';
 import { LISTINGS_COLLECTION, DEFAULT_QUERY_BY, DEFAULT_QUERY_WEIGHTS } from './typesense-schema';
 

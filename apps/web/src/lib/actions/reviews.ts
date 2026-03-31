@@ -233,5 +233,3 @@ export async function updateReview(reviewId: string, data: ReviewSubmissionData)
   return { success: true, reviewId };
 }
 
-// Re-export query function from its dedicated module
-export { getReviewForOrder } from '@/lib/queries/review-for-order';

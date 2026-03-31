@@ -12,9 +12,6 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
 
-// Re-export finalize functions from split file
-export { finalizeOrder, finalizeOrders } from './checkout-finalize';
-
 interface CouponData {
   promotionId: string;
   couponCode: string;

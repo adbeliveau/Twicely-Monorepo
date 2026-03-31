@@ -14,7 +14,7 @@ import {
   bundleSubscription,
 } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import type { FinanceTier, SubscriptionStatus, BundleTier } from '@/types/enums';
+import type { FinanceTier, SubscriptionStatus, BundleTier } from '@twicely/db/types';
 import { resolveBundleComponents } from './bundle-resolution';
 
 // ─── Automation Subscription ────────────────────────────────────────────────

@@ -16,7 +16,7 @@ import {
   getDowngradeWarnings,
 } from './subscription-engine-core';
 import type { DowngradeWarning } from './subscription-engine-core';
-import type { StoreTier, ListerTier, BundleTier } from '@/types/enums';
+import type { StoreTier, ListerTier, BundleTier } from '@twicely/db/types';
 
 // ─── Re-export everything from core so existing imports continue to work ─────
 

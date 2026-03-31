@@ -25,7 +25,8 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn(),
 }));
 
-import { updateReview, getReviewForOrder } from '../reviews';
+import { updateReview } from '../reviews';
+import { getReviewForOrder } from '../../queries/review-for-order';
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';

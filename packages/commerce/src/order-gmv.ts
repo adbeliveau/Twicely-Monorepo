@@ -1,7 +1,7 @@
 import { db } from '@twicely/db';
 import { order, orderItem } from '@twicely/db/schema';
 import { eq, and, inArray, sql, gte } from 'drizzle-orm';
-import type { FeeBucket } from '@/types/enums';
+import type { FeeBucket } from '@twicely/db/types';
 import type { ShippingAddressJson } from './address-types';
 
 export interface CreateOrderInput {

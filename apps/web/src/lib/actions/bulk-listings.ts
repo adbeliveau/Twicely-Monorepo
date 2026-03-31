@@ -274,5 +274,3 @@ export async function bulkUpdateListingsAction(
   return result;
 }
 
-// Re-export query function from its dedicated module
-export { getListingsForBulkAction } from '@/lib/queries/bulk-listings';

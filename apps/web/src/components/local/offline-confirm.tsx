@@ -7,7 +7,7 @@ import { Button } from '@twicely/ui/button';
 import {
   confirmReceiptOfflineAction,
   confirmReceiptOfflineDualCodeAction,
-} from '@/lib/actions/local-transaction';
+} from '@/lib/actions/local-transaction-offline';
 import { storeTokens, getStoredTokens, clearStoredTokens } from '@twicely/commerce/local-token-store';
 import { verifyTokenClient } from '@twicely/commerce/local-token-client';
 import type { PreloadedTokenData } from '@/lib/types/local-token';

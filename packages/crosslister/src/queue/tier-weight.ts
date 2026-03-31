@@ -11,7 +11,7 @@
  * Falls back to hardcoded defaults if setting is missing.
  */
 
-import type { ListerTier } from '@/types/enums';
+import type { ListerTier } from '@twicely/db/types';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 
 /** Hardcoded fallback weights — overridden by platform_settings at runtime. */

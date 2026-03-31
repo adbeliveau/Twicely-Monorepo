@@ -247,5 +247,3 @@ export async function updateShippingProfile(
   }
 }
 
-// Re-export delete and setDefault from their dedicated module
-export { deleteShippingProfile, setDefaultShippingProfile } from './shipping-profile-manage';

@@ -14,7 +14,7 @@ import {
   publishCreditLedger,
 } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
-import type { StoreTier, ListerTier, SubscriptionStatus } from '@/types/enums';
+import type { StoreTier, ListerTier, SubscriptionStatus } from '@twicely/db/types';
 import { addMonthlyCredits } from '@twicely/crosslister/services/rollover-manager';
 import { reactivateUnmanagedProjections } from '@twicely/crosslister/services/projection-cascade';
 
