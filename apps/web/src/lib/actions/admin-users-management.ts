@@ -14,6 +14,7 @@ import { revalidatePath } from 'next/cache';
 import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
+import { requireMfaForCriticalAction } from './staff-mfa';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -99,6 +100,9 @@ export async function createUserAction(input: unknown) {
 export async function holdPayoutsAction(input: unknown) {
   const { ability, session } = await staffAuthorize();
   if (!ability.can('update', 'SellerProfile')) return { error: 'Forbidden' };
+
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = holdPayoutsSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
@@ -214,6 +218,9 @@ export async function addInternalNoteAction(input: unknown) {
 export async function resetPasswordAction(input: unknown) {
   const { ability, session } = await staffAuthorize();
   if (!ability.can('update', 'User')) return { error: 'Forbidden' };
+
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = resetPasswordSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };

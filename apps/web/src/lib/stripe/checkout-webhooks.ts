@@ -14,7 +14,7 @@ import {
   listerSubscription,
   publishCreditLedger,
 } from '@twicely/db/schema';
-import { eq, and, gte } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { addOverageCredits } from '@twicely/crosslister/services/rollover-manager';
 import { logger } from '@twicely/logger';
 
@@ -97,20 +97,11 @@ async function handleOveragePackPurchase(
     return;
   }
 
-  // 4. Idempotency check: skip if an OVERAGE credit with the same quantity was
-  //    already added for this user within the last 60 seconds (duplicate webhook guard).
-  const sixtySecondsAgo = new Date(Date.now() - 60_000);
+  // 4. Idempotency check: skip if credits were already delivered for this Stripe session.
   const [existing] = await db
     .select({ id: publishCreditLedger.id })
     .from(publishCreditLedger)
-    .where(
-      and(
-        eq(publishCreditLedger.userId, userId),
-        eq(publishCreditLedger.creditType, 'OVERAGE'),
-        eq(publishCreditLedger.totalCredits, quantity),
-        gte(publishCreditLedger.createdAt, sixtySecondsAgo),
-      ),
-    )
+    .where(eq(publishCreditLedger.stripeSessionId, session.id))
     .limit(1);
 
   if (existing) {
@@ -123,7 +114,7 @@ async function handleOveragePackPurchase(
   }
 
   // 5. Deliver credits — expire at current lister period end
-  await addOverageCredits(userId, quantity, listerSub.currentPeriodEnd);
+  await addOverageCredits(userId, quantity, listerSub.currentPeriodEnd, session.id);
 
   logger.info('[checkout-webhook] Overage pack credits delivered', {
     sessionId: session.id,

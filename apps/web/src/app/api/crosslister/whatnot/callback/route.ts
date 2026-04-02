@@ -15,6 +15,7 @@ import { crosslisterAccount } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
 import { WhatnotConnector } from '@twicely/crosslister/connectors/whatnot-connector';
+import { encryptToken } from '@twicely/crosslister/token-crypto';
 import { logger } from '@twicely/logger';
 import { defineAbilitiesFor, sub } from '@twicely/casl';
 
@@ -96,8 +97,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           status: 'ACTIVE',
           externalAccountId: authResult.externalAccountId,
           externalUsername: authResult.externalUsername,
-          accessToken: authResult.accessToken,
-          refreshToken: authResult.refreshToken,
+          accessToken: encryptToken(authResult.accessToken),
+          refreshToken: encryptToken(authResult.refreshToken),
           tokenExpiresAt: authResult.tokenExpiresAt,
           capabilities: authResult.capabilities,
           lastAuthAt: new Date(),
@@ -107,7 +108,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .where(eq(crosslisterAccount.id, existing.id));
     } else {
       // Create new account row
-      // TODO: Encrypt tokens before production (stored as plain text for H2.1)
       await db.insert(crosslisterAccount).values({
         sellerId,
         channel: 'WHATNOT',
@@ -115,8 +115,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         status: 'ACTIVE',
         externalAccountId: authResult.externalAccountId,
         externalUsername: authResult.externalUsername,
-        accessToken: authResult.accessToken,
-        refreshToken: authResult.refreshToken,
+        accessToken: encryptToken(authResult.accessToken),
+        refreshToken: encryptToken(authResult.refreshToken),
         tokenExpiresAt: authResult.tokenExpiresAt,
         capabilities: authResult.capabilities,
         lastAuthAt: new Date(),

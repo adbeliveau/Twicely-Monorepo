@@ -8,7 +8,6 @@
  * Vestiaire Collective has no public API. Uses internal API at https://www.vestiairecollective.com/api.
  * Auth: extension captures session cookie → stored in sessionData.sessionToken.
  *
- * TODO: Token encryption must be added before production.
  */
 
 import { db } from '@twicely/db';

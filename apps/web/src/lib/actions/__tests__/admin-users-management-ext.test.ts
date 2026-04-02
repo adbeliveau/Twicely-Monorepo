@@ -35,6 +35,10 @@ vi.mock('@twicely/auth', () => ({
   },
 }));
 
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
+}));
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeUpdateChain() {

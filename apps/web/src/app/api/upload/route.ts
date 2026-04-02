@@ -150,6 +150,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid image type' }, { status: 400 });
     }
 
+    // Meetup-photo validation runs before storage branch (R2 or local)
+    let meetupPhotoPosition = 0;
+    let meetupTransactionId: string | null = null;
+    if (type === 'meetup-photo') {
+      meetupTransactionId = formData.get('localTransactionId') as string | null;
+      if (!meetupTransactionId) {
+        return NextResponse.json({ success: false, error: 'localTransactionId required' }, { status: 400 });
+      }
+
+      const [tx] = await db
+        .select()
+        .from(localTransaction)
+        .where(eq(localTransaction.id, meetupTransactionId))
+        .limit(1);
+
+      if (!tx || tx.buyerId !== userId) {
+        return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
+      }
+      if (!isPhotoUploadAllowed(tx.status)) {
+        return NextResponse.json({ success: false, error: 'Photos can only be uploaded before confirming receipt' }, { status: 400 });
+      }
+      if (tx.confirmedAt !== null) {
+        return NextResponse.json({ success: false, error: 'Transaction already confirmed' }, { status: 400 });
+      }
+      const currentCount = tx.meetupPhotoUrls.length;
+      if (currentCount >= 5) {
+        return NextResponse.json({ success: false, error: 'Maximum 5 photos per transaction' }, { status: 400 });
+      }
+      meetupPhotoPosition = currentCount;
+    }
+
     // Use R2 if configured, otherwise fall back to local filesystem
     if (isR2Configured()) {
       const buffer = Buffer.from(bytes);
@@ -180,39 +211,13 @@ export async function POST(request: NextRequest) {
           break;
         }
         case 'meetup-photo': {
-          const localTransactionId = formData.get('localTransactionId') as string | null;
-          if (!localTransactionId) {
-            return NextResponse.json({ success: false, error: 'localTransactionId required' }, { status: 400 });
-          }
-
-          const [tx] = await db
-            .select()
-            .from(localTransaction)
-            .where(eq(localTransaction.id, localTransactionId))
-            .limit(1);
-
-          if (!tx || tx.buyerId !== userId) {
-            return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
-          }
-          if (!isPhotoUploadAllowed(tx.status)) {
-            return NextResponse.json({ success: false, error: 'Photos can only be uploaded before confirming receipt' }, { status: 400 });
-          }
-          if (tx.confirmedAt !== null) {
-            return NextResponse.json({ success: false, error: 'Transaction already confirmed' }, { status: 400 });
-          }
-          const currentCount = tx.meetupPhotoUrls.length;
-          if (currentCount >= 5) {
-            return NextResponse.json({ success: false, error: 'Maximum 5 photos per transaction' }, { status: 400 });
-          }
-
-          const position = currentCount;
-          result = await uploadMeetupPhoto(localTransactionId, buffer, position);
+          result = await uploadMeetupPhoto(meetupTransactionId!, buffer, meetupPhotoPosition);
           if (!result.success) {
             return NextResponse.json({ success: false, error: result.error }, { status: 400 });
           }
           return NextResponse.json({
             success: true,
-            image: { id: createId(), url: result.url, position },
+            image: { id: createId(), url: result.url, position: meetupPhotoPosition },
           });
         }
         default:
@@ -247,7 +252,7 @@ export async function POST(request: NextRequest) {
       image: {
         id: createId(),
         url,
-        position: 0,
+        position: type === 'meetup-photo' ? meetupPhotoPosition : 0,
       },
     });
   } catch (error) {

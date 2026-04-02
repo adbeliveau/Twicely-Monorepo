@@ -3,17 +3,17 @@
 /**
  * Admin Anonymization Queue Actions (I13)
  * Force anonymize or cancel deletion requests for users.
- * NOTE: anonymizedAt column does not yet exist on user table (schema v2.0.7).
- * TODO: Once anonymizedAt is added to user table, update anonymize actions to set it.
+ * anonymizedAt marks completion; deletionRequestedAt is cleared on anonymization.
  */
 
 import { db } from '@twicely/db';
 import { user, auditEvent } from '@twicely/db/schema';
-import { eq, and, isNotNull, lt } from 'drizzle-orm';
+import { eq, and, isNotNull, isNull, lt } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { ForbiddenError } from '@twicely/casl';
 import { revalidatePath } from 'next/cache';
 import { zodId } from '@/lib/validations/shared';
+import { requireMfaForCriticalAction } from './staff-mfa';
 
 const userIdSchema = zodId;
 
@@ -25,6 +25,9 @@ export async function forceAnonymizeUserAction(userId: string): Promise<ActionRe
   if (!ability.can('manage', 'DataRetention')) {
     throw new ForbiddenError('ADMIN role required');
   }
+
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = userIdSchema.safeParse(userId);
   if (!parsed.success) return { error: 'Invalid user ID' };
@@ -45,7 +48,8 @@ export async function forceAnonymizeUserAction(userId: string): Promise<ActionRe
     .set({
       name: 'Deleted User',
       email: `anonymized-${parsed.data}@deleted.twicely.com`,
-      // TODO: Set anonymizedAt: new Date() once column is added to user table (schema v2.0.7).
+      anonymizedAt: new Date(),
+      deletionRequestedAt: null,
     })
     .where(eq(user.id, parsed.data));
 
@@ -117,13 +121,14 @@ export async function processOverdueDeletionsAction(): Promise<
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
 
   // Find users with deletionRequestedAt older than 30 days (past grace period), LIMIT 50.
-  // TODO: Once anonymizedAt column exists, add isNull(user.anonymizedAt) to exclude already-processed.
+  // Exclude already-anonymized users.
   const overdueBatch = await db
     .select({ id: user.id })
     .from(user)
     .where(
       and(
         isNotNull(user.deletionRequestedAt),
+        isNull(user.anonymizedAt),
         lt(user.deletionRequestedAt, thirtyDaysAgo)
       )
     )
@@ -137,7 +142,8 @@ export async function processOverdueDeletionsAction(): Promise<
       .set({
         name: 'Deleted User',
         email: `anonymized-${target.id}@deleted.twicely.com`,
-        // TODO: Set anonymizedAt: new Date() once column is added to user table.
+        anonymizedAt: new Date(),
+        deletionRequestedAt: null,
       })
       .where(eq(user.id, target.id));
     processed++;

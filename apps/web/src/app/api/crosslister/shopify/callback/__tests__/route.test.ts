@@ -59,6 +59,10 @@ vi.mock('@twicely/crosslister/connectors/shopify-connector', () => ({
 
 vi.mock('@twicely/crosslister/connectors', () => ({}));
 
+vi.mock('@twicely/crosslister/token-crypto', () => ({
+  encryptToken: vi.fn().mockImplementation((t: unknown) => t),
+}));
+
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));

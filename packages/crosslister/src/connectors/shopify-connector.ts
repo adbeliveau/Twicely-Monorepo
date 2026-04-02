@@ -37,6 +37,7 @@ import type {
   WebhookRegistration,
 } from '../types';
 import { registerConnector } from '../connector-registry';
+import { withDecryptedTokens } from '../token-crypto';
 import {
   buildShopifyAuthUrl,
   authenticateShopify,
@@ -120,6 +121,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
+    account = withDecryptedTokens(account);
     return refreshShopifyAuth(account, SHOPIFY_CAPABILITIES);
   }
 
@@ -128,6 +130,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
@@ -141,6 +144,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       throw new Error('No access token or shop domain');
     }
@@ -154,6 +158,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     }
@@ -176,6 +181,7 @@ export class ShopifyConnector implements PlatformConnector {
     externalId: string,
     changes: Partial<TransformedListing>,
   ): Promise<UpdateResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       return { success: false, error: 'No credentials', retryable: false };
     }
@@ -187,6 +193,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       return { success: false, error: 'No credentials', retryable: false };
     }
@@ -197,6 +204,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async verifyListing(account: CrosslisterAccount, externalId: string): Promise<VerificationResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       return { exists: false, status: 'UNKNOWN', priceCents: null, quantity: null, lastModifiedAt: null, diff: null };
     }
@@ -222,6 +230,7 @@ export class ShopifyConnector implements PlatformConnector {
     account: CrosslisterAccount,
     events: string[],
   ): Promise<WebhookRegistration> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       throw new Error('ShopifyConnector.registerWebhook: no access token or shop domain');
     }
@@ -281,6 +290,7 @@ export class ShopifyConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { healthy: false, latencyMs: 0, error: 'No access token' };
     }

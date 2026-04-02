@@ -16,6 +16,7 @@ import {
   assignCustomRoleSchema,
   revokeCustomRoleSchema,
 } from './admin-custom-role-schemas';
+import { requireMfaForCriticalAction } from './staff-mfa';
 
 // ─── deleteCustomRoleAction ───────────────────────────────────────────────────
 
@@ -28,7 +29,8 @@ export async function deleteCustomRoleAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = deleteCustomRoleSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
@@ -103,7 +105,8 @@ export async function assignCustomRoleAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = assignCustomRoleSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
@@ -179,7 +182,8 @@ export async function revokeCustomRoleAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = revokeCustomRoleSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };

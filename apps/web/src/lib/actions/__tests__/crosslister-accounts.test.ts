@@ -77,6 +77,13 @@ vi.mock('@twicely/crosslister/connector-registry', () => ({
   }),
 }));
 vi.mock('@paralleldrive/cuid2', () => ({ createId: vi.fn().mockReturnValue('state-xyz') }));
+vi.mock('next/headers', () => ({
+  cookies: vi.fn().mockResolvedValue({
+    set: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn(),
+  }),
+}));
 
 function makeChain(result: unknown) {
   const chain = {

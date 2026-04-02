@@ -28,6 +28,7 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
+import { withDecryptedTokens } from '../token-crypto';
 import { normalizeFbMarketplaceListing, toExternalListing } from './fb-marketplace-normalizer';
 import type { FbCommerceListingsResponse } from './fb-marketplace-types';
 import {
@@ -69,6 +70,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
+    account = withDecryptedTokens(account);
     return fbMarketplaceRefreshAuth(account, FB_MARKETPLACE_CAPABILITIES);
   }
 
@@ -77,6 +79,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
@@ -118,6 +121,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) throw new Error('No access token');
 
     const url = `${FB_API_BASE}/${encodeURIComponent(externalId)}?fields=id,name,description,price,currency,condition,availability,category,brand,images,product_item_id,created_time,retailer_id`;
@@ -133,6 +137,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
 
   /** Create a listing on Facebook Marketplace via Graph API v18.0. */
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken || !account.externalAccountId) {
       return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     }
@@ -170,6 +175,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
 
   /** Update a Facebook Marketplace listing. */
   async updateListing(account: CrosslisterAccount, externalId: string, changes: Partial<TransformedListing>): Promise<UpdateResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
       const body: Record<string, unknown> = {};
@@ -190,6 +196,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
 
   /** Delete a Facebook Marketplace listing. */
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
       const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(externalId)}?access_token=${account.accessToken}`, {
@@ -207,6 +214,7 @@ export class FbMarketplaceConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
 
     const start = Date.now();

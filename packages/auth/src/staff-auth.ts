@@ -7,7 +7,18 @@ import { staffUser, staffUserRole, staffSession } from '@twicely/db/schema';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
-import type { PlatformRole } from '@twicely/casl/types';
+// Platform staff roles — mirrors platformRoleEnum in @twicely/db/schema/enums
+type PlatformRole =
+  | 'HELPDESK_AGENT'
+  | 'HELPDESK_LEAD'
+  | 'HELPDESK_MANAGER'
+  | 'SUPPORT'
+  | 'MODERATION'
+  | 'FINANCE'
+  | 'DEVELOPER'
+  | 'SRE'
+  | 'ADMIN'
+  | 'SUPER_ADMIN';
 
 // Fallback defaults (only used if platform_settings DB is unreachable)
 const DEFAULT_SESSION_ABSOLUTE_HOURS = 8;

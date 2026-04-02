@@ -37,6 +37,11 @@ vi.mock('@twicely/casl/permission-registry', () => ({
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
+const mockRequireMfa = vi.fn().mockResolvedValue(null);
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: (...args: unknown[]) => mockRequireMfa(...args),
+}));
+
 // ─── Chain helpers ─────────────────────────────────────────────────────────────
 
 function makeUpdateChain() {
@@ -285,5 +290,29 @@ describe('updateCustomRoleAction', () => {
     expect(auditValues.severity).toBe('CRITICAL');
     expect(auditValues.detailsJson.before.name).toBe('Old Name');
     expect(auditValues.detailsJson.after.name).toBe('New Name');
+  });
+});
+
+// ─── MFA re-verification ─────────────────────────────────────────────────────
+
+describe('MFA re-verification for custom role mutations', () => {
+  beforeEach(() => { vi.clearAllMocks(); vi.resetModules(); });
+
+  it('createCustomRoleAction returns MFA error when step-up fails', async () => {
+    mockSuperAdmin();
+    mockRequireMfa.mockResolvedValueOnce({ error: 'MFA re-verification required', requiresMfa: true });
+    const { createCustomRoleAction } = await import('../admin-custom-roles');
+    const result = await createCustomRoleAction({ name: 'Valid Name', permissions: [] });
+    expect(result).toEqual({ error: 'MFA re-verification required', requiresMfa: true });
+    expect(mockDbInsert).not.toHaveBeenCalled();
+  });
+
+  it('updateCustomRoleAction returns MFA error when step-up fails', async () => {
+    mockSuperAdmin();
+    mockRequireMfa.mockResolvedValueOnce({ error: 'MFA re-verification required', requiresMfa: true });
+    const { updateCustomRoleAction } = await import('../admin-custom-roles');
+    const result = await updateCustomRoleAction({ customRoleId: 'role-001', name: 'New Name' });
+    expect(result).toEqual({ error: 'MFA re-verification required', requiresMfa: true });
+    expect(mockDbUpdate).not.toHaveBeenCalled();
   });
 });

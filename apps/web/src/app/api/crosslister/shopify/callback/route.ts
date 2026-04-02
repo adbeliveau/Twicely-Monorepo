@@ -22,6 +22,7 @@ import { crosslisterAccount, platformSetting } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
 import { ShopifyConnector } from '@twicely/crosslister/connectors/shopify-connector';
+import { encryptToken } from '@twicely/crosslister/token-crypto';
 import { logger } from '@twicely/logger';
 import { defineAbilitiesFor, sub } from '@twicely/casl';
 import { createHmac } from 'crypto';
@@ -152,7 +153,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           status: 'ACTIVE',
           externalAccountId: authResult.externalAccountId,
           externalUsername: authResult.externalUsername,
-          accessToken: authResult.accessToken,
+          accessToken: encryptToken(authResult.accessToken),
           refreshToken: null,        // Shopify tokens are permanent
           tokenExpiresAt: null,      // No expiry
           capabilities: authResult.capabilities,
@@ -170,7 +171,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         status: 'ACTIVE',
         externalAccountId: authResult.externalAccountId,
         externalUsername: authResult.externalUsername,
-        accessToken: authResult.accessToken,
+        accessToken: encryptToken(authResult.accessToken),
         refreshToken: null,          // Shopify tokens are permanent
         tokenExpiresAt: null,        // No expiry
         capabilities: authResult.capabilities,

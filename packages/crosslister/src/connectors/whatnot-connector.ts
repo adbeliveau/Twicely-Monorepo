@@ -35,6 +35,7 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
+import { withDecryptedTokens } from '../token-crypto';
 import { executeGraphQL } from './whatnot-graphql';
 import { toWhatnotInput, toWhatnotPartialInput } from './whatnot-transform';
 import { WhatnotListingSchema } from './whatnot-schemas';
@@ -227,6 +228,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
+    account = withDecryptedTokens(account);
     if (!account.refreshToken) {
       return {
         success: false,
@@ -307,6 +309,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
@@ -381,6 +384,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       throw new Error('No access token');
     }
@@ -423,6 +427,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     }
@@ -518,6 +523,7 @@ export class WhatnotConnector implements PlatformConnector {
     externalId: string,
     changes: Partial<TransformedListing>,
   ): Promise<UpdateResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { success: false, error: 'No credentials', retryable: false };
     }
@@ -558,6 +564,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { success: false, error: 'No credentials', retryable: false };
     }
@@ -614,6 +621,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async verifyListing(account: CrosslisterAccount, externalId: string): Promise<VerificationResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { exists: false, status: 'UNKNOWN', priceCents: null, quantity: null, lastModifiedAt: null, diff: null };
     }
@@ -670,6 +678,7 @@ export class WhatnotConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
 
     const config = await loadWhatnotConfig();

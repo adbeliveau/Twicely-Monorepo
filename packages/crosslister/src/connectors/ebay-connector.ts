@@ -5,11 +5,10 @@
  * NOT a 'use server' file — plain TypeScript module.
  * Self-registers at module load: registerConnector(new EbayConnector()).
  *
- * TODO: Token encryption must be added before production.
- *       Tokens stored as plain text in crosslisterAccount.accessToken / refreshToken.
  */
 
 import { db } from '@twicely/db';
+import { withDecryptedTokens } from '../token-crypto';
 import { platformSetting } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
@@ -216,6 +215,7 @@ export class EbayConnector implements PlatformConnector {
    * Refresh an expired or expiring access token using the refresh token.
    */
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
+    account = withDecryptedTokens(account);
     if (!account.refreshToken) {
       return {
         success: false,
@@ -306,6 +306,7 @@ export class EbayConnector implements PlatformConnector {
    * Only returns listings with status ACTIVE.
    */
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
@@ -365,6 +366,7 @@ export class EbayConnector implements PlatformConnector {
    * Fetch a single inventory item by SKU.
    */
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       throw new Error('No access token');
     }
@@ -400,6 +402,7 @@ export class EbayConnector implements PlatformConnector {
     account: CrosslisterAccount,
     listing: TransformedListing,
   ): Promise<PublishResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     }
@@ -487,6 +490,7 @@ export class EbayConnector implements PlatformConnector {
     externalId: string,
     changes: Partial<TransformedListing>,
   ): Promise<UpdateResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     const config = await loadEbayConfig();
     const apiBase = this.getApiBase(config.environment);
@@ -514,6 +518,7 @@ export class EbayConnector implements PlatformConnector {
     account: CrosslisterAccount,
     externalId: string,
   ): Promise<DelistResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     const config = await loadEbayConfig();
     const apiBase = this.getApiBase(config.environment);
@@ -550,6 +555,7 @@ export class EbayConnector implements PlatformConnector {
    * Health check: try fetching 1 item. Returns healthy if 200 OK.
    */
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { healthy: false, latencyMs: 0, error: 'No access token' };
     }

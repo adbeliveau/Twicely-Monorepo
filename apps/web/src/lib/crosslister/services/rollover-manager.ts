@@ -106,6 +106,7 @@ export async function addOverageCredits(
   userId: string,
   quantity: number,
   periodEnd: Date,
+  stripeSessionId?: string,
 ): Promise<void> {
   const now = new Date();
   await db.insert(publishCreditLedger).values({
@@ -117,6 +118,7 @@ export async function addOverageCredits(
     periodStart: now,
     periodEnd,
     listerSubscriptionId: null,
+    stripeSessionId: stripeSessionId ?? null,
   });
 }
 

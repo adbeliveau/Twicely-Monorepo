@@ -25,6 +25,12 @@ vi.mock('@twicely/db/schema', () => ({
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((col, val) => ({ col, val })),
+  and: vi.fn((...args: unknown[]) => ({ and: args })),
+  sql: vi.fn(),
+}));
+
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

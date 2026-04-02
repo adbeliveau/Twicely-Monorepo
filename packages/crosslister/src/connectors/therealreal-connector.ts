@@ -8,7 +8,6 @@
  * The RealReal has no public API. Uses internal API at https://www.therealreal.com/api/v1.
  * Auth: username/password → session cookie stored in sessionData.
  *
- * TODO: Token encryption must be added before production.
  */
 
 import { db } from '@twicely/db';

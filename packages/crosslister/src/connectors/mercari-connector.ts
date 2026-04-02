@@ -28,6 +28,7 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
+import { withDecryptedTokens } from '../token-crypto';
 import { normalizeMercariListing, toExternalListing } from './mercari-normalizer';
 import type { MercariListingsResponse } from './mercari-types';
 import {
@@ -69,6 +70,7 @@ export class MercariConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
+    account = withDecryptedTokens(account);
     return mercariRefreshAuth(account, MERCARI_CAPABILITIES);
   }
 
@@ -77,6 +79,7 @@ export class MercariConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
@@ -118,6 +121,7 @@ export class MercariConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) throw new Error('No access token');
 
     const response = await fetch(`${MERCARI_API_BASE}/items/${encodeURIComponent(externalId)}`, {
@@ -132,6 +136,7 @@ export class MercariConnector implements PlatformConnector {
 
   /** Create a listing on Mercari via POST /v1/listings. */
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     try {
       const body = {
@@ -166,6 +171,7 @@ export class MercariConnector implements PlatformConnector {
 
   /** Update a Mercari listing via PATCH /v1/listings/{id}. */
   async updateListing(account: CrosslisterAccount, externalId: string, changes: Partial<TransformedListing>): Promise<UpdateResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
       const body: Record<string, unknown> = {};
@@ -186,6 +192,7 @@ export class MercariConnector implements PlatformConnector {
 
   /** End a Mercari listing by setting status to 'ended'. */
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
       const resp = await fetch(`${MERCARI_API_BASE}/listings/${encodeURIComponent(externalId)}/status`, {
@@ -205,6 +212,7 @@ export class MercariConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
+    account = withDecryptedTokens(account);
     if (!account.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
 
     const start = Date.now();

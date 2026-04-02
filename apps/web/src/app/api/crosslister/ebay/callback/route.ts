@@ -7,12 +7,13 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { auth } from '@twicely/auth/server';
 import { db } from '@twicely/db';
 import { crosslisterAccount } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { EbayConnector } from '@twicely/crosslister/connectors/ebay-connector';
+import { encryptToken } from '@twicely/crosslister/token-crypto';
 import { logger } from '@twicely/logger';
 import { defineAbilitiesFor, sub } from '@twicely/casl';
 
@@ -22,11 +23,29 @@ const CONNECT_FAILURE_URL = '/my/selling/crosslist/connect?error=auth_failed';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  // state is validated in production; for F1 we accept any valid state
-  searchParams.get('state');
+  const state = searchParams.get('state');
 
   if (!code) {
     logger.warn('[ebay/callback] Missing authorization code');
+    return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+  }
+
+  // Validate OAuth state to prevent CSRF
+  const cookieStore = await cookies();
+  const stateCookie = cookieStore.get('crosslister_oauth_state')?.value;
+  cookieStore.delete('crosslister_oauth_state');
+  if (!stateCookie || !state) {
+    logger.warn('[ebay/callback] Missing OAuth state — possible CSRF', { state });
+    return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+  }
+  try {
+    const stored = JSON.parse(stateCookie) as { state?: string };
+    if (stored.state !== state) {
+      logger.warn('[ebay/callback] OAuth state mismatch — possible CSRF', { expected: stored.state, got: state });
+      return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+    }
+  } catch {
+    logger.warn('[ebay/callback] Invalid OAuth state cookie');
     return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
   }
 
@@ -87,8 +106,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .update(crosslisterAccount)
         .set({
           status: 'ACTIVE',
-          accessToken: authResult.accessToken,
-          refreshToken: authResult.refreshToken,
+          accessToken: encryptToken(authResult.accessToken),
+          refreshToken: encryptToken(authResult.refreshToken),
           tokenExpiresAt: authResult.tokenExpiresAt,
           capabilities: authResult.capabilities,
           lastAuthAt: new Date(),
@@ -98,14 +117,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .where(eq(crosslisterAccount.id, existing.id));
     } else {
       // Create new account row
-      // TODO: Encrypt tokens before production (stored as plain text for F1)
       await db.insert(crosslisterAccount).values({
         sellerId,
         channel: 'EBAY',
         authMethod: 'OAUTH',
         status: 'ACTIVE',
-        accessToken: authResult.accessToken,
-        refreshToken: authResult.refreshToken,
+        accessToken: encryptToken(authResult.accessToken),
+        refreshToken: encryptToken(authResult.refreshToken),
         tokenExpiresAt: authResult.tokenExpiresAt,
         capabilities: authResult.capabilities,
         lastAuthAt: new Date(),

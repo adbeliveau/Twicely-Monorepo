@@ -35,6 +35,11 @@ vi.mock('@twicely/db/schema', () => ({
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
+const mockRequireMfa = vi.fn().mockResolvedValue(null);
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: (...args: unknown[]) => mockRequireMfa(...args),
+}));
+
 // ─── Chain helpers ─────────────────────────────────────────────────────────────
 
 function makeUpdateChain() {
@@ -257,5 +262,38 @@ describe('revokeCustomRoleAction', () => {
     const auditValues = auditInsert.values.mock.calls[0]![0];
     expect(auditValues.action).toBe('REVOKE_CUSTOM_ROLE');
     expect(auditValues.severity).toBe('CRITICAL');
+  });
+});
+
+// ─── MFA re-verification ─────────────────────────────────────────────────────
+
+describe('MFA re-verification for custom role assignment mutations', () => {
+  beforeEach(() => { vi.clearAllMocks(); vi.resetModules(); });
+
+  it('deleteCustomRoleAction returns MFA error when step-up fails', async () => {
+    mockSuperAdmin();
+    mockRequireMfa.mockResolvedValueOnce({ error: 'MFA re-verification required', requiresMfa: true });
+    const { deleteCustomRoleAction } = await import('../admin-custom-roles-assign');
+    const result = await deleteCustomRoleAction({ customRoleId: 'role-001' });
+    expect(result).toEqual({ error: 'MFA re-verification required', requiresMfa: true });
+    expect(mockDbUpdate).not.toHaveBeenCalled();
+  });
+
+  it('assignCustomRoleAction returns MFA error when step-up fails', async () => {
+    mockSuperAdmin();
+    mockRequireMfa.mockResolvedValueOnce({ error: 'MFA re-verification required', requiresMfa: true });
+    const { assignCustomRoleAction } = await import('../admin-custom-roles-assign');
+    const result = await assignCustomRoleAction({ staffUserId: 'staff-001', customRoleId: 'role-001' });
+    expect(result).toEqual({ error: 'MFA re-verification required', requiresMfa: true });
+    expect(mockDbInsert).not.toHaveBeenCalled();
+  });
+
+  it('revokeCustomRoleAction returns MFA error when step-up fails', async () => {
+    mockSuperAdmin();
+    mockRequireMfa.mockResolvedValueOnce({ error: 'MFA re-verification required', requiresMfa: true });
+    const { revokeCustomRoleAction } = await import('../admin-custom-roles-assign');
+    const result = await revokeCustomRoleAction({ staffUserId: 'staff-001', customRoleId: 'role-001' });
+    expect(result).toEqual({ error: 'MFA re-verification required', requiresMfa: true });
+    expect(mockDbUpdate).not.toHaveBeenCalled();
   });
 });

@@ -34,6 +34,10 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('bcryptjs', () => ({ hash: vi.fn().mockResolvedValue('hashed-password') }));
 vi.mock('@paralleldrive/cuid2', () => ({ createId: vi.fn().mockReturnValue('new-staff-id-001') }));
 
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
+}));
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeUpdateChain() {

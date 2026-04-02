@@ -20,6 +20,7 @@ import { logger } from '@twicely/logger';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 import { createId } from '@paralleldrive/cuid2';
+import { cookies } from 'next/headers';
 import type { ExternalChannel } from '@twicely/crosslister/types';
 
 const refreshAccountSchema = z.object({ accountId: zodId }).strict();
@@ -98,7 +99,20 @@ export async function connectPlatformAccount(
       if (!connector.buildAuthUrl) {
         return { success: false, error: `Connector for ${channel} does not support OAuth.` };
       }
-      const url = await connector.buildAuthUrl(state);
+      const result = await connector.buildAuthUrl(state);
+      const url = typeof result === 'string' ? result : result.url;
+      const codeVerifier = typeof result === 'string' ? undefined : result.codeVerifier;
+
+      // Store state + optional PKCE verifier in a short-lived httpOnly cookie
+      const cookieStore = await cookies();
+      cookieStore.set('crosslister_oauth_state', JSON.stringify({ state, codeVerifier }), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 600, // 10 minutes
+        path: '/api/crosslister',
+      });
+
       return { success: true, data: { url, method: 'OAUTH' } };
     } catch (err) {
       logger.error('[connectPlatformAccount] Failed to build auth URL', { channel, error: String(err) });
@@ -229,6 +243,16 @@ export async function connectEbayAccount(): Promise<ActionResult<{ url: string }
   try {
     const connector = new EbayConnector();
     const url = await connector.buildAuthUrl(state);
+
+    const cookieStore = await cookies();
+    cookieStore.set('crosslister_oauth_state', JSON.stringify({ state }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 600,
+      path: '/api/crosslister',
+    });
+
     return { success: true, data: { url } };
   } catch (err) {
     logger.error('[connectEbayAccount] Failed to build auth URL', { error: String(err) });

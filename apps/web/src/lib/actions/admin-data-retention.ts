@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { db } from '@twicely/db';
 import { user as userTable, dataExportRequest, auditEvent } from '@twicely/db/schema';
-import { eq, isNotNull, desc, and, gte, count, inArray } from 'drizzle-orm';
+import { eq, isNotNull, isNull, desc, and, gte, count, inArray } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { ForbiddenError } from '@twicely/casl';
 import { getPlatformSettingsByPrefix, getPlatformSetting } from '@/lib/queries/platform-settings';
@@ -83,7 +83,7 @@ export async function getDeletionQueue(): Promise<DeletionQueueEntry[]> {
       deletionRequestedAt: userTable.deletionRequestedAt,
     })
     .from(userTable)
-    .where(isNotNull(userTable.deletionRequestedAt))
+    .where(and(isNotNull(userTable.deletionRequestedAt), isNull(userTable.anonymizedAt)))
     .orderBy(desc(userTable.deletionRequestedAt))
     .limit(100);
 
@@ -223,7 +223,7 @@ export async function getGdprComplianceSummary(): Promise<GdprComplianceSummary>
     completedExports,
     failedExports,
   ] = await Promise.all([
-    db.select({ c: count() }).from(userTable).where(isNotNull(userTable.deletionRequestedAt)),
+    db.select({ c: count() }).from(userTable).where(and(isNotNull(userTable.deletionRequestedAt), isNull(userTable.anonymizedAt))),
     db.select({ c: count() }).from(auditEvent).where(
       and(
         eq(auditEvent.action, 'ACCOUNT_DELETION_EXECUTED'),

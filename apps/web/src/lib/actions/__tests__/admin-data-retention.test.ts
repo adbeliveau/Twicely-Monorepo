@@ -24,15 +24,20 @@ vi.mock('@/lib/queries/platform-settings', () => ({
 }));
 
 vi.mock('@twicely/db/schema', () => ({
-  user: { id: 'id', name: 'name', email: 'email', deletionRequestedAt: 'deletion_requested_at' },
+  user: { id: 'id', name: 'name', email: 'email', deletionRequestedAt: 'deletion_requested_at', anonymizedAt: 'anonymized_at' },
   dataExportRequest: { id: 'id', userId: 'user_id', createdAt: 'created_at', status: 'status' },
   auditEvent: { id: 'id' },
 }));
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((col, val) => ({ op: 'eq', col, val })),
+  and: vi.fn((...args: unknown[]) => ({ op: 'and', args })),
   isNotNull: vi.fn((col) => ({ op: 'isNotNull', col })),
+  isNull: vi.fn((col) => ({ op: 'isNull', col })),
   desc: vi.fn((col) => ({ op: 'desc', col })),
+  gte: vi.fn((col, val) => ({ op: 'gte', col, val })),
+  count: vi.fn(() => 'count_expr'),
+  inArray: vi.fn((col, vals) => ({ op: 'inArray', col, vals })),
 }));
 
 const mockDbSelect = vi.fn();

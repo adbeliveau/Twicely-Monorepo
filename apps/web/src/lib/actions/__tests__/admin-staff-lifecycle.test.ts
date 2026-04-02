@@ -21,6 +21,10 @@ vi.mock('drizzle-orm', () => ({
   isNull: vi.fn((col) => ({ isNull: col })),
 }));
 
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock('@twicely/db/schema', () => ({
   staffUser: { id: 'id', isActive: 'is_active', passwordHash: 'password_hash' },
   staffUserRole: { id: 'id', staffUserId: 'staff_user_id', role: 'role', revokedAt: 'revoked_at' },
@@ -137,8 +141,22 @@ describe('reactivateStaffAction', () => {
       .toEqual({ error: 'Forbidden' });
   });
 
+  it('returns error when ADMIN tries to reactivate SUPER_ADMIN', async () => {
+    const ability = { can: vi.fn().mockReturnValue(true) };
+    mockStaffAuthorize.mockResolvedValue({
+      ability,
+      session: { staffUserId: 'acting-001', email: 'x@x.com', displayName: 'X', isPlatformStaff: true, platformRoles: ['ADMIN'] },
+    });
+    const mockFrom = vi.fn().mockReturnThis();
+    const mockWhere = vi.fn().mockResolvedValue([{ role: 'SUPER_ADMIN' }]);
+    mockDbSelect.mockReturnValue({ from: mockFrom, where: mockWhere });
+    const { reactivateStaffAction } = await import('../admin-staff-lifecycle');
+    expect(await reactivateStaffAction({ staffUserId: 'super-admin-target' }))
+      .toEqual({ error: 'Cannot reactivate SUPER_ADMIN' });
+  });
+
   it('reactivates staff and creates HIGH audit event', async () => {
-    mockAllowed(false);
+    mockAllowed(true); // SUPER_ADMIN skips hierarchy check
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
     const { reactivateStaffAction } = await import('../admin-staff-lifecycle');

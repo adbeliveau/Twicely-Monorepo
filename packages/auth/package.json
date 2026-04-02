@@ -20,12 +20,14 @@
     "bcryptjs": "^3.0.3",
     "@paralleldrive/cuid2": "^3.3.0",
     "@twicely/db": "workspace:*",
+    "@twicely/email": "workspace:*",
     "@twicely/logger": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/bcryptjs": "^2.4.6",
     "@types/react": "^19",
+    "@twicely/casl": "workspace:*",
     "next": "16.1.6"
   }
 }

@@ -30,7 +30,7 @@ vi.mock('@twicely/casl', () => ({
   },
 }));
 vi.mock('@twicely/db/schema', () => ({
-  user: { id: 'id', name: 'name', email: 'email', deletionRequestedAt: 'deletion_requested_at' },
+  user: { id: 'id', name: 'name', email: 'email', deletionRequestedAt: 'deletion_requested_at', anonymizedAt: 'anonymized_at' },
   auditEvent: {},
 }));
 vi.mock('drizzle-orm', () => ({
@@ -39,6 +39,10 @@ vi.mock('drizzle-orm', () => ({
   isNotNull: (_a: unknown) => ({ type: 'isNotNull' }),
   isNull: (_a: unknown) => ({ type: 'isNull' }),
   lt: (_a: unknown, _b: unknown) => ({ type: 'lt' }),
+}));
+
+vi.mock('../staff-mfa', () => ({
+  requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

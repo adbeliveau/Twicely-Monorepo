@@ -79,16 +79,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Increment usage before calling Claude (prevents duplicate calls on retry)
-  await incrementUsage(userId);
-
-  // Calculate remaining after increment
-  const newCount = count + 1;
-  const remainingUses = limit === -1 ? -1 : Math.max(0, limit - newCount);
-
   // Call Claude Vision
   try {
     const suggestions = await analyzeListingImages(imageUrls);
+
+    // Increment usage only after successful Claude call
+    await incrementUsage(userId);
+
+    const newCount = count + 1;
+    const remainingUses = limit === -1 ? -1 : Math.max(0, limit - newCount);
 
     return NextResponse.json({
       success: true,

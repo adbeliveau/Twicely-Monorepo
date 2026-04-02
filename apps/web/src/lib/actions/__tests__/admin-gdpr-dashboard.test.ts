@@ -9,7 +9,7 @@ vi.mock('@twicely/db', () => ({
 }));
 
 vi.mock('@twicely/db/schema', () => ({
-  user: { id: 'id', deletionRequestedAt: 'deletion_requested_at' },
+  user: { id: 'id', deletionRequestedAt: 'deletion_requested_at', anonymizedAt: 'anonymized_at' },
   dataExportRequest: {
     id: 'id',
     status: 'status',
@@ -24,6 +24,7 @@ vi.mock('drizzle-orm', () => ({
   and: vi.fn((...args) => ({ op: 'and', args })),
   gte: vi.fn((col, val) => ({ op: 'gte', col, val })),
   isNotNull: vi.fn((col) => ({ op: 'isNotNull', col })),
+  isNull: vi.fn((col) => ({ op: 'isNull', col })),
   inArray: vi.fn((col, arr) => ({ op: 'inArray', col, arr })),
   count: vi.fn(() => ({ type: 'count' })),
   desc: vi.fn((col) => ({ op: 'desc', col })),

@@ -8,13 +8,14 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { auth } from '@twicely/auth/server';
 import { db } from '@twicely/db';
 import { crosslisterAccount } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
 import { EtsyConnector } from '@twicely/crosslister/connectors/etsy-connector';
+import { encryptToken } from '@twicely/crosslister/token-crypto';
 import { logger } from '@twicely/logger';
 import { defineAbilitiesFor, sub } from '@twicely/casl';
 
@@ -24,10 +25,31 @@ const CONNECT_FAILURE_URL = '/my/selling/crosslist/connect?error=auth_failed';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  searchParams.get('state');
+  const state = searchParams.get('state');
 
   if (!code) {
     logger.warn('[etsy/callback] Missing authorization code');
+    return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+  }
+
+  // Validate OAuth state and extract PKCE verifier
+  const cookieStore = await cookies();
+  const stateCookie = cookieStore.get('crosslister_oauth_state')?.value;
+  cookieStore.delete('crosslister_oauth_state');
+  let codeVerifier: string | undefined;
+  if (!stateCookie || !state) {
+    logger.warn('[etsy/callback] Missing OAuth state — possible CSRF', { state });
+    return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+  }
+  try {
+    const stored = JSON.parse(stateCookie) as { state?: string; codeVerifier?: string };
+    if (stored.state !== state) {
+      logger.warn('[etsy/callback] OAuth state mismatch — possible CSRF', { expected: stored.state, got: state });
+      return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+    }
+    codeVerifier = stored.codeVerifier;
+  } catch {
+    logger.warn('[etsy/callback] Invalid OAuth state cookie');
     return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
   }
 
@@ -63,6 +85,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       method: 'OAUTH',
       code,
       redirectUri: '', // loaded from platform_settings inside connector
+      codeVerifier,
     });
 
     if (!authResult.success || !authResult.accessToken) {
@@ -89,8 +112,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           status: 'ACTIVE',
           externalAccountId: authResult.externalAccountId,
           externalUsername: authResult.externalUsername,
-          accessToken: authResult.accessToken,
-          refreshToken: authResult.refreshToken,
+          accessToken: encryptToken(authResult.accessToken),
+          refreshToken: encryptToken(authResult.refreshToken),
           tokenExpiresAt: authResult.tokenExpiresAt,
           capabilities: authResult.capabilities,
           lastAuthAt: new Date(),
@@ -99,7 +122,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         })
         .where(eq(crosslisterAccount.id, existing.id));
     } else {
-      // TODO: Encrypt tokens before production (stored as plain text for F3)
       await db.insert(crosslisterAccount).values({
         sellerId,
         channel: 'ETSY',
@@ -107,8 +129,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         status: 'ACTIVE',
         externalAccountId: authResult.externalAccountId,
         externalUsername: authResult.externalUsername,
-        accessToken: authResult.accessToken,
-        refreshToken: authResult.refreshToken,
+        accessToken: encryptToken(authResult.accessToken),
+        refreshToken: encryptToken(authResult.refreshToken),
         tokenExpiresAt: authResult.tokenExpiresAt,
         capabilities: authResult.capabilities,
         lastAuthAt: new Date(),

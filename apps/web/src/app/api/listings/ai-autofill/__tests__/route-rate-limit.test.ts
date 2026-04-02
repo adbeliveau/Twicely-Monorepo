@@ -149,7 +149,7 @@ describe('POST /api/listings/ai-autofill — happy path', () => {
     expect(body.remainingUses).toBe(46);
   });
 
-  it('increments usage BEFORE calling Claude (prevents double-billing on retry)', async () => {
+  it('increments usage AFTER Claude succeeds (no charge on failure)', async () => {
     const callOrder: string[] = [];
     mockIncrementUsage.mockImplementation(async () => { callOrder.push('increment'); });
     mockAnalyzeListingImages.mockImplementation(async () => {
@@ -159,8 +159,16 @@ describe('POST /api/listings/ai-autofill — happy path', () => {
 
     await POST(makeRequest({ imageUrls: VALID_URLS }));
 
-    expect(callOrder[0]).toBe('increment');
-    expect(callOrder[1]).toBe('claude');
+    expect(callOrder[0]).toBe('claude');
+    expect(callOrder[1]).toBe('increment');
+  });
+
+  it('does not increment usage when Claude fails', async () => {
+    mockAnalyzeListingImages.mockRejectedValue(new Error('anthropic_rate_limit'));
+
+    await POST(makeRequest({ imageUrls: VALID_URLS }));
+
+    expect(mockIncrementUsage).not.toHaveBeenCalled();
   });
 
   it('passes the correct userId to incrementUsage', async () => {

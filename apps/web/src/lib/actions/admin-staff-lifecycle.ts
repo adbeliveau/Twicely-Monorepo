@@ -16,6 +16,7 @@ import {
   reactivateStaffSchema,
   resetStaffPasswordSchema,
 } from './admin-staff-schemas';
+import { requireMfaForCriticalAction } from './staff-mfa';
 
 // ─── deactivateStaffAction ────────────────────────────────────────────────────
 
@@ -24,6 +25,9 @@ export async function deactivateStaffAction(input: unknown) {
   if (!ability.can('update', 'StaffUser')) {
     return { error: 'Forbidden' };
   }
+
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = deactivateStaffSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
@@ -69,10 +73,26 @@ export async function reactivateStaffAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
+
   const parsed = reactivateStaffSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
 
   const { staffUserId } = parsed.data;
+
+  if (staffUserId === session.staffUserId) return { error: 'Cannot reactivate own account' };
+
+  if (!session.platformRoles.includes('SUPER_ADMIN')) {
+    const targetRoles = await db
+      .select({ role: staffUserRole.role })
+      .from(staffUserRole)
+      .where(and(eq(staffUserRole.staffUserId, staffUserId), isNull(staffUserRole.revokedAt)));
+
+    if (targetRoles.some((r) => r.role === 'SUPER_ADMIN')) {
+      return { error: 'Cannot reactivate SUPER_ADMIN' };
+    }
+  }
 
   await db.update(staffUser).set({ isActive: true }).where(eq(staffUser.id, staffUserId));
 
@@ -98,6 +118,9 @@ export async function resetStaffPasswordAction(input: unknown) {
   if (!ability.can('update', 'StaffUser')) {
     return { error: 'Forbidden' };
   }
+
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = resetStaffPasswordSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };

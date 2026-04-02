@@ -16,6 +16,7 @@ import {
   createCustomRoleSchema,
   updateCustomRoleSchema,
 } from './admin-custom-role-schemas';
+import { requireMfaForCriticalAction } from './staff-mfa';
 
 const MAX_CUSTOM_ROLES = 20;
 
@@ -30,7 +31,8 @@ export async function createCustomRoleAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = createCustomRoleSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
@@ -112,7 +114,8 @@ export async function updateCustomRoleAction(input: unknown) {
     return { error: 'Forbidden' };
   }
 
-  // TODO: Require MFA re-verification (Actors Canonical Section 6.1)
+  const mfaCheck = await requireMfaForCriticalAction(session.staffUserId);
+  if (mfaCheck) return mfaCheck;
 
   const parsed = updateCustomRoleSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };

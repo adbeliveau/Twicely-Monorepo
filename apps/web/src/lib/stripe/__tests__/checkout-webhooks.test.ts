@@ -19,6 +19,7 @@ vi.mock('@twicely/db/schema', () => ({
   publishCreditLedger: {
     id: 'id', userId: 'user_id', creditType: 'credit_type',
     totalCredits: 'total_credits', createdAt: 'created_at',
+    stripeSessionId: 'stripe_session_id',
   },
 }));
 
@@ -96,6 +97,7 @@ describe('handleCheckoutSessionCompleted', () => {
       'user-test-301',
       500,
       PERIOD_END,
+      'cs_test_001',
     );
   });
 
