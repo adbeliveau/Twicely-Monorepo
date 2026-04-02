@@ -31,7 +31,10 @@ export default function CasesPage() {
     setLoading(false);
   }, [searchParams]);
 
-  useEffect(() => { void loadCases(); }, [loadCases]);
+  useEffect(() => {
+    const id = setTimeout(() => void loadCases(), 0);
+    return () => clearTimeout(id);
+  }, [loadCases]);
 
   // Keyboard navigation (J/K/Enter)
   useEffect(() => {

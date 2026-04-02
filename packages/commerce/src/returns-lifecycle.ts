@@ -9,6 +9,7 @@ import { returnRequest, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { processReturnRefund } from '@twicely/stripe/refunds';
+import { applyReturnFees } from './return-fee-apply';
 import type { ApproveReturnResult, RespondToReturnInput } from './returns-types';
 
 /**
@@ -252,7 +253,7 @@ export async function markReturnReceived(
   });
 
   // Process refund via Stripe (applies fees + issues refund)
-  const refundResult = await processReturnRefund({ returnId });
+  const refundResult = await processReturnRefund({ returnId }, applyReturnFees);
   if (!refundResult.success) {
     // Refund failure is non-blocking; item was received. Manual review needed.
     // TODO: replace with structured logger (e.g. pino) when logging infra is in place

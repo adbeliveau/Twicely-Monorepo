@@ -57,7 +57,7 @@ export default async function StripeSettingsPage() {
   const { feeMap, ...stripeConfig } = stripeConfigRaw;
 
   // Fetch secret masks from provider instance
-  let secretMasks: Record<string, string> = {};
+  const secretMasks: Record<string, string> = {};
   if (adapter) {
     const instances = await getInstancesByAdapter(adapter.id);
     const instance = instances[0];

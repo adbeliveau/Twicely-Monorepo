@@ -5,6 +5,19 @@ import { Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@twicely/ui/button';
 import { publishStorefront, unpublishStorefront } from '@/lib/actions/storefront';
 
+function GateItem({ passed, label }: { passed: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      {passed ? (
+        <Check className="h-4 w-4 text-green-600" />
+      ) : (
+        <X className="h-4 w-4 text-red-500" />
+      )}
+      <span className={passed ? 'text-gray-700' : 'text-gray-500'}>{label}</span>
+    </div>
+  );
+}
+
 interface PublishToggleProps {
   isPublished: boolean;
   sellerType: string;
@@ -37,17 +50,6 @@ export function PublishToggle({
       }
     });
   };
-
-  const GateItem = ({ passed, label }: { passed: boolean; label: string }) => (
-    <div className="flex items-center gap-2 text-sm">
-      {passed ? (
-        <Check className="h-4 w-4 text-green-600" />
-      ) : (
-        <X className="h-4 w-4 text-red-500" />
-      )}
-      <span className={passed ? 'text-gray-700' : 'text-gray-500'}>{label}</span>
-    </div>
-  );
 
   return (
     <div className="rounded-lg border border-gray-200 p-4 space-y-4">

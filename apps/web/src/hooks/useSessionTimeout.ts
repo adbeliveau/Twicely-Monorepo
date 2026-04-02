@@ -29,7 +29,9 @@ export function useSessionTimeout() {
   });
 
   const timeoutMinutesRef = useRef(5); // default, overridden by settings fetch
-  const lastActivityRef = useRef(Date.now());
+  const [timeoutMinutes, setTimeoutMinutes] = useState(5);
+  const [initialNow] = useState(() => Date.now());
+  const lastActivityRef = useRef(initialNow);
   const warningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const checkTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const settingsLoadedRef = useRef(false);
@@ -102,6 +104,7 @@ export function useSessionTimeout() {
         const minutes = data?.settings?.staffInactivityTimeoutMinutes;
         if (typeof minutes === "number" && minutes > 0) {
           timeoutMinutesRef.current = minutes;
+          setTimeoutMinutes(minutes);
         }
       })
       .catch(() => {
@@ -146,6 +149,6 @@ export function useSessionTimeout() {
     showWarning: state.showWarning,
     secondsRemaining: state.secondsRemaining,
     dismissWarning,
-    timeoutMinutes: timeoutMinutesRef.current,
+    timeoutMinutes,
   };
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDrop } from "react-dnd";
 import { Task } from "./types/types";
 import TaskItem from "./TaskItem";
@@ -33,7 +33,7 @@ const Column: React.FC<ColumnProps> = ({
     }),
   });
 
-  drop(ref);
+  useEffect(() => { drop(ref); }, [drop]);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);

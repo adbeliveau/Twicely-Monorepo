@@ -10,6 +10,7 @@ import { dispute, order } from '@twicely/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { processReturnRefund } from '@twicely/stripe/refunds';
+import { applyReturnFees } from './return-fee-apply';
 import { logger } from '@twicely/logger';
 
 /**
@@ -211,7 +212,7 @@ export async function resolveDispute(
     const refundResult = await processReturnRefund({
       returnId: disp.returnRequestId,
       amountCents: refundAmount,
-    });
+    }, applyReturnFees);
     if (!refundResult.success) {
       logger.error('Failed to process refund for dispute', { disputeId, error: refundResult.error });
     }

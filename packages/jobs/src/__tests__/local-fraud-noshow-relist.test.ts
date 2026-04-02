@@ -14,10 +14,6 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockResolvedValue(24),
 }));
 
-vi.mock('@twicely/commerce/local-fraud-detection', () => ({
-  checkNoshowRelist: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));

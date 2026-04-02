@@ -27,7 +27,7 @@ function selectMimeType(): string {
 
 export function VideoTrimmer({ videoFile, minDurationSeconds, maxDurationSeconds, onTrimComplete, onCancel }: VideoTrimmerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const objectUrlRef = useRef<string | null>(null);
+  const [objectUrl, setObjectUrl] = useState<string | null>(() => URL.createObjectURL(videoFile));
   const trackRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(0);
@@ -35,14 +35,20 @@ export function VideoTrimmer({ videoFile, minDurationSeconds, maxDurationSeconds
   const [isTrimming, setIsTrimming] = useState(false);
   const [noCaptureStream, setNoCaptureStream] = useState(false);
 
+  const [prevVideoFile, setPrevVideoFile] = useState(videoFile);
+  if (videoFile !== prevVideoFile) {
+    setPrevVideoFile(videoFile);
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    setObjectUrl(URL.createObjectURL(videoFile));
+  }
+
   useEffect(() => {
-    const url = URL.createObjectURL(videoFile);
-    objectUrlRef.current = url;
     return () => {
-      if (objectUrlRef.current) { URL.revokeObjectURL(objectUrlRef.current); objectUrlRef.current = null; }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       if (trackRef.current !== null) { clearInterval(trackRef.current); trackRef.current = null; }
     };
-  }, [videoFile]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
+  }, []);
 
   const handleLoadedMetadata = useCallback(() => {
     const vid = videoRef.current;
@@ -117,9 +123,9 @@ export function VideoTrimmer({ videoFile, minDurationSeconds, maxDurationSeconds
   }, [isValid, startTime, endTime, onTrimComplete]);
 
   const handleCancel = useCallback(() => {
-    if (objectUrlRef.current) { URL.revokeObjectURL(objectUrlRef.current); objectUrlRef.current = null; }
+    if (objectUrl) { URL.revokeObjectURL(objectUrl); setObjectUrl(null); }
     onCancel();
-  }, [onCancel]);
+  }, [objectUrl, onCancel]);
 
   const startPct = duration > 0 ? (startTime / duration) * 100 : 0;
   const endPct = duration > 0 ? (endTime / duration) * 100 : 100;
@@ -134,7 +140,7 @@ export function VideoTrimmer({ videoFile, minDurationSeconds, maxDurationSeconds
         <div className="h-11 w-11" />
       </div>
       <div className="flex-1 overflow-hidden">
-        <video ref={videoRef} src={objectUrlRef.current ?? undefined} className="h-full w-full object-contain" onLoadedMetadata={handleLoadedMetadata} playsInline aria-label="Video trim preview" />
+        <video ref={videoRef} src={objectUrl ?? undefined} className="h-full w-full object-contain" onLoadedMetadata={handleLoadedMetadata} playsInline aria-label="Video trim preview" />
       </div>
       <div className="space-y-4 bg-black/90 px-4 pb-8 pt-4">
         <div className="relative h-2 rounded-full bg-white/20">

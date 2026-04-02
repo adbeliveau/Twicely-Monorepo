@@ -2,10 +2,7 @@
   "name": "@twicely/subscriptions",
   "version": "0.0.0",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
     "./*": "./src/*.ts"
   },
   "scripts": {
@@ -17,8 +14,7 @@
     "stripe": "^20.3.1",
     "@twicely/crosslister": "workspace:*",
     "@twicely/db": "workspace:*",
-    "@twicely/logger": "workspace:*",
-    "@twicely/stripe": "workspace:*"
+    "@twicely/logger": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20"

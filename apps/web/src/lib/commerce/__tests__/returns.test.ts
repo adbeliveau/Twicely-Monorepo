@@ -210,7 +210,7 @@ describe('Returns Module', () => {
       const result = await markReturnReceived('seller1', 'ret1');
 
       expect(result.success).toBe(true);
-      expect(mockProcessReturnRefund).toHaveBeenCalledWith({ returnId: 'ret1' });
+      expect(mockProcessReturnRefund).toHaveBeenCalledWith({ returnId: 'ret1' }, expect.any(Function));
     });
 
     it('still returns success if processReturnRefund fails (logs error)', async () => {

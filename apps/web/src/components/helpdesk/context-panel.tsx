@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   KnowledgeBaseSection,
@@ -192,7 +193,7 @@ function SlaSection({ firstResponseDue, resolutionDue, firstResponseAt, resolved
 }
 
 function SlaCountdown({ due }: { due: Date }) {
-  const now = Date.now();
+  const [now] = useState(() => Date.now());
   const dueMs = new Date(due).getTime();
   const diffMs = dueMs - now;
   const isBreached = diffMs < 0;

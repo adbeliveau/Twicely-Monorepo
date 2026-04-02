@@ -49,9 +49,10 @@ export function HubNotificationDropdown() {
 
   // Initial fetch + polling
   useEffect(() => {
-    fetchNotifications();
+    const id = setTimeout(() => void fetchNotifications(), 0);
     pollRef.current = setInterval(fetchNotifications, POLL_INTERVAL_MS);
     return () => {
+      clearTimeout(id);
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [fetchNotifications]);

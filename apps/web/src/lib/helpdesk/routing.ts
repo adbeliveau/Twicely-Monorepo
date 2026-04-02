@@ -95,7 +95,7 @@ export async function evaluateRoutingRules(caseData: CaseRoutingInput): Promise<
     if (!allMatch) continue;
 
     const actions = rule.actionsJson as RoutingActions;
-    let assignedTeamId = actions.assignTeamId ?? null;
+    const assignedTeamId = actions.assignTeamId ?? null;
     let assignedAgentId = actions.assignAgentId ?? null;
     const priority = (actions.setPriority ?? caseData.priority) as CasePriority;
     const tags = [...(caseData.tags ?? []), ...(actions.addTags ?? [])];

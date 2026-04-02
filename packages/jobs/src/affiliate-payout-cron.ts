@@ -1,5 +1,6 @@
 import { createQueue, createWorker } from './queue';
 import { logger } from '@twicely/logger';
+import type { StripeTransferCreator } from './affiliate-payout-service';
 
 const QUEUE_NAME = 'affiliate-payout';
 
@@ -34,7 +35,9 @@ export async function registerAffiliatePayoutJob(): Promise<void> {
  * Core logic: graduate PENDING commissions then execute payouts.
  * Exported for testability.
  */
-export async function processAffiliatePayouts(): Promise<void> {
+export async function processAffiliatePayouts(
+  createTransfer: StripeTransferCreator
+): Promise<void> {
   const { graduateCommissions } = await import('./affiliate-commission-graduation');
   const { executeAffiliatePayouts } = await import('./affiliate-payout-service');
 
@@ -44,7 +47,7 @@ export async function processAffiliatePayouts(): Promise<void> {
     totalCents: graduation.totalCents,
   });
 
-  const payouts = await executeAffiliatePayouts();
+  const payouts = await executeAffiliatePayouts(createTransfer);
   logger.info('[affiliatePayoutCron] Payouts complete', {
     payoutCount: payouts.payoutCount,
     totalPaidCents: payouts.totalPaidCents,
@@ -53,12 +56,15 @@ export async function processAffiliatePayouts(): Promise<void> {
 }
 
 /**
- * Worker that processes the monthly affiliate payout job.
+ * Factory to create the worker for the monthly affiliate payout job.
+ * Accepts a StripeTransferCreator callback to avoid circular dep on @twicely/stripe.
  */
-export const affiliatePayoutWorker = createWorker<AffiliatePayoutJobData>(
-  QUEUE_NAME,
-  async () => {
-    await processAffiliatePayouts();
-  },
-  1 // single concurrency — avoid duplicate processing
-);
+export function createAffiliatePayoutWorker(createTransfer: StripeTransferCreator) {
+  return createWorker<AffiliatePayoutJobData>(
+    QUEUE_NAME,
+    async () => {
+      await processAffiliatePayouts(createTransfer);
+    },
+    1 // single concurrency — avoid duplicate processing
+  );
+}

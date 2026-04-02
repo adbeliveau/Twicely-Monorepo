@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@twicely/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@twicely/ui/card';
@@ -44,12 +44,13 @@ export function AccountDeletionSection({
       )
     : null;
 
-  const daysRemaining = deletionDate
+  const [now] = useState(() => Date.now());
+  const daysRemaining = useMemo(() => deletionDate
     ? Math.max(
         0,
-        Math.ceil((deletionDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+        Math.ceil((deletionDate.getTime() - now) / (24 * 60 * 60 * 1000))
       )
-    : null;
+    : null, [deletionDate, now]);
 
   function handleDelete() {
     startTransition(async () => {

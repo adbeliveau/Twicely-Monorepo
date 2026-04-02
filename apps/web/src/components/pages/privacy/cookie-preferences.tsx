@@ -8,7 +8,7 @@
  * and allows modification. Saves via updateCookieConsent action.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Switch } from '@twicely/ui/switch';
 import { Label } from '@twicely/ui/label';
 import { Button } from '@twicely/ui/button';
@@ -53,17 +53,17 @@ interface Props {
 }
 
 export function CookiePreferencesForm({ isAuthenticated }: Props) {
-  const [functional, setFunctional] = useState(false);
-  const [analytics, setAnalytics] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
+  const [functional, setFunctional] = useState(() => {
+    if (typeof document === 'undefined') return false;
     const existing = readConsentCookie();
-    if (existing) {
-      setFunctional(existing.functional);
-      setAnalytics(existing.analytics);
-    }
-  }, []);
+    return existing ? existing.functional : false;
+  });
+  const [analytics, setAnalytics] = useState(() => {
+    if (typeof document === 'undefined') return false;
+    const existing = readConsentCookie();
+    return existing ? existing.analytics : false;
+  });
+  const [saved, setSaved] = useState(false);
 
   async function handleSave(): Promise<void> {
     const state: ConsentState = {

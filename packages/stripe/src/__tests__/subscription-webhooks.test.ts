@@ -4,6 +4,10 @@ vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn().mockReturnValue({ set: vi.fn().mockResolvedValue('OK'), get: vi.fn().mockResolvedValue(null) }),
 }));
 
+vi.mock('../server', () => ({
+  stripe: { subscriptions: { update: vi.fn() } },
+}));
+
 import { mapStripeStatus } from '../subscription-webhooks';
 import {
   createMockSubscription,

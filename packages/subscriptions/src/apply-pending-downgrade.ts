@@ -18,12 +18,18 @@ import {
   bundleSubscription,
 } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { stripe } from '@twicely/stripe/server';
 import { getStripePriceId } from './price-map';
 import { getBillingIntervalFromPriceId } from './subscription-engine';
 import { resolveBundleComponents } from './bundle-resolution';
 import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@twicely/db/types';
 import type { BillingInterval } from './price-map';
+
+// ─── Callback Types (DI to avoid circular dep on @twicely/stripe) ────────────
+
+export type StripeSubscriptionUpdater = (
+  subId: string,
+  params: { items: Array<{ id: string; price: string }>; proration_behavior: 'none' }
+) => Promise<unknown>;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -114,7 +120,8 @@ async function findPendingSubscription(
  */
 export async function applyPendingDowngradeIfNeeded(
   stripeSubscriptionId: string,
-  stripeSubscription: Stripe.Subscription
+  stripeSubscription: Stripe.Subscription,
+  updateSubscription: StripeSubscriptionUpdater
 ): Promise<void> {
   const pending = await findPendingSubscription(stripeSubscriptionId);
   if (!pending) return;
@@ -148,7 +155,7 @@ export async function applyPendingDowngradeIfNeeded(
   }
 
   try {
-    await stripe.subscriptions.update(stripeSubscriptionId, {
+    await updateSubscription(stripeSubscriptionId, {
       items: [{ id: itemId, price: newPriceId }],
       proration_behavior: 'none',
     });

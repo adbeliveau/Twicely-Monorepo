@@ -9,7 +9,7 @@
  * Per TWICELY_V3_LOCAL_CANONICAL_ADDENDUM_v1_1.md §A4
  */
 
-import { sign, verify, createPrivateKey, createPublicKey } from 'crypto';
+import { sign, verify, createPrivateKey, createPublicKey, randomInt } from 'crypto';
 import { createId } from '@paralleldrive/cuid2';
 import type { LocalTransactionTokenPayload } from '@/lib/types/local-token';
 
@@ -146,7 +146,6 @@ export function verifyTokenServer(token: string): TokenVerifyResult {
  * Range: 100000-999999 (always 6 digits, no leading zeros).
  */
 export function generateOfflineCode(): string {
-  const { randomInt } = require('crypto') as typeof import('crypto');
   return randomInt(100000, 1000000).toString();
 }
 

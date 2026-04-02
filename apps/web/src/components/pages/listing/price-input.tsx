@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Input } from '@twicely/ui/input';
 import { cn } from '@twicely/utils';
 
@@ -23,14 +23,15 @@ export function PriceInput({ value, onChange, placeholder, disabled, error }: Pr
   );
 
   // Sync from parent when value changes externally (not from our own input)
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     const parentDisplay = value > 0 ? (value / 100).toFixed(2) : '';
     const localCents = parseFloat(localValue || '0') * 100;
-    // Only sync if values are meaningfully different (not just formatting)
     if (Math.round(localCents) !== value) {
       setLocalValue(parentDisplay);
     }
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;

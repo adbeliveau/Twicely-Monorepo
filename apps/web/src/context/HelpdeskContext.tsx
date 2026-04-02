@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 
 type HelpdeskContextType = {
@@ -24,22 +24,16 @@ export const useHelpdesk = () => {
 export const HelpdeskProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const pathname = usePathname();
-
-  // Auto-hide sidebar when navigating to a case detail page
-  useEffect(() => {
-    if (pathname.match(/\/hd\/cases\/[^/]+$/)) {
-      // On case detail page - switch to drawer mode (workspace mode)
-      setIsSidebarHidden(true);
-      setIsDrawerOpen(false); // Close drawer on navigation
-    } else {
-      // On all other helpdesk pages - show sidebar normally
-      setIsSidebarHidden(false);
-      setIsDrawerOpen(false);
-    }
-  }, [pathname]);
+  const isCaseDetail = !!pathname.match(/\/hd\/cases\/[^/]+$/);
+  const [isSidebarHidden, setIsSidebarHidden] = useState(isCaseDetail);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setIsSidebarHidden(isCaseDetail);
+    setIsDrawerOpen(false);
+  }
 
   const showSidebar = useCallback(() => {
     if (isSidebarHidden) {

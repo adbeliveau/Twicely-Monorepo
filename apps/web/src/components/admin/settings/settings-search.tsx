@@ -26,7 +26,11 @@ export function SettingsSearch() {
 
   const results = useMemo(() => searchSettings(query), [query]);
 
-  useEffect(() => { setSelectedIdx(-1); }, [query]);
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
+    setSelectedIdx(-1);
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

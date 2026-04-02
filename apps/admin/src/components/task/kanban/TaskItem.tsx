@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { Task, DropResult } from "./types/types";
 import Image from "next/image";
@@ -74,7 +74,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
     },
   });
   const opacity = isDragging ? 0.3 : 0.8;
-  drag(drop(ref));
+  useEffect(() => { drag(drop(ref)); }, [drag, drop]);
 
   return (
     <div

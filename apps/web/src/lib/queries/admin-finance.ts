@@ -123,7 +123,7 @@ export async function getPayoutList(opts: {
 
   const [totalResult] = await db.select({ count: count() }).from(payout).where(where);
 
-  let rows = await db
+  const rows = await db
     .select()
     .from(payout)
     .where(where)

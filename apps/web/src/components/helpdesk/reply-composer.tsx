@@ -50,35 +50,32 @@ export function ReplyComposer({
   const macroDropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync initialBody when it changes (e.g. from AI suggestion card)
-  const prevInitialBody = useRef(initialBody);
-  useEffect(() => {
-    if (initialBody !== undefined && initialBody !== prevInitialBody.current) {
-      prevInitialBody.current = initialBody;
-      setBody(initialBody);
-      textareaRef.current?.focus();
-    }
-  }, [initialBody]);
+  const [prevInitialBody, setPrevInitialBody] = useState(initialBody);
+  const [focusTrigger, setFocusTrigger] = useState(0);
+  if (initialBody !== undefined && initialBody !== prevInitialBody) {
+    setPrevInitialBody(initialBody);
+    setBody(initialBody);
+    setFocusTrigger((c) => c + 1);
+  }
 
   // Respond to external focus requests (from hotkeys R / N)
-  const prevFocusCounter = useRef(0);
+  const [prevFocusCounter, setPrevFocusCounter] = useState(0);
+  if (focusRequest && focusRequest.counter !== prevFocusCounter) {
+    setPrevFocusCounter(focusRequest.counter);
+    setMode(focusRequest.mode);
+    setFocusTrigger((c) => c + 1);
+  }
+
   useEffect(() => {
-    if (!focusRequest) return;
-    if (focusRequest.counter !== prevFocusCounter.current) {
-      prevFocusCounter.current = focusRequest.counter;
-      setMode(focusRequest.mode);
-      textareaRef.current?.focus();
-    }
-  }, [focusRequest]);
+    if (focusTrigger > 0) textareaRef.current?.focus();
+  }, [focusTrigger]);
 
   // Respond to external macro toggle requests (from hotkey M)
-  const prevMacroSignal = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (macroToggleSignal === undefined) return;
-    if (macroToggleSignal !== prevMacroSignal.current) {
-      prevMacroSignal.current = macroToggleSignal;
-      setShowMacros((s) => !s);
-    }
-  }, [macroToggleSignal]);
+  const [prevMacroSignal, setPrevMacroSignal] = useState<number | undefined>(undefined);
+  if (macroToggleSignal !== undefined && macroToggleSignal !== prevMacroSignal) {
+    setPrevMacroSignal(macroToggleSignal);
+    setShowMacros((s) => !s);
+  }
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -100,7 +97,7 @@ export function ReplyComposer({
       else await onSendNote(body.trim());
       setBody("");
     } catch { /* error handled by caller */ }
-  }, [body, mode, isSubmitting, onSendReply, onSendNote]);
+  }, [body, mode, isSubmitting, onSendReply, onSendNote, setBody]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -112,7 +109,7 @@ export function ReplyComposer({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleSend]);
 
-  const useMacro = (macro: Macro) => {
+  const applyMacro = (macro: Macro) => {
     const resolved = macroContext
       ? substituteMacroVariables(macro.body, macroContext)
       : macro.body;
@@ -219,7 +216,7 @@ export function ReplyComposer({
                           ? substituteMacroVariables(macro.body, macroContext)
                           : macro.body;
                         return (
-                          <button key={macro.id} onClick={() => useMacro(macro)} className="w-full text-left px-3 py-2 rounded-md hd-transition">
+                          <button key={macro.id} onClick={() => applyMacro(macro)} className="w-full text-left px-3 py-2 rounded-md hd-transition">
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-sm" style={{ color: "rgb(var(--hd-text-primary))" }}>{macro.title}</span>
                               {macro.shortcut && <span className="hd-kbd">{macro.shortcut}</span>}

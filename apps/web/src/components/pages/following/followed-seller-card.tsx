@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { toggleFollow } from '@/lib/actions/follow';
 import type { SerializedFollowedSeller } from './following-list';
@@ -23,9 +23,11 @@ export function FollowedSellerCard({ seller, onUnfollow }: Props) {
     });
   }
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const hasNewListings =
-    seller.lastListedAt !== null && new Date(seller.lastListedAt) > sevenDaysAgo;
+  const [now] = useState(() => Date.now());
+  const hasNewListings = useMemo(() => {
+    const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    return seller.lastListedAt !== null && new Date(seller.lastListedAt) > sevenDaysAgo;
+  }, [seller.lastListedAt, now]);
 
   return (
     <div className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">

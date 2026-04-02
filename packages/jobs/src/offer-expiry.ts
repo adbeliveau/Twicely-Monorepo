@@ -1,5 +1,8 @@
 import { createQueue, createWorker } from './queue';
-import { expireOffer } from '@twicely/commerce/offer-engine';
+
+// ─── Callback Type (DI to avoid circular dep on @twicely/commerce) ───────────
+
+export type OfferExpirer = (offerId: string) => Promise<{ success: boolean; error?: string }>;
 
 interface OfferExpiryJobData {
   offerId: string;
@@ -51,17 +54,19 @@ export async function cancelOfferExpiry(offerId: string): Promise<void> {
 }
 
 /**
- * Worker that processes offer expiry jobs.
- * Idempotent: if offer is no longer PENDING, skips silently.
+ * Factory to create the offer expiry worker.
+ * Accepts an OfferExpirer callback to avoid circular dep on @twicely/commerce.
  */
-export const offerExpiryWorker = createWorker<OfferExpiryJobData>(
-  QUEUE_NAME,
-  async (job) => {
-    const { offerId } = job.data;
-    const result = await expireOffer(offerId);
+export function createOfferExpiryWorker(expireOffer: OfferExpirer) {
+  return createWorker<OfferExpiryJobData>(
+    QUEUE_NAME,
+    async (job) => {
+      const { offerId } = job.data;
+      const result = await expireOffer(offerId);
 
-    if (!result.success && result.error !== 'Offer not found') {
-      console.error(`[offer-expiry] Failed to expire offer ${offerId}:`, result.error);
+      if (!result.success && result.error !== 'Offer not found') {
+        console.error(`[offer-expiry] Failed to expire offer ${offerId}:`, result.error);
+      }
     }
-  }
-);
+  );
+}

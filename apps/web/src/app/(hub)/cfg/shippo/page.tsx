@@ -69,7 +69,7 @@ export default async function ShippoSettingsPage() {
   const schema = (adapter.configSchemaJson ?? []) as ConfigField[];
 
   let configJson: Record<string, unknown> = {};
-  let secretMasks: Record<string, string> = {};
+  const secretMasks: Record<string, string> = {};
 
   if (instance) {
     configJson = (instance.configJson ?? {}) as Record<string, unknown>;

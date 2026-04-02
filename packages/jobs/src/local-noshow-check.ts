@@ -13,12 +13,22 @@ import { db } from '@twicely/db';
 import { localTransaction, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
-import { canTransition } from '@twicely/commerce/local-state-machine';
-import { postReliabilityMark } from '@twicely/commerce/local-reliability';
-import { unreserveListingForLocalTransaction } from '@twicely/commerce/local-reserve';
 import { enqueueNoshowRelistCheck } from '@twicely/jobs/local-fraud-noshow-relist';
 import { sendLocalAutoMessage } from './local-auto-messages';
 import { logger } from '@twicely/logger';
+
+// ─── Callback Types (DI to avoid circular dep on @twicely/commerce) ──────────
+
+export interface LocalNoShowHandlers {
+  canTransition: (from: string, to: string) => boolean;
+  postReliabilityMark: (params: {
+    userId: string;
+    transactionId: string;
+    eventType: string;
+    marksApplied: number;
+  }) => Promise<void>;
+  unreserveListingForLocalTransaction: (orderId: string) => Promise<void>;
+}
 
 const QUEUE_NAME = 'local-noshow-check';
 
@@ -69,114 +79,118 @@ export async function enqueueNoShowCheck(
   );
 }
 
-// ─── Processing Logic ─────────────────────────────────────────────────────────
+// ─── Factory ─────────────────────────────────────────────────────────────────
 
-async function processNoShowCheck(data: LocalNoShowCheckData): Promise<void> {
-  const { localTransactionId, checkedInParty } = data;
+/**
+ * Factory to create the no-show check worker.
+ * Accepts LocalNoShowHandlers to avoid circular dep on @twicely/commerce.
+ */
+export function createLocalNoShowCheckWorker(handlers: LocalNoShowHandlers) {
+  async function processNoShowCheck(data: LocalNoShowCheckData): Promise<void> {
+    const { localTransactionId, checkedInParty } = data;
 
-  const [tx] = await db
-    .select()
-    .from(localTransaction)
-    .where(eq(localTransaction.id, localTransactionId))
-    .limit(1);
+    const [tx] = await db
+      .select()
+      .from(localTransaction)
+      .where(eq(localTransaction.id, localTransactionId))
+      .limit(1);
 
-  if (!tx) {
-    logger.error('[local-noshow-check] Transaction not found', { localTransactionId });
-    return;
-  }
+    if (!tx) {
+      logger.error('[local-noshow-check] Transaction not found', { localTransactionId });
+      return;
+    }
 
-  // Skip if already in a terminal or resolved state
-  const skipStatuses = [
-    'BOTH_CHECKED_IN',
-    'RECEIPT_CONFIRMED',
-    'COMPLETED',
-    'CANCELED',
-    'DISPUTED',
-  ] as const;
+    // Skip if already in a terminal or resolved state
+    const skipStatuses = [
+      'BOTH_CHECKED_IN',
+      'RECEIPT_CONFIRMED',
+      'COMPLETED',
+      'CANCELED',
+      'DISPUTED',
+    ] as const;
 
-  if (skipStatuses.includes(tx.status as (typeof skipStatuses)[number])) {
-    return;
-  }
+    if (skipStatuses.includes(tx.status as (typeof skipStatuses)[number])) {
+      return;
+    }
 
-  // Determine no-show party based on who checked in and current status
-  let noShowParty: 'BUYER' | 'SELLER' | null = null;
+    // Determine no-show party based on who checked in and current status
+    let noShowParty: 'BUYER' | 'SELLER' | null = null;
 
-  if (tx.status === 'SELLER_CHECKED_IN' && checkedInParty === 'SELLER') {
-    noShowParty = 'BUYER';
-  } else if (tx.status === 'BUYER_CHECKED_IN' && checkedInParty === 'BUYER') {
-    noShowParty = 'SELLER';
-  }
+    if (tx.status === 'SELLER_CHECKED_IN' && checkedInParty === 'SELLER') {
+      noShowParty = 'BUYER';
+    } else if (tx.status === 'BUYER_CHECKED_IN' && checkedInParty === 'BUYER') {
+      noShowParty = 'SELLER';
+    }
 
-  if (!noShowParty) {
-    return;
-  }
+    if (!noShowParty) {
+      return;
+    }
 
-  // Verify the transition is valid
-  if (!canTransition(tx.status, 'NO_SHOW')) {
-    logger.error('[local-noshow-check] Cannot transition to NO_SHOW', {
+    // Verify the transition is valid
+    if (!handlers.canTransition(tx.status, 'NO_SHOW')) {
+      logger.error('[local-noshow-check] Cannot transition to NO_SHOW', {
+        localTransactionId,
+        currentStatus: tx.status,
+      });
+      return;
+    }
+
+    const now = new Date();
+
+    // Update local transaction: mark no-show (do not write fee fields)
+    await db
+      .update(localTransaction)
+      .set({
+        status: 'NO_SHOW',
+        noShowParty,
+        updatedAt: now,
+      })
+      .where(eq(localTransaction.id, localTransactionId));
+
+    // Cancel the associated order
+    await db
+      .update(order)
+      .set({
+        status: 'CANCELED',
+        cancelInitiator: 'SYSTEM',
+        cancelReason: 'No-show at local meetup',
+        canceledAt: now,
+        updatedAt: now,
+      })
+      .where(eq(order.id, tx.orderId));
+
+    logger.info('[local-noshow-check] No-show detected', {
       localTransactionId,
-      currentStatus: tx.status,
+      noShowParty,
     });
-    return;
+
+    // Unreserve listing immediately — NO_SHOW is terminal, no rescheduling possible
+    await handlers.unreserveListingForLocalTransaction(tx.orderId);
+
+    // G2.15: Enqueue 24-hour relist check for fraud detection (Signal 3)
+    await enqueueNoshowRelistCheck(localTransactionId, tx.sellerId, tx.orderId);
+
+    // Post auto-message to the linked conversation
+    void sendLocalAutoMessage(tx.orderId, 'NO_SHOW', {
+      noShowParty: noShowParty === 'BUYER' ? 'Buyer' : 'Seller',
+    });
+
+    // Post reliability mark — suspension handled inside postReliabilityMark
+    const noShowUserId = noShowParty === 'BUYER' ? tx.buyerId : tx.sellerId;
+    const markNoShow = await getPlatformSetting<number>('commerce.local.markNoShow', -3);
+    await handlers.postReliabilityMark({
+      userId: noShowUserId,
+      transactionId: localTransactionId,
+      eventType: noShowParty === 'BUYER' ? 'BUYER_NOSHOW' : 'SELLER_NOSHOW',
+      marksApplied: markNoShow,
+    });
   }
 
-  const now = new Date();
-
-  // Update local transaction: mark no-show (do not write fee fields)
-  await db
-    .update(localTransaction)
-    .set({
-      status: 'NO_SHOW',
-      noShowParty,
-      updatedAt: now,
-    })
-    .where(eq(localTransaction.id, localTransactionId));
-
-  // Cancel the associated order
-  await db
-    .update(order)
-    .set({
-      status: 'CANCELED',
-      cancelInitiator: 'SYSTEM',
-      cancelReason: 'No-show at local meetup',
-      canceledAt: now,
-      updatedAt: now,
-    })
-    .where(eq(order.id, tx.orderId));
-
-  logger.info('[local-noshow-check] No-show detected', {
-    localTransactionId,
-    noShowParty,
-  });
-
-  // Unreserve listing immediately — NO_SHOW is terminal, no rescheduling possible
-  await unreserveListingForLocalTransaction(tx.orderId);
-
-  // G2.15: Enqueue 24-hour relist check for fraud detection (Signal 3)
-  await enqueueNoshowRelistCheck(localTransactionId, tx.sellerId, tx.orderId);
-
-  // Post auto-message to the linked conversation
-  void sendLocalAutoMessage(tx.orderId, 'NO_SHOW', {
-    noShowParty: noShowParty === 'BUYER' ? 'Buyer' : 'Seller',
-  });
-
-  // Post reliability mark — suspension handled inside postReliabilityMark
-  const noShowUserId = noShowParty === 'BUYER' ? tx.buyerId : tx.sellerId;
-  const markNoShow = await getPlatformSetting<number>('commerce.local.markNoShow', -3);
-  await postReliabilityMark({
-    userId: noShowUserId,
-    transactionId: localTransactionId,
-    eventType: noShowParty === 'BUYER' ? 'BUYER_NOSHOW' : 'SELLER_NOSHOW',
-    marksApplied: markNoShow,
-  });
+  return createWorker<LocalNoShowCheckData>(
+    QUEUE_NAME,
+    async (job) => {
+      await processNoShowCheck(job.data);
+    },
+    1,
+  );
 }
-
-// ─── Worker ───────────────────────────────────────────────────────────────────
-
-export const localNoShowCheckWorker = createWorker<LocalNoShowCheckData>(
-  QUEUE_NAME,
-  async (job) => {
-    await processNoShowCheck(job.data);
-  },
-  1,
-);

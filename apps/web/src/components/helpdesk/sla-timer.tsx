@@ -41,11 +41,19 @@ function formatTime(ms: number): string {
 
 export function SlaTimer({ dueAt, isMet = false, label, size = "md", className }: SlaTimerProps) {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [state, setState] = useState<SlaState>("none");
+  const [state, setState] = useState<SlaState>(() => !dueAt ? "none" : isMet ? "met" : "none");
+
+  const [prevDueAt, setPrevDueAt] = useState(dueAt);
+  const [prevIsMet, setPrevIsMet] = useState(isMet);
+  if (dueAt !== prevDueAt || isMet !== prevIsMet) {
+    setPrevDueAt(dueAt);
+    setPrevIsMet(isMet);
+    if (!dueAt) setState("none");
+    else if (isMet) setState("met");
+  }
 
   useEffect(() => {
-    if (!dueAt) { setState("none"); return; }
-    if (isMet) { setState("met"); return; }
+    if (!dueAt || isMet) return;
 
     const update = () => {
       const remaining = new Date(dueAt).getTime() - Date.now();
@@ -99,12 +107,20 @@ interface SlaIndicatorProps {
 }
 
 export function SlaIndicator({ dueAt, isMet = false, className }: SlaIndicatorProps) {
-  const [state, setState] = useState<SlaState>("none");
-  const [display, setDisplay] = useState<string>("—");
+  const [state, setState] = useState<SlaState>(() => !dueAt ? "none" : isMet ? "met" : "none");
+  const [display, setDisplay] = useState<string>(() => !dueAt ? "—" : isMet ? "✓" : "—");
+
+  const [prevDueAt, setPrevDueAt] = useState(dueAt);
+  const [prevIsMet, setPrevIsMet] = useState(isMet);
+  if (dueAt !== prevDueAt || isMet !== prevIsMet) {
+    setPrevDueAt(dueAt);
+    setPrevIsMet(isMet);
+    if (!dueAt) { setState("none"); setDisplay("—"); }
+    else if (isMet) { setState("met"); setDisplay("✓"); }
+  }
 
   useEffect(() => {
-    if (!dueAt) { setState("none"); setDisplay("—"); return; }
-    if (isMet) { setState("met"); setDisplay("✓"); return; }
+    if (!dueAt || isMet) return;
 
     const update = () => {
       const remaining = new Date(dueAt).getTime() - Date.now();
@@ -154,12 +170,19 @@ export function SlaProgress({ dueAt, startedAt, isMet = false, className }: SlaP
   const [progress, setProgress] = useState(0);
   const [state, setState] = useState<SlaState>("none");
 
-  useEffect(() => {
+  const [prevDueAt, setPrevDueAt] = useState(dueAt);
+  const [prevIsMet, setPrevIsMet] = useState(isMet);
+  if (prevDueAt !== dueAt || prevIsMet !== isMet) {
+    setPrevDueAt(dueAt);
+    setPrevIsMet(isMet);
     if (!dueAt || isMet) {
       setProgress(isMet ? 100 : 0);
       setState(isMet ? "met" : "none");
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!dueAt || isMet) return;
 
     const update = () => {
       const start = new Date(startedAt).getTime();
@@ -173,9 +196,9 @@ export function SlaProgress({ dueAt, startedAt, isMet = false, className }: SlaP
       else if (pct >= 75) setState("warning");
       else setState("ok");
     };
-    update();
+    const timeout = setTimeout(update, 0);
     const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
+    return () => { clearTimeout(timeout); clearInterval(interval); };
   }, [dueAt, startedAt, isMet]);
 
   const barColors: Record<SlaState, string> = {

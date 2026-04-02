@@ -11,6 +11,15 @@ import { createQueue, createWorker } from './queue';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 
+// ─── Callback Types (DI to avoid circular dep on @twicely/commerce) ──────────
+
+export interface CronHandlers {
+  autoCompleteDeliveredOrders: () => Promise<number>;
+  autoApproveOverdueReturns: () => Promise<number>;
+  scanForShippingExceptions: () => Promise<number>;
+  processVacationAutoEnd: () => Promise<number>;
+}
+
 const QUEUE_NAME = 'platform-cron';
 
 type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc';
@@ -110,54 +119,56 @@ export async function registerCronJobs(): Promise<void> {
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }
 
-async function processCronJob(task: CronTask): Promise<void> {
-  switch (task) {
-    case 'orders': {
-      const { autoCompleteDeliveredOrders } = await import('@twicely/commerce/shipping');
-      const count = await autoCompleteDeliveredOrders();
-      logger.info('[cronJobs] orders complete', { autoCompleted: count });
-      break;
-    }
-    case 'returns': {
-      const { autoApproveOverdueReturns } = await import('@twicely/commerce/returns');
-      const count = await autoApproveOverdueReturns();
-      logger.info('[cronJobs] returns complete', { autoApproved: count });
-      break;
-    }
-    case 'shipping': {
-      const { scanForShippingExceptions } = await import('@twicely/commerce/shipping-exceptions');
-      const found = await scanForShippingExceptions();
-      logger.info('[cronJobs] shipping complete', { exceptionsFound: found });
-      break;
-    }
-    case 'health': {
-      const { runAllChecks } = await import('./doctor-runner');
-      const { sendSlackAlert } = await import('./slack-alert');
-      const summary = await runAllChecks();
-      const failed = summary.checks.filter((c) => c.status !== 'HEALTHY');
-      if (failed.length > 0) {
-        await sendSlackAlert(summary);
+/**
+ * Factory to create the cron worker.
+ * Accepts CronHandlers to avoid circular dep on @twicely/commerce.
+ */
+export function createCronWorker(handlers: CronHandlers) {
+  async function processCronJob(task: CronTask): Promise<void> {
+    switch (task) {
+      case 'orders': {
+        const count = await handlers.autoCompleteDeliveredOrders();
+        logger.info('[cronJobs] orders complete', { autoCompleted: count });
+        break;
       }
-      logger.info('[cronJobs] health complete', { checksRun: summary.checks.length, failed: failed.length });
-      break;
-    }
-    case 'vacation': {
-      const { processVacationAutoEnd } = await import('@twicely/commerce/vacation-cron');
-      const count = await processVacationAutoEnd();
-      logger.info('[cronJobs] vacation complete', { vacationsEnded: count });
-      break;
-    }
-    case 'seller-score-recalc': {
-      const { processSellerScoreRecalc } = await import('@twicely/jobs/seller-score-recalc');
-      await processSellerScoreRecalc();
-      logger.info('[cronJobs] seller-score-recalc complete');
-      break;
+      case 'returns': {
+        const count = await handlers.autoApproveOverdueReturns();
+        logger.info('[cronJobs] returns complete', { autoApproved: count });
+        break;
+      }
+      case 'shipping': {
+        const found = await handlers.scanForShippingExceptions();
+        logger.info('[cronJobs] shipping complete', { exceptionsFound: found });
+        break;
+      }
+      case 'health': {
+        const { runAllChecks } = await import('./doctor-runner');
+        const { sendSlackAlert } = await import('./slack-alert');
+        const summary = await runAllChecks();
+        const failed = summary.checks.filter((c) => c.status !== 'HEALTHY');
+        if (failed.length > 0) {
+          await sendSlackAlert(summary);
+        }
+        logger.info('[cronJobs] health complete', { checksRun: summary.checks.length, failed: failed.length });
+        break;
+      }
+      case 'vacation': {
+        const count = await handlers.processVacationAutoEnd();
+        logger.info('[cronJobs] vacation complete', { vacationsEnded: count });
+        break;
+      }
+      case 'seller-score-recalc': {
+        const { processSellerScoreRecalc } = await import('@twicely/jobs/seller-score-recalc');
+        await processSellerScoreRecalc();
+        logger.info('[cronJobs] seller-score-recalc complete');
+        break;
+      }
     }
   }
-}
 
-export const cronWorker = createWorker<CronJobData>(
-  QUEUE_NAME,
-  async (job) => { await processCronJob(job.data.task); },
-  1,
-);
+  return createWorker<CronJobData>(
+    QUEUE_NAME,
+    async (job) => { await processCronJob(job.data.task); },
+    1,
+  );
+}

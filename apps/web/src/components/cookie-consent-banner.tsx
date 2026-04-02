@@ -13,7 +13,7 @@
  * 3. Analytics — opt-in (usage tracking)
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@twicely/ui/button';
 import { Switch } from '@twicely/ui/switch';
 import { Label } from '@twicely/ui/label';
@@ -66,18 +66,15 @@ export function CookieConsentBanner({
   isEuVisitor = true,
   isAuthenticated = false,
 }: Props) {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => {
+    if (!consentRequired) return false;
+    if (typeof document === 'undefined') return false;
+    const existing = readConsentCookie();
+    return !existing || existing.version !== CONSENT_VERSION;
+  });
   const [showDetails, setShowDetails] = useState(false);
   const [functional, setFunctional] = useState(false);
   const [analytics, setAnalytics] = useState(false);
-
-  useEffect(() => {
-    if (!consentRequired) return;
-    const existing = readConsentCookie();
-    if (!existing || existing.version !== CONSENT_VERSION) {
-      setVisible(true);
-    }
-  }, [consentRequired]);
 
   if (!visible) return null;
 

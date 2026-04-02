@@ -194,6 +194,39 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   They execute in the user's browser when the HTML is rendered, not on the Node.js server.
   The shell regex matched the string literals within the template. Not a server-side SSR crash risk.
 
+## Auth & CASL (Stream 2) — continued (2026-03-31 audit)
+
+- **FP-086:** `staff-notifications.ts` — all four functions use `staffAuthorize()` but no `ability.can()`
+  — Staff personal data actions (FP-004 pattern). All operations scoped to `session.staffUserId`
+  at the DB query level. No `Notification` CASL rule exists for non-admin staff roles, so adding
+  a gate would break notifications for HELPDESK_AGENT, SUPPORT, MODERATION, etc.
+
+- **FP-087:** `GET /api/hub/notifications` — `staffAuthorize()` but no `ability.can()` check
+  — Same FP-004 pattern as FP-086. Query is scoped to `session.staffUserId`. Adding a CASL gate
+  on `Notification` would require adding `Notification` rules for all staff roles. Self-service
+  personal data endpoint.
+
+## Routes & Pages (Stream 1) — 2026-04-01 audit
+
+- **FP-088:** `/my/selling/settings/local` flagged as "unreachable via navigation"
+  — Actually wired into both `hub-nav.ts:146` (`{ key: 'local-pickup', label: 'Local Pickup', href: '/my/selling/settings/local' }`)
+  and `selling-sidebar.tsx:92`. The Stream 1 agent missed these navigation entries.
+
+## Hardcoded Values (Stream 3) — 2026-04-01 audit
+
+- **FP-089:** `return-fees.ts` — `calculateRestockingFee()` and `calculateTfRefund()` have hardcoded
+  default parameters (0.10, 5000, 100, 0.50). Same pattern as FP-010 (`tf-calculator.ts` fallback
+  constants). The production call path at line 213 always passes live `feeConfig` from
+  `getReturnFeeConfig()` → `getPlatformSetting()`. All defaults match seed values exactly. The pure
+  functions retain defaults for standalone testability.
+
+## Schema (Stream 6) — 2026-04-01 audit
+
+- **FP-090:** `financialProjection` TS property names (`projectedRevenue30dCents`, etc.) diverge from
+  spec §18.6 property names (`projectedRevenue30d`, etc.). DB column names match spec exactly. The TS
+  names are MORE descriptive and correct — they signal integer cents storage. The spec property names
+  are the stale artifact; code is correct.
+
 ---
 
 ## How to add entries

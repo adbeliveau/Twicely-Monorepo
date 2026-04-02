@@ -9,8 +9,14 @@ import { stripe } from './server';
 import { db } from '@twicely/db';
 import { returnRequest, order } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { applyReturnFees } from '@twicely/commerce/return-fees';
 import { logger } from '@twicely/logger';
+
+// ─── Callback Type (DI to avoid circular dep on @twicely/commerce) ───────────
+
+export type ReturnFeesApplier = (
+  returnId: string,
+  stripeRefundId: string
+) => Promise<{ success: boolean; error?: string }>;
 
 export interface ProcessRefundInput {
   returnId: string;
@@ -37,7 +43,8 @@ export interface ProcessRefundResult {
  * 5. Update statuses
  */
 export async function processReturnRefund(
-  input: ProcessRefundInput
+  input: ProcessRefundInput,
+  applyFees: ReturnFeesApplier
 ): Promise<ProcessRefundResult> {
   const { returnId, reason = 'requested_by_customer' } = input;
 
@@ -110,7 +117,7 @@ export async function processReturnRefund(
   }
 
   // 5. Apply return fees + create ledger entries (AFTER Stripe succeeds)
-  const feesResult = await applyReturnFees(returnId, stripeRefundId);
+  const feesResult = await applyFees(returnId, stripeRefundId);
   if (!feesResult.success) {
     logger.warn('[refunds] Failed to apply return fees', { error: feesResult.error });
   }

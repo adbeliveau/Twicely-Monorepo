@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { auth } from '@twicely/auth';
 import { getSellerScoreData, getScoreHistory, getMetricBreakdown, getSellerTrend } from '@/lib/queries/seller-score';
@@ -101,7 +102,7 @@ export default async function PerformancePage() {
           </div>
           <div className="text-sm mt-1">
             Visit your performance metrics below and{' '}
-            <a href="/p/policies" className="underline font-medium">review our seller standards</a>{' '}
+            <Link href="/p/policies" className="underline font-medium">review our seller standards</Link>{' '}
             to understand what to improve.
           </div>
         </div>
@@ -153,9 +154,9 @@ export default async function PerformancePage() {
       {/* Score projection */}
       {showProjection && projectionDays !== null && nextBandLabel && projectionDays > 0 && projectionDays < 365 && (
         <div className="rounded-lg border bg-green-50 border-green-200 p-4 text-green-800">
-          <div className="font-medium">You're on track!</div>
+          <div className="font-medium">You&apos;re on track!</div>
           <p className="text-sm mt-1">
-            At your current trajectory, you'll reach <strong>{nextBandLabel}</strong> status in approximately{' '}
+            At your current trajectory, you&apos;ll reach <strong>{nextBandLabel}</strong> status in approximately{' '}
             <strong>{projectionDays} day{projectionDays !== 1 ? 's' : ''}</strong>.
           </p>
         </div>

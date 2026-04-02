@@ -94,6 +94,7 @@ export default async function SellerReturnDetailPage({ params }: PageProps) {
   const canRespond = ret.status === 'PENDING_SELLER';
   const isOverdue = ret.sellerResponseDueAt && new Date(ret.sellerResponseDueAt) < new Date();
   const hoursRemaining = ret.sellerResponseDueAt
+    // eslint-disable-next-line react-hooks/purity -- server component, renders once
     ? Math.max(0, Math.floor((new Date(ret.sellerResponseDueAt).getTime() - Date.now()) / (1000 * 60 * 60)))
     : null;
 

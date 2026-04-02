@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { ComponentConfig } from '@puckeditor/core';
 import { isSafeHref } from './url-safety';
 
@@ -21,9 +22,9 @@ export function ImageBlock({ src, alt, linkUrl, rounded }: ImageBlockProps) {
 
   if (linkUrl && isSafeHref(linkUrl)) {
     return (
-      <a href={linkUrl} target="_blank" rel="noopener noreferrer">
+      <Link href={linkUrl} target="_blank" rel="noopener noreferrer">
         {img}
-      </a>
+      </Link>
     );
   }
 

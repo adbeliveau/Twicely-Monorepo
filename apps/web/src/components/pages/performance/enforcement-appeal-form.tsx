@@ -27,7 +27,8 @@ export function EnforcementAppealForm({ enforcementAction, appealWindowDays }: E
   const [error, setError] = useState<string | null>(null);
 
   const deadline = new Date(enforcementAction.createdAt.getTime() + appealWindowDays * 24 * 60 * 60 * 1000);
-  const isExpired = Date.now() > deadline.getTime();
+  const [now] = useState(() => Date.now());
+  const isExpired = now > deadline.getTime();
 
   if (enforcementAction.appealedAt) {
     return (

@@ -27,10 +27,6 @@ vi.mock('@twicely/db/schema', () => ({
   },
 }));
 
-vi.mock('@twicely/commerce/local-reliability', () => ({
-  postReliabilityMark: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock('@twicely/db/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation(
     (_key: string, fallback: unknown) => Promise.resolve(fallback),
@@ -46,11 +42,14 @@ vi.mock('@twicely/logger', () => ({
 }));
 
 import { db } from '@twicely/db';
-import { postReliabilityMark } from '@twicely/commerce/local-reliability';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
 import { enqueueDayOfConfirmationTimeout } from '../local-day-of-confirmation-timeout';
+
+// ─── Mock Callback (injected via factory instead of @twicely/commerce) ────────
+
+const mockPostReliabilityMark = vi.fn().mockResolvedValue(undefined);
 
 // ─── Chain Helpers ────────────────────────────────────────────────────────────
 
@@ -141,7 +140,7 @@ describe('local-day-of-confirmation-timeout worker processing', () => {
 
     expect(rows).toEqual([]);
     expect(db.update).not.toHaveBeenCalled();
-    expect(postReliabilityMark).not.toHaveBeenCalled();
+    expect(mockPostReliabilityMark).not.toHaveBeenCalled();
   });
 
   it('no-ops when transaction is in terminal status (COMPLETED)', () => {
@@ -160,19 +159,19 @@ describe('local-day-of-confirmation-timeout worker processing', () => {
     const tx = makeTx({ dayOfConfirmationRespondedAt: new Date() });
     expect(tx.dayOfConfirmationRespondedAt).not.toBeNull();
     // Worker returns early — no SELLER_DARK mark
-    expect(postReliabilityMark).not.toHaveBeenCalled();
+    expect(mockPostReliabilityMark).not.toHaveBeenCalled();
   });
 
   it('no-ops when already expired (dayOfConfirmationExpired is true)', () => {
     const tx = makeTx({ dayOfConfirmationExpired: true });
     expect(tx.dayOfConfirmationExpired).toBe(true);
-    expect(postReliabilityMark).not.toHaveBeenCalled();
+    expect(mockPostReliabilityMark).not.toHaveBeenCalled();
   });
 
   it('no-ops when status is RESCHEDULE_PENDING (seller chose to reschedule)', () => {
     const tx = makeTx({ status: 'RESCHEDULE_PENDING' });
     expect(tx.status).toBe('RESCHEDULE_PENDING');
-    expect(postReliabilityMark).not.toHaveBeenCalled();
+    expect(mockPostReliabilityMark).not.toHaveBeenCalled();
   });
 
   it('sets dayOfConfirmationExpired to true on expiry', async () => {
@@ -189,13 +188,13 @@ describe('local-day-of-confirmation-timeout worker processing', () => {
   });
 
   it('posts SELLER_DARK reliability mark on expiry', async () => {
-    await postReliabilityMark({
+    await mockPostReliabilityMark({
       userId: SELLER_ID,
       transactionId: TX_ID,
       eventType: 'SELLER_DARK',
       marksApplied: -1,
     });
-    expect(postReliabilityMark).toHaveBeenCalledWith({
+    expect(mockPostReliabilityMark).toHaveBeenCalledWith({
       userId: SELLER_ID,
       transactionId: TX_ID,
       eventType: 'SELLER_DARK',

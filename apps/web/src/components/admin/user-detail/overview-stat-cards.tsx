@@ -90,6 +90,7 @@ interface Props {
 }
 
 export function OverviewStatCards({ user: u, orderCount = 0 }: Props) {
+  // eslint-disable-next-line react-hooks/purity -- server component, renders once
   const accountAgeDays = Math.floor((Date.now() - u.createdAt.getTime()) / (1000 * 60 * 60 * 24));
   const totalBalance = u.balance
     ? u.balance.availableCents + u.balance.pendingCents + u.balance.reservedCents

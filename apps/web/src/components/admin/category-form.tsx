@@ -105,7 +105,7 @@ export function CategoryForm({
         if (!result.success) { setError(result.error ?? 'Unknown error'); return; }
         router.push(`/categories/${result.data?.id}`);
       } else {
-        const result = await updateCategory({ id: initialData?.id!, ...payload });
+        const result = await updateCategory({ id: initialData?.id ?? '', ...payload });
         if (!result.success) { setError(result.error ?? 'Unknown error'); return; }
         if (onCancel) onCancel();
       }

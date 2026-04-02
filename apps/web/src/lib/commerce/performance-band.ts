@@ -225,7 +225,7 @@ export async function computePerformanceBand(
   );
 
   // Calculate weighted score
-  let rawScore =
+  const rawScore =
     onTimeShippingScore * WEIGHTS.onTimeShipping +
     inadScore * WEIGHTS.inad +
     reviewScore * WEIGHTS.review +

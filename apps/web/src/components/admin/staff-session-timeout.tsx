@@ -49,7 +49,8 @@ export function StaffSessionTimeoutProvider({
   const [variant, setVariant] = useState<WarningVariant>(null);
   const [countdownMs, setCountdownMs] = useState(0);
 
-  const lastActivityRef = useRef<number>(Date.now());
+  const [initialNow] = useState(() => Date.now());
+  const lastActivityRef = useRef<number>(initialNow);
   const inactivityMsRef = useRef<number>(5 * 60 * 1000);
   const warnSecsRef = useRef<number>(60);
   const expiresAtRef = useRef<number>(new Date(initialExpiresAt).getTime());

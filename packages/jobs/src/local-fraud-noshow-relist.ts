@@ -9,9 +9,16 @@
  */
 
 import { createQueue, createWorker } from './queue';
-import { checkNoshowRelist } from '@twicely/commerce/local-fraud-detection';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
+
+// ─── Callback Type (DI to avoid circular dep on @twicely/commerce) ───────────
+
+export type NoshowRelistChecker = (
+  localTransactionId: string,
+  sellerId: string,
+  orderId: string,
+) => Promise<void>;
 
 const QUEUE_NAME = 'local-fraud-noshow-relist';
 
@@ -68,10 +75,16 @@ export async function enqueueNoshowRelistCheck(
   });
 }
 
-// ─── Worker ───────────────────────────────────────────────────────────────────
+// ─── Factory ─────────────────────────────────────────────────────────────────
 
-export const localFraudNoshowRelistWorker =
-  createWorker<LocalFraudNoshowRelistData>(
+/**
+ * Factory to create the no-show relist fraud check worker.
+ * Accepts a NoshowRelistChecker to avoid circular dep on @twicely/commerce.
+ */
+export function createLocalFraudNoshowRelistWorker(
+  checkNoshowRelist: NoshowRelistChecker,
+) {
+  return createWorker<LocalFraudNoshowRelistData>(
     QUEUE_NAME,
     async (job) => {
       const { localTransactionId, sellerId, orderId } = job.data;
@@ -79,3 +92,4 @@ export const localFraudNoshowRelistWorker =
     },
     1,
   );
+}

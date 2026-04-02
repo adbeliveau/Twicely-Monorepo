@@ -13,9 +13,17 @@ import { db } from '@twicely/db';
 import { localTransaction } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
-import { postReliabilityMark } from '@twicely/commerce/local-reliability';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
+
+// ─── Callback Type (DI to avoid circular dep on @twicely/commerce) ───────────
+
+export type ReliabilityMarkPoster = (params: {
+  userId: string;
+  transactionId: string;
+  eventType: string;
+  marksApplied: number;
+}) => Promise<void>;
 
 const QUEUE_NAME = 'local-day-of-confirmation-timeout';
 
@@ -69,100 +77,105 @@ function isTerminalStatus(status: string): boolean {
   return (TERMINAL_STATUSES as readonly string[]).includes(status);
 }
 
-// ─── Processing Logic ─────────────────────────────────────────────────────────
+// ─── Factory ─────────────────────────────────────────────────────────────────
 
-async function processDayOfConfirmationTimeout(
-  data: DayOfConfirmationTimeoutData,
-): Promise<void> {
-  const { localTransactionId } = data;
+/**
+ * Factory to create the day-of confirmation timeout worker.
+ * Accepts a ReliabilityMarkPoster to avoid circular dep on @twicely/commerce.
+ */
+export function createDayOfConfirmationTimeoutWorker(
+  postReliabilityMark: ReliabilityMarkPoster,
+) {
+  async function processDayOfConfirmationTimeout(
+    data: DayOfConfirmationTimeoutData,
+  ): Promise<void> {
+    const { localTransactionId } = data;
 
-  const [tx] = await db
-    .select()
-    .from(localTransaction)
-    .where(eq(localTransaction.id, localTransactionId))
-    .limit(1);
+    const [tx] = await db
+      .select()
+      .from(localTransaction)
+      .where(eq(localTransaction.id, localTransactionId))
+      .limit(1);
 
-  if (!tx) {
-    logger.warn('[local-day-of-timeout] Transaction not found', { localTransactionId });
-    return;
-  }
+    if (!tx) {
+      logger.warn('[local-day-of-timeout] Transaction not found', { localTransactionId });
+      return;
+    }
 
-  // No-op: terminal status
-  if (isTerminalStatus(tx.status)) {
-    logger.info('[local-day-of-timeout] Transaction in terminal status, skipping', {
-      localTransactionId,
-      status: tx.status,
+    // No-op: terminal status
+    if (isTerminalStatus(tx.status)) {
+      logger.info('[local-day-of-timeout] Transaction in terminal status, skipping', {
+        localTransactionId,
+        status: tx.status,
+      });
+      return;
+    }
+
+    // No-op: seller already responded — race condition guard
+    if (tx.dayOfConfirmationRespondedAt !== null) {
+      logger.info('[local-day-of-timeout] Seller already responded, skipping', {
+        localTransactionId,
+      });
+      return;
+    }
+
+    // No-op: already processed (idempotent)
+    if (tx.dayOfConfirmationExpired === true) {
+      logger.info('[local-day-of-timeout] Already expired, skipping (idempotent)', {
+        localTransactionId,
+      });
+      return;
+    }
+
+    // No-op: seller chose to reschedule — counts as a valid response, no mark
+    if (tx.status === 'RESCHEDULE_PENDING') {
+      logger.info('[local-day-of-timeout] Seller proposed reschedule, skipping SELLER_DARK mark', {
+        localTransactionId,
+      });
+      return;
+    }
+
+    const now = new Date();
+
+    // Mark as expired
+    await db
+      .update(localTransaction)
+      .set({ dayOfConfirmationExpired: true, updatedAt: now })
+      .where(eq(localTransaction.id, localTransactionId));
+
+    // Post SELLER_DARK reliability mark
+    const markSellerDark = await getPlatformSetting<number>(
+      'commerce.local.markSellerDark',
+      -1,
+    );
+    await postReliabilityMark({
+      userId: tx.sellerId,
+      transactionId: localTransactionId,
+      eventType: 'SELLER_DARK',
+      marksApplied: markSellerDark,
     });
-    return;
-  }
 
-  // No-op: seller already responded — race condition guard
-  if (tx.dayOfConfirmationRespondedAt !== null) {
-    logger.info('[local-day-of-timeout] Seller already responded, skipping', {
+    logger.info('[local-day-of-timeout] SELLER_DARK mark posted', {
       localTransactionId,
+      sellerId: tx.sellerId,
+      marksApplied: markSellerDark,
     });
-    return;
+
+    // Notify buyer: seller did not confirm
+    const scheduledAtDate = tx.scheduledAt !== null ? new Date(tx.scheduledAt) : null;
+    const timeStr = scheduledAtDate !== null
+      ? scheduledAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      : '';
+
+    void notify(tx.buyerId, 'local.dayof.expired', { time: timeStr });
+    void notify(tx.sellerId, 'local.dayof.expired_seller', { time: timeStr });
   }
 
-  // No-op: already processed (idempotent)
-  if (tx.dayOfConfirmationExpired === true) {
-    logger.info('[local-day-of-timeout] Already expired, skipping (idempotent)', {
-      localTransactionId,
-    });
-    return;
-  }
-
-  // No-op: seller chose to reschedule — counts as a valid response, no mark
-  if (tx.status === 'RESCHEDULE_PENDING') {
-    logger.info('[local-day-of-timeout] Seller proposed reschedule, skipping SELLER_DARK mark', {
-      localTransactionId,
-    });
-    return;
-  }
-
-  const now = new Date();
-
-  // Mark as expired
-  await db
-    .update(localTransaction)
-    .set({ dayOfConfirmationExpired: true, updatedAt: now })
-    .where(eq(localTransaction.id, localTransactionId));
-
-  // Post SELLER_DARK reliability mark
-  const markSellerDark = await getPlatformSetting<number>(
-    'commerce.local.markSellerDark',
-    -1,
-  );
-  await postReliabilityMark({
-    userId: tx.sellerId,
-    transactionId: localTransactionId,
-    eventType: 'SELLER_DARK',
-    marksApplied: markSellerDark,
-  });
-
-  logger.info('[local-day-of-timeout] SELLER_DARK mark posted', {
-    localTransactionId,
-    sellerId: tx.sellerId,
-    marksApplied: markSellerDark,
-  });
-
-  // Notify buyer: seller did not confirm
-  const scheduledAtDate = tx.scheduledAt !== null ? new Date(tx.scheduledAt) : null;
-  const timeStr = scheduledAtDate !== null
-    ? scheduledAtDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : '';
-
-  void notify(tx.buyerId, 'local.dayof.expired', { time: timeStr });
-  void notify(tx.sellerId, 'local.dayof.expired_seller', { time: timeStr });
-}
-
-// ─── Worker ───────────────────────────────────────────────────────────────────
-
-export const dayOfConfirmationTimeoutWorker =
-  createWorker<DayOfConfirmationTimeoutData>(
+  return createWorker<DayOfConfirmationTimeoutData>(
     QUEUE_NAME,
     async (job) => {
       await processDayOfConfirmationTimeout(job.data);
     },
     1,
   );
+}

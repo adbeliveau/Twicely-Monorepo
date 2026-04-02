@@ -25,18 +25,15 @@ interface OfflineConfirmProps {
  * Dual-code fallback: both enter each other's 6-digit codes.
  */
 export function OfflineConfirm({ localTransactionId, graceHours = 2, onSuccess }: OfflineConfirmProps) {
-  const [isOffline, setIsOffline] = useState(false);
+  const [isOffline, setIsOffline] = useState(() =>
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
   const [storedData, setStoredData] = useState<PreloadedTokenData | null>(null);
   const [buyerCodeInput, setBuyerCodeInput] = useState('');
   const [sellerCodeInput, setSellerCodeInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [offlineVerified, setOfflineVerified] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  // Initialize online/offline state safely (navigator may not be available during SSR)
-  useEffect(() => {
-    setIsOffline(!navigator.onLine);
-  }, []);
 
   // Load preloaded tokens from IndexedDB
   useEffect(() => {

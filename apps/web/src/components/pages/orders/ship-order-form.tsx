@@ -51,8 +51,10 @@ export function ShipOrderForm({ orderId }: ShipOrderFormProps) {
   // Fetch rates when label tab is selected
   useEffect(() => {
     if (activeTab === 'label' && rates.length === 0 && !isLoadingRates && !ratesError) {
-      loadShippingRates();
+      const id = setTimeout(() => void loadShippingRates(), 0);
+      return () => clearTimeout(id);
     }
+    return undefined;
   }, [activeTab, rates.length, isLoadingRates, ratesError, orderId]);
 
   async function handleSubmit(e: React.FormEvent) {

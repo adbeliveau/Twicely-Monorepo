@@ -45,8 +45,8 @@ describe('watcher-offers module', () => {
 
   describe('createWatcherOffer', () => {
     it('exports createWatcherOffer function', async () => {
-      const module = await import('../watcher-offers');
-      expect(typeof module.createWatcherOffer).toBe('function');
+      const mod = await import('../watcher-offers');
+      expect(typeof mod.createWatcherOffer).toBe('function');
     });
 
     it('returns error when listing not found', async () => {
@@ -107,8 +107,8 @@ describe('watcher-offers module', () => {
 
   describe('acceptWatcherOffer', () => {
     it('exports acceptWatcherOffer function', async () => {
-      const module = await import('../watcher-offers');
-      expect(typeof module.acceptWatcherOffer).toBe('function');
+      const mod = await import('../watcher-offers');
+      expect(typeof mod.acceptWatcherOffer).toBe('function');
     });
 
     it('returns error when offer not found', async () => {
@@ -151,8 +151,8 @@ describe('watcher-offers module', () => {
 
   describe('cancelWatcherOffer', () => {
     it('exports cancelWatcherOffer function', async () => {
-      const module = await import('../watcher-offers');
-      expect(typeof module.cancelWatcherOffer).toBe('function');
+      const mod = await import('../watcher-offers');
+      expect(typeof mod.cancelWatcherOffer).toBe('function');
     });
 
     it('returns error when offer not found', async () => {

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import type { Metadata } from 'next';
@@ -33,12 +34,12 @@ export default async function StoreEditorPageDetail({ params }: PageProps) {
     <div className="flex h-[calc(100vh-64px)] flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
         <div className="flex items-center gap-3">
-          <a
+          <Link
             href="/my/selling/store/editor"
             className="text-sm text-gray-500 hover:text-gray-700"
           >
             &larr; Back to pages
-          </a>
+          </Link>
           <span className="text-sm font-medium text-gray-900">
             {page.title}
           </span>

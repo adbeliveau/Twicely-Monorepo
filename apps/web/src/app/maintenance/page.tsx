@@ -9,7 +9,7 @@ export default function MaintenancePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8 text-center">
       <div className="max-w-md space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">We'll be right back</h1>
+        <h1 className="text-3xl font-bold text-gray-900">We&apos;ll be right back</h1>
         <p className="text-gray-600">
           Twicely is temporarily unavailable while we perform scheduled maintenance.
           We expect to be back shortly.

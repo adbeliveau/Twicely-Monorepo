@@ -1,5 +1,5 @@
 "use client";
-import { useState, ReactNode, useRef } from "react";
+import { useState, ReactNode } from "react";
 import {
   useFloating,
   autoUpdate,
@@ -25,7 +25,7 @@ interface PopoverProps {
 
 export default function Popover({ position, trigger, children }: PopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
+  const [arrowEl, setArrowEl] = useState<HTMLElement | null>(null);
 
   // Map position to Floating UI placement
   const placementMap: Record<Position, Placement> = {
@@ -40,7 +40,7 @@ export default function Popover({ position, trigger, children }: PopoverProps) {
     return position === "top" || position === "bottom" ? 20 : 10;
   };
 
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs: { setFloating, setReference }, floatingStyles, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
     placement: placementMap[position],
@@ -52,7 +52,7 @@ export default function Popover({ position, trigger, children }: PopoverProps) {
       }),
       shift({ padding: 8 }),
       arrow({
-        element: arrowRef,
+        element: arrowEl,
         padding: 8,
       }),
     ],
@@ -130,26 +130,28 @@ export default function Popover({ position, trigger, children }: PopoverProps) {
 
   return (
     <>
-      <span ref={refs.setReference} {...getReferenceProps()}>
+      <span ref={setReference} {...getReferenceProps()}>
         {trigger}
       </span>
-      {isOpen && (
-        <FloatingFocusManager context={context} modal={false}>
-          <div
-            ref={refs.setFloating}
-            style={floatingStyles}
-            {...getFloatingProps()}
-            className="w-[300px] z-99999 bg-white border border-gray-200 rounded-xl shadow-md dark:bg-[#1E2634] dark:border-gray-700"
-          >
-            {children}
-            <div
-              ref={arrowRef}
-              style={getArrowStyles()}
-              className={`bg-white dark:bg-[#1E2634] ${getArrowBorderSides()} border-gray-200 dark:border-gray-700`}
-            />
-          </div>
-        </FloatingFocusManager>
-      )}
+      <div
+        ref={setFloating}
+        style={{ ...floatingStyles, ...(isOpen ? {} : { visibility: "hidden" as const, pointerEvents: "none" as const }) }}
+        {...getFloatingProps()}
+        className="w-[300px] z-99999 bg-white border border-gray-200 rounded-xl shadow-md dark:bg-[#1E2634] dark:border-gray-700"
+      >
+        {isOpen && (
+          <FloatingFocusManager context={context} modal={false}>
+            <>
+              {children}
+              <div
+                ref={setArrowEl}
+                style={getArrowStyles()}
+                className={`bg-white dark:bg-[#1E2634] ${getArrowBorderSides()} border-gray-200 dark:border-gray-700`}
+              />
+            </>
+          </FloatingFocusManager>
+        )}
+      </div>
     </>
   );
 }

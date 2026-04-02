@@ -35,6 +35,25 @@ interface Props {
   canEdit: boolean;
 }
 
+// ─── Toggle ─────────────────────────────────────────────────────────────────
+
+function Toggle({ value, onChange, label, description, disabled }: {
+  value: boolean; onChange: (v: boolean) => void; label: string; description: string; disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-700">{label}</p>
+        <p className="text-xs text-gray-500">{description}</p>
+      </div>
+      <button type="button" disabled={disabled} onClick={() => onChange(!value)}
+        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${value ? 'bg-purple-600' : 'bg-gray-300'} disabled:opacity-50`}>
+        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5 ${value ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'}`} />
+      </button>
+    </div>
+  );
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function StripeSettingsForm({ initialConfig, secretMasks, canEdit }: Props) {
@@ -103,31 +122,16 @@ export function StripeSettingsForm({ initialConfig, secretMasks, canEdit }: Prop
     });
   };
 
-  const Toggle = ({ value, onChange, label, description }: {
-    value: boolean; onChange: (v: boolean) => void; label: string; description: string;
-  }) => (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-700">{label}</p>
-        <p className="text-xs text-gray-500">{description}</p>
-      </div>
-      <button type="button" disabled={!canEdit} onClick={() => onChange(!value)}
-        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${value ? 'bg-purple-600' : 'bg-gray-300'} disabled:opacity-50`}>
-        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5 ${value ? 'translate-x-5 ml-0.5' : 'translate-x-0.5'}`} />
-      </button>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Module Status */}
       <div className={sectionCls}>
         <h3 className="text-sm font-semibold text-gray-900">Module Status</h3>
         <Toggle value={stripeEnabled} onChange={setStripeEnabled}
-          label="Enable Stripe Payments" description="When disabled, no payment processing will occur" />
+          label="Enable Stripe Payments" description="When disabled, no payment processing will occur" disabled={!canEdit} />
         <div className={`rounded-md p-3 ${testMode ? 'border-2 border-yellow-400 bg-yellow-50' : 'bg-gray-50'}`}>
           <Toggle value={testMode} onChange={setTestMode}
-            label="Test Mode Active" description={testMode ? 'Using test API keys — no real charges will occur' : 'Using live API keys — real charges'} />
+            label="Test Mode Active" description={testMode ? 'Using test API keys — no real charges will occur' : 'Using live API keys — real charges'} disabled={!canEdit} />
         </div>
       </div>
 
@@ -261,7 +265,7 @@ export function StripeSettingsForm({ initialConfig, secretMasks, canEdit }: Prop
           </select>
         </div>
         <Toggle value={autoTransfer} onChange={setAutoTransfer}
-          label="Auto-Transfer to Sellers" description="Automatically transfer funds when payment succeeds" />
+          label="Auto-Transfer to Sellers" description="Automatically transfer funds when payment succeeds" disabled={!canEdit} />
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
             Transfer Delay (Hours) <span className="text-gray-400">(0 = immediate)</span>

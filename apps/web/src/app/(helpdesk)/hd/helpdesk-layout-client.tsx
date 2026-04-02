@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { HelpdeskSidebar } from "./helpdesk-sidebar";
@@ -42,10 +42,12 @@ export function HelpdeskLayoutClient({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Auto-hide sidebar on case detail, show on other pages
-  useEffect(() => {
+  const [prevIsCaseDetail, setPrevIsCaseDetail] = useState(isCaseDetail);
+  if (prevIsCaseDetail !== isCaseDetail) {
+    setPrevIsCaseDetail(isCaseDetail);
     setSidebarHidden(isCaseDetail);
     setDrawerOpen(false);
-  }, [isCaseDetail]);
+  }
 
   const handleToggleSidebar = () => {
     if (sidebarHidden) {

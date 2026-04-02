@@ -4,8 +4,16 @@ import { and, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { notify } from '@twicely/notifications/service';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
-import { stripe } from '@twicely/stripe/server';
 import { createId } from '@paralleldrive/cuid2';
+
+// ─── Callback Type (DI to avoid circular dep on @twicely/stripe) ─────────────
+
+export type StripeTransferCreator = (params: {
+  amount: number;
+  currency: string;
+  destination: string;
+  metadata: Record<string, string>;
+}) => Promise<{ id: string }>;
 
 export interface AffiliatePayoutsResult {
   payoutCount: number;
@@ -36,7 +44,9 @@ function getPrevMonthPeriod(): { periodStart: Date; periodEnd: Date } {
  * On failure: marks affiliatePayout FAILED, leaves balance and commissions unchanged.
  * Continues to next affiliate on any individual failure.
  */
-export async function executeAffiliatePayouts(): Promise<AffiliatePayoutsResult> {
+export async function executeAffiliatePayouts(
+  createTransfer: StripeTransferCreator
+): Promise<AffiliatePayoutsResult> {
   const minPayoutCents = await getPlatformSetting<number>('affiliate.minPayoutCents', 2500);
   const { periodStart, periodEnd } = getPrevMonthPeriod();
 
@@ -142,7 +152,7 @@ export async function executeAffiliatePayouts(): Promise<AffiliatePayoutsResult>
         });
 
         // Stripe transfer (inside tx so rollback cleans up on DB error)
-        const transfer = await stripe.transfers.create({
+        const transfer = await createTransfer({
           amount: payoutAmountCents,
           currency: 'usd',
           destination: lockedAff.stripeConnectAccountId,

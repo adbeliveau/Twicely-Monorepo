@@ -175,7 +175,7 @@ export function BundleOfferModal({
           )}
 
           <p className="text-xs text-muted-foreground">
-            Note: You'll need to select a shipping address and payment method to complete your offer.
+            Note: You&apos;ll need to select a shipping address and payment method to complete your offer.
           </p>
         </form>
 

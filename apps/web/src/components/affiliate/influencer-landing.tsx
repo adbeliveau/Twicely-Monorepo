@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@twicely/ui/avatar';
 import { Badge } from '@twicely/ui/badge';
 import { Button } from '@twicely/ui/button';
@@ -191,14 +192,14 @@ export function InfluencerLanding({ data, searchParams }: InfluencerLandingProps
 
       {/* CTA */}
       <section className="flex flex-col items-center gap-3 py-4">
-        <a href={ctaHref}>
+        <Link href={ctaHref}>
           <Button size="lg" className="px-10">
             Join Twicely with {headingName}&apos;s link
           </Button>
-        </a>
-        <a href="/" className="text-sm text-muted-foreground hover:underline">
+        </Link>
+        <Link href="/" className="text-sm text-muted-foreground hover:underline">
           Already have an account? Browse the marketplace
-        </a>
+        </Link>
       </section>
     </div>
   );

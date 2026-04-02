@@ -39,9 +39,11 @@ export default async function OrderDetailPage({
   const escrowReleaseAt = o.deliveredAt
     ? new Date(o.deliveredAt.getTime() + escrowHoldHours * 60 * 60 * 1000)
     : null;
+  // eslint-disable-next-line react-hooks/purity -- server component, runs once
+  const now = Date.now();
   const escrowStatus = !o.deliveredAt
     ? null
-    : Date.now() < (escrowReleaseAt?.getTime() ?? 0)
+    : now < (escrowReleaseAt?.getTime() ?? 0)
       ? 'HELD'
       : 'RELEASED';
 

@@ -4,7 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { sendEmail } from '@twicely/email/send';
 import { TEMPLATES, interpolate, type TemplateKey } from '@twicely/notifications/templates';
 import { logger } from '@twicely/logger';
-import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 
 interface UserPrefs {
@@ -158,27 +158,12 @@ export async function notify(
 
   // EMAIL — digest routing for NORMAL/LOW priority
   if (prefs.email) {
-    // Fix 1: Global email gate
+    // Global email gate
     const emailEnabled = await getPlatformSetting<boolean>('comms.email.enabled', true);
-    if (!emailEnabled) return; // Email globally disabled
-
-    // Fix 2: Per-user daily email rate limit
-    try {
-      const valkey = getValkeyClient();
-      const maxPerDay = await getPlatformSetting<number>('comms.email.maxPerDayPerUser', 50);
-      const rateLimitKey = `email-rate:${userId}:${new Date().toISOString().split('T')[0]}`;
-      const count = await valkey.incr(rateLimitKey);
-      if (count === 1) await valkey.expire(rateLimitKey, 86400);
-      if (count > maxPerDay) {
-        logger.warn('[notify] Email rate limit exceeded', { userId, count, maxPerDay });
-        return;
-      }
-    } catch {
-      // Valkey unavailable — fail open
-    }
+    if (!emailEnabled) return;
 
     const isInformational = template.priority === 'NORMAL' || template.priority === 'LOW';
-    // Fix 3: Global digest gate — if disabled, send immediately instead of queueing
+    // Global digest gate — if disabled, send immediately instead of queueing
     const digestEnabled = await getPlatformSetting<boolean>('comms.digest.enabled', true);
     if (isInformational && digestEnabled && settings.digestFrequency) {
       // Queue for digest: create row with sentAt=null
@@ -228,7 +213,33 @@ export async function notify(
         return;
       }
 
+      // Per-user daily email rate limit — check before, charge after success
+      const dateInTz = new Intl.DateTimeFormat('en-CA', { timeZone: settings.timezone }).format(new Date());
+      const rateLimitKey = `email-rate:${userId}:${dateInTz}`;
+      try {
+        const valkey = getValkeyClient();
+        const maxPerDay = await getPlatformSetting<number>('comms.email.maxPerDayPerUser', 50);
+        const currentCount = parseInt(await valkey.get(rateLimitKey) ?? '0', 10);
+        if (currentCount >= maxPerDay) {
+          logger.warn('[notify] Email rate limit exceeded', { userId, count: currentCount, maxPerDay });
+          return;
+        }
+      } catch {
+        // Valkey unavailable — fail open
+      }
+
       const result = await sendEmail({ to: email, subject, react: emailComponent });
+
+      // Charge rate limit only after successful send
+      if (result.success) {
+        try {
+          const valkey = getValkeyClient();
+          const count = await valkey.incr(rateLimitKey);
+          if (count === 1) await valkey.expire(rateLimitKey, 86400);
+        } catch {
+          // Valkey unavailable — non-critical
+        }
+      }
 
       try {
         await db.insert(notification).values({

@@ -42,18 +42,6 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
   ),
 }));
 
-vi.mock('@twicely/commerce/local-state-machine', () => ({
-  canTransition: vi.fn().mockReturnValue(true),
-}));
-
-vi.mock('@twicely/commerce/local-reliability', () => ({
-  postReliabilityMark: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@twicely/commerce/local-reserve', () => ({
-  unreserveListingForLocalTransaction: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock('@twicely/jobs/local-fraud-noshow-relist', () => ({
   enqueueNoshowRelistCheck: vi.fn().mockResolvedValue(undefined),
 }));
@@ -71,9 +59,13 @@ vi.mock('@twicely/logger', () => ({
 
 import { db } from '@twicely/db';
 import { logger } from '@twicely/logger';
-import { canTransition } from '@twicely/commerce/local-state-machine';
-import { postReliabilityMark } from '@twicely/commerce/local-reliability';
 import { enqueueNoShowCheck } from '../local-noshow-check';
+
+// ─── Mock Callbacks (injected via factory instead of @twicely/commerce) ───────
+
+const mockCanTransition = vi.fn().mockReturnValue(true);
+const mockPostReliabilityMark = vi.fn().mockResolvedValue(undefined);
+const mockUnreserveListingForLocalTransaction = vi.fn().mockResolvedValue(undefined);
 
 // ─── Chain Helpers ────────────────────────────────────────────────────────────
 
@@ -154,7 +146,7 @@ describe('enqueueNoShowCheck', () => {
 describe('local-noshow-check worker processing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(canTransition).mockReturnValue(true);
+    mockCanTransition.mockReturnValue(true);
   });
 
   it('skips if transaction not found — no update called', async () => {
@@ -208,13 +200,13 @@ describe('local-noshow-check worker processing', () => {
   });
 
   it('calls postReliabilityMark with BUYER_NOSHOW and -3 when buyer no-shows', async () => {
-    await postReliabilityMark({
+    await mockPostReliabilityMark({
       userId: BUYER_ID,
       transactionId: TX_ID,
       eventType: 'BUYER_NOSHOW',
       marksApplied: -3,
     });
-    expect(postReliabilityMark).toHaveBeenCalledWith({
+    expect(mockPostReliabilityMark).toHaveBeenCalledWith({
       userId: BUYER_ID,
       transactionId: TX_ID,
       eventType: 'BUYER_NOSHOW',
@@ -223,13 +215,13 @@ describe('local-noshow-check worker processing', () => {
   });
 
   it('calls postReliabilityMark with SELLER_NOSHOW and -3 when seller no-shows', async () => {
-    await postReliabilityMark({
+    await mockPostReliabilityMark({
       userId: SELLER_ID,
       transactionId: TX_ID,
       eventType: 'SELLER_NOSHOW',
       marksApplied: -3,
     });
-    expect(postReliabilityMark).toHaveBeenCalledWith({
+    expect(mockPostReliabilityMark).toHaveBeenCalledWith({
       userId: SELLER_ID,
       transactionId: TX_ID,
       eventType: 'SELLER_NOSHOW',
@@ -263,8 +255,8 @@ describe('local-noshow-check worker processing', () => {
   });
 
   it('skips if canTransition returns false for NO_SHOW', () => {
-    vi.mocked(canTransition).mockReturnValue(false);
-    const result = canTransition('SCHEDULED', 'NO_SHOW');
+    mockCanTransition.mockReturnValue(false);
+    const result = mockCanTransition('SCHEDULED', 'NO_SHOW');
     expect(result).toBe(false);
   });
 

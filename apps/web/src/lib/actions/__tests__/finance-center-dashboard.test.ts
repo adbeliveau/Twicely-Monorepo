@@ -157,7 +157,7 @@ describe('getFinanceDashboardAction — error fallback and delegation', () => {
   });
 
   it('runs all 5 data queries in parallel (Promise.all)', async () => {
-    let callOrder: string[] = [];
+    const callOrder: string[] = [];
     mockAuthorize.mockResolvedValue({
       session: { userId: 'user-test-014', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(true) },

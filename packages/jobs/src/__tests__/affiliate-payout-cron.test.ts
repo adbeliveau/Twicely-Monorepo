@@ -99,12 +99,14 @@ describe('registerAffiliatePayoutJob — cron registration', () => {
 describe('processAffiliatePayouts — orchestration', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  const dummyTransfer = vi.fn().mockResolvedValue({ id: 'tr_test' });
+
   it('calls graduateCommissions before executeAffiliatePayouts', async () => {
     const { graduateCommissions } = await import('../affiliate-commission-graduation');
     const { executeAffiliatePayouts } = await import('../affiliate-payout-service');
     const { processAffiliatePayouts } = await import('../affiliate-payout-cron');
 
-    await processAffiliatePayouts();
+    await processAffiliatePayouts(dummyTransfer);
 
     expect(graduateCommissions).toHaveBeenCalledOnce();
     expect(executeAffiliatePayouts).toHaveBeenCalledOnce();
@@ -125,7 +127,7 @@ describe('processAffiliatePayouts — orchestration', () => {
       return { payoutCount: 0, totalPaidCents: 0, failedCount: 0 };
     });
 
-    await processAffiliatePayouts();
+    await processAffiliatePayouts(dummyTransfer);
 
     expect(callOrder).toEqual(['graduate', 'payout']);
   });
@@ -133,19 +135,23 @@ describe('processAffiliatePayouts — orchestration', () => {
   it('resolves without throwing when both steps succeed', async () => {
     const { processAffiliatePayouts } = await import('../affiliate-payout-cron');
 
-    await expect(processAffiliatePayouts()).resolves.toBeUndefined();
+    await expect(processAffiliatePayouts(dummyTransfer)).resolves.toBeUndefined();
   });
 });
 
-describe('affiliatePayoutWorker — worker config', () => {
+describe('createAffiliatePayoutWorker — worker factory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
   });
 
+  const dummyTransfer = vi.fn().mockResolvedValue({ id: 'tr_test' });
+
   it('worker is created with queue name affiliate-payout', async () => {
-    await import('../affiliate-payout-cron');
+    const { createAffiliatePayoutWorker } = await import('../affiliate-payout-cron');
     const { createWorker } = await import('../queue');
+
+    createAffiliatePayoutWorker(dummyTransfer);
 
     expect(createWorker).toHaveBeenCalledWith(
       'affiliate-payout',
@@ -155,8 +161,10 @@ describe('affiliatePayoutWorker — worker config', () => {
   });
 
   it('worker is created with concurrency 1 to prevent duplicate processing', async () => {
-    await import('../affiliate-payout-cron');
+    const { createAffiliatePayoutWorker } = await import('../affiliate-payout-cron');
     const { createWorker } = await import('../queue');
+
+    createAffiliatePayoutWorker(dummyTransfer);
 
     const concurrencyArg = vi.mocked(createWorker).mock.calls[0]?.[2];
     expect(concurrencyArg).toBe(1);

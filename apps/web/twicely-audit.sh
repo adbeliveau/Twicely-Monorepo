@@ -15,7 +15,12 @@
 # Exit codes: 0 = clean, non-zero = issue count
 
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel 2>/dev/null || echo '.')"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo '.')"
+if [ -d "$REPO_ROOT/apps/web/src" ]; then
+  cd "$REPO_ROOT/apps/web"
+else
+  cd "$REPO_ROOT"
+fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

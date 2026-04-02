@@ -12,12 +12,13 @@ interface ReopenCaseButtonProps {
 export function ReopenCaseButton({ caseId, resolvedAt }: ReopenCaseButtonProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [now] = useState(() => Date.now());
 
   // Server-side window check is authoritative, but provide a client-side hint
   // The default window is 7 days; if beyond that, hide the button optimistically.
   if (resolvedAt) {
     const windowMs = 7 * 24 * 60 * 60 * 1000;
-    if (Date.now() - new Date(resolvedAt).getTime() > windowMs) {
+    if (now - new Date(resolvedAt).getTime() > windowMs) {
       return null;
     }
   }

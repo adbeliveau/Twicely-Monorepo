@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useState } from "react";
 import {
   useFloating,
   autoUpdate,
@@ -31,9 +31,9 @@ export default function Tooltip({
   variant = "default",
 }: TooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
+  const [arrowEl, setArrowEl] = useState<HTMLElement | null>(null);
 
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs: { setFloating, setReference }, floatingStyles, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
     placement: placement as Placement,
@@ -45,7 +45,7 @@ export default function Tooltip({
       }),
       shift({ padding: 8 }),
       arrow({
-        element: arrowRef,
+        element: arrowEl,
         padding: 8,
       }),
     ],
@@ -145,27 +145,29 @@ export default function Tooltip({
   return (
     <>
       <span
-        ref={refs.setReference}
+        ref={setReference}
         {...getReferenceProps()}
         className="inline-flex"
       >
         {children}
       </span>
-      {isOpen && (
-        <div
-          ref={refs.setFloating}
-          style={floatingStyles}
-          {...getFloatingProps()}
-          className={`z-99999 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-medium shadow-md ${variantClasses}`}
-        >
-          {content}
-          <div
-            ref={arrowRef}
-            style={getArrowStyles()}
-            className={`${arrowBg} ${getArrowBorderSides()} ${arrowBorderClasses}`}
-          />
-        </div>
-      )}
+      <div
+        ref={setFloating}
+        style={{ ...floatingStyles, ...(isOpen ? {} : { visibility: "hidden" as const, pointerEvents: "none" as const }) }}
+        {...getFloatingProps()}
+        className={`z-99999 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-medium shadow-md ${variantClasses}`}
+      >
+        {isOpen && (
+          <>
+            {content}
+            <div
+              ref={setArrowEl}
+              style={getArrowStyles()}
+              className={`${arrowBg} ${getArrowBorderSides()} ${arrowBorderClasses}`}
+            />
+          </>
+        )}
+      </div>
     </>
   );
 }

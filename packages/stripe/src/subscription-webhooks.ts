@@ -7,6 +7,7 @@
 
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
+import { stripe } from './server';
 import { getValkeyClient } from '@twicely/db/cache';
 import { notify } from '@twicely/notifications/service';
 import { resolveStripePriceId } from '@twicely/subscriptions/price-map';
@@ -258,7 +259,9 @@ export async function handleSubscriptionWebhook(event: Stripe.Event): Promise<vo
       await handleSubscriptionUpsert(sub);
       // D3-S4: After processing the upsert, check if a pending downgrade should be applied
       if (event.type === 'customer.subscription.updated') {
-        await applyPendingDowngradeIfNeeded(sub.id, sub);
+        await applyPendingDowngradeIfNeeded(sub.id, sub,
+          (subId, params) => stripe.subscriptions.update(subId, params)
+        );
       }
       break;
     }
