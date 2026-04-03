@@ -62,7 +62,7 @@ export default function UserDropdown() {
             Musharof Chowdhury
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
+            user@twicely.co
           </span>
         </div>
 

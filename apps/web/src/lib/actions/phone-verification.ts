@@ -5,7 +5,7 @@
  * Uses @twicely/sms with Telnyx backend.
  */
 
-import { authorize } from '@twicely/casl';
+import { authorize, sub } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { user } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
@@ -23,8 +23,11 @@ const verifySchema = z.object({
 }).strict();
 
 export async function sendPhoneVerificationAction(input: unknown) {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return { error: 'Not authenticated' };
+  if (!ability.can('update', sub('User', { id: session.userId }))) {
+    return { error: 'Not authorized' };
+  }
 
   const parsed = phoneSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid phone number' };
@@ -48,8 +51,11 @@ export async function sendPhoneVerificationAction(input: unknown) {
 }
 
 export async function verifyPhoneAction(input: unknown) {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return { error: 'Not authenticated' };
+  if (!ability.can('update', sub('User', { id: session.userId }))) {
+    return { error: 'Not authorized' };
+  }
 
   const parsed = verifySchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };

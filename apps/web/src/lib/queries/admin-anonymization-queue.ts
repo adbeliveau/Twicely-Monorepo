@@ -1,20 +1,17 @@
 /**
  * Admin Anonymization Queue Queries (I13)
  * Queries for users pending deletion/anonymization.
- * NOTE: The user table does not have an anonymizedAt column as of schema v2.0.7.
- * TODO: Add anonymizedAt column to user table when schema is updated.
  */
 
 import { db } from '@twicely/db';
 import { user } from '@twicely/db/schema';
-import { isNotNull, desc, count, ilike, or, and, lt, SQL } from 'drizzle-orm';
+import { isNotNull, isNull, desc, count, ilike, or, and, SQL } from 'drizzle-orm';
 
 export type AnonymizationRow = {
   userId: string;
   email: string | null;
   name: string | null;
   deletionRequestedAt: Date;
-  // TODO: Return real anonymizedAt once user table schema is updated.
   anonymizedAt: Date | null;
 };
 
@@ -25,20 +22,23 @@ export interface AnonymizationQueueSummary {
 }
 
 export async function getAnonymizationQueueSummary(): Promise<AnonymizationQueueSummary> {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
-
   const [pendingRow, processedRow, totalRow] = await Promise.all([
-    db
-      .select({ c: count() })
-      .from(user)
-      .where(isNotNull(user.deletionRequestedAt)),
     db
       .select({ c: count() })
       .from(user)
       .where(
         and(
           isNotNull(user.deletionRequestedAt),
-          lt(user.deletionRequestedAt, thirtyDaysAgo)
+          isNull(user.anonymizedAt)
+        )
+      ),
+    db
+      .select({ c: count() })
+      .from(user)
+      .where(
+        and(
+          isNotNull(user.deletionRequestedAt),
+          isNotNull(user.anonymizedAt)
         )
       ),
     db
@@ -49,7 +49,7 @@ export async function getAnonymizationQueueSummary(): Promise<AnonymizationQueue
 
   const total = totalRow[0]?.c ?? 0;
   const processed = processedRow[0]?.c ?? 0;
-  const pendingDeletions = (pendingRow[0]?.c ?? 0) - processed;
+  const pendingDeletions = pendingRow[0]?.c ?? 0;
 
   return {
     pendingDeletions,
@@ -62,19 +62,17 @@ function buildQueueWhere(opts: {
   status?: string;
   search?: string;
 }): SQL | undefined {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
-
   let base: SQL | undefined = isNotNull(user.deletionRequestedAt);
 
   if (opts.status === 'pending') {
     base = and(
       isNotNull(user.deletionRequestedAt),
-      lt(user.deletionRequestedAt, new Date()),
+      isNull(user.anonymizedAt),
     );
   } else if (opts.status === 'processed') {
     base = and(
       isNotNull(user.deletionRequestedAt),
-      lt(user.deletionRequestedAt, thirtyDaysAgo)
+      isNotNull(user.anonymizedAt),
     );
   }
 
@@ -110,6 +108,7 @@ export async function getAnonymizationQueueAdmin(opts: {
         email: user.email,
         name: user.name,
         deletionRequestedAt: user.deletionRequestedAt,
+        anonymizedAt: user.anonymizedAt,
       })
       .from(user)
       .where(whereClause)
@@ -132,8 +131,7 @@ export async function getAnonymizationQueueAdmin(opts: {
         email: r.email,
         name: r.name,
         deletionRequestedAt: r.deletionRequestedAt,
-        // TODO: Return real anonymizedAt once user table schema is updated.
-        anonymizedAt: null,
+        anonymizedAt: r.anonymizedAt,
       })),
     total: totalRows[0]?.c ?? 0,
   };

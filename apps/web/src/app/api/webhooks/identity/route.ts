@@ -51,8 +51,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await handleVerificationWebhook(event);
   } catch (err) {
     logger.error('Identity webhook handler error', { error: err, eventType: event.type });
-    // Return 200 — Stripe retries on non-2xx, causing retry storms
-    return NextResponse.json({ error: 'Handler failed' }, { status: 200 });
+    // Return 500 so Stripe retries — dedupe key is only set after success
+    return NextResponse.json({ error: 'Handler failed' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

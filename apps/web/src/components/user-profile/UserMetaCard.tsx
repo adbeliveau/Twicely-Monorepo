@@ -43,7 +43,7 @@ export default function UserMetaCard() {
               <a
                 target="_blank"
                 rel="noreferrer"
-                href="https://www.facebook.com/PimjoHQ"
+                href="https://www.facebook.com/TwicelyHQ"
                 className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
               >
                 <svg
@@ -62,7 +62,7 @@ export default function UserMetaCard() {
               </a>
 
               <a
-                href="https://x.com/PimjoHQ"
+                href="https://x.com/TwicelyHQ"
                 target="_blank"
                 rel="noreferrer"
                 className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -83,7 +83,7 @@ export default function UserMetaCard() {
               </a>
 
               <a
-                href="https://www.linkedin.com/company/pimjo"
+                href="https://www.linkedin.com/company/twicely"
                 target="_blank"
                 rel="noreferrer"
                 className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -104,7 +104,7 @@ export default function UserMetaCard() {
               </a>
 
               <a
-                href="https://instagram.com/PimjoHQ"
+                href="https://instagram.com/TwicelyHQ"
                 target="_blank"
                 rel="noreferrer"
                 className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -170,20 +170,20 @@ export default function UserMetaCard() {
                     <Label>Facebook</Label>
                     <Input
                       type="text"
-                      defaultValue="https://www.facebook.com/PimjoHQ"
+                      defaultValue="https://www.facebook.com/TwicelyHQ"
                     />
                   </div>
 
                   <div>
                     <Label>X.com</Label>
-                    <Input type="text" defaultValue="https://x.com/PimjoHQ" />
+                    <Input type="text" defaultValue="https://x.com/TwicelyHQ" />
                   </div>
 
                   <div>
                     <Label>Linkedin</Label>
                     <Input
                       type="text"
-                      defaultValue="https://www.linkedin.com/company/pimjo"
+                      defaultValue="https://www.linkedin.com/company/twicely"
                     />
                   </div>
 
@@ -191,7 +191,7 @@ export default function UserMetaCard() {
                     <Label>Instagram</Label>
                     <Input
                       type="text"
-                      defaultValue="https://instagram.com/PimjoHQ"
+                      defaultValue="https://instagram.com/TwicelyHQ"
                     />
                   </div>
                 </div>
@@ -214,7 +214,7 @@ export default function UserMetaCard() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" defaultValue="randomuser@pimjo.com" />
+                    <Input type="text" defaultValue="user@twicely.co" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">

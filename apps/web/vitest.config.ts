@@ -13,24 +13,50 @@ export default defineConfig({
       '**/dist/**',
       '**/*.integration.test.ts',
     ],
+    setupFiles: ['./vitest.setup.ts'],
     env: {
       DATABASE_URL: 'postgresql://localhost:5432/twicely_test_placeholder',
     },
   },
   resolve: {
     alias: {
+      // ── @/lib/* → package redirects (infrastructure only) ─────────
+      // These infrastructure packages are always MOCKED in tests, never
+      // the code-under-test.  Redirecting @/lib/* to packages ensures
+      // vi.mock('@twicely/X') also covers `await import('@/lib/X')`.
+      // MUST come before the general '@' alias (first match wins).
+      '@/lib/db/schema': path.resolve(__dirname, '../../packages/db/src/schema'),
+      '@/lib/db/channel-types': path.resolve(__dirname, '../../packages/db/src/channel-types'),
+      '@/lib/db': path.resolve(__dirname, '../../packages/db/src'),
+      '@/lib/cache/valkey': path.resolve(__dirname, '../../packages/db/src/cache'),
+      '@/lib/encryption': path.resolve(__dirname, '../../packages/db/src/encryption'),
+      '@/lib/casl': path.resolve(__dirname, '../../packages/casl/src'),
+      '@/lib/auth': path.resolve(__dirname, '../../packages/auth/src'),
+      '@/lib/logger': path.resolve(__dirname, '../../packages/logger/src'),
+
+      // ── General app alias ─────────────────────────────────────────────
+      // All other @/* paths (actions, mutations, hooks, queries, commerce,
+      // crosslister, jobs, etc.) resolve to apps/web/src/*.
       '@': path.resolve(__dirname, './src'),
-      // Map all @twicely/* packages to local app files during tests
-      // so vi.mock() on @twicely/* paths intercepts the same modules
-      // that source code imports via relative or @/ paths.
-      // Subpath aliases must come BEFORE their parent package alias
-      '@twicely/db/schema': path.resolve(__dirname, './src/lib/db/schema'),
+
+      // ── @twicely/* aliases ────────────────────────────────────────────
+      // Infrastructure packages → canonical package sources.
+      // Code-under-test packages → app-local copies (matching @/lib/* mock
+      // paths used by tests).  Subpath aliases BEFORE parent aliases.
+      //
+      // INFRASTRUCTURE (packages — tests mock these, never import as CUT)
+      '@twicely/db/schema': path.resolve(__dirname, '../../packages/db/src/schema'),
       '@twicely/db/queries': path.resolve(__dirname, './src/lib/queries'),
-      '@twicely/db/cache': path.resolve(__dirname, './src/lib/cache/valkey'),
-      '@twicely/db/encryption': path.resolve(__dirname, './src/lib/encryption'),
-      '@twicely/db/channel-types': path.resolve(__dirname, './src/lib/db/channel-types'),
-      '@twicely/db': path.resolve(__dirname, './src/lib/db'),
-      // Search submodules point to the package source (typesense SDK not installed in apps/web)
+      '@twicely/db/cache': path.resolve(__dirname, '../../packages/db/src/cache'),
+      '@twicely/db/encryption': path.resolve(__dirname, '../../packages/db/src/encryption'),
+      '@twicely/db/channel-types': path.resolve(__dirname, '../../packages/db/src/channel-types'),
+      '@twicely/db': path.resolve(__dirname, '../../packages/db/src'),
+      '@twicely/casl': path.resolve(__dirname, '../../packages/casl/src'),
+      '@twicely/auth': path.resolve(__dirname, '../../packages/auth/src'),
+      '@twicely/logger': path.resolve(__dirname, '../../packages/logger/src'),
+
+      // CODE-UNDER-TEST (app-local — internal imports use @/lib/* paths
+      // matching test vi.mock() declarations)
       '@twicely/search/typesense-client': path.resolve(__dirname, '../../packages/search/src/typesense-client'),
       '@twicely/search/typesense-index': path.resolve(__dirname, '../../packages/search/src/typesense-index'),
       '@twicely/search/typesense-schema': path.resolve(__dirname, '../../packages/search/src/typesense-schema'),
@@ -45,9 +71,6 @@ export default defineConfig({
       '@twicely/crosslister': path.resolve(__dirname, './src/lib/crosslister'),
       '@twicely/subscriptions': path.resolve(__dirname, './src/lib/subscriptions'),
       '@twicely/scoring': path.resolve(__dirname, './src/lib/scoring'),
-      '@twicely/auth': path.resolve(__dirname, './src/lib/auth'),
-      '@twicely/casl': path.resolve(__dirname, './src/lib/casl'),
-      '@twicely/logger': path.resolve(__dirname, './src/lib/logger'),
       '@twicely/email': path.resolve(__dirname, './src/lib/email'),
       '@twicely/utils': path.resolve(__dirname, './src/lib/utils'),
       '@twicely/config': path.resolve(__dirname, './src/lib/config'),

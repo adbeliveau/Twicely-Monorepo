@@ -7,7 +7,7 @@
 import { stripe } from './server';
 import { db } from '@twicely/db';
 import { dispute, order, shipment, ledgerEntry } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
@@ -100,7 +100,8 @@ export async function submitChargebackEvidence(
  * Called from webhook handler.
  */
 export async function handleChargebackResolution(
-  stripeDispute: Stripe.Dispute
+  stripeDispute: Stripe.Dispute,
+  eventId?: string
 ): Promise<void> {
   const paymentIntentId = stripeDispute.payment_intent as string | null;
   if (!paymentIntentId) return;
@@ -116,14 +117,25 @@ export async function handleChargebackResolution(
   const now = new Date();
 
   if (stripeDispute.status === 'won') {
-    await db.insert(ledgerEntry).values({
-      type: 'CHARGEBACK_REVERSAL',
-      status: 'POSTED',
-      amountCents: stripeDispute.amount,
-      userId: ord.sellerId,
-      orderId: ord.id,
-      postedAt: now,
-    });
+    // Guard: skip if reversal already exists
+    const [existingReversal] = await db
+      .select({ id: ledgerEntry.id })
+      .from(ledgerEntry)
+      .where(and(eq(ledgerEntry.stripeDisputeId, stripeDispute.id), eq(ledgerEntry.type, 'CHARGEBACK_REVERSAL')))
+      .limit(1);
+
+    if (!existingReversal) {
+      await db.insert(ledgerEntry).values({
+        type: 'CHARGEBACK_REVERSAL',
+        status: 'POSTED',
+        amountCents: stripeDispute.amount,
+        userId: ord.sellerId,
+        orderId: ord.id,
+        stripeDisputeId: stripeDispute.id,
+        stripeEventId: eventId ?? null,
+        postedAt: now,
+      });
+    }
 
     await db
       .update(dispute)
@@ -136,23 +148,45 @@ export async function handleChargebackResolution(
       .where(eq(dispute.orderId, ord.id));
 
   } else if (stripeDispute.status === 'lost') {
-    await db.insert(ledgerEntry).values({
-      type: 'CHARGEBACK_FEE',
-      status: 'POSTED',
-      amountCents: -(await getPlatformSetting<number>('commerce.chargeback.feeCents', 1500)),
-      userId: ord.sellerId,
-      orderId: ord.id,
-      postedAt: now,
-    });
+    // Guard: skip if fee already exists
+    const [existingFee] = await db
+      .select({ id: ledgerEntry.id })
+      .from(ledgerEntry)
+      .where(and(eq(ledgerEntry.stripeDisputeId, stripeDispute.id), eq(ledgerEntry.type, 'CHARGEBACK_FEE')))
+      .limit(1);
 
-    await db.insert(ledgerEntry).values({
-      type: 'PLATFORM_ABSORBED_COST',
-      status: 'POSTED',
-      amountCents: -stripeDispute.amount,
-      userId: ord.sellerId,
-      orderId: ord.id,
-      postedAt: now,
-    });
+    if (!existingFee) {
+      await db.insert(ledgerEntry).values({
+        type: 'CHARGEBACK_FEE',
+        status: 'POSTED',
+        amountCents: -(await getPlatformSetting<number>('commerce.chargeback.feeCents', 1500)),
+        userId: ord.sellerId,
+        orderId: ord.id,
+        stripeDisputeId: stripeDispute.id,
+        stripeEventId: eventId ?? null,
+        postedAt: now,
+      });
+    }
+
+    // Guard: skip if absorbed cost already exists
+    const [existingAbsorbed] = await db
+      .select({ id: ledgerEntry.id })
+      .from(ledgerEntry)
+      .where(and(eq(ledgerEntry.stripeDisputeId, stripeDispute.id), eq(ledgerEntry.type, 'PLATFORM_ABSORBED_COST')))
+      .limit(1);
+
+    if (!existingAbsorbed) {
+      await db.insert(ledgerEntry).values({
+        type: 'PLATFORM_ABSORBED_COST',
+        status: 'POSTED',
+        amountCents: -stripeDispute.amount,
+        userId: ord.sellerId,
+        orderId: ord.id,
+        stripeDisputeId: stripeDispute.id,
+        stripeEventId: eventId ?? null,
+        postedAt: now,
+      });
+    }
 
     await db
       .update(dispute)

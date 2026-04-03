@@ -47,6 +47,8 @@ export const ledgerEntry = pgTable('ledger_entry', {
   stripeEventIdx:      index('le_stripe_event').on(table.stripeEventId),
   statusIdx:           index('le_status').on(table.status),
   reversalIdx:         index('le_reversal').on(table.reversalOfEntryId),
+  uniqRefund:          uniqueIndex('le_uniq_refund').on(table.stripeRefundId, table.type).where(sql`stripe_refund_id IS NOT NULL`),
+  uniqDispute:         uniqueIndex('le_uniq_dispute').on(table.stripeDisputeId, table.type).where(sql`stripe_dispute_id IS NOT NULL`),
 }));
 
 // §11.2 sellerBalance

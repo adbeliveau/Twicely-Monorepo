@@ -84,8 +84,8 @@ describe('getGdprComplianceSummary', () => {
   });
 
   it('returns correct summary shape with counts', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
-    const { db } = await import('@/lib/db');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(staffAuthorize).mockResolvedValue(makeAuthorizedAbility() as unknown as Awaited<ReturnType<typeof staffAuthorize>>);
     vi.mocked(db.select).mockReturnValue(makeSelectChain([{ c: 5 }]) as unknown as ReturnType<typeof db.select>);
@@ -100,7 +100,7 @@ describe('getGdprComplianceSummary', () => {
   });
 
   it('throws ForbiddenError when ability.can returns false', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
 
     vi.mocked(staffAuthorize).mockResolvedValue({
       session: { staffUserId: 'staff-2' },
@@ -119,8 +119,8 @@ describe('getGdprComplianceSummary — empty state', () => {
   });
 
   it('returns zero counts when no deletions or exports exist', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
-    const { db } = await import('@/lib/db');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(staffAuthorize).mockResolvedValue({
       session: { staffUserId: 'staff-3' },
@@ -147,7 +147,7 @@ describe('getRetentionJobStatus', () => {
   });
 
   it('returns status for all 4 cleanup jobs', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
     const { getPlatformSettingsByPrefix } = await import('@/lib/queries/platform-settings');
 
     vi.mocked(staffAuthorize).mockResolvedValue(makeAuthorizedAbility() as unknown as Awaited<ReturnType<typeof staffAuthorize>>);
@@ -174,7 +174,7 @@ describe('getRetentionJobStatus', () => {
   });
 
   it('returns null for jobs that have never run', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
     const { getPlatformSettingsByPrefix } = await import('@/lib/queries/platform-settings');
 
     vi.mocked(staffAuthorize).mockResolvedValue(makeAuthorizedAbility() as unknown as Awaited<ReturnType<typeof staffAuthorize>>);

@@ -43,8 +43,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await handleSubscriptionWebhook(event);
   } catch (err) {
     logger.error('Subscription webhook handler error', { error: err });
-    // Return 200 even on handler errors — Stripe retries on non-2xx, causing retry storms
-    return NextResponse.json({ error: 'Handler failed' }, { status: 200 });
+    // Return 500 so Stripe retries — dedupe key is only set after success
+    return NextResponse.json({ error: 'Handler failed' }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

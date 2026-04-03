@@ -9,8 +9,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "db:generate": "pnpm --filter @twicely/db drizzle-kit generate",
-    "db:push": "pnpm --filter @twicely/db drizzle-kit push",
+    "db:generate": "pnpm --filter @twicely/web drizzle-kit generate",
+    "db:push": "pnpm --filter @twicely/web drizzle-kit push",
     "db:seed": "pnpm --filter @twicely/db seed"
   },
   "devDependencies": {

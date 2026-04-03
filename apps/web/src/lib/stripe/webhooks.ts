@@ -7,7 +7,7 @@
 
 import type Stripe from 'stripe';
 import { db } from '@twicely/db';
-import { order, sellerProfile } from '@twicely/db/schema';
+import { order, sellerProfile, payout as payoutTable } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { syncAccountStatus } from '@twicely/stripe/connect';
 import { handleTrialWillEnd, handleSubscriptionUpdated } from '@twicely/stripe/webhook-trial-handlers';
@@ -16,26 +16,12 @@ import { handleCheckoutSessionCompleted } from '@twicely/stripe/checkout-webhook
 import { handleChargeRefunded } from '@twicely/stripe/webhook-refund-handler';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
-import { getValkeyClient } from '@twicely/db/cache';
+import { isWebhookDuplicate, markWebhookProcessed } from './webhook-idempotency';
 
 export type WebhookResult = {
   handled: boolean;
   error?: string;
 };
-
-/**
- * M3 Security: Deduplicate webhook events via Valkey (24h TTL).
- * Prevents duplicate processing from Stripe retries.
- */
-async function isWebhookDuplicate(eventId: string): Promise<boolean> {
-  try {
-    const valkey = getValkeyClient();
-    const result = await valkey.set(`stripe-webhook:${eventId}`, '1', 'EX', 86400, 'NX');
-    return result === null; // NX returns null if key already existed
-  } catch {
-    return false; // Valkey down — fail open, allow processing
-  }
-}
 
 /**
  * Handle platform webhook events (payment_intent, customer, etc.).
@@ -46,6 +32,17 @@ export async function handlePlatformWebhook(event: Stripe.Event): Promise<Webhoo
     return { handled: true };
   }
 
+  const result = await dispatchPlatformEvent(event);
+
+  // Only mark as processed on success — failed events should be retryable by Stripe
+  if (!result.error) {
+    await markWebhookProcessed(event.id, event.type, event.data.object);
+  }
+
+  return result;
+}
+
+async function dispatchPlatformEvent(event: Stripe.Event): Promise<WebhookResult> {
   switch (event.type) {
     case 'payment_intent.succeeded':
       return handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
@@ -60,18 +57,17 @@ export async function handlePlatformWebhook(event: Stripe.Event): Promise<Webhoo
       return handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
 
     case 'charge.refunded':
-      return handleChargeRefunded(event.data.object as Stripe.Charge);
+      return handleChargeRefunded(event.data.object as Stripe.Charge, event.id);
 
     case 'charge.dispute.created':
-      return handleChargeDispute(event.data.object as Stripe.Dispute);
+      return handleChargeDispute(event.data.object as Stripe.Dispute, event.id);
 
     case 'charge.dispute.updated':
     case 'charge.dispute.closed':
-      return handleChargeDisputeResolution(event.data.object as Stripe.Dispute);
+      return handleChargeDisputeResolution(event.data.object as Stripe.Dispute, event.id);
 
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      // Only handle one-time payments here — subscriptions are handled by the subscriptions webhook
       if (session.mode === 'payment') {
         await handleCheckoutSessionCompleted(session);
       }
@@ -85,7 +81,6 @@ export async function handlePlatformWebhook(event: Stripe.Event): Promise<Webhoo
       return handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
 
     default:
-      // Unhandled event type — not an error, just not processed
       return { handled: false };
   }
 }
@@ -99,6 +94,16 @@ export async function handleConnectWebhook(event: Stripe.Event): Promise<Webhook
     return { handled: true };
   }
 
+  const result = await dispatchConnectEvent(event);
+
+  if (!result.error) {
+    await markWebhookProcessed(event.id, event.type, event.data.object);
+  }
+
+  return result;
+}
+
+async function dispatchConnectEvent(event: Stripe.Event): Promise<WebhookResult> {
   switch (event.type) {
     case 'account.updated':
       return handleAccountUpdated(event.data.object as Stripe.Account);
@@ -239,9 +244,9 @@ async function handleAccountUpdated(account: Stripe.Account): Promise<WebhookRes
 /**
  * Chargeback created — handle via chargebacks module.
  */
-async function handleChargeDispute(dispute: Stripe.Dispute): Promise<WebhookResult> {
+async function handleChargeDispute(dispute: Stripe.Dispute, eventId?: string): Promise<WebhookResult> {
   try {
-    const result = await handleChargebackWebhook(dispute);
+    const result = await handleChargebackWebhook(dispute, eventId);
     return { handled: result.success, error: result.error };
   } catch (error) {
     logger.error('Error handling charge.dispute.created', { error });
@@ -255,9 +260,9 @@ async function handleChargeDispute(dispute: Stripe.Dispute): Promise<WebhookResu
 /**
  * Chargeback updated/closed — handle resolution.
  */
-async function handleChargeDisputeResolution(dispute: Stripe.Dispute): Promise<WebhookResult> {
+async function handleChargeDisputeResolution(dispute: Stripe.Dispute, eventId?: string): Promise<WebhookResult> {
   try {
-    await handleChargebackResolution(dispute);
+    await handleChargebackResolution(dispute, eventId);
     return { handled: true };
   } catch (error) {
     logger.error('Error handling charge.dispute resolution', { error });
@@ -329,6 +334,11 @@ async function handlePayoutPaid(payout: Stripe.Payout, stripeAccountId: string |
       return { handled: true };
     }
 
+    // Update payout record in DB (no-op if no matching row, e.g. batch payouts)
+    await db.update(payoutTable)
+      .set({ status: 'COMPLETED', completedAt: new Date(), updatedAt: new Date() })
+      .where(eq(payoutTable.stripePayoutId, payout.id));
+
     const amountFormatted = `$${(payout.amount / 100).toFixed(2)}`;
     void notify(seller.userId, 'seller.payout.paid', { amountFormatted }).catch(() => {});
 
@@ -362,6 +372,11 @@ async function handlePayoutFailed(payout: Stripe.Payout, stripeAccountId: string
     if (!seller) {
       return { handled: true };
     }
+
+    // Update payout record in DB (no-op if no matching row, e.g. batch payouts)
+    await db.update(payoutTable)
+      .set({ status: 'FAILED', failureReason: payout.failure_message ?? 'Unknown error', failedAt: new Date(), updatedAt: new Date() })
+      .where(eq(payoutTable.stripePayoutId, payout.id));
 
     const amountFormatted = `$${(payout.amount / 100).toFixed(2)}`;
     const failureReason = payout.failure_message ?? 'Unknown error — please check your bank account details.';

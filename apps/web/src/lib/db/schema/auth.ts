@@ -24,6 +24,7 @@ export const user = pgTable('user', {
   dashboardLayoutJson: jsonb('dashboard_layout_json'),
   marketingOptIn:      boolean('marketing_opt_in').notNull().default(false),
   deletionRequestedAt: timestamp('deletion_requested_at', { withTimezone: true }),
+  anonymizedAt:        timestamp('anonymized_at', { withTimezone: true }),
   isBanned:            boolean('is_banned').notNull().default(false),
   bannedAt:            timestamp('banned_at', { withTimezone: true }),
   bannedReason:        text('banned_reason'),

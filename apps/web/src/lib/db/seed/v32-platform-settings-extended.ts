@@ -38,7 +38,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'bundle.maxPromptsPerCart', value: 3, type: 'number', category: 'commerce', description: 'Max bundle prompts shown at once' },
   { key: 'commerce.order.autoCompleteAfterDays', value: 3, type: 'number', category: 'commerce', description: 'Days after delivery before order auto-completes (separate from escrow hold)' },
   { key: 'commerce.order.buyerCancelWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
-  { key: 'commerce.order.maxItemsPerOrder', value: 50, type: 'number', category: 'commerce', description: 'Maximum items in single order' },
+  { key: 'commerce.order.maxItemsPerOrder', value: 100, type: 'number', category: 'commerce', description: 'Maximum items in single order' },
   { key: 'listing.maxImagesPerListing', value: 24, type: 'number', category: 'commerce', description: 'Maximum photos per listing' },
   { key: 'listing.minTitleLength', value: 10, type: 'number', category: 'commerce', description: 'Minimum characters in listing title' },
   { key: 'listing.maxTitleLength', value: 80, type: 'number', category: 'commerce', description: 'Maximum characters in listing title' },
@@ -142,6 +142,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'comms.messaging.moderationEnabled', value: true, type: 'boolean', category: 'comms', description: 'Enable message content moderation' },
   { key: 'comms.messaging.attachmentMaxBytes', value: 10_485_760, type: 'number', category: 'comms', description: 'Message attachment max file size (bytes)' },
   { key: 'comms.messaging.bannedKeywords', value: [], type: 'array', category: 'comms', description: 'Banned keyword list for message moderation (managed via /cfg/messaging/keywords)' },
+  { key: 'comms.messaging.autoResponseEnabled', value: false, type: 'boolean', category: 'comms', description: 'Enable auto-response for buyer-seller messages' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PRIVACY — Data retention, GDPR

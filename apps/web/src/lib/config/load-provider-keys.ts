@@ -19,6 +19,7 @@ const PROVIDER_KEY_MAP: Record<string, Record<string, string>> = {
     webhook_signing_secret: 'STRIPE_WEBHOOK_SECRET',
     connect_webhook_secret: 'STRIPE_CONNECT_WEBHOOK_SECRET',
     identity_webhook_secret: 'STRIPE_IDENTITY_WEBHOOK_SECRET',
+    subscription_webhook_secret: 'STRIPE_SUBSCRIPTION_WEBHOOK_SECRET',
   },
   shippo: {
     api_key: 'SHIPPO_API_KEY',

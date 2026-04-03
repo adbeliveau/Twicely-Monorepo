@@ -51,7 +51,7 @@ export async function createOrdersFromCart(
     return [{ success: false, error: 'Cart is empty' }];
   }
 
-  const maxItems = await getPlatformSetting<number>('commerce.order.maxItemsPerOrder', 50);
+  const maxItems = await getPlatformSetting<number>('commerce.order.maxItemsPerOrder', 100);
   if (cartItems.length > maxItems) return [{ success: false, error: `Orders are limited to ${maxItems} items` }];
 
   // Get seller info (pre-fetch outside transaction)

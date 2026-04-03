@@ -76,6 +76,13 @@ vi.mock('@twicely/crosslister/connector-registry', () => ({
     };
   }),
 }));
+vi.mock('@twicely/crosslister/token-crypto', () => ({
+  encryptToken: vi.fn((v: string) => v),
+  decryptToken: vi.fn((v: string) => v),
+  encryptSessionData: vi.fn((data: unknown) => (data ? JSON.stringify(data) : null)),
+  decryptSessionData: vi.fn((data: unknown) => data),
+  withDecryptedTokens: vi.fn((a: unknown) => a),
+}));
 vi.mock('@paralleldrive/cuid2', () => ({ createId: vi.fn().mockReturnValue('state-xyz') }));
 vi.mock('next/headers', () => ({
   cookies: vi.fn().mockResolvedValue({

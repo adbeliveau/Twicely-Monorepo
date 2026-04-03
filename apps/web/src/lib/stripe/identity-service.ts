@@ -12,7 +12,7 @@ import { identityVerification, sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { getValkeyClient } from '@twicely/db/cache';
+import { isWebhookDuplicate, markWebhookProcessed } from './webhook-idempotency';
 import type Stripe from 'stripe';
 import { notify } from '@twicely/notifications/service';
 
@@ -83,15 +83,12 @@ export async function getVerificationSessionResult(
 export async function handleVerificationWebhook(
   event: Stripe.Event
 ): Promise<void> {
-  // N2 Security: Deduplicate webhook events via Valkey (24h TTL)
-  try {
-    const valkey = getValkeyClient();
-    const result = await valkey.set(`stripe-webhook:${event.id}`, '1', 'EX', 86400, 'NX');
-    if (result === null) {
-      logger.info('[identity-webhook] Duplicate event skipped', { eventId: event.id });
-      return;
-    }
-  } catch { /* Valkey down — fail open */ }
+  // Durable two-layer dedupe: Valkey (fast) + DB stripe_event_log (crash-safe)
+  if (await isWebhookDuplicate(event.id)) {
+    logger.info('[identity-webhook] Duplicate event skipped', { eventId: event.id });
+    return;
+  }
+
   const session = event.data.object as Stripe.Identity.VerificationSession;
   const stripeSessionId = session.id;
 
@@ -208,4 +205,7 @@ export async function handleVerificationWebhook(
       expiryDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     });
   }
+
+  // Mark event as durably processed (Valkey + DB)
+  await markWebhookProcessed(event.id, event.type, event.data.object);
 }

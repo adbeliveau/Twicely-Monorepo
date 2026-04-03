@@ -102,8 +102,8 @@ export async function purchaseOveragePack(
 
   // 6. Read overage price and quantity from platform_settings
   const [priceCents, quantity] = await Promise.all([
-    getNumericSetting('fees.overage.publishPack.cents', 900),
-    getNumericSetting('fees.overage.publishPack.quantity', 500),
+    getNumericSetting('overage.publishes.cents', 900),
+    getNumericSetting('overage.publishes.qty', 500),
   ]);
 
   // 7. Get or create Stripe customer

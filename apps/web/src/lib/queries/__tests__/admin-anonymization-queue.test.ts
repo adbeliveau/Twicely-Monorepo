@@ -20,6 +20,7 @@ vi.mock('@twicely/db/schema', () => ({
   user: {
     id: 'id', name: 'name', email: 'email',
     deletionRequestedAt: 'deletion_requested_at',
+    anonymizedAt: 'anonymized_at',
   },
 }));
 
@@ -71,15 +72,15 @@ describe('getAnonymizationQueueSummary', () => {
 
   it('returns pending, processed, and total counts', async () => {
     mockDbSelect
-      .mockReturnValueOnce(makeChain([{ c: 5 }]))  // pending (all with deletion requested)
-      .mockReturnValueOnce(makeChain([{ c: 2 }]))  // processed (past 30 days)
+      .mockReturnValueOnce(makeChain([{ c: 3 }]))  // pending (deletionRequested + not anonymized)
+      .mockReturnValueOnce(makeChain([{ c: 2 }]))  // processed (deletionRequested + anonymized)
       .mockReturnValueOnce(makeChain([{ c: 5 }])); // total
 
     const result = await getAnonymizationQueueSummary();
 
     expect(result.total).toBe(5);
     expect(result.processed).toBe(2);
-    expect(result.pendingDeletions).toBe(3); // 5 - 2
+    expect(result.pendingDeletions).toBe(3);
   });
 
   it('returns zeros when no deletion requests exist', async () => {
@@ -128,14 +129,24 @@ describe('getAnonymizationQueueAdmin', () => {
     expect(result.total).toBe(2);
   });
 
-  it('maps anonymizedAt to null (schema does not have this column yet)', async () => {
+  it('returns real anonymizedAt from user column', async () => {
+    const row = { ...makeUserRow(TEN_DAYS_AGO), anonymizedAt: null };
     mockDbSelect
-      .mockReturnValueOnce(makeChain([makeUserRow(TEN_DAYS_AGO)]))
+      .mockReturnValueOnce(makeChain([row]))
       .mockReturnValueOnce(makeChain([{ c: 1 }]));
 
     const result = await getAnonymizationQueueAdmin({});
 
     expect(result.queue[0]?.anonymizedAt).toBeNull();
+
+    // When anonymizedAt is set, it passes through
+    const row2 = { ...makeUserRow(TEN_DAYS_AGO), anonymizedAt: new Date('2026-01-15') };
+    mockDbSelect
+      .mockReturnValueOnce(makeChain([row2]))
+      .mockReturnValueOnce(makeChain([{ c: 1 }]));
+
+    const result2 = await getAnonymizationQueueAdmin({});
+    expect(result2.queue[0]?.anonymizedAt).toEqual(new Date('2026-01-15'));
   });
 
   it('filters by pending status', async () => {

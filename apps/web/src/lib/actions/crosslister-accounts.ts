@@ -17,6 +17,7 @@ import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
 import { EbayConnector } from '@twicely/crosslister/connectors/ebay-connector';
 import { getConnector } from '@twicely/crosslister/connector-registry';
 import { logger } from '@twicely/logger';
+import { encryptSessionData } from '@twicely/crosslister/token-crypto';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 import { createId } from '@paralleldrive/cuid2';
@@ -162,12 +163,14 @@ export async function authenticateSessionAccount(
       .where(and(eq(crosslisterAccount.sellerId, sellerId), eq(crosslisterAccount.channel, channelKey)))
       .limit(1);
 
+    const encryptedSessionData = encryptSessionData(authResult.sessionData as Record<string, unknown> | null);
+
     if (existing) {
       await db.update(crosslisterAccount).set({
         status: 'ACTIVE',
         externalAccountId: authResult.externalAccountId,
         externalUsername: authResult.externalUsername,
-        sessionData: authResult.sessionData,
+        sessionData: encryptedSessionData,
         capabilities: authResult.capabilities,
         lastAuthAt: new Date(),
         firstImportCompletedAt: null,
@@ -181,7 +184,7 @@ export async function authenticateSessionAccount(
         status: 'ACTIVE',
         externalAccountId: authResult.externalAccountId,
         externalUsername: authResult.externalUsername,
-        sessionData: authResult.sessionData,
+        sessionData: encryptedSessionData,
         capabilities: authResult.capabilities,
         lastAuthAt: new Date(),
         firstImportCompletedAt: null,

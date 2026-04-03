@@ -115,7 +115,7 @@ export function HubSidebar({ capabilities, unreadMessageCount = 0 }: HubSidebarP
                 key={item.key}
                 href={item.href}
                 icon={item.icon}
-                active={pathname === item.href || pathname.startsWith(item.href + '/')}
+                active={pathname === item.href || (item.href !== '/my' && pathname.startsWith(item.href + '/'))}
                 external={item.external}
                 badge={item.key === 'inbox' ? unreadMessageCount : null}
                 disabled={item.disabled}
@@ -139,7 +139,7 @@ export function HubSidebar({ capabilities, unreadMessageCount = 0 }: HubSidebarP
                       key={item.key}
                       href={item.href}
                       icon={item.icon}
-                      active={pathname === item.href || pathname.startsWith(item.href + '/')}
+                      active={pathname === item.href || (item.href !== '/my' && pathname.startsWith(item.href + '/'))}
                       external={item.external}
                       indent
                       disabled={item.disabled}

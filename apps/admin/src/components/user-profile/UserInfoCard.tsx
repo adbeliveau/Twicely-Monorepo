@@ -44,7 +44,7 @@ export default function UserInfoCard() {
                 Email address
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                randomuser@pimjo.com
+                user@twicely.co
               </p>
             </div>
 
@@ -113,20 +113,20 @@ export default function UserInfoCard() {
                     <Label>Facebook</Label>
                     <Input
                       type="text"
-                      defaultValue="https://www.facebook.com/PimjoHQ"
+                      defaultValue="https://www.facebook.com/TwicelyHQ"
                     />
                   </div>
 
                   <div>
                     <Label>X.com</Label>
-                    <Input type="text" defaultValue="https://x.com/PimjoHQ" />
+                    <Input type="text" defaultValue="https://x.com/TwicelyHQ" />
                   </div>
 
                   <div>
                     <Label>Linkedin</Label>
                     <Input
                       type="text"
-                      defaultValue="https://www.linkedin.com/company/pimjo"
+                      defaultValue="https://www.linkedin.com/company/twicely"
                     />
                   </div>
 
@@ -134,7 +134,7 @@ export default function UserInfoCard() {
                     <Label>Instagram</Label>
                     <Input
                       type="text"
-                      defaultValue="https://instagram.com/PimjoHQ"
+                      defaultValue="https://instagram.com/TwicelyHQ"
                     />
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export default function UserInfoCard() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" defaultValue="randomuser@pimjo.com" />
+                    <Input type="text" defaultValue="user@twicely.co" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">

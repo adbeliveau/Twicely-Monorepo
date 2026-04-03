@@ -2,10 +2,13 @@ import { headers } from 'next/headers';
 import { eq, and, or, isNull, gt } from 'drizzle-orm';
 import { auth } from '@twicely/auth/server';
 import { db } from '@twicely/db';
+import { user as userTable } from '@twicely/db/schema';
 import { delegatedAccess } from '@/lib/db/schema/subscriptions';
 import { sellerProfile } from '@/lib/db/schema/identity';
 import { defineAbilitiesFor } from '@twicely/casl/ability';
 import type { AppAbility, CaslSession } from '@twicely/casl/types';
+import { getImpersonationSession } from '@/lib/auth/impersonation';
+import { logger } from '@twicely/logger';
 
 /**
  * Custom error for authorization failures
@@ -43,10 +46,70 @@ export async function authorize(): Promise<{
     return { ability, session: null };
   }
 
-  // sellerId is the user's own id — all ownership columns in DB use user.id
-  const sellerId: string | null = user.isSeller ? user.id : null;
+  // ── G10.8 Staff impersonation: override effective user context ──────
+  // If a valid impersonation cookie is present, the staff user (authenticated
+  // via Better Auth) views the target user's context. The impersonation token
+  // is already HMAC-signed and time-limited (15 min) by the start route.
+  let impersonation: { targetUserId: string; staffUserId: string } | null = null;
+  try {
+    const impersonationSession = await getImpersonationSession();
+    if (impersonationSession) {
+      // Security: only honor impersonation if the authenticated user matches the staff user
+      if (impersonationSession.staffUserId === user.id) {
+        impersonation = {
+          targetUserId: impersonationSession.targetUserId,
+          staffUserId: impersonationSession.staffUserId,
+        };
+      } else {
+        logger.warn('[authorize] Impersonation token staffUserId mismatch', {
+          tokenStaffUser: impersonationSession.staffUserId,
+          authenticatedUser: user.id,
+        });
+      }
+    }
+  } catch {
+    // Impersonation cookie absent or IMPERSONATION_SECRET not set — proceed normally
+  }
 
-  // Lookup active delegation for this user (D5 staff context)
+  // Determine the effective user for this request
+  let effectiveUserId: string;
+  let effectiveEmail: string;
+  let effectiveIsSeller: boolean;
+
+  if (impersonation) {
+    // Load the target user's identity from DB
+    const [targetUser] = await db
+      .select({
+        id: userTable.id,
+        email: userTable.email,
+        isSeller: userTable.isSeller,
+      })
+      .from(userTable)
+      .where(eq(userTable.id, impersonation.targetUserId))
+      .limit(1);
+
+    if (!targetUser) {
+      logger.warn('[authorize] Impersonation target user not found', { targetUserId: impersonation.targetUserId });
+      // Fall back to the staff's own identity
+      effectiveUserId = user.id;
+      effectiveEmail = user.email;
+      effectiveIsSeller = user.isSeller ?? false;
+      impersonation = null;
+    } else {
+      effectiveUserId = targetUser.id;
+      effectiveEmail = targetUser.email;
+      effectiveIsSeller = targetUser.isSeller;
+    }
+  } else {
+    effectiveUserId = user.id;
+    effectiveEmail = user.email;
+    effectiveIsSeller = user.isSeller ?? false;
+  }
+
+  // sellerId is the effective user's own id — all ownership columns in DB use user.id
+  const sellerId: string | null = effectiveIsSeller ? effectiveUserId : null;
+
+  // Lookup active delegation for the effective user (D5 staff context)
   let delegationId: string | null = null;
   let onBehalfOfSellerId: string | null = null;
   let onBehalfOfSellerProfileId: string | null = null;
@@ -64,7 +127,7 @@ export async function authorize(): Promise<{
     .innerJoin(sellerProfile, eq(sellerProfile.id, delegatedAccess.sellerId))
     .where(
       and(
-        eq(delegatedAccess.userId, user.id),
+        eq(delegatedAccess.userId, effectiveUserId),
         eq(delegatedAccess.status, 'ACTIVE'),
         or(isNull(delegatedAccess.expiresAt), gt(delegatedAccess.expiresAt, now))
       )
@@ -81,9 +144,9 @@ export async function authorize(): Promise<{
   }
 
   const caslSession: CaslSession = {
-    userId: user.id,
-    email: user.email,
-    isSeller: user.isSeller ?? false,
+    userId: effectiveUserId,
+    email: effectiveEmail,
+    isSeller: effectiveIsSeller,
     sellerId,
     sellerStatus: null,
     delegationId,

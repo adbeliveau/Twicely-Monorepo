@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@twicely/db/cache', () => ({
-  getValkeyClient: vi.fn().mockReturnValue({ set: vi.fn().mockResolvedValue('OK'), get: vi.fn().mockResolvedValue(null) }),
+  getValkeyClient: vi.fn().mockReturnValue({ get: vi.fn().mockResolvedValue(null), set: vi.fn().mockResolvedValue('OK') }),
 }));
 
 vi.mock('../server', () => ({

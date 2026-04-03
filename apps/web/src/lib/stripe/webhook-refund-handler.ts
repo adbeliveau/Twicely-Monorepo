@@ -7,12 +7,12 @@
 import type Stripe from 'stripe';
 import { db } from '@twicely/db';
 import { order, ledgerEntry } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';
 import type { WebhookResult } from '@twicely/stripe/webhooks';
 
-export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookResult> {
+export async function handleChargeRefunded(charge: Stripe.Charge, eventId?: string): Promise<WebhookResult> {
   try {
     const paymentIntentId =
       typeof charge.payment_intent === 'string'
@@ -53,6 +53,19 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
     const now = new Date();
 
     if (isFullRefund) {
+      // Guard: skip if ledger entry already exists for this refund
+      if (latestRefund?.id) {
+        const [existing] = await db
+          .select({ id: ledgerEntry.id })
+          .from(ledgerEntry)
+          .where(and(eq(ledgerEntry.stripeRefundId, latestRefund.id), eq(ledgerEntry.type, 'REFUND_FULL')))
+          .limit(1);
+        if (existing) {
+          logger.info('[webhook] charge.refunded — skipping duplicate REFUND_FULL ledger entry', { refundId: latestRefund.id });
+          return { handled: true };
+        }
+      }
+
       await db
         .update(order)
         .set({ status: 'REFUNDED', updatedAt: now })
@@ -66,6 +79,8 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
         orderId: ord.id,
         stripeChargeId: charge.id,
         stripePaymentIntentId: paymentIntentId,
+        stripeRefundId: latestRefund?.id ?? null,
+        stripeEventId: eventId ?? null,
         postedAt: now,
         memo: 'External full refund via Stripe',
       });
@@ -86,6 +101,19 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
         amountCents: charge.amount_refunded,
       });
     } else {
+      // Guard: skip if ledger entry already exists for this refund
+      if (latestRefund?.id) {
+        const [existing] = await db
+          .select({ id: ledgerEntry.id })
+          .from(ledgerEntry)
+          .where(and(eq(ledgerEntry.stripeRefundId, latestRefund.id), eq(ledgerEntry.type, 'REFUND_PARTIAL')))
+          .limit(1);
+        if (existing) {
+          logger.info('[webhook] charge.refunded — skipping duplicate REFUND_PARTIAL ledger entry', { refundId: latestRefund.id });
+          return { handled: true };
+        }
+      }
+
       await db.insert(ledgerEntry).values({
         type: 'REFUND_PARTIAL',
         status: 'POSTED',
@@ -94,6 +122,8 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
         orderId: ord.id,
         stripeChargeId: charge.id,
         stripePaymentIntentId: paymentIntentId,
+        stripeRefundId: latestRefund?.id ?? null,
+        stripeEventId: eventId ?? null,
         postedAt: now,
         memo: 'External partial refund via Stripe',
       });

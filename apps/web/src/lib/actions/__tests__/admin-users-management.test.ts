@@ -29,6 +29,10 @@ vi.mock('drizzle-orm', () => ({
   sql: vi.fn(),
 }));
 
+vi.mock('@twicely/auth', () => ({
+  auth: { api: {} },
+}));
+
 vi.mock('../staff-mfa', () => ({
   requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
 }));

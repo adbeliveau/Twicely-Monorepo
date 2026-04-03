@@ -22,6 +22,7 @@ vi.mock('drizzle-orm', () => ({
 vi.mock('@twicely/db/schema', () => ({
   platformSetting: { id: 'id', key: 'key', value: 'value', updatedByStaffId: 'updated_by_staff_id', updatedAt: 'updated_at', type: 'type', category: 'category', description: 'description' },
   platformSettingHistory: { id: 'id', settingId: 'setting_id' },
+  providerAdapter: { id: 'id', code: 'code' },
   providerInstance: { id: 'id', name: 'name', adapterId: 'adapter_id', displayName: 'display_name', createdByStaffId: 'created_by_staff_id' },
   providerSecret: { id: 'id', instanceId: 'instance_id', key: 'key', encryptedValue: 'encrypted_value', updatedAt: 'updated_at' },
   auditEvent: { id: 'id', action: 'action' },
@@ -29,6 +30,10 @@ vi.mock('@twicely/db/schema', () => ({
 
 vi.mock('@paralleldrive/cuid2', () => ({
   createId: () => 'generated-cuid',
+}));
+
+vi.mock('@/lib/crypto/provider-secrets', () => ({
+  encryptSecret: vi.fn((v: string) => 'enc:' + v),
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -114,6 +119,8 @@ describe('updateIntegrationKeys', () => {
     mockCanUpdateSetting();
     // getOrCreateInstance — no existing instance
     mockDbSelect.mockReturnValueOnce(makeSelectChain([]));
+    // getOrCreateInstance — adapter lookup by code
+    mockDbSelect.mockReturnValueOnce(makeSelectChain([{ id: 'adapter-stripe-cuid' }]));
     // upsertSecret — no existing secret
     mockDbSelect.mockReturnValueOnce(makeSelectChain([]));
     const insertInstanceChain = makeInsertChain();
@@ -129,6 +136,9 @@ describe('updateIntegrationKeys', () => {
 
     expect(result).toEqual({ success: true });
     expect(mockDbInsert).toHaveBeenCalledTimes(3);
+    // Verify the instance was created with the adapter CUID, not the code string
+    const instanceValues = insertInstanceChain.values.mock.calls[0]![0];
+    expect(instanceValues.adapterId).toBe('adapter-stripe-cuid');
   });
 
   it('creates audit event for key update', async () => {

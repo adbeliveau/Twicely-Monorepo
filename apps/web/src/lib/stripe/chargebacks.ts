@@ -14,7 +14,7 @@
 
 import { db } from '@twicely/db';
 import { dispute, order, ledgerEntry } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
 import { submitChargebackEvidence } from '@twicely/stripe/chargeback-evidence';
@@ -34,7 +34,8 @@ export interface ChargebackWebhookResult {
  * Creates internal dispute record if one doesn't exist.
  */
 export async function handleChargebackWebhook(
-  stripeDispute: Stripe.Dispute
+  stripeDispute: Stripe.Dispute,
+  eventId?: string
 ): Promise<ChargebackWebhookResult> {
   const paymentIntentId = stripeDispute.payment_intent as string | null;
 
@@ -108,15 +109,27 @@ export async function handleChargebackWebhook(
     })
     .where(eq(order.id, ord.id));
 
-  // Create ledger entry for chargeback debit
-  await db.insert(ledgerEntry).values({
-    type: 'CHARGEBACK_DEBIT',
-    status: 'POSTED',
-    amountCents: -stripeDispute.amount, // Negative: seller loses this
-    userId: ord.sellerId,
-    orderId: ord.id,
-    postedAt: new Date(),
-  });
+  // Guard: skip if ledger entry already exists for this dispute
+  const [existingDebit] = await db
+    .select({ id: ledgerEntry.id })
+    .from(ledgerEntry)
+    .where(and(eq(ledgerEntry.stripeDisputeId, stripeDispute.id), eq(ledgerEntry.type, 'CHARGEBACK_DEBIT')))
+    .limit(1);
+
+  if (!existingDebit) {
+    await db.insert(ledgerEntry).values({
+      type: 'CHARGEBACK_DEBIT',
+      status: 'POSTED',
+      amountCents: -stripeDispute.amount, // Negative: seller loses this
+      userId: ord.sellerId,
+      orderId: ord.id,
+      stripeDisputeId: stripeDispute.id,
+      stripeEventId: eventId ?? null,
+      postedAt: new Date(),
+    });
+  } else {
+    logger.info('[webhook] charge.dispute.created — skipping duplicate CHARGEBACK_DEBIT', { disputeId: stripeDispute.id });
+  }
 
   // Auto-submit evidence if we have it
   await submitChargebackEvidence(disputeId, stripeDispute.id);

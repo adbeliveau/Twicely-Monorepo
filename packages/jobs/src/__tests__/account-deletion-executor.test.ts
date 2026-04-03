@@ -27,6 +27,7 @@ vi.mock('drizzle-orm', () => ({
   and: vi.fn((...args) => ({ op: 'and', args })),
   lt: vi.fn((col, val) => ({ op: 'lt', col, val })),
   isNotNull: vi.fn((col) => ({ op: 'isNotNull', col })),
+  isNull: vi.fn((col) => ({ op: 'isNull', col })),
   inArray: vi.fn((col, arr) => ({ op: 'inArray', col, arr })),
 }));
 
@@ -106,7 +107,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
     const { runAccountDeletionBatch } = await import('../account-deletion-executor');
     await runAccountDeletionBatch();
 
-    expect(getPlatformSetting).toHaveBeenCalledWith('gdpr.deletionGracePeriodDays', 30);
+    expect(getPlatformSetting).toHaveBeenCalledWith('privacy.gdpr.deletionGracePeriodDays', 30);
   });
 
   it('skips users still in cooling-off period', async () => {

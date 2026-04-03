@@ -27,6 +27,7 @@ vi.mock('drizzle-orm', () => ({
   and: vi.fn((...args) => ({ op: 'and', args })),
   lt: vi.fn((col, val) => ({ op: 'lt', col, val })),
   isNotNull: vi.fn((col) => ({ op: 'isNotNull', col })),
+  isNull: vi.fn((col) => ({ op: 'isNull', col })),
   inArray: vi.fn((col, arr) => ({ op: 'inArray', col, arr })),
 }));
 

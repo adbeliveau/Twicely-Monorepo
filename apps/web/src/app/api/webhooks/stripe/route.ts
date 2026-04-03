@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
 
   if (result.error) {
     logger.error('Webhook error', { eventType: event.type, error: result.error });
-    // Return 200 anyway to acknowledge receipt — Stripe will retry on 4xx/5xx
-    // We log errors but don't fail the webhook
+    // Return 500 so Stripe retries — dedupe key is only set after success
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
   return NextResponse.json({ received: true, handled: result.handled });

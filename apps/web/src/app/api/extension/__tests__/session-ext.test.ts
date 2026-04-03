@@ -43,6 +43,14 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('@twicely/crosslister/token-crypto', () => ({
+  encryptSessionData: vi.fn((data: unknown) => (data ? JSON.stringify(data) : null)),
+  decryptSessionData: vi.fn((data: unknown) => data),
+  encryptToken: vi.fn((v: string) => v),
+  decryptToken: vi.fn((v: string) => v),
+  withDecryptedTokens: vi.fn((a: unknown) => a),
+}));
+
 vi.mock('@twicely/casl', () => ({
   defineAbilitiesFor: vi.fn(() => ({ can: vi.fn(() => true) })),
   sub: vi.fn((_type, conditions) => conditions),

@@ -7,8 +7,8 @@
 
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
-import { getValkeyClient } from '@twicely/db/cache';
 import { notify } from '@twicely/notifications/service';
+import { isWebhookDuplicate, markWebhookProcessed } from './webhook-idempotency';
 import { resolveStripePriceId } from '@twicely/subscriptions/price-map';
 import {
   findSellerByStripeCustomerId,
@@ -241,15 +241,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void
  * Called from the API route after signature verification.
  */
 export async function handleSubscriptionWebhook(event: Stripe.Event): Promise<void> {
-  // N2 Security: Deduplicate webhook events via Valkey (24h TTL)
-  try {
-    const valkey = getValkeyClient();
-    const result = await valkey.set(`stripe-webhook:${event.id}`, '1', 'EX', 86400, 'NX');
-    if (result === null) {
-      logger.info('[subscription-webhook] Duplicate event skipped', { eventId: event.id });
-      return;
-    }
-  } catch { /* Valkey down — fail open */ }
+  // Durable two-layer dedup: Valkey (fast) + DB stripe_event_log (durable)
+  if (await isWebhookDuplicate(event.id)) {
+    logger.info('[subscription-webhook] Duplicate event skipped', { eventId: event.id });
+    return;
+  }
 
   switch (event.type) {
     case 'customer.subscription.created':
@@ -274,4 +270,7 @@ export async function handleSubscriptionWebhook(event: Stripe.Event): Promise<vo
     default:
       break;
   }
+
+  // Mark as processed in both Valkey + DB
+  await markWebhookProcessed(event.id, event.type, event.data.object);
 }

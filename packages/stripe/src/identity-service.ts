@@ -12,7 +12,8 @@ import { identityVerification, sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
-import { getValkeyClient } from '@twicely/db/cache';
+import { isWebhookDuplicate, markWebhookProcessed } from './webhook-idempotency';
+import { notify } from '@twicely/notifications/service';
 import type Stripe from 'stripe';
 
 export interface VerificationSessionResult {
@@ -82,15 +83,12 @@ export async function getVerificationSessionResult(
 export async function handleVerificationWebhook(
   event: Stripe.Event
 ): Promise<void> {
-  // N2 Security: Deduplicate webhook events via Valkey (24h TTL)
-  try {
-    const valkey = getValkeyClient();
-    const result = await valkey.set(`stripe-webhook:${event.id}`, '1', 'EX', 86400, 'NX');
-    if (result === null) {
-      logger.info('[identity-webhook] Duplicate event skipped', { eventId: event.id });
-      return;
-    }
-  } catch { /* Valkey down — fail open */ }
+  // Durable two-layer dedupe: Valkey (fast) + DB stripe_event_log (crash-safe)
+  if (await isWebhookDuplicate(event.id)) {
+    logger.info('[identity-webhook] Duplicate event skipped', { eventId: event.id });
+    return;
+  }
+
   const session = event.data.object as Stripe.Identity.VerificationSession;
   const stripeSessionId = session.id;
 
@@ -107,6 +105,14 @@ export async function handleVerificationWebhook(
       eventType: event.type,
     });
     return;
+  }
+
+  // Notify submission received on first outcome event (not canceled — user abandoned)
+  if (
+    event.type === 'identity.verification_session.verified' ||
+    event.type === 'identity.verification_session.requires_input'
+  ) {
+    void notify(record.userId, 'kyc.verification_submitted', {});
   }
 
   if (event.type === 'identity.verification_session.verified') {
@@ -143,6 +149,10 @@ export async function handleVerificationWebhook(
       level: record.level,
       expiresAt,
     });
+
+    void notify(record.userId, 'kyc.verification_approved', {
+      level: record.level,
+    });
   } else if (event.type === 'identity.verification_session.requires_input') {
     const failureReason =
       session.last_error?.code ?? 'unknown';
@@ -169,6 +179,11 @@ export async function handleVerificationWebhook(
       failureReason,
       retryAfter,
     });
+
+    void notify(record.userId, 'kyc.verification_failed', {
+      failureReason,
+      retryAfterDate: retryAfter.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    });
   } else if (event.type === 'identity.verification_session.canceled') {
     const retryDays = await getPlatformSetting<number>('kyc.failedRetryDays', 30);
 
@@ -185,5 +200,12 @@ export async function handleVerificationWebhook(
         updatedAt: new Date(),
       })
       .where(eq(identityVerification.id, record.id));
+
+    void notify(record.userId, 'kyc.verification_expired', {
+      expiryDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    });
   }
+
+  // Mark event as durably processed (Valkey + DB)
+  await markWebhookProcessed(event.id, event.type, event.data.object);
 }

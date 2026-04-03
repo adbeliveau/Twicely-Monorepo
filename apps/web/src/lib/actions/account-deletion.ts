@@ -91,7 +91,7 @@ export async function beginAccountDeletion(): Promise<{
 
   // Read grace period from platform settings — NOT hardcoded
   const gracePeriodDays = await getPlatformSetting<number>(
-    'gdpr.deletionGracePeriodDays',
+    'privacy.gdpr.deletionGracePeriodDays',
     30
   );
 

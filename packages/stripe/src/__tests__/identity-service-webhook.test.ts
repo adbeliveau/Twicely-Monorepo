@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@twicely/db/cache', () => ({
-  getValkeyClient: vi.fn().mockReturnValue({ set: vi.fn().mockResolvedValue('OK') }),
+vi.mock('../webhook-idempotency', () => ({
+  isWebhookDuplicate: vi.fn().mockResolvedValue(false),
+  markWebhookProcessed: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@twicely/notifications/service', () => ({
+  notify: vi.fn().mockResolvedValue(undefined),
 }));
 
 /**

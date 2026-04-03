@@ -23,7 +23,7 @@ import {
   listingImage,
 } from '@twicely/db/schema';
 import { deleteImage } from '@twicely/storage/image-service';
-import { eq, and, lt, isNotNull, inArray } from 'drizzle-orm';
+import { eq, and, lt, isNotNull, isNull, inArray } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
 import { notify } from '@twicely/notifications/service';
@@ -168,6 +168,7 @@ async function executeAccountDeletion(userId: string): Promise<void> {
       bannedAt: new Date(),
       bannedReason: 'Account deleted per GDPR right-to-erasure',
       deletionRequestedAt: null,
+      anonymizedAt: new Date(),
       updatedAt: new Date(),
     })
     .where(eq(userTable.id, userId));
@@ -195,7 +196,7 @@ async function executeAccountDeletion(userId: string): Promise<void> {
 /** Process all users past their cooling-off period. Exported for cleanup-queue.ts. */
 export async function runAccountDeletionBatch(): Promise<void> {
   const gracePeriodDays = await getPlatformSetting<number>(
-    'gdpr.deletionGracePeriodDays',
+    'privacy.gdpr.deletionGracePeriodDays',
     30
   );
 
@@ -207,6 +208,7 @@ export async function runAccountDeletionBatch(): Promise<void> {
     .where(
       and(
         isNotNull(userTable.deletionRequestedAt),
+        isNull(userTable.anonymizedAt),
         lt(userTable.deletionRequestedAt, cutoff)
       )
     )

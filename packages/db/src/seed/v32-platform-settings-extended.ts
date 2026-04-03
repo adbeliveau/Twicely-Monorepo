@@ -38,7 +38,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'bundle.maxPromptsPerCart', value: 3, type: 'number', category: 'commerce', description: 'Max bundle prompts shown at once' },
   // Removed: order.autoCompleteAfterDays — dead config, code uses commerce.escrow.holdHours instead
   { key: 'order.buyerCancelWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
-  { key: 'order.maxItemsPerOrder', value: 50, type: 'number', category: 'commerce', description: 'Maximum items in single order' },
+  { key: 'order.maxItemsPerOrder', value: 100, type: 'number', category: 'commerce', description: 'Maximum items in single order' },
   { key: 'listing.maxImagesPerListing', value: 24, type: 'number', category: 'commerce', description: 'Maximum photos per listing' },
   { key: 'listing.minTitleLength', value: 10, type: 'number', category: 'commerce', description: 'Minimum characters in listing title' },
   { key: 'listing.maxTitleLength', value: 80, type: 'number', category: 'commerce', description: 'Maximum characters in listing title' },
@@ -152,6 +152,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'messaging.moderationEnabled', value: true, type: 'boolean', category: 'comms', description: 'Enable message content moderation' },
   { key: 'comms.messaging.attachmentMaxBytes', value: 10_485_760, type: 'number', category: 'comms', description: 'Message attachment max file size (bytes)' },
   { key: 'comms.messaging.bannedKeywords', value: [], type: 'array', category: 'comms', description: 'Banned keyword list for message moderation (managed via /cfg/messaging/keywords)' },
+  { key: 'comms.messaging.autoResponseEnabled', value: false, type: 'boolean', category: 'comms', description: 'Enable auto-response for buyer-seller messages' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PRIVACY — Data retention, GDPR
@@ -159,10 +160,10 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'retention.messageDays', value: 730, type: 'number', category: 'privacy', description: 'Keep messages for this many days (2 years)' },
   { key: 'retention.searchLogDays', value: 90, type: 'number', category: 'privacy', description: 'Keep search logs for this many days' },
   { key: 'retention.auditLogDays', value: 2555, type: 'number', category: 'privacy', description: 'Keep audit logs for compliance (7 years)' },
-  { key: 'gdpr.dataExportEnabled', value: true, type: 'boolean', category: 'privacy', description: 'Allow users to export their data' },
-  { key: 'gdpr.deletionGracePeriodDays', value: 30, type: 'number', category: 'privacy', description: 'Days before permanent deletion after request' },
-  { key: 'gdpr.anonymizeOnDeletion', value: true, type: 'boolean', category: 'privacy', description: 'Anonymize vs hard delete user data' },
-  { key: 'gdpr.cookieConsentRequired', value: true, type: 'boolean', category: 'privacy', description: 'Require cookie consent banner' },
+  { key: 'privacy.gdpr.dataExportEnabled', value: true, type: 'boolean', category: 'privacy', description: 'Allow users to export their data' },
+  { key: 'privacy.gdpr.deletionGracePeriodDays', value: 30, type: 'number', category: 'privacy', description: 'Days before permanent deletion after request' },
+  { key: 'privacy.gdpr.anonymizeOnDeletion', value: true, type: 'boolean', category: 'privacy', description: 'Anonymize vs hard delete user data' },
+  { key: 'privacy.gdpr.cookieConsentRequired', value: true, type: 'boolean', category: 'privacy', description: 'Require cookie consent banner' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SOCIAL FEED — G3.8

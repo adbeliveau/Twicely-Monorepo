@@ -22,7 +22,7 @@ export default function InvoiceMain() {
             </span>
 
             <h5 className="mb-2 text-base font-semibold text-gray-800 dark:text-white/90">
-              Pimjo LLC
+              Twicely Inc.
             </h5>
 
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">

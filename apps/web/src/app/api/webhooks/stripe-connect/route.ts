@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
 
   if (result.error) {
     logger.error('Connect webhook error', { eventType: event.type, error: result.error });
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
   return NextResponse.json({ received: true, handled: result.handled });

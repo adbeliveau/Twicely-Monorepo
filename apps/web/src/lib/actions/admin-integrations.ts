@@ -9,10 +9,12 @@ import { db } from '@twicely/db';
 import {
   platformSetting,
   platformSettingHistory,
+  providerAdapter,
   providerInstance,
   providerSecret,
   auditEvent,
 } from '@twicely/db/schema';
+import { encryptSecret } from '@/lib/crypto/provider-secrets';
 import { eq, and } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
@@ -27,6 +29,7 @@ const updateKeysSchema = z.object({
   webhookSigningSecret: z.string().optional(),
   connectWebhookSecret: z.string().optional(),
   identityWebhookSecret: z.string().optional(),
+  subscriptionWebhookSecret: z.string().optional(),
   apiKey: z.string().optional(),
 }).strict();
 
@@ -43,10 +46,18 @@ async function getOrCreateInstance(
 
   if (existing) return existing.id;
 
+  // Resolve adapter CUID by code — adapterId is a FK to provider_adapter.id
+  const [adapter] = await db
+    .select({ id: providerAdapter.id })
+    .from(providerAdapter)
+    .where(eq(providerAdapter.code, adapterCode))
+    .limit(1);
+  if (!adapter) throw new Error(`Provider adapter not found: ${adapterCode}`);
+
   const id = createId();
   await db.insert(providerInstance).values({
     id,
-    adapterId: adapterCode,
+    adapterId: adapter.id,
     name: instanceName,
     displayName: instanceName,
     createdByStaffId: staffId,
@@ -55,6 +66,8 @@ async function getOrCreateInstance(
 }
 
 async function upsertSecret(instanceId: string, key: string, value: string) {
+  const encrypted = encryptSecret(value);
+
   const [existing] = await db
     .select({ id: providerSecret.id })
     .from(providerSecret)
@@ -67,13 +80,13 @@ async function upsertSecret(instanceId: string, key: string, value: string) {
   if (existing) {
     await db
       .update(providerSecret)
-      .set({ encryptedValue: value, updatedAt: new Date() })
+      .set({ encryptedValue: encrypted, updatedAt: new Date() })
       .where(eq(providerSecret.id, existing.id));
   } else {
     await db.insert(providerSecret).values({
       instanceId,
       key,
-      encryptedValue: value,
+      encryptedValue: encrypted,
     });
   }
 }
@@ -87,9 +100,9 @@ export async function updateIntegrationKeys(input: unknown) {
   const parsed = updateKeysSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
 
-  const { provider, testSecretKey, liveSecretKey, testPublishableKey, livePublishableKey, webhookSigningSecret, connectWebhookSecret, identityWebhookSecret, apiKey } = parsed.data;
+  const { provider, testSecretKey, liveSecretKey, testPublishableKey, livePublishableKey, webhookSigningSecret, connectWebhookSecret, identityWebhookSecret, subscriptionWebhookSecret, apiKey } = parsed.data;
   const instanceName = `${provider}-primary`;
-  const instanceId = await getOrCreateInstance(instanceName, instanceName, session.staffUserId);
+  const instanceId = await getOrCreateInstance(instanceName, provider, session.staffUserId);
 
   if (testSecretKey) await upsertSecret(instanceId, 'test_secret_key', testSecretKey);
   if (liveSecretKey) await upsertSecret(instanceId, 'live_secret_key', liveSecretKey);
@@ -98,6 +111,7 @@ export async function updateIntegrationKeys(input: unknown) {
   if (webhookSigningSecret) await upsertSecret(instanceId, 'webhook_signing_secret', webhookSigningSecret);
   if (connectWebhookSecret) await upsertSecret(instanceId, 'connect_webhook_secret', connectWebhookSecret);
   if (identityWebhookSecret) await upsertSecret(instanceId, 'identity_webhook_secret', identityWebhookSecret);
+  if (subscriptionWebhookSecret) await upsertSecret(instanceId, 'subscription_webhook_secret', subscriptionWebhookSecret);
   if (apiKey) await upsertSecret(instanceId, 'api_key', apiKey);
 
   await db.insert(auditEvent).values({

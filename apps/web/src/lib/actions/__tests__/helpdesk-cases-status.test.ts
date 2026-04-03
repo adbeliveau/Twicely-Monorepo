@@ -14,6 +14,7 @@ const mockStaffAuthorize = vi.fn();
 const mockGetPlatformSetting = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
+vi.mock('@twicely/auth', () => ({ auth: { api: {} } }));
 vi.mock('@twicely/casl', () => ({ authorize: mockAuthorize, sub: (...args: unknown[]) => args }));
 vi.mock('@twicely/casl/staff-authorize', () => ({ staffAuthorize: mockStaffAuthorize }));
 vi.mock('@/lib/helpdesk/routing', () => ({ evaluateRoutingRules: vi.fn() }));
@@ -21,6 +22,8 @@ vi.mock('@/lib/helpdesk/sla', () => ({ calculateSlaDue: vi.fn() }));
 vi.mock('@/lib/helpdesk/case-number', () => ({ generateCaseNumber: vi.fn() }));
 vi.mock('@/lib/queries/platform-settings', () => ({ getPlatformSetting: mockGetPlatformSetting }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@twicely/notifications/service', () => ({ notify: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('@/lib/helpdesk/notify-watchers', () => ({ notifyCaseWatchers: vi.fn().mockResolvedValue(undefined) }));
 
 // Chain builder for Drizzle
 function makeChain(returnVal: unknown) {

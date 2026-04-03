@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { logger } from '@twicely/logger';
 import { defineAbilitiesFor, sub } from '@twicely/casl';
+import { encryptSessionData } from '@twicely/crosslister/token-crypto';
 
 const sessionSchema = z.object({
   channel: z.enum(['POSHMARK', 'FB_MARKETPLACE', 'THEREALREAL', 'VESTIAIRE'] as const),
@@ -53,7 +54,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ success: false, error: 'Invalid input' }, { status: 400 });
   }
 
-  const { channel, sessionData } = parsed.data;
+  const { channel, sessionData: rawSessionData } = parsed.data;
+  const sessionData = encryptSessionData(rawSessionData);
 
   // CASL authorization check — user must have crosslister account creation/update rights
   const ability = defineAbilitiesFor({

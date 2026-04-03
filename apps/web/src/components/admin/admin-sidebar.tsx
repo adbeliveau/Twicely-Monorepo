@@ -122,7 +122,7 @@ function NavItem({ item, isActive }: { item: AdminNavItem; isActive: boolean }) 
 
 function CollapsibleNavItem({ item, pathname }: { item: AdminNavItem; pathname: string }) {
   const childActive = item.children?.some(
-    (c) => pathname === c.href || (c.href !== '/d' && pathname.startsWith(c.href))
+    (c) => pathname === c.href || (c.href !== '/d' && pathname.startsWith(c.href + '/'))
   );
   const [open, setOpen] = useState(childActive ?? false);
 
@@ -147,7 +147,7 @@ function CollapsibleNavItem({ item, pathname }: { item: AdminNavItem; pathname: 
       {open && item.children && (
         <ul id={listId} className="ml-6 mt-1 space-y-0.5" role="list">
           {item.children.map((child) => {
-            const isChildActive = pathname === child.href;
+            const isChildActive = pathname === child.href || pathname.startsWith(child.href + '/');
             return (
               <li key={child.key}>
                 <NavItem item={child} isActive={isChildActive} />

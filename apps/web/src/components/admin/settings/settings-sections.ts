@@ -191,6 +191,6 @@ export const TAB_SECTIONS: Record<string, SectionDef[]> = {
   ],
   privacy: [
     { title: 'Data Retention', description: 'How long messages, search logs, and audit records are kept', keyPrefixes: ['retention.'] },
-    { title: 'GDPR', description: 'EU data protection — export, deletion, consent', keyPrefixes: ['gdpr.'] },
+    { title: 'GDPR', description: 'EU data protection — export, deletion, consent', keyPrefixes: ['privacy.gdpr.'] },
   ],
 };

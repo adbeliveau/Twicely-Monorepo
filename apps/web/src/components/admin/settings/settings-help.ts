@@ -73,8 +73,8 @@ const H: Record<string, string> = {
 
   // Privacy
   'retention.auditLogDays': 'Audit logs must be retained for 7 years (2,555 days) for financial compliance. Reducing this value may violate regulatory requirements.',
-  'gdpr.deletionGracePeriodDays': 'Days between a user requesting account deletion and permanent data removal. During this window, the user can cancel the deletion request.',
-  'gdpr.anonymizeOnDeletion': 'When enabled, user data is anonymized (names, emails replaced with hashes) rather than hard-deleted. Preserves transaction integrity for accounting.',
+  'privacy.gdpr.deletionGracePeriodDays': 'Days between a user requesting account deletion and permanent data removal. During this window, the user can cancel the deletion request.',
+  'privacy.gdpr.anonymizeOnDeletion': 'When enabled, user data is anonymized (names, emails replaced with hashes) rather than hard-deleted. Preserves transaction integrity for accounting.',
 };
 
 export function getHelpText(key: string): string | null {

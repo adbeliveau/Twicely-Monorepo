@@ -52,13 +52,32 @@ async function checkDbPool(): Promise<HealthCheckResult> {
 
 async function checkAppEnv(): Promise<HealthCheckResult> {
   const start = Date.now();
-  const required = ['DATABASE_URL', 'CRON_SECRET'];
+  const required = [
+    'DATABASE_URL',
+    'CRON_SECRET',
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET',
+    'STRIPE_CONNECT_WEBHOOK_SECRET',
+    'STRIPE_SUBSCRIPTION_WEBHOOK_SECRET',
+    'STRIPE_IDENTITY_WEBHOOK_SECRET',
+  ];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length > 0) {
     return makeResult('app.env', 'App', 'UNHEALTHY', Date.now() - start,
       `Missing env vars: ${missing.join(', ')}`);
   }
   return makeResult('app.env', 'App', 'HEALTHY', Date.now() - start, null);
+}
+
+async function checkOptionalEnvVars(): Promise<HealthCheckResult> {
+  const start = Date.now();
+  const optional = ['METRICS_SECRET', 'IMPERSONATION_SECRET', 'EXTENSION_JWT_SECRET'];
+  const missing = optional.filter((k) => !process.env[k]);
+  if (missing.length > 0) {
+    return makeResult('app.optional-env', 'App', 'DEGRADED', Date.now() - start,
+      `Optional env vars missing: ${missing.join(', ')}`);
+  }
+  return makeResult('app.optional-env', 'App', 'HEALTHY', Date.now() - start, null);
 }
 
 async function checkAppSettings(): Promise<HealthCheckResult> {
@@ -134,6 +153,7 @@ export const DOCTOR_CHECKS: DoctorCheck[] = [
   { name: 'db.connection', module: 'Database', fn: checkDbConnection },
   { name: 'db.pool', module: 'Database', fn: checkDbPool },
   { name: 'app.env', module: 'App', fn: checkAppEnv },
+  { name: 'app.optional-env', module: 'App', fn: checkOptionalEnvVars },
   { name: 'app.settings', module: 'App', fn: checkAppSettings },
   { name: 'valkey.ping', module: 'Valkey', fn: checkValkeyPing },
   { name: 'typesense.health', module: 'Typesense', fn: checkTypesenseHealth },

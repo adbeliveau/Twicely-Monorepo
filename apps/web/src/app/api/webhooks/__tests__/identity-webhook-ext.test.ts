@@ -45,7 +45,7 @@ describe('Identity webhook route — handler error path', () => {
     process.env.STRIPE_IDENTITY_WEBHOOK_SECRET = 'whsec_test_ext';
   });
 
-  it('returns 200 even when handleVerificationWebhook throws (prevents retry storm)', async () => {
+  it('returns 500 when handleVerificationWebhook throws (allows Stripe retry)', async () => {
     const event = {
       type: 'identity.verification_session.verified',
       data: { object: { id: 'vs_err_1' } },
@@ -57,8 +57,8 @@ describe('Identity webhook route — handler error path', () => {
     const req = makeRequest('{}', 't=1,v1=sig');
     const res = await POST(req);
 
-    // CRITICAL: Must return 200 even on handler error to prevent Stripe retrying
-    expect(res.status).toBe(200);
+    // Return 500 so Stripe retries — dedupe key is only set after success
+    expect(res.status).toBe(500);
   });
 
   it('logs error when handler throws', async () => {

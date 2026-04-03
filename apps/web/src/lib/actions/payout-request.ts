@@ -6,7 +6,7 @@
  */
 
 import { db } from '@twicely/db';
-import { sellerProfile, auditEvent } from '@twicely/db/schema';
+import { sellerProfile, payout as payoutTable, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
@@ -134,7 +134,7 @@ export async function requestPayoutAction(
   // ── Stripe payout ────────────────────────────────────────────────────
   let stripePayoutId: string;
   try {
-    const payout = await stripe.payouts.create(
+    const stripePayout = await stripe.payouts.create(
       {
         amount: parsed.data.amountCents,
         currency: 'usd',
@@ -143,13 +143,37 @@ export async function requestPayoutAction(
       },
       { stripeAccount: profile.stripeAccountId },
     );
-    stripePayoutId = payout.id;
+    stripePayoutId = stripePayout.id;
   } catch (err) {
     logger.error('[requestPayout] Stripe payout failed', { userId, tier, error: err });
     return { success: false, error: err instanceof Error ? err.message : 'Payout could not be initiated.' };
   }
 
-  // ── Set cooldown after success ───────────────────────────────────────
+  // ── Persist payout record (mandatory — must succeed for webhook reconciliation) ──
+  try {
+    await db.insert(payoutTable).values({
+      userId,
+      status: 'PENDING',
+      amountCents: parsed.data.amountCents,
+      stripePayoutId,
+      isOnDemand: true,
+      initiatedAt: new Date(),
+    });
+  } catch (err) {
+    logger.error('[requestPayout] Payout DB insert failed — attempting Stripe cancellation', {
+      userId, payoutId: stripePayoutId, error: String(err),
+    });
+    try {
+      await stripe.payouts.cancel(stripePayoutId, undefined, { stripeAccount: profile.stripeAccountId });
+    } catch (cancelErr) {
+      logger.error('[requestPayout] CRITICAL: DB insert failed AND Stripe cancel failed — manual reconciliation required', {
+        userId, payoutId: stripePayoutId, cancelError: String(cancelErr),
+      });
+    }
+    return { success: false, error: 'Payout could not be recorded. Please try again or contact support.' };
+  }
+
+  // ── Set cooldown AFTER successful DB insert (avoids lockout on DB failure) ──
   try {
     const valkey = getValkeyClient();
     await valkey.set(cooldownKey, '1', 'EX', cooldownHours * 3600);

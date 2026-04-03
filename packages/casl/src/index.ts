@@ -9,5 +9,5 @@ export { ACTIONS } from './action-types';
 
 // Core
 export { defineAbilitiesFor } from './ability';
-export { authorize, ForbiddenError } from './authorize';
+export { authorize, requireAuth, ForbiddenError } from './authorize';
 export { sub } from './check';

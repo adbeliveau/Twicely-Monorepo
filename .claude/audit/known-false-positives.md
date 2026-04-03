@@ -204,6 +204,22 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   All queries are scoped to `session.staffUserId` — staff can only read/clear their own
   notifications. No CASL gate needed; this is not a role-gated operation.
 
+- **FP-087:** `auth-offer-check.ts` — `checkAuthOfferAction` has no `authorize()` or CASL gate.
+  — Intentionally public. This is a read-only price-threshold check against `platform_settings`.
+  No user data is read or written. Called from listing pages for anonymous and authenticated
+  users alike. Adding auth would break anonymous item browsing.
+
+- **FP-088:** `deal-badge.ts` — `getDealBadgeAction` has no `authorize()` or CASL gate.
+  — Intentionally public. This is a pure computation (GREAT_PRICE / PRICE_DROP / FAST_SELLER
+  badge) based on listing context and market summary. No user data is read or written. Called
+  from listing cards for all visitors. Adding auth would break anonymous browsing.
+
+- **FP-089:** `performance-band.ts` — TARGETS and MINIMUMS calibration constants are hardcoded.
+  — These are scoring curve endpoints that determine the 0% and 100% score marks for each
+  seller metric. Changing them alters every seller's performance score. They are algorithm
+  calibration, not business settings. The band thresholds and metric weights ARE in
+  platform_settings. Promoting these to configurable is a future enhancement, not a bug.
+
 ---
 
 ## How to add entries

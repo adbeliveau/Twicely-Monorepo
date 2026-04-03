@@ -322,7 +322,13 @@
       "Bash(pnpm -v)",
       "Bash(grep -n '\"\"@twicely/storage\"\"' package.json)",
       "Bash(\"packages/logger/src/index.ts\")",
-      "Bash(\"/c/Users/XPS-15/Projects/Twicely Mono/packages/logger/src/index.ts\")"
+      "Bash(\"/c/Users/XPS-15/Projects/Twicely Mono/packages/logger/src/index.ts\")",
+      "Bash(sed -i \"s|from ''@/lib/actions/admin-moderation''|from ''@/lib/actions/admin-moderation-helpers''|g\" apps/web/src/lib/actions/__tests__/admin-moderation-enriched.test.ts)",
+      "Bash(sed -i \"s|from ''@/lib/actions/admin-moderation''|from ''@/lib/actions/admin-moderation-helpers''|g\" apps/web/src/lib/actions/__tests__/admin-moderation.test.ts)",
+      "Bash(sed -i \"s|const { removeReviewAction } = await import\\(''../admin-moderation''\\);|const { removeReviewAction } = await import\\(''../admin-moderation-helpers''\\);|g\" apps/web/src/lib/actions/__tests__/admin-moderation.test.ts)",
+      "Bash(sed -i \"s|const { approveReviewAction } = await import\\(''../admin-moderation''\\);|const { approveReviewAction } = await import\\(''../admin-moderation-helpers''\\);|g\" apps/web/src/lib/actions/__tests__/admin-moderation.test.ts)",
+      "Read(//^@twicely/web:lint: [A-Z]/{file=$0} /  \\(error|warning\\)  / && !/no-unused-vars/**)",
+      "Bash(bc)"
     ],
     "additionalDirectories": [
       "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts"
