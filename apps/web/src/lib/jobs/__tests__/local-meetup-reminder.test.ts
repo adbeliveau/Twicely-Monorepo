@@ -18,6 +18,9 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 vi.mock('@twicely/notifications/service', () => ({ notify: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@twicely/logger', () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
 
 import { notify } from '@twicely/notifications/service';
 import { logger } from '@twicely/logger';

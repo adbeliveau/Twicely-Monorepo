@@ -16,6 +16,7 @@ import { helpdeskCase, helpdeskSlaPolicy, caseEvent, helpdeskTeam } from '@twice
 import { eq, and, isNotNull, inArray } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { notify } from '@twicely/notifications/service';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 const QUEUE_NAME = 'helpdesk-sla-check';
 
@@ -37,6 +38,7 @@ const queue = createQueue<HelpdeskSlaCheckData>(QUEUE_NAME, {
 createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
   const now = new Date();
   const nowMs = now.getTime();
+  const slaWarningThreshold = await getPlatformSetting<number>('helpdesk.sla.warningThreshold', 0.75);
 
   const activeCases = await db
     .select({
@@ -120,7 +122,7 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
         });
       }
 
-    } else if (!c.slaResolutionBreached && elapsedRatio >= 0.75) {
+    } else if (!c.slaResolutionBreached && elapsedRatio >= slaWarningThreshold) {
       // 75% warning — insert event only once
       await db.insert(caseEvent).values({
         caseId: c.id,

@@ -105,6 +105,8 @@ export const V32_SETTINGS_OPERATIONS: PlatformSettingSeed[] = [
   { key: 'commerce.local.offlineModeEnabled', value: true, type: 'boolean', category: 'commerce.local', description: 'Enable offline dual-token verification mode for local meetups' },
   { key: 'commerce.local.preloadTokensOnEscrow', value: true, type: 'boolean', category: 'commerce.local', description: 'Push tokens to both phones at escrow creation (before meetup)' },
   { key: 'commerce.local.tokenExpiryHours', value: 48, type: 'number', category: 'commerce.local', description: 'Hours until Ed25519 tokens expire from scheduled meetup time' },
+  { key: 'commerce.local.meetupReminder24HrOffset', value: 24, type: 'number', category: 'commerce.local', description: 'Hours before meetup to send 24-hour reminder notification' },
+  { key: 'commerce.local.meetupReminder1HrOffset', value: 1, type: 'number', category: 'commerce.local', description: 'Hours before meetup to send 1-hour reminder notification' },
   { key: 'commerce.local.scheduleReminderHours', value: 24, type: 'number', category: 'commerce.local', description: 'Hours after checkout before nudging unscheduled local transactions' },
   { key: 'commerce.local.rescheduleMaxCount', value: 2, type: 'number', category: 'commerce.local', description: 'Maximum reschedules per local transaction before reliability marks apply (3rd reschedule = -1 mark)' },
   { key: 'commerce.local.inconsistentMarkThreshold', value: 3, type: 'number', category: 'commerce.local', description: 'Reliability marks at which user tier becomes INCONSISTENT (display threshold)' },
@@ -146,8 +148,10 @@ export const V32_SETTINGS_OPERATIONS: PlatformSettingSeed[] = [
   { key: 'commerce.shipping.autoDiscountMaxPercent', value: 75, type: 'number', category: 'commerce.shipping', description: 'Maximum auto-discount percentage for AUTO_DISCOUNT combined shipping mode' },
   { key: 'commerce.shipping.lostInTransitDays', value: 7, type: 'number', category: 'commerce.shipping', description: 'Days without tracking update before marking lost in transit' },
   { key: 'commerce.shipping.significantDelayDays', value: 14, type: 'number', category: 'commerce.shipping', description: 'Days past expected delivery before marking significant delay' },
-  { key: 'commerce.returns.estimatedShippingCents', value: 800, type: 'number', category: 'commerce.returns', description: 'Estimated return shipping cost in cents' },
+  { key: 'commerce.returns.estimatedShippingCents', value: 800, type: 'cents', category: 'commerce.returns', description: 'Estimated return shipping cost in cents' },
   { key: 'commerce.returns.sellerResponseDeadlineDays', value: 3, type: 'number', category: 'commerce.returns', description: 'Business days seller has to respond to a return request' },
+  { key: 'commerce.returns.sellerResponseDeadlineHour', value: 17, type: 'number', category: 'commerce.returns', description: 'Hour of day (0-23) for seller response deadline cutoff (e.g. 17 = 5 PM)' },
+  { key: 'commerce.seller.defaultOnTimeShippingPct', value: 100, type: 'number', category: 'commerce.seller', description: 'Default on-time shipping percentage for new sellers with no performance history' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FEATURE FLAGS (E4)

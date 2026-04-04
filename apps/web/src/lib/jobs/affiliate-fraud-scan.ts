@@ -56,7 +56,8 @@ export async function processAffiliateFraudScan(): Promise<void> {
     return;
   }
 
-  const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const scanWindowHours = await getPlatformSetting<number>('affiliate.fraud.scanWindowHours', 24);
+  const windowStart = new Date(Date.now() - scanWindowHours * 60 * 60 * 1000);
 
   // Find affiliates with recent referral activity
   const recentAffiliateReferrals = await db

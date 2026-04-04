@@ -80,8 +80,10 @@ export async function createPriceAlertAction(
   }
 
   if (alertType === 'PERCENT_DROP') {
-    if (!targetPercentDrop || targetPercentDrop < 5 || targetPercentDrop > 50) {
-      return { success: false, error: 'Percent drop must be between 5% and 50%' };
+    const minDropPercent = await getPlatformSetting<number>('commerce.priceAlert.minDropPercent', 5);
+    const maxDropPercent = await getPlatformSetting<number>('commerce.priceAlert.maxDropPercent', 50);
+    if (!targetPercentDrop || targetPercentDrop < minDropPercent || targetPercentDrop > maxDropPercent) {
+      return { success: false, error: `Percent drop must be between ${minDropPercent}% and ${maxDropPercent}%` };
     }
   }
 

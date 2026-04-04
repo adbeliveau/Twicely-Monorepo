@@ -102,6 +102,15 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'trust.standards.evaluationPeriodDays', value: 90, type: 'number', category: 'trust', description: 'Rolling window for seller standards evaluation' },
   { key: 'trust.standards.maxDefectRatePercent', value: 2, type: 'number', category: 'trust', description: 'Max transaction defect rate for GOOD standing' },
   { key: 'trust.standards.topRatedMinOrdersYear', value: 100, type: 'number', category: 'trust', description: 'Minimum annual orders for TOP_RATED' },
+  { key: 'trust.standards.minOrdersForEvaluation', value: 10, type: 'number', category: 'trust', description: 'Minimum orders before standards evaluation applies' },
+  { key: 'trust.standards.maxLateShipRatePercent', value: 5, type: 'number', category: 'trust', description: 'Max late shipment rate for GOOD standing' },
+  { key: 'trust.standards.maxUnresolvedCasesPercent', value: 1, type: 'number', category: 'trust', description: 'Max unresolved case rate for GOOD standing' },
+  { key: 'trust.standards.topRatedMaxDefectRate', value: 0.5, type: 'number', category: 'trust', description: 'Max defect rate for TOP_RATED' },
+  { key: 'trust.standards.topRatedMaxLateShipRate', value: 1, type: 'number', category: 'trust', description: 'Max late ship rate for TOP_RATED' },
+  { key: 'trust.standards.belowStandardVisibilityReduction', value: 50, type: 'number', category: 'trust', description: 'Search visibility reduction % for BELOW_STANDARD sellers' },
+  { key: 'trust.standards.belowStandardTfSurcharge', value: 200, type: 'number', category: 'trust', description: 'TF surcharge in bps for BELOW_STANDARD sellers' },
+  { key: 'trust.standards.restrictedMaxListings', value: 10, type: 'number', category: 'trust', description: 'Max active listings for RESTRICTED sellers' },
+  { key: 'trust.standards.defectExpiryDays', value: 365, type: 'number', category: 'trust', description: 'Days after which a defect no longer counts' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PERFORMANCE BANDS — Seller score band thresholds
@@ -245,6 +254,15 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'helpdesk.templates.moderation.message', value: 'We have received a report regarding a message in your conversation. Our moderation team is reviewing the report.', type: 'string', category: 'helpdesk', description: 'Auto-message template for moderation message cases' },
   { key: 'helpdesk.templates.moderation.listing', value: 'We have received a report regarding one of your listings. Our moderation team is reviewing the report and will follow up.', type: 'string', category: 'helpdesk', description: 'Auto-message template for moderation listing cases' },
   { key: 'helpdesk.templates.fraud', value: 'Our fraud detection system has flagged activity on your account. Our trust and safety team is investigating and will contact you.', type: 'string', category: 'helpdesk', description: 'Auto-message template for fraud detection cases' },
+  { key: 'helpdesk.sla.warningThreshold', value: 0.75, type: 'number', category: 'helpdesk', description: 'SLA elapsed ratio at which warning is triggered (0.75 = 75%)' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISPUTE & CHARGEBACK DEFAULTS
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'commerce.dispute.chargebackDeadlineDays', value: 7, type: 'number', category: 'commerce', description: 'Default chargeback evidence deadline when Stripe does not provide one' },
+  { key: 'commerce.shippingQuote.penaltyDiscountPercent', value: 25, type: 'number', category: 'commerce', description: 'Default penalty discount % when seller misses shipping quote deadline' },
+  { key: 'commerce.priceAlert.minDropPercent', value: 5, type: 'number', category: 'commerce', description: 'Minimum allowed percent drop threshold for price alerts' },
+  { key: 'commerce.priceAlert.maxDropPercent', value: 50, type: 'number', category: 'commerce', description: 'Maximum allowed percent drop threshold for price alerts' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ACCESSIBILITY — G7 (Feature Lock-in §34, Platform Settings Canonical §16.1)

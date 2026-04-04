@@ -17,6 +17,8 @@ export const AFFILIATE_TRIAL_SETTINGS: PlatformSettingSeed[] = [
   { key: 'affiliate.community.cookieDays', value: 30, type: 'number', category: 'affiliate', description: 'Community cookie duration' },
   { key: 'affiliate.influencer.enabled', value: true, type: 'boolean', category: 'affiliate', description: 'Allow influencer applications' },
   { key: 'affiliate.influencer.defaultCommissionRateBps', value: 2500, type: 'bps', category: 'affiliate', description: 'Default influencer commission (25%)' },
+  { key: 'affiliate.influencer.minCommissionRateBps', value: 2000, type: 'bps', category: 'affiliate', description: 'Minimum influencer commission rate (20%)' },
+  { key: 'affiliate.influencer.maxCommissionRateBps', value: 3000, type: 'bps', category: 'affiliate', description: 'Maximum influencer commission rate (30%)' },
   { key: 'affiliate.influencer.cookieDays', value: 60, type: 'number', category: 'affiliate', description: 'Influencer cookie duration' },
   { key: 'affiliate.commissionDurationMonths', value: 12, type: 'number', category: 'affiliate', description: 'How long commissions last' },
   { key: 'affiliate.holdDays', value: 30, type: 'number', category: 'affiliate', description: 'Hold period before payable' },
@@ -40,6 +42,7 @@ export const AFFILIATE_TRIAL_SETTINGS: PlatformSettingSeed[] = [
   { key: 'affiliate.fraud.rapidChurnWindowHours', value: 48, type: 'number', category: 'affiliate', description: 'Hours after conversion to count as rapid churn' },
   { key: 'affiliate.fraud.geoClusterThreshold', value: 50, type: 'number', category: 'affiliate', description: 'Clicks from same /24 subnet in window that triggers geo anomaly' },
   { key: 'affiliate.fraud.suspensionDays', value: 30, type: 'number', category: 'affiliate', description: 'Days a fraud-suspended affiliate is automatically suspended for (strike 2)' },
+  { key: 'affiliate.fraud.scanWindowHours', value: 24, type: 'number', category: 'affiliate', description: 'Lookback window in hours for the fraud-scan BullMQ job' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CREATOR AFFILIATE LISTING LINKS (6 keys — G3.6)

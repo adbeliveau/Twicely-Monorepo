@@ -18,6 +18,7 @@ import { eq, and } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
 import { submitChargebackEvidence } from '@twicely/stripe/chargeback-evidence';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 // Re-export from split file for existing consumers
 export { submitChargebackEvidence, handleChargebackResolution, getChargebackStatus } from '@twicely/stripe/chargeback-evidence';
@@ -93,7 +94,7 @@ export async function handleChargebackWebhook(
         // Deadline from Stripe dispute
         deadlineAt: stripeDispute.evidence_details?.due_by
           ? new Date(stripeDispute.evidence_details.due_by * 1000)
-          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          : new Date(Date.now() + (await getPlatformSetting<number>('commerce.dispute.chargebackDeadlineDays', 7)) * 24 * 60 * 60 * 1000),
       })
       .returning({ id: dispute.id });
 

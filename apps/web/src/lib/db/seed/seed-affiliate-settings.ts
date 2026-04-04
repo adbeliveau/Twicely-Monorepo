@@ -42,6 +42,7 @@ export const AFFILIATE_TRIAL_SETTINGS: PlatformSettingSeed[] = [
   { key: 'affiliate.fraud.rapidChurnWindowHours', value: 48, type: 'number', category: 'affiliate', description: 'Hours after conversion to count as rapid churn' },
   { key: 'affiliate.fraud.geoClusterThreshold', value: 50, type: 'number', category: 'affiliate', description: 'Clicks from same /24 subnet in window that triggers geo anomaly' },
   { key: 'affiliate.fraud.suspensionDays', value: 30, type: 'number', category: 'affiliate', description: 'Days a fraud-suspended affiliate is automatically suspended for (strike 2)' },
+  { key: 'affiliate.fraud.scanWindowHours', value: 24, type: 'number', category: 'affiliate', description: 'Lookback window in hours for the fraud-scan BullMQ job' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CREATOR AFFILIATE LISTING LINKS (6 keys — G3.6)

@@ -150,7 +150,6 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // FINANCE PRICING (Financial Center Canonical v3.0 §2)
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'finance.pricing.pro.annualMonthlyCents', value: 1199, type: 'cents', category: 'finance', description: 'Finance Pro annual price/mo ($11.99)' },
   { key: 'finance.pricing.pro.annualTotalCents', value: 14388, type: 'cents', category: 'finance', description: 'Finance Pro annual total ($143.88/yr)' },
   { key: 'finance.pricing.pro.annualCents', value: 1199, type: 'cents', category: 'finance', description: 'Finance Pro annual price/mo ($11.99)' },
   { key: 'finance.pricing.pro.monthlyCents', value: 1499, type: 'cents', category: 'finance', description: 'Finance Pro monthly price ($14.99)' },
@@ -241,6 +240,8 @@ import { V32_EXTENDED_SETTINGS } from './v32-platform-settings-extended';
 import { AI_AUTOFILL_SETTINGS } from './seed-ai-autofill';
 // Affiliate & trial settings (G1.2)
 import { AFFILIATE_TRIAL_SETTINGS } from './seed-affiliate-settings';
+// Communications settings — comms.email.*, comms.push.*, comms.sms.*, comms.digest.*
+import { COMMS_SETTINGS } from './seed-comms-settings';
 
 /** @deprecated Use V32_PLATFORM_SETTINGS_CORE + V32_SETTINGS_OPERATIONS instead */
 export const V32_PLATFORM_SETTINGS: PlatformSettingSeed[] = [
@@ -253,6 +254,7 @@ export const V32_ALL_SETTINGS: PlatformSettingSeed[] = [
   ...V32_EXTENDED_SETTINGS,
   ...AI_AUTOFILL_SETTINGS,
   ...AFFILIATE_TRIAL_SETTINGS,
+  ...COMMS_SETTINGS,
 ];
 
 // Total settings count for verification
