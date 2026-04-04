@@ -159,7 +159,7 @@ export default function UserDropdown() {
           </span>
           {user.role === "SELLER" && (
             <span className="mt-1 inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-              Seller {user.sellerTier ? `• ${user.sellerTier}` : ""}
+              Seller {user.storeTier ? `• ${user.storeTier}` : ""}
             </span>
           )}
           {user.role === "STAFF" && (

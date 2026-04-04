@@ -26,15 +26,15 @@ export async function createAffiliatePromoCode(
   if (!session) return { success: false, error: 'Unauthorized' };
   if (!session.isSeller) return { success: false, error: 'Sellers only' };
 
+  if (!ability.can('create', sub('PromoCode', { affiliateId: session.userId }))) {
+    return { success: false, error: 'Forbidden' };
+  }
+
   const parsed = createPromoCodeSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
   const data = parsed.data;
-
-  if (!ability.can('create', sub('PromoCode', { affiliateId: session.userId }))) {
-    return { success: false, error: 'Forbidden' };
-  }
 
   const affiliateRecord = await getAffiliateByUserId(session.userId);
   if (!affiliateRecord) return { success: false, error: 'Affiliate record not found' };

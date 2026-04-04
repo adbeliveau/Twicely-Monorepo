@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, BellOff, Check } from 'lucide-react';
 import { Button } from '@twicely/ui/button';
@@ -28,18 +28,9 @@ export function SetAlertButton({
   const [alertSet, setAlertSet] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const autoSetFiredRef = useRef(false);
 
-  // Auto-set alert on mount if redirected back from login
-  useEffect(() => {
-    if (autoSetAlert && isLoggedIn && !alertSet) {
-      handleSetAlert();
-      // Clean URL
-      router.replace(`/c/${categorySlug}`, { scroll: false });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleSetAlert = () => {
+  const handleSetAlert = useCallback(() => {
     if (alertSet) return; // Already set, don't allow duplicate clicks
 
     if (!isLoggedIn) {
@@ -61,7 +52,17 @@ export function SetAlertButton({
         setTimeout(() => setShowConfirmation(false), 2000);
       }
     });
-  };
+  }, [alertSet, isLoggedIn, categorySlug, categoryId, categoryName, router, isPending, startTransition]);
+
+  // Auto-set alert on mount if redirected back from login
+  useEffect(() => {
+    if (autoSetFiredRef.current) return;
+    if (autoSetAlert && isLoggedIn && !alertSet) {
+      autoSetFiredRef.current = true;
+      handleSetAlert();
+      router.replace(`/c/${categorySlug}`, { scroll: false });
+    }
+  }, [autoSetAlert, isLoggedIn, alertSet, handleSetAlert, router, categorySlug]);
 
   return (
     <Button

@@ -67,9 +67,9 @@ describe('updateReviewVisibility', () => {
     await updateReviewVisibility('order1');
 
     expect(updateCalls).toHaveLength(2);
-    // Both should have visibleAt = s2bCreatedAt + 48h (the later one, default editWindowHours=48)
+    // Both should have visibleAt = s2bCreatedAt + 24h (the later one, default editWindowHours=24)
     const expectedVisibleAt = new Date(s2bCreatedAt);
-    expectedVisibleAt.setHours(expectedVisibleAt.getHours() + 48);
+    expectedVisibleAt.setHours(expectedVisibleAt.getHours() + 24);
 
     updateCalls.forEach((call) => {
       expect(call.visibleAt.getTime()).toBe(expectedVisibleAt.getTime());

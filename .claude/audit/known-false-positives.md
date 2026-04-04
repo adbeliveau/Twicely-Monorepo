@@ -59,8 +59,10 @@ Format: `FP-###: [stream] description — reason`
 ## Wiring (Stream 7)
 
 - **FP-040:** Trust weight functions (`computeReviewerTrustWeight`,
-  `computeWeightedAverageRating`) exported but not yet called
-  — Wired during Phase G launch polish. Expected gap.
+  `computeWeightedAverageRating`) exported but not yet called in production
+  — Algorithmic enhancement: trust-weighted review averages. Functions are correct and tested
+  but wiring them into the seller score recalculation cron would change all seller scores.
+  Planned for future enhancement — not a bug.
 
 - **FP-041:** Performance band functions exported but called only from cron
   — Called from scheduled job, not from direct user actions. Correct.
@@ -71,28 +73,18 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
 
 ## Hygiene (Stream 9)
 
-- **FP-060:** `console.error` in `src/lib/notifications/service.tsx`
-  — Known. Structured logger not yet integrated. Phase G task.
-
 - **FP-061:** `as unknown as` in `src/lib/queries/__tests__/*.test.ts`
   — Test mocks. Not production code.
 
-- **FP-062:** Files over 300 lines
+- **FP-062:** 18 production files over 300 lines (largest: `admin-moderation.ts` 552 lines)
   — Owner accepts file size violations. Not blocking. Will address during refactor sprints.
 
-- **FP-063:** `console.error/warn` in production code (13 occurrences)
-  — Structured logger integration is a Phase G task. Acceptable until then.
-
-- **FP-064:** Dead exports in `src/lib/commerce/` (35+ functions)
-  — Phase G wiring. Functions are correct implementations awaiting UI/route integration.
-
-- **FP-065:** Unwired notification templates (messaging, QA, search, watchlist, social)
-  — Phase G wiring. Templates are defined correctly, notify() calls added when UI is built.
-  `social.followed_seller_new_listing` IS wired via `notifyFollowedSellerNewListing()` in
-  `listings-create.ts` — shell script can't detect indirect wiring through helper functions.
-
-- **FP-066:** Weak ID validation (`z.string().min(1)` instead of `z.string().cuid2()`)
-  — Acceptable for now. Will tighten ID validation in a dedicated security pass.
+- **FP-064:** Dead exports in commerce/stripe packages
+  — Most dead exports exist because app-local copies (`src/lib/commerce/`) are imported directly
+  while identical package copies (`packages/commerce/src/`) exist but are never imported via
+  `@twicely/commerce/*` aliases. This is the alias drift issue. Truly dead functions
+  (`countVisibleReviews`, `getOfferChain`) were removed 2026-04-04. Test-only exports
+  (`checkStackingRules`, `getEffectiveRate`, etc.) are intentionally kept as API surface for tests.
 
 ## Schema (Stream 6) — continued
 
@@ -111,17 +103,22 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
 
 ## Runtime Safety (Stream 11)
 
-- **FP-070:** `eslint-disable-next-line @next/next/no-img-element` in photo/video components
-  — `<img>` is used intentionally for external CDN URLs, blob URLs, and video thumbnails
-  where Next.js `<Image>` doesn't apply (no optimization needed for user-uploaded content).
-  Affected: `receipt-upload.tsx`, `local-meetup-card.tsx`, `meetup-photo-capture.tsx`,
-  `listing-video-player.tsx`.
+- **FP-070:** `eslint-disable-next-line @next/next/no-img-element` in 4 components using blob URLs
+  — `<img>` is used intentionally for blob URLs and video thumbnails where Next.js `<Image>`
+  cannot be used (blob URLs are client-only, incompatible with server-side image optimization).
+  Affected: `receipt-upload.tsx`, `meetup-photo-capture.tsx`, `listing-video-player.tsx`,
+  `message-composer.tsx`. (`local-meetup-card.tsx` converted to `<Image>` 2026-04-04 after
+  adding `cdn.twicely.com` to `next.config.ts` `remotePatterns`.)
 
-- **FP-071:** `eslint-disable react-hooks/exhaustive-deps` in effect hooks
-  — Some effects intentionally run only on mount or when specific deps change.
-  Each instance reviewed individually; some may be legitimate bugs. Re-audit periodically.
+- **FP-071:** ~~MOSTLY RESOLVED~~ — 7 of 8 `eslint-disable react-hooks/exhaustive-deps`
+  suppressions removed via useCallback/useRef restructuring:
+  `set-alert-button.tsx` (useRef guard), `watch-button.tsx` (useRef guard),
+  `qr-scanner.tsx` (handleScanSuccessRef), `conversation-thread.tsx` (useCallback),
+  `video-recorder.tsx` (initialFacingModeRef), `video-trimmer.tsx` (objectUrlRef),
+  `use-helpdesk-hotkeys.ts` (handlersRef). Only `meetup-map.tsx` retains suppression
+  (genuine FP: Leaflet imperative init requires mount-only effect).
 
-- **FP-072:** `void` async calls (105 occurrences)
+- **FP-072:** `void` async calls (~268 occurrences as of 2026-04-04)
   — Standard pattern for fire-and-forget in event handlers and useEffect callbacks.
   Error handling is in the called function (server actions return `{ success, error }`).
   Not a runtime risk — errors surface via return value, not exceptions.
@@ -177,10 +174,6 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   — Both keys ARE seeded at `src/lib/db/seed/v32-platform-settings.ts:358-359`.
   Auditor checked the wrong section of the seed file.
 
-- **FP-083:** ~~RESOLVED~~ — Key naming mismatches fixed in audit fix session 2026-03-21.
-  All seed keys and code call sites now use canonical prefixes (`trust.review.*`, `trust.standards.*`,
-  `fulfillment.shipping.*`, `discovery.*`, `privacy.gdpr.*`, `privacy.retention.*`, etc.).
-
 - **FP-084:** W-NEW-11 — `helpdeskSlaPolicy` missing `businessHoursOnly` and `escalateOnBreach` columns
   — Both columns ARE present in `src/lib/db/schema/helpdesk.ts:178-179`.
   Auditor incorrectly reported them as missing.
@@ -219,6 +212,63 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   seller metric. Changing them alters every seller's performance score. They are algorithm
   calibration, not business settings. The band thresholds and metric weights ARE in
   platform_settings. Promoting these to configurable is a future enhancement, not a bug.
+
+## Auth & CASL (Stream 2) — continued (2026-04-03 audit)
+
+- **FP-090:** W-A01/A02/A03 — `geocode.ts`, `local-reliability.ts`, `kb-feedback.ts` flagged as
+  "ability check before session null guard"
+  — Auditor was wrong. All three files already have correct ordering: `if (!session)` return
+  is checked BEFORE `ability.can()`. Code verified by direct file read.
+
+- **FP-091:** W-A04/A05 — Login and magic-link endpoints "missing rate limiting"
+  — Rate limiting is already configured in better-auth at `packages/auth/src/server.ts:134`:
+  `rateLimit: { window: 60, max: 10 }` (10 req/min). Auth routes use a catch-all
+  `[...all]/route.ts` that delegates to `toNextJsHandler(auth)`, inheriting this config.
+
+- **FP-092:** W-A06 — OAuth callbacks "missing CSRF state validation"
+  — OAuth state parameter validation is handled internally by better-auth's OAuth plugin.
+  The callbacks go through the same catch-all route. State validation is a library responsibility.
+
+- **FP-093:** W-A07 — Heartbeat/keep-alive pattern "fire-and-forget without retry"
+  — Design choice for real-time presence pings. Heartbeat failures are non-critical (presence
+  just goes stale after timeout). Adding retry would create reconnection storms under load.
+
+## Hardcoded Values (Stream 3) — continued (2026-04-03 audit)
+
+- **FP-094:** W-H01/H02 — `shipping-exceptions.ts` "hardcoded weight/dimension thresholds"
+  — Code already uses `getPlatformSetting()` at lines 97-100 with `LOST_IN_TRANSIT_DAYS` and
+  `SIGNIFICANT_DELAY_DAYS` as fallback defaults. Same pattern as FP-010 (tf-calculator).
+  The constants are defaults only, not hardcoded business values.
+
+## Schema (Stream 6) — continued (2026-04-03 audit)
+
+- **FP-095:** W-S01 — `finance-center.ts` "TS property names don't match DB column names"
+  — The properties in `FinanceDashboardKPIs` (`grossRevenueCents`, `totalFeesCents`, etc.)
+  are computed aggregation results from SQL `sum()/count()`, not direct DB column mappings.
+  There are no corresponding DB columns to match. This is standard Drizzle query pattern.
+
+- **FP-096:** W-A02 — `shopify/callback/route.ts` uses HMAC-SHA256 over query params
+  instead of `crosslister_oauth_state` cookie nonce. Shopify's OAuth spec mandates HMAC
+  verification (`verifyShopifyHmac`), which provides equivalent CSRF protection. All 7
+  other connectors use the cookie nonce pattern; Shopify is the justified exception.
+
+- **FP-097:** W-A01b — `returns-queries-actions.ts:getReturnRequestAction` has safeParse
+  between session check and ability.can(). The ability check depends on `ret.buyerId` and
+  `ret.sellerId` which come from the DB query using the parsed `returnId`. Cannot move
+  ability.can() before safeParse because the check requires fetched data.
+
+## Auth & CASL (Stream 2) — Round 2 additions
+
+- **FP-099:** `/api/hub/notifications` and `/api/platform/helpdesk/notifications` — `staffAuthorize()` without `ability.can()`.
+  Same self-service pattern as FP-086 (`staff-notifications.ts`). Data scoped to `session.staffUserId`, no cross-user access.
+
+- **FP-100:** `seller-response.ts:getPendingSellerReviewResponses`, `identity-verification.ts:getVerificationStatus`,
+  `data-export.ts:getMyDataExportRequests`, `price-alerts.ts:getPriceAlertsAction`,
+  `promo-codes-platform.ts:validatePromoCode`, `cart-helpers.ts` — read-only self-service queries
+  using `authorize()` without `ability.can()`. All return only the caller's own data, scoped
+  to `session.userId`. Same pattern as FP-004 (personal data reads). No privilege escalation risk.
+
+---
 
 ---
 

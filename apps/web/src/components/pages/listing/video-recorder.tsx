@@ -98,13 +98,10 @@ export function VideoRecorder({
     setRecorderState('previewing');
   }, [stopTracks]);
 
+  const initialFacingModeRef = useRef(facingMode);
   useEffect(() => {
-    void startPreview(facingMode);
-    return () => {
-      stopTracks();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void startPreview(initialFacingModeRef.current);
+  }, [startPreview]);
 
   useEffect(() => {
     return () => {

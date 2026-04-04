@@ -56,28 +56,6 @@ const listingFields = {
 
 const buyerFields = { buyer: { id: user.id, name: user.name, completedPurchaseCount: user.completedPurchaseCount, createdAt: user.createdAt, emailVerified: user.emailVerified, phoneVerified: user.phoneVerified } };
 
-/** Walk parentOfferId up to root, return ordered array (oldest first) */
-export async function getOfferChain(offerId: string): Promise<OfferWithListing[]> {
-  const chain: OfferWithListing[] = [];
-  let currentId: string | null = offerId;
-  const ancestors: string[] = [];
-
-  while (currentId) {
-    ancestors.unshift(currentId);
-    const [offer] = await db.select({ parentOfferId: listingOffer.parentOfferId })
-      .from(listingOffer).where(eq(listingOffer.id, currentId)).limit(1);
-    currentId = offer?.parentOfferId ?? null;
-  }
-
-  for (const id of ancestors) {
-    const [offer] = await db.select({ ...offerFields, ...listingFields })
-      .from(listingOffer).innerJoin(listing, eq(listing.id, listingOffer.listingId))
-      .where(eq(listingOffer.id, id)).limit(1);
-    if (offer) chain.push(offer);
-  }
-  return chain;
-}
-
 /** Get all PENDING offers for a listing, ordered by offerCents DESC */
 export async function getActiveOffersForListing(listingId: string): Promise<OfferWithDetails[]> {
   return db.select({ ...offerFields, ...listingFields, ...buyerFields })

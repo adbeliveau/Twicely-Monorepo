@@ -128,6 +128,20 @@ function CollapsibleNavItem({ item, pathname }: { item: AdminNavItem; pathname: 
 
   const listId = `admin-nav-${item.key}`;
 
+  if (item.disabled) {
+    return (
+      <li>
+        <span
+          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed"
+          aria-disabled="true"
+        >
+          <NavIcon name={item.icon} />
+          <span className="flex-1 text-left">{item.label}</span>
+        </span>
+      </li>
+    );
+  }
+
   return (
     <li>
       <button

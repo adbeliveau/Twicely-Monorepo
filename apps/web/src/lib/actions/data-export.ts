@@ -13,14 +13,13 @@ import { authorize, sub } from '@twicely/casl';
 import { dataExportQueue } from '@twicely/jobs/data-export';
 import { logger } from '@twicely/logger';
 import type { InferSelectModel } from 'drizzle-orm';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 export type DataExportRequestRecord = InferSelectModel<typeof dataExportRequest>;
 
 const RequestDataExportSchema = z.object({
   format: z.enum(['json', 'csv']),
 });
-
-const EXPORT_RATE_LIMIT_MS = 24 * 60 * 60 * 1000; // 1 per 24 hours
 
 /**
  * Request a data export. Enforces 1-per-24h rate limit.
@@ -44,8 +43,9 @@ export async function requestDataExport(
   const { userId } = session;
   const { format } = parsed.data;
 
-  // Rate limit: check for any request in the last 24 hours
-  const since = new Date(Date.now() - EXPORT_RATE_LIMIT_MS);
+  // Rate limit: check for any request in the last N hours
+  const exportRateLimitHours = await getPlatformSetting<number>('privacy.dataExportRateLimitHours', 24);
+  const since = new Date(Date.now() - exportRateLimitHours * 3600000);
   const [recentRequest] = await db
     .select({ id: dataExportRequest.id, status: dataExportRequest.status })
     .from(dataExportRequest)

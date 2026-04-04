@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { MapPin, Calendar, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@twicely/ui/card';
 import { Badge } from '@twicely/ui/badge';
@@ -177,8 +178,8 @@ export function LocalMeetupCard({
         {tx.meetupPhotoUrls.length > 0 && tx.confirmedAt !== null && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">Condition photos taken at {formatScheduledAt(tx.meetupPhotosAt ?? tx.confirmedAt)}</p>
-            <div className="flex gap-2 flex-wrap">{tx.meetupPhotoUrls.map((url) => ( // eslint-disable-line @next/next/no-img-element
-              <a key={url} href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt="Condition photo" className="w-16 h-16 object-cover rounded-md border hover:opacity-90 transition-opacity" /></a>))}</div>
+            <div className="flex gap-2 flex-wrap">{tx.meetupPhotoUrls.map((url) => (
+              <a key={url} href={url} target="_blank" rel="noopener noreferrer"><Image src={url} alt="Condition photo" width={64} height={64} className="object-cover rounded-md border hover:opacity-90 transition-opacity" /></a>))}</div>
           </div>
         )}
         {/* Buyer: photo evidence capture before confirmation */}

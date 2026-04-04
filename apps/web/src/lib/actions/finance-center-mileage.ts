@@ -56,11 +56,6 @@ function resolveUserId(
 export async function createMileageAction(
   input: unknown,
 ): Promise<CreateMileageResponse> {
-  const parsed = createMileageSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -68,6 +63,11 @@ export async function createMileageAction(
 
   if (!ability.can('create', sub('MileageEntry', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = createMileageSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -105,11 +105,6 @@ export async function createMileageAction(
 export async function updateMileageAction(
   input: unknown,
 ): Promise<UpdateMileageResponse> {
-  const parsed = updateMileageSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -117,6 +112,11 @@ export async function updateMileageAction(
 
   if (!ability.can('update', sub('MileageEntry', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = updateMileageSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -166,11 +166,6 @@ export async function updateMileageAction(
 export async function deleteMileageAction(
   input: unknown,
 ): Promise<DeleteMileageResponse> {
-  const parsed = deleteMileageSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -178,6 +173,11 @@ export async function deleteMileageAction(
 
   if (!ability.can('delete', sub('MileageEntry', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = deleteMileageSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -207,11 +207,6 @@ export async function deleteMileageAction(
 export async function listMileageAction(
   input: unknown,
 ): Promise<ListMileageResponse> {
-  const parsed = listMileageSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -219,6 +214,11 @@ export async function listMileageAction(
 
   if (!ability.can('read', sub('MileageEntry', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = listMileageSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);

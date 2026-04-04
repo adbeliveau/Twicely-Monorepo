@@ -4,9 +4,27 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockDbSelect = vi.fn();
 const mockDbUpdate = vi.fn();
@@ -58,8 +76,6 @@ vi.mock('@twicely/casl', () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
-
 function makeRequest(authHeader: string | undefined, body: unknown): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authHeader !== undefined) {
@@ -72,22 +88,16 @@ function makeRequest(authHeader: string | undefined, body: unknown): Request {
   });
 }
 
-async function makeSessionToken(overrides: Record<string, unknown> = {}): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-session', ...overrides })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('30d')
-    .sign(s);
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/extension/session — VESTIAIRE channel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
 
     // Default: no existing account
     mockDbSelect.mockReturnValue({
@@ -109,9 +119,8 @@ describe('POST /api/extension/session — VESTIAIRE channel', () => {
   });
 
   it('accepts VESTIAIRE channel with valid session data (returns 200)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       sessionData: {
         sessionToken: 'vc_sess_token_abc123',
@@ -126,16 +135,14 @@ describe('POST /api/extension/session — VESTIAIRE channel', () => {
   });
 
   it('creates crosslisterAccount row with channel=VESTIAIRE and authMethod=SESSION', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    await POST(makeRequest(`Bearer ${token}`, {
+    await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       sessionData: { sessionToken: 'vc-token-xyz' },
     }));
     expect(mockDbInsert).toHaveBeenCalledOnce();
     const insertCall = mockDbInsert.mock.calls[0];
     expect(insertCall).toBeDefined();
-    // Verify insert was called (the values are passed via .values() chain)
     expect(mockDbUpdate).not.toHaveBeenCalled();
   });
 
@@ -148,9 +155,8 @@ describe('POST /api/extension/session — VESTIAIRE channel', () => {
       }),
     });
 
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       sessionData: { sessionToken: 'updated-vc-token' },
     }));
@@ -160,6 +166,7 @@ describe('POST /api/extension/session — VESTIAIRE channel', () => {
   });
 
   it('rejects without auth token (returns 401)', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Unauthorized'));
     const { POST } = await import('../session/route');
     const res = await POST(makeRequest(undefined, {
       channel: 'VESTIAIRE',

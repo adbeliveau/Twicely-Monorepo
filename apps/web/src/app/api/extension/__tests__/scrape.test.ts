@@ -4,12 +4,30 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockValkeySet = vi.fn().mockResolvedValue('OK');
-vi.mock('@twicely/db/cache/valkey', () => ({
+vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn(() => ({ set: mockValkeySet })),
 }));
 
@@ -21,15 +39,7 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key, defaultVal) => Promise.resolve(defaultVal)),
 }));
 
-vi.mock('@twicely/casl', () => ({
-  defineAbilitiesFor: vi.fn(() => ({ can: vi.fn(() => true) })),
-  sub: vi.fn((_type, conditions) => conditions),
-  ForbiddenError: class ForbiddenError extends Error {},
-}));
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
 
 const VALID_LISTING = {
   externalId: 'posh-abc123',
@@ -56,124 +66,98 @@ function makeRequest(authHeader: string | undefined, body: unknown): Request {
   });
 }
 
-async function makeSessionToken(overrides: Record<string, unknown> = {}): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-session', ...overrides })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('30d')
-    .sign(s);
-}
-
-async function makeRegistrationToken(): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-registration' })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('5m')
-    .sign(s);
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/extension/scrape', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     mockValkeySet.mockResolvedValue('OK');
   });
 
   it('returns 401 for missing Authorization header', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Unauthorized'));
     const { POST } = await import('../scrape/route');
     const res = await POST(makeRequest(undefined, { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 for invalid token', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Invalid token'));
     const { POST } = await import('../scrape/route');
     const res = await POST(makeRequest('Bearer bad-token', { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 for expired token', async () => {
-    const s = new TextEncoder().encode(TEST_SECRET);
-    const expiredToken = await new SignJWT({ userId: 'user-abc', purpose: 'extension-session' })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('-1s')
-      .sign(s);
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Invalid token'));
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${expiredToken}`, { channel: 'POSHMARK', listing: VALID_LISTING }));
+    const res = await POST(makeRequest('Bearer expired-token', { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for JWT with wrong purpose (extension-registration)', async () => {
-    const regToken = await makeRegistrationToken();
+    mockAuth.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${regToken}`, { channel: 'POSHMARK', listing: VALID_LISTING }));
+    const res = await POST(makeRequest('Bearer reg-token', { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(403);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(false);
   });
 
   it('returns 400 for missing channel field', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { listing: VALID_LISTING }));
+    const res = await POST(makeRequest('Bearer valid', { listing: VALID_LISTING }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for missing listing field', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK' }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK' }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for invalid channel value', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'EBAY', listing: VALID_LISTING }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'EBAY', listing: VALID_LISTING }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for missing required listing field: externalId', async () => {
-    const token = await makeSessionToken();
-    const { POST } = await import('../scrape/route');
     const { externalId: _dropped, ...listingWithout } = VALID_LISTING;
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: listingWithout }));
+    const { POST } = await import('../scrape/route');
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: listingWithout }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for missing required listing field: title', async () => {
-    const token = await makeSessionToken();
-    const { POST } = await import('../scrape/route');
     const { title: _dropped, ...listingWithout } = VALID_LISTING;
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: listingWithout }));
+    const { POST } = await import('../scrape/route');
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: listingWithout }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for missing required listing field: priceCents', async () => {
-    const token = await makeSessionToken();
-    const { POST } = await import('../scrape/route');
     const { priceCents: _dropped, ...listingWithout } = VALID_LISTING;
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: listingWithout }));
+    const { POST } = await import('../scrape/route');
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: listingWithout }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for missing required listing field: url', async () => {
-    const token = await makeSessionToken();
-    const { POST } = await import('../scrape/route');
     const { url: _dropped, ...listingWithout } = VALID_LISTING;
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: listingWithout }));
+    const { POST } = await import('../scrape/route');
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: listingWithout }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for extra unknown fields in top-level body (Zod strict)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: VALID_LISTING,
       extraField: 'not-allowed',
@@ -182,9 +166,8 @@ describe('POST /api/extension/scrape', () => {
   });
 
   it('returns 400 for extra unknown fields in listing object (Zod strict)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, sneakyExtra: 'not-allowed' },
     }));
@@ -192,9 +175,8 @@ describe('POST /api/extension/scrape', () => {
   });
 
   it('returns 400 for negative priceCents', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, priceCents: -100 },
     }));
@@ -202,9 +184,8 @@ describe('POST /api/extension/scrape', () => {
   });
 
   it('returns 400 for non-integer priceCents (e.g. 19.99)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, priceCents: 19.99 },
     }));
@@ -212,9 +193,8 @@ describe('POST /api/extension/scrape', () => {
   });
 
   it('returns 400 for empty externalId', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, externalId: '' },
     }));
@@ -222,9 +202,8 @@ describe('POST /api/extension/scrape', () => {
   });
 
   it('returns 400 for invalid imageUrls (not valid URLs)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, imageUrls: ['not-a-url', 'also-not'] },
     }));
@@ -232,30 +211,27 @@ describe('POST /api/extension/scrape', () => {
   });
 
   it('returns 200 for valid Poshmark scrape', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: VALID_LISTING }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
 
   it('returns 200 for valid FB_MARKETPLACE scrape', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
     const fbListing = {
       ...VALID_LISTING,
       externalId: 'fb-item-456',
       url: 'https://www.facebook.com/marketplace/item/456/',
     };
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'FB_MARKETPLACE', listing: fbListing }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'FB_MARKETPLACE', listing: fbListing }));
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
 
   it('returns 200 with all optional fields null', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
     const minimalListing = {
       externalId: 'posh-min-1',
@@ -269,12 +245,12 @@ describe('POST /api/extension/scrape', () => {
       imageUrls: [],
       url: 'https://poshmark.com/listing/posh-min-1',
     };
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: minimalListing }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: minimalListing }));
     expect(res.status).toBe(200);
   });
 
   it('returns 503 when EXTENSION_JWT_SECRET is not configured', async () => {
-    vi.stubEnv('EXTENSION_JWT_SECRET', '');
+    mockAuth.mockRejectedValue(new MockExtAuthError(503, 'Extension authentication unavailable'));
     const { POST } = await import('../scrape/route');
     const res = await POST(makeRequest('Bearer any', { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(503);

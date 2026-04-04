@@ -53,13 +53,7 @@ async function getNumericSetting(key: string, fallback: number): Promise<number>
 export async function purchaseOveragePack(
   input: PurchaseOverageInput
 ): Promise<PurchaseOverageResult> {
-  // 1. Validate input
-  const parsed = PurchaseOverageSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-
-  // 2. Auth via CASL
+  // 1. Auth via CASL
   const { ability, session: caslSession } = await authorize();
   if (!caslSession) {
     return { success: false, error: 'Unauthorized' };
@@ -70,6 +64,12 @@ export async function purchaseOveragePack(
 
   if (!ability.can('create', sub('Subscription', { sellerId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  // 2. Validate input
+  const parsed = PurchaseOverageSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
   }
 
   // 3. Get sellerProfileId

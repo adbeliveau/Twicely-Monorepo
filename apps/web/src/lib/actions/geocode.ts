@@ -20,8 +20,9 @@ const pointSchema = z.object({
 }).strict();
 
 export async function geocodeAddressAction(input: unknown) {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return { error: 'Not authenticated' };
+  if (!ability.can('read', 'SafeMeetupLocation')) return { error: 'Not authorized' };
 
   const parsed = addressSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid address' };
@@ -45,8 +46,9 @@ export async function geocodeAddressAction(input: unknown) {
 }
 
 export async function reverseGeocodeAction(input: unknown) {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return { error: 'Not authenticated' };
+  if (!ability.can('read', 'SafeMeetupLocation')) return { error: 'Not authorized' };
 
   const parsed = pointSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid coordinates' };

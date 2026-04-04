@@ -97,6 +97,7 @@ describe('updateExpenseAction', () => {
   });
 
   it('returns validation error for missing id', async () => {
+    mockAuth();
     const { updateExpenseAction } = await import('../finance-center-expenses');
     const result = await updateExpenseAction({
       category: 'Equipment',
@@ -169,6 +170,7 @@ describe('deleteExpenseAction', () => {
   });
 
   it('returns validation error for missing id', async () => {
+    mockAuth();
     const { deleteExpenseAction } = await import('../finance-center-expenses');
     const result = await deleteExpenseAction({});
 

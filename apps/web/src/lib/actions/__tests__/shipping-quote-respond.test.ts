@@ -72,7 +72,13 @@ function mockUpdateChain() {
 }
 
 describe('respondToShippingQuote — Zod validation', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthorize.mockResolvedValue({
+      session: { userId: BUYER_ID } as never,
+      ability: makeAbility(true) as never,
+    });
+  });
 
   it('rejects missing quoteId', async () => {
     const result = await respondToShippingQuote({ action: 'ACCEPT' });

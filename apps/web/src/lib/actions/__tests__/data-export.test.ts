@@ -15,6 +15,10 @@ vi.mock('@twicely/jobs/data-export', () => ({
   dataExportQueue: mockDataExportQueue,
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
+
 vi.mock('@twicely/db/schema', () => ({
   dataExportRequest: {
     id: 'id', userId: 'user_id', status: 'status',

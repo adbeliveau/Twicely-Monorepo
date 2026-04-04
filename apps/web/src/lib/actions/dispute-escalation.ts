@@ -41,9 +41,12 @@ interface CanEscalateResult {
  * Buyer-facing action used on the return detail page.
  */
 export async function canEscalateAction(returnId: string): Promise<CanEscalateResult> {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) {
     return { canEscalate: false, reason: 'Not authenticated' };
+  }
+  if (!ability.can('read', 'Dispute')) {
+    return { canEscalate: false, reason: 'Not authorized' };
   }
 
   const parsed = canEscalateSchema.safeParse({ returnId });

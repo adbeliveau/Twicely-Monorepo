@@ -216,3 +216,51 @@ export async function getSellerScoreHistory(userId: string, days = 90): Promise<
     previousBand: r.previousBand ?? null, bandChangedAt: r.bandChangedAt ?? null,
   }));
 }
+
+// ─── Seller Trust List (paginated) ───────────────────────────────────────────
+
+export interface SellerTrustListItem {
+  userId: string;
+  name: string;
+  email: string;
+  sellerScore: number;
+  performanceBand: string;
+  enforcementLevel: string | null;
+}
+
+export async function getSellerTrustList(
+  page = 1,
+  pageSize = 50
+): Promise<{ rows: SellerTrustListItem[]; total: number }> {
+  const offset = (page - 1) * pageSize;
+
+  const [rows, totalResult] = await Promise.all([
+    db
+      .select({
+        userId: sellerProfile.userId,
+        name: sql<string>`coalesce(${user.name}, ${user.email})`,
+        email: user.email,
+        sellerScore: sellerProfile.sellerScore,
+        performanceBand: sellerProfile.performanceBand,
+        enforcementLevel: sellerProfile.enforcementLevel,
+      })
+      .from(sellerProfile)
+      .innerJoin(user, eq(user.id, sellerProfile.userId))
+      .orderBy(desc(sellerProfile.sellerScore))
+      .limit(pageSize)
+      .offset(offset),
+    db.select({ count: count() }).from(sellerProfile),
+  ]);
+
+  return {
+    rows: rows.map((r) => ({
+      userId: r.userId,
+      name: r.name,
+      email: r.email,
+      sellerScore: r.sellerScore,
+      performanceBand: r.performanceBand,
+      enforcementLevel: r.enforcementLevel,
+    })),
+    total: totalResult[0]?.count ?? 0,
+  };
+}

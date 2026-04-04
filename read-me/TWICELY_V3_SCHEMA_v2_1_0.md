@@ -110,6 +110,9 @@ export const localTransactionStatusEnum = pgEnum('local_transaction_status', [
   'RECEIPT_CONFIRMED', 'COMPLETED', 'CANCELED', 'NO_SHOW', 'DISPUTED',
   'ADJUSTMENT_PENDING', 'RESCHEDULE_PENDING'
 ]);
+export const confirmationModeEnum = pgEnum('confirmation_mode', [
+  'QR_ONLINE', 'QR_DUAL_OFFLINE', 'CODE_ONLINE', 'CODE_DUAL_OFFLINE'
+]);
 export const localFraudFlagSeverityEnum = pgEnum('local_fraud_flag_severity', [
   'CONFIRMED', 'STRONG_SIGNAL', 'MANUAL_REVIEW'
 ]);
@@ -185,7 +188,7 @@ export const feeBucketEnum = pgEnum('fee_bucket', ['ELECTRONICS', 'APPAREL_ACCES
 
 ```typescript
 export const channelEnum = pgEnum('channel', [
-  'TWICELY', 'EBAY', 'POSHMARK', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'THEREALREAL'
+  'TWICELY', 'EBAY', 'POSHMARK', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'THEREALREAL', 'WHATNOT', 'SHOPIFY', 'VESTIAIRE'
 ]);
 export const authMethodEnum = pgEnum('auth_method', ['OAUTH', 'API_KEY', 'SESSION']);
 export const accountStatusEnum = pgEnum('account_status', ['ACTIVE', 'PAUSED', 'REVOKED', 'ERROR', 'REAUTHENTICATION_REQUIRED']);
@@ -1621,6 +1624,8 @@ export const payout = pgTable('payout', {
   batchId:             text('batch_id').references(() => payoutBatch.id),
   status:              payoutStatusEnum('status').notNull().default('PENDING'),
   amountCents:         integer('amount_cents').notNull(),
+  feeCents:            integer('fee_cents').notNull().default(0),
+  isInstant:           boolean('is_instant').notNull().default(false),
   currency:            text('currency').notNull().default('USD'),
   stripeTransferId:    text('stripe_transfer_id'),
   stripePayoutId:      text('stripe_payout_id'),

@@ -150,7 +150,6 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // FINANCE PRICING (Financial Center Canonical v3.0 §2)
   // ═══════════════════════════════════════════════════════════════════════════
-  { key: 'finance.pricing.pro.annualMonthlyCents', value: 1199, type: 'cents', category: 'finance', description: 'Finance Pro annual price/mo ($11.99)' },
   { key: 'finance.pricing.pro.annualTotalCents', value: 14388, type: 'cents', category: 'finance', description: 'Finance Pro annual total ($143.88/yr)' },
   { key: 'finance.pricing.pro.annualCents', value: 1199, type: 'cents', category: 'finance', description: 'Finance Pro annual price/mo ($11.99)' },
   { key: 'finance.pricing.pro.monthlyCents', value: 1499, type: 'cents', category: 'finance', description: 'Finance Pro monthly price ($14.99)' },

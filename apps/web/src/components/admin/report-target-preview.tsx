@@ -22,7 +22,7 @@ export async function ReportTargetPreview({ targetType, targetId }: ReportTarget
         <p className="font-medium text-gray-800">{preview.title ?? '(No title)'}</p>
         <p className="mt-0.5 text-xs text-gray-500">Status: {preview.status}</p>
         <Link
-          href={`/listings?id=${targetId}`}
+          href={`/mod/listings/${targetId}`}
           className="mt-1 inline-block text-xs text-blue-600 hover:underline"
         >
           View in listings admin

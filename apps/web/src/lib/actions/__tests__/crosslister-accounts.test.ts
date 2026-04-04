@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockDbSelect = vi.fn();
 const mockDbUpdate = vi.fn();
 const mockDbInsert = vi.fn();
+const mockCookieSet = vi.fn();
 const mockDb = { select: mockDbSelect, update: mockDbUpdate, insert: mockDbInsert };
 
 const mockAuthorize = vi.fn();
@@ -54,6 +55,13 @@ vi.mock('@twicely/crosslister/connector-registry', () => ({
         refreshAuth: vi.fn().mockResolvedValue({ success: true, accessToken: 'tok', refreshToken: null, tokenExpiresAt: new Date(), capabilities: {} }),
       };
     }
+    if (channel === 'SHOPIFY') {
+      return {
+        buildAuthUrl: vi.fn().mockResolvedValue('https://my-store.myshopify.com/admin/oauth/authorize?state=xyz'),
+        revokeAuth: vi.fn().mockResolvedValue(undefined),
+        refreshAuth: vi.fn().mockResolvedValue({ success: true, accessToken: 'tok', refreshToken: null, tokenExpiresAt: null, capabilities: {} }),
+      };
+    }
     if (channel === 'POSHMARK') {
       return {
         authenticate: vi.fn().mockResolvedValue({
@@ -86,7 +94,7 @@ vi.mock('@twicely/crosslister/token-crypto', () => ({
 vi.mock('@paralleldrive/cuid2', () => ({ createId: vi.fn().mockReturnValue('state-xyz') }));
 vi.mock('next/headers', () => ({
   cookies: vi.fn().mockResolvedValue({
-    set: vi.fn(),
+    set: mockCookieSet,
     get: vi.fn(),
     delete: vi.fn(),
   }),
@@ -259,6 +267,26 @@ describe('connectPlatformAccount', () => {
     expect(result.success).toBe(true);
     expect(result.data?.method).toBe('SESSION');
     expect(result.data?.url).toBeUndefined();
+  });
+
+  it('returns Shopify OAuth URL when a valid shopDomain is provided', async () => {
+    mockAuthorize.mockResolvedValue(sellerSession());
+    mockDbSelect.mockReturnValue(makeChain([]));
+
+    const { connectPlatformAccount } = await import('../crosslister-accounts');
+    const result = await connectPlatformAccount({
+      channel: 'SHOPIFY',
+      shopDomain: 'My-Store.myshopify.com',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.method).toBe('OAUTH');
+    expect(result.data?.url).toContain('my-store.myshopify.com/admin/oauth/authorize');
+    expect(mockCookieSet).toHaveBeenCalledWith(
+      'crosslister_oauth_state',
+      expect.stringContaining('"shopDomain":"my-store.myshopify.com"'),
+      expect.any(Object),
+    );
   });
 
   it('rejects unauthenticated users', async () => {

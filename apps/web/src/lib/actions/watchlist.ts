@@ -19,16 +19,16 @@ interface ToggleResult {
  * If watching, removes from watchlist. If not watching, adds to watchlist.
  */
 export async function toggleWatchlistAction(listingId: string): Promise<ToggleResult> {
-  const parsed = toggleWatchlistSchema.safeParse({ listingId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   if (!ability.can('update', 'Watchlist')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = toggleWatchlistSchema.safeParse({ listingId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Get listing to check ownership
@@ -80,16 +80,16 @@ interface PriceAlertResult {
  * Toggle price drop notifications for a watched listing.
  */
 export async function togglePriceAlertAction(listingId: string): Promise<PriceAlertResult> {
-  const parsed = togglePriceAlertSchema.safeParse({ listingId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   if (!ability.can('update', 'Watchlist')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = togglePriceAlertSchema.safeParse({ listingId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Get current watchlist item

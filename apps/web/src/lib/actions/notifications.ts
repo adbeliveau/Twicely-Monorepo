@@ -30,16 +30,16 @@ interface ActionResult {
  * Mark a single notification as read.
  */
 export async function markAsRead(notificationId: string): Promise<ActionResult> {
-  const parsed = markAsReadSchema.safeParse({ notificationId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   if (!ability.can('update', 'Notification')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = markAsReadSchema.safeParse({ notificationId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const [notif] = await db
@@ -98,16 +98,16 @@ interface PreferenceUpdate {
 export async function updatePreferences(
   preferences: PreferenceUpdate[]
 ): Promise<ActionResult> {
-  const parsed = updatePreferencesSchema.safeParse({ preferences });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   if (!ability.can('update', 'Notification')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = updatePreferencesSchema.safeParse({ preferences });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const userId = session.userId;

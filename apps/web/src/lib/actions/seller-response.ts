@@ -169,7 +169,7 @@ export async function updateSellerResponse(
   }
 
   // 4. Check edit window (from platform settings)
-  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 48);
+  const editWindowHours = await getPlatformSetting<number>('trust.review.editWindowHours', 24);
   const now = new Date();
   const editDeadline = new Date(responseData.createdAt);
   editDeadline.setHours(editDeadline.getHours() + editWindowHours);

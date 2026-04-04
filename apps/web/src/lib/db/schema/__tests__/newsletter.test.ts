@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import * as schema from '@twicely/db/schema';
-import { newsletterSourceEnum } from '@/lib/db/schema/newsletter';
+import { newsletterSourceEnum } from '@twicely/db/schema';
 
 describe('newsletterSubscriber schema', () => {
   it('is exported from the schema barrel', () => {
@@ -49,7 +49,7 @@ describe('newsletterSubscriber schema', () => {
     expect(schema.newsletterSubscriber.welcomeSentAt).toBeDefined();
   });
 
-  it('confirmedAt is defined (not-null with defaultNow)', () => {
+  it('confirmedAt is defined for double opt-in confirmation tracking', () => {
     expect(schema.newsletterSubscriber.confirmedAt).toBeDefined();
   });
 
@@ -59,7 +59,7 @@ describe('newsletterSubscriber schema', () => {
 });
 
 describe('newsletterSourceEnum', () => {
-  it('is exported from newsletter schema module', () => {
+  it('is exported from schema barrel (via enums)', () => {
     expect(newsletterSourceEnum).toBeDefined();
   });
 

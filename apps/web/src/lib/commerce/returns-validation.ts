@@ -4,6 +4,7 @@
 
 import { getReturnWindowDays, getCounterfeitWindowDays, getSellerResponseDays } from '@twicely/commerce/returns-types';
 import type { ReturnReason } from '@twicely/commerce/returns-types';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 /**
  * Check if an order is within the return window.
@@ -60,7 +61,8 @@ export async function calculateSellerResponseDue(): Promise<Date> {
     }
   }
 
-  // Set to end of business day (5pm)
-  result.setHours(17, 0, 0, 0);
+  // Set to end of business day (configurable hour, default 5 PM)
+  const deadlineHour = await getPlatformSetting<number>('commerce.returns.sellerResponseDeadlineHour', 17);
+  result.setHours(deadlineHour, 0, 0, 0);
   return result;
 }

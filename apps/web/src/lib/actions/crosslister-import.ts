@@ -65,11 +65,6 @@ interface ActionResult<T = undefined> {
 export async function startImport(
   input: unknown,
 ): Promise<ActionResult<{ batchId: string }>> {
-  const parsed = startImportSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -77,6 +72,11 @@ export async function startImport(
 
   if (!ability.can('create', sub('ImportBatch', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = startImportSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Lookup account + verify ownership + check status
@@ -143,11 +143,6 @@ export async function startImport(
 export async function getImportBatchStatus(
   input: unknown,
 ): Promise<ActionResult<ImportBatch>> {
-  const parsed = batchIdSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -155,6 +150,11 @@ export async function getImportBatchStatus(
 
   if (!ability.can('read', sub('ImportBatch', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = batchIdSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const [batch] = await db
@@ -174,11 +174,6 @@ export async function getImportBatchStatus(
 export async function getImportIssues(
   input: unknown,
 ): Promise<ActionResult<{ records: ImportRecord[]; total: number }>> {
-  const parsed = issuesSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -186,6 +181,11 @@ export async function getImportIssues(
 
   if (!ability.can('read', sub('ImportBatch', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = issuesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Verify batch ownership
@@ -222,11 +222,6 @@ export async function getImportIssues(
 export async function retryImportRecord(
   input: unknown,
 ): Promise<ActionResult> {
-  const parsed = recordIdSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -234,6 +229,11 @@ export async function retryImportRecord(
 
   if (!ability.can('create', sub('ImportBatch', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = recordIdSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Fetch record + verify ownership via batch

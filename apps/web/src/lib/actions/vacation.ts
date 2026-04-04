@@ -35,16 +35,16 @@ export async function activateVacation(data: ActivateVacationInput): Promise<Act
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Please sign in' };
 
+  if (!ability.can('update', sub('SellerProfile', { userId: session.userId }))) {
+    return { success: false, error: 'Not authorized' };
+  }
+
   const parsed = activateVacationSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const { modeType, vacationMessage, autoReplyMessage, startAt, endAt } = parsed.data;
-
-  if (!ability.can('update', sub('SellerProfile', { userId: session.userId }))) {
-    return { success: false, error: 'Not authorized' };
-  }
 
   // Load max duration settings from platform_settings
   const [maxPauseDays, maxAllowSalesDays] = await Promise.all([

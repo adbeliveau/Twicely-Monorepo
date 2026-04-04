@@ -1,4 +1,5 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
+import { clientLogger } from '@/lib/client-logger';
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
@@ -10,7 +11,7 @@ export function getStripePromise(): Promise<Stripe | null> {
   if (!stripePromise) {
     const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
     if (!publishableKey) {
-      console.error('Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY');
+      clientLogger.error('Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY');
       return Promise.resolve(null);
     }
     stripePromise = loadStripe(publishableKey);

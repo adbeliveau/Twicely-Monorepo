@@ -283,6 +283,11 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'commerce.local.schedulingMaxLeadTimeDays', value: 30, type: 'number', category: 'local', description: 'Maximum advance scheduling for meetups (days)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // CONTENT MODERATION — G4
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'moderation.report.maxPerUserPerDay', value: 10, type: 'number', category: 'moderation', description: 'Max content reports per user per 24 hours' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // SELLER STANDARDS & ENFORCEMENT — G4 (Seller Score Canonical Section 11.5)
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'score.enforcement.coachingBelow', value: 550, type: 'number', category: 'trust', description: 'Seller score threshold triggering coaching level' },
@@ -412,7 +417,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // COMMUNICATIONS — Newsletter and marketing opt-in
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'newsletter.enabled', value: true, type: 'boolean' as const, category: 'comms', description: 'Enable newsletter subscription form on homepage and footer' },
-  { key: 'newsletter.doubleOptIn', value: false, type: 'boolean' as const, category: 'comms', description: 'Require email confirmation before adding subscriber (reserved for future use)' },
+  { key: 'newsletter.doubleOptIn', value: true, type: 'boolean' as const, category: 'comms', description: 'Require email confirmation before activating newsletter subscriptions' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // EXTENSION — Browser extension feature flags and configuration (H1.1)
@@ -431,4 +436,13 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'crosslister.tierC.delayMinMs', value: 2000, type: 'number' as const, category: 'crosslister', description: 'Tier-C connector minimum human-like delay (ms)' },
   { key: 'crosslister.tierC.delayMaxMs', value: 8000, type: 'number' as const, category: 'crosslister', description: 'Tier-C connector maximum human-like delay (ms)' },
+
+  // ════════��══════════════════════════════════════════════════════════════════
+  // AUDIT FIX — Round 2 missing seeds
+  // ════════════════��══════════════════════════════════════════════════════════
+  { key: 'storefront.pages.maxPower', value: 5, type: 'number' as const, category: 'storefront', description: 'Max storefront pages for Power tier' },
+  { key: 'storefront.pages.maxEnterprise', value: 20, type: 'number' as const, category: 'storefront', description: 'Max storefront pages for Enterprise tier' },
+  { key: 'discovery.browsingHistory.maxItems', value: 50, type: 'number' as const, category: 'discovery', description: 'Max browsing history items per user (FIFO)' },
+  { key: 'admin.customRoles.maxCount', value: 20, type: 'number' as const, category: 'admin', description: 'Max number of active custom staff roles' },
+  { key: 'privacy.dataExportRateLimitHours', value: 24, type: 'number' as const, category: 'privacy', description: 'Minimum hours between user data export requests' },
 ];

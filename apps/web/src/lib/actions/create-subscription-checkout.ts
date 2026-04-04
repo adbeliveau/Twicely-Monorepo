@@ -53,14 +53,7 @@ interface CheckoutResult {
 export async function createSubscriptionCheckout(
   input: CreateCheckoutInput
 ): Promise<CheckoutResult> {
-  // 0. Validate input
-  const parsed = CreateCheckoutSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-  const { product, tier, interval, promoCode: promoCodeInput } = parsed.data;
-
-  // 1. Auth via CASL
+  // 0. Auth via CASL
   const { ability, session: caslSession } = await authorize();
   if (!caslSession) {
     return { success: false, error: 'Unauthorized' };
@@ -70,6 +63,13 @@ export async function createSubscriptionCheckout(
   if (!sessionSellerId || !ability.can('create', sub('Subscription', { sellerId: sessionSellerId }))) {
     return { success: false, error: 'Forbidden' };
   }
+
+  // 1. Validate input
+  const parsed = CreateCheckoutSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
+  }
+  const { product, tier, interval, promoCode: promoCodeInput } = parsed.data;
 
   // 2. Get sellerProfileId
   const sellerProfileId = await getSellerProfileIdByUserId(userId);

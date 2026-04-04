@@ -5,9 +5,27 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockDbSelect = vi.fn();
 const mockDbUpdate = vi.fn();
@@ -59,8 +77,6 @@ vi.mock('@twicely/casl', () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
-
 function makeRequest(authHeader: string | undefined, body: unknown, malformed = false): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authHeader !== undefined) headers['Authorization'] = authHeader;
@@ -69,15 +85,6 @@ function makeRequest(authHeader: string | undefined, body: unknown, malformed = 
     headers,
     body: malformed ? 'not-json{{' : JSON.stringify(body),
   });
-}
-
-async function makeSessionToken(overrides: Record<string, unknown> = {}, expiresIn = '30d'): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-session', ...overrides })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(s);
 }
 
 function setupSelectNoExisting(): void {
@@ -102,7 +109,10 @@ describe('POST /api/extension/session — extended', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
 
     setupSelectNoExisting();
     setupUpdateChain();
@@ -110,32 +120,24 @@ describe('POST /api/extension/session — extended', () => {
   });
 
   it('returns 400 for malformed JSON body (parse error)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, null, true));
+    const res = await POST(makeRequest('Bearer valid', null, true));
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid JSON');
   });
 
   it('returns 401 for expired session token', async () => {
-    const expiredToken = await makeSessionToken({}, '-1s');
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Invalid token'));
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${expiredToken}`, { channel: 'POSHMARK', sessionData: {} }));
+    const res = await POST(makeRequest('Bearer expired', { channel: 'POSHMARK', sessionData: {} }));
     expect(res.status).toBe(401);
   });
 
-  it('returns 403 when JWT payload has correct purpose but missing userId', async () => {
-    // Craft a token with purpose=extension-session but no userId field
-    const s = new TextEncoder().encode(TEST_SECRET);
-    const tokenNoUserId = await new SignJWT({ purpose: 'extension-session' })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('30d')
-      .sign(s);
-
+  it('returns 403 when JWT payload has wrong purpose or missing userId', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${tokenNoUserId}`, { channel: 'POSHMARK', sessionData: {} }));
+    const res = await POST(makeRequest('Bearer bad-purpose', { channel: 'POSHMARK', sessionData: {} }));
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid token');
@@ -146,16 +148,14 @@ describe('POST /api/extension/session — extended', () => {
       values: vi.fn().mockRejectedValue(new Error('DB connection lost')),
     });
 
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', sessionData: {} }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', sessionData: {} }));
     expect(res.status).toBe(500);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Internal error');
   });
 
   it('returns 500 when DB update throws', async () => {
-    // Account exists
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
@@ -169,16 +169,14 @@ describe('POST /api/extension/session — extended', () => {
       }),
     });
 
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', sessionData: {} }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', sessionData: {} }));
     expect(res.status).toBe(500);
   });
 
   it('rejects extra fields in request body (strict schema)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       sessionData: {},
       extraField: 'not-allowed',
@@ -187,9 +185,8 @@ describe('POST /api/extension/session — extended', () => {
   });
 
   it('accepts THEREALREAL channel with valid session', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'THEREALREAL',
       sessionData: { accessToken: 'trr-123' },
     }));
@@ -207,9 +204,8 @@ describe('POST /api/extension/session — extended', () => {
       }),
     });
 
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', sessionData: { key: 'val' } }));
+    await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', sessionData: { key: 'val' } }));
 
     expect(insertedValues).toBeDefined();
     expect(insertedValues!['authMethod']).toBe('SESSION');
@@ -227,9 +223,8 @@ describe('POST /api/extension/session — extended', () => {
     });
 
     const { mockSet } = setupUpdateChain();
-    const token = await makeSessionToken();
     const { POST } = await import('../session/route');
-    await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', sessionData: {} }));
+    await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', sessionData: {} }));
 
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({ lastError: null, lastErrorAt: null }),

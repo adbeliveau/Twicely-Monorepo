@@ -14,6 +14,7 @@ import { ForbiddenError } from '@twicely/casl';
 import { revalidatePath } from 'next/cache';
 import { zodId } from '@/lib/validations/shared';
 import { requireMfaForCriticalAction } from './staff-mfa';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 const userIdSchema = zodId;
 
@@ -118,9 +119,10 @@ export async function processOverdueDeletionsAction(): Promise<
     throw new ForbiddenError('ADMIN role required');
   }
 
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+  const gracePeriodDays = await getPlatformSetting<number>('privacy.gdpr.deletionGracePeriodDays', 30);
+  const cutoff = new Date(Date.now() - gracePeriodDays * 86400000);
 
-  // Find users with deletionRequestedAt older than 30 days (past grace period), LIMIT 50.
+  // Find users with deletionRequestedAt older than grace period, LIMIT 50.
   // Exclude already-anonymized users.
   const overdueBatch = await db
     .select({ id: user.id })
@@ -129,7 +131,7 @@ export async function processOverdueDeletionsAction(): Promise<
       and(
         isNotNull(user.deletionRequestedAt),
         isNull(user.anonymizedAt),
-        lt(user.deletionRequestedAt, thirtyDaysAgo)
+        lt(user.deletionRequestedAt, cutoff)
       )
     )
     .limit(50);

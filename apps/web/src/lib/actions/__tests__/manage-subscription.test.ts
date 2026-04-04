@@ -103,6 +103,7 @@ describe('D3-S3: cancelSubscriptionAction', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
   it('returns error for invalid input (Zod)', async () => {
+    mockAuthorize.mockResolvedValue({ ability: createAbility(), session: createSession() });
     const { cancelSubscriptionAction } = await import('../manage-subscription');
     const result = await cancelSubscriptionAction({ product: 'invalid' as 'store' });
     expect(result).toEqual({ success: false, error: 'Invalid input' });

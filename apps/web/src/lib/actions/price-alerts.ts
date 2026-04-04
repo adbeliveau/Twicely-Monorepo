@@ -30,14 +30,14 @@ interface CreatePriceAlertInput {
 export async function createPriceAlertAction(
   input: CreatePriceAlertInput
 ): Promise<ActionResult> {
+  const { session, ability } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  if (!ability.can('create', 'Notification')) return { success: false, error: 'Not authorized' };
+
   const parsed = createPriceAlertSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
-
-  const { session, ability } = await authorize();
-  if (!session) return { success: false, error: 'Unauthorized' };
-  if (!ability.can('create', 'Notification')) return { success: false, error: 'Not authorized' };
 
   const alertsEnabled = await getPlatformSetting<boolean>('discovery.priceAlert.enabled', true);
   if (!alertsEnabled) return { success: false, error: 'Price alerts are currently disabled' };
@@ -162,14 +162,14 @@ export async function createPriceAlertAction(
  * Delete a price alert.
  */
 export async function deletePriceAlertAction(alertId: string): Promise<ActionResult> {
+  const { session, ability } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  if (!ability.can('delete', 'Notification')) return { success: false, error: 'Not authorized' };
+
   const parsed = deletePriceAlertSchema.safeParse({ alertId });
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
-
-  const { session, ability } = await authorize();
-  if (!session) return { success: false, error: 'Unauthorized' };
-  if (!ability.can('delete', 'Notification')) return { success: false, error: 'Not authorized' };
 
   // Verify ownership
   const [alertRow] = await db

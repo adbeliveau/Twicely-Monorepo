@@ -60,7 +60,7 @@ export async function authenticateShopify(
     };
   }
 
-  const shopDomain = credentials.state ?? '';
+  const shopDomain = credentials.shopDomain ?? '';
 
   if (!shopDomain) {
     return {
@@ -72,7 +72,7 @@ export async function authenticateShopify(
       sessionData: null,
       tokenExpiresAt: null,
       capabilities,
-      error: 'ShopifyConnector.authenticate: shopDomain missing from credentials.state',
+      error: 'ShopifyConnector.authenticate: shopDomain missing from credentials.shopDomain',
     };
   }
 

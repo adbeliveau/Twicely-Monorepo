@@ -54,7 +54,7 @@ export interface PlatformConnector {
 
   // OAuth (Tier A/B only — optional)
   // Returns URL string, or { url, codeVerifier } when PKCE is used.
-  buildAuthUrl?(state: string): Promise<string | { url: string; codeVerifier: string }>;
+  buildAuthUrl?(state: string, shopDomain?: string): Promise<string | { url: string; codeVerifier: string }>;
 
   // Webhooks (Tier A only — optional)
   registerWebhook?(account: CrosslisterAccount, events: string[]): Promise<WebhookRegistration>;

@@ -9,7 +9,7 @@ const navItems = [
   { icon: Home, label: 'Home', href: '/' },
   { icon: Search, label: 'Search', href: '/s' },
   { icon: Plus, label: 'Sell', href: '/my/selling/listings/new' },
-  { icon: MessageSquare, label: 'Messages', href: '/m' },
+  { icon: MessageSquare, label: 'Messages', href: '/my/messages' },
   { icon: User, label: 'My', href: '/my' },
 ];
 
@@ -19,6 +19,9 @@ export function MobileBottomNav() {
   function isActive(href: string) {
     if (href === '/') {
       return pathname === '/';
+    }
+    if (href === '/my/messages') {
+      return pathname === '/my/messages' || pathname.startsWith('/my/messages/');
     }
     return pathname.startsWith(href);
   }

@@ -51,11 +51,6 @@ export async function bulkUpdateListingsAction(
   action: BulkAction,
   priceAdjustment?: PriceAdjustment
 ): Promise<BulkActionResult> {
-  const parsed = bulkActionSchema.safeParse({ listingIds, action, priceAdjustment });
-  if (!parsed.success) {
-    return { success: false, processed: 0, failed: listingIds.length, errors: [{ listingId: '', error: parsed.error.issues[0]?.message ?? 'Invalid input' }] };
-  }
-
   const { ability, session } = await authorize();
   if (!session) {
     return { success: false, processed: 0, failed: listingIds.length, errors: [{ listingId: '', error: 'Unauthorized' }] };
@@ -63,6 +58,11 @@ export async function bulkUpdateListingsAction(
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, processed: 0, failed: listingIds.length, errors: [{ listingId: '', error: 'Forbidden' }] };
+  }
+
+  const parsed = bulkActionSchema.safeParse({ listingIds, action, priceAdjustment });
+  if (!parsed.success) {
+    return { success: false, processed: 0, failed: listingIds.length, errors: [{ listingId: '', error: parsed.error.issues[0]?.message ?? 'Invalid input' }] };
   }
 
   if (listingIds.length === 0) {

@@ -114,6 +114,7 @@ export const ADMIN_NAV_CORE: AdminNavItem[] = [
       { key: 'trust-overview', label: 'Trust Overview', href: '/trust', icon: 'ShieldCheck', roles: ['ADMIN', 'MODERATION', 'SUPPORT'] },
       { key: 'trust-settings', label: 'Trust Settings', href: '/trust/settings', icon: 'Settings', roles: ['ADMIN'] },
       { key: 'risk-signals', label: 'Risk Signals', href: '/risk', icon: 'AlertTriangle', roles: ['ADMIN', 'MODERATION', 'SUPPORT'] },
+      { key: 'trust-sellers', label: 'Sellers', href: '/trust/sellers', icon: 'Store', roles: ['ADMIN', 'MODERATION', 'SUPPORT'] },
       { key: 'security-events', label: 'Security', href: '/security', icon: 'Shield', roles: ['ADMIN', 'SRE'] },
     ],
   },

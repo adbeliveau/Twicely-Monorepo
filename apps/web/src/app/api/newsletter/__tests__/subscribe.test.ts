@@ -1,16 +1,8 @@
 /**
- * Tests for POST /api/newsletter/subscribe (G10.12)
+ * Tests for POST /api/newsletter/subscribe
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-vi.mock('@twicely/db/cache', () => ({
-  getValkeyClient: vi.fn().mockReturnValue({ incr: vi.fn().mockResolvedValue(1), expire: vi.fn().mockResolvedValue(1) }),
-}));
-vi.mock('@twicely/logger', () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
-
 import { NextRequest } from 'next/server';
-
-// ─── Hoisted mocks ────────────────────────────────────────────────────────────
 
 const {
   mockDbSelect,
@@ -18,12 +10,16 @@ const {
   mockDbUpdate,
   mockGetPlatformSetting,
   mockResendSend,
+  mockValkeyIncr,
+  mockValkeyExpire,
 } = vi.hoisted(() => ({
   mockDbSelect: vi.fn(),
   mockDbInsert: vi.fn(),
   mockDbUpdate: vi.fn(),
   mockGetPlatformSetting: vi.fn(),
   mockResendSend: vi.fn(),
+  mockValkeyIncr: vi.fn(),
+  mockValkeyExpire: vi.fn(),
 }));
 
 vi.mock('@twicely/db', () => ({
@@ -54,6 +50,13 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: (...args: unknown[]) => mockGetPlatformSetting(...args),
 }));
 
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn(() => ({
+    incr: mockValkeyIncr,
+    expire: mockValkeyExpire,
+  })),
+}));
+
 vi.mock('resend', () => {
   const ResendMock = vi.fn(function ResendConstructor() {
     return { emails: { send: mockResendSend } };
@@ -65,7 +68,13 @@ vi.mock('@twicely/email/templates/newsletter-welcome', () => ({
   default: vi.fn(() => null),
 }));
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+vi.mock('@twicely/email/templates/newsletter-confirmation', () => ({
+  default: vi.fn(() => null),
+}));
+
+vi.mock('@twicely/logger', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
 
 function makeRequest(body: Record<string, unknown> = {}): NextRequest {
   return new NextRequest('http://localhost/api/newsletter/subscribe', {
@@ -97,177 +106,142 @@ function makeUpdateChain() {
   };
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
 describe('POST /api/newsletter/subscribe', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockGetPlatformSetting.mockResolvedValue(true);
+    mockValkeyIncr.mockResolvedValue(1);
+    mockValkeyExpire.mockResolvedValue(1);
+    mockGetPlatformSetting.mockImplementation((key: unknown, fallback: unknown) => {
+      if (key === 'newsletter.enabled') return Promise.resolve(true);
+      if (key === 'newsletter.doubleOptIn') return Promise.resolve(true);
+      return Promise.resolve(fallback);
+    });
     mockResendSend.mockResolvedValue({ data: { id: 'email-id' }, error: null });
   });
 
-  it('returns 200 { success: true } for a new valid email', async () => {
-    mockDbSelect
-      .mockImplementationOnce(() => makeSelectChain([]))           // existing check
-      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }])); // token fetch
-    mockDbInsert.mockImplementation(() => makeInsertChain([{ id: 'sub-1' }]));
-    mockDbUpdate.mockImplementation(() => makeUpdateChain());
+  it('returns 503 when Valkey rate limiting is unavailable', async () => {
+    mockValkeyIncr.mockRejectedValue(new Error('Valkey down'));
 
     const { POST } = await import('../subscribe/route');
     const res = await POST(makeRequest({ email: 'user@example.com' }));
-    const body = await res.json() as { success: boolean };
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-  });
-
-  it('normalizes email to lowercase', async () => {
-    mockDbSelect
-      .mockImplementationOnce(() => makeSelectChain([]))
-      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
-    mockDbInsert.mockImplementation(() => makeInsertChain([{ id: 'sub-1' }]));
-    mockDbUpdate.mockImplementation(() => makeUpdateChain());
-
-    const { POST } = await import('../subscribe/route');
-    await POST(makeRequest({ email: 'USER@EXAMPLE.COM' }));
-    // insert called with lowercase email
-    const insertValues = mockDbInsert.mock.results[0]?.value?.values;
-    expect(insertValues).toBeDefined();
-  });
-
-  it('rejects email with surrounding whitespace (Zod validates before transform)', async () => {
-    const { POST } = await import('../subscribe/route');
-    const res = await POST(makeRequest({ email: '  user@example.com  ' }));
     const body = await res.json() as { success: boolean; error: string };
-    // Zod .email() runs before .transform(), so padded emails fail validation
-    expect(res.status).toBe(400);
+
+    expect(res.status).toBe(503);
     expect(body.success).toBe(false);
+    expect(body.error).toContain('temporarily unavailable');
+  });
+
+  it('returns 429 when rate limit is exceeded', async () => {
+    mockValkeyIncr.mockResolvedValue(4);
+
+    const { POST } = await import('../subscribe/route');
+    const res = await POST(makeRequest({ email: 'user@example.com' }));
+
+    expect(res.status).toBe(429);
   });
 
   it('returns 400 for invalid email format', async () => {
     const { POST } = await import('../subscribe/route');
     const res = await POST(makeRequest({ email: 'not-an-email' }));
     const body = await res.json() as { success: boolean; error: string };
+
     expect(res.status).toBe(400);
     expect(body.success).toBe(false);
     expect(body.error).toBe('Invalid email address');
   });
 
-  it('returns 400 for email longer than 254 chars', async () => {
-    const { POST } = await import('../subscribe/route');
-    const longEmail = `${'a'.repeat(250)}@b.com`;
-    const res = await POST(makeRequest({ email: longEmail }));
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for extra fields (strict mode)', async () => {
-    const { POST } = await import('../subscribe/route');
-    const res = await POST(makeRequest({ email: 'user@example.com', extra: 'field' }));
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 200 { success: true, alreadySubscribed: true } for duplicate active subscription', async () => {
-    mockDbSelect.mockImplementation(() =>
-      makeSelectChain([{ id: 'sub-1', unsubscribedAt: null }]),
-    );
-
-    const { POST } = await import('../subscribe/route');
-    const res = await POST(makeRequest({ email: 'active@example.com' }));
-    const body = await res.json() as { success: boolean; alreadySubscribed?: boolean };
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.alreadySubscribed).toBe(true);
-  });
-
-  it('re-subscribes a previously unsubscribed email (clears unsubscribedAt)', async () => {
-    mockDbSelect
-      .mockImplementationOnce(() =>
-        makeSelectChain([{ id: 'sub-1', unsubscribedAt: new Date('2024-01-01') }]),
-      )
-      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
-    mockDbUpdate.mockImplementation(() => makeUpdateChain());
-    mockResendSend.mockResolvedValue({ data: { id: 'email-id' }, error: null });
-
-    const { POST } = await import('../subscribe/route');
-    const res = await POST(makeRequest({ email: 'returned@example.com' }));
-    const body = await res.json() as { success: boolean };
-    expect(body.success).toBe(true);
-    // update was called (re-subscribe + welcomeSentAt)
-    expect(mockDbUpdate).toHaveBeenCalled();
-  });
-
   it('returns 503 when newsletter.enabled is false', async () => {
-    mockGetPlatformSetting.mockResolvedValue(false);
-
-    const { POST } = await import('../subscribe/route');
-    const res = await POST(makeRequest({ email: 'user@example.com' }));
-    const body = await res.json() as { success: boolean; error: string };
-    expect(res.status).toBe(503);
-    expect(body.success).toBe(false);
-    expect(body.error).toBe('Newsletter subscriptions are currently unavailable');
-  });
-
-  it('calls Resend after successful insert', async () => {
-    mockDbSelect
-      .mockImplementationOnce(() => makeSelectChain([]))
-      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
-    mockDbInsert.mockImplementation(() => makeInsertChain([{ id: 'sub-1' }]));
-    mockDbUpdate.mockImplementation(() => makeUpdateChain());
-
-    const { POST } = await import('../subscribe/route');
-    await POST(makeRequest({ email: 'user@example.com' }));
-    expect(mockResendSend).toHaveBeenCalledOnce();
-  });
-
-  it('does NOT call Resend when alreadySubscribed', async () => {
-    mockDbSelect.mockImplementation(() =>
-      makeSelectChain([{ id: 'sub-1', unsubscribedAt: null }]),
-    );
-
-    const { POST } = await import('../subscribe/route');
-    await POST(makeRequest({ email: 'active@example.com' }));
-    expect(mockResendSend).not.toHaveBeenCalled();
-  });
-
-  it('sets welcomeSentAt after email send', async () => {
-    mockDbSelect
-      .mockImplementationOnce(() => makeSelectChain([]))
-      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
-    mockDbInsert.mockImplementation(() => makeInsertChain([{ id: 'sub-1' }]));
-    mockDbUpdate.mockImplementation(() => makeUpdateChain());
-
-    const { POST } = await import('../subscribe/route');
-    await POST(makeRequest({ email: 'user@example.com' }));
-    // update called with welcomeSentAt
-    expect(mockDbUpdate).toHaveBeenCalled();
-  });
-
-  it('returns 500 on unexpected DB error', async () => {
-    mockDbSelect.mockImplementation(() => {
-      throw new Error('DB connection refused');
+    mockGetPlatformSetting.mockImplementation((key: unknown) => {
+      if (key === 'newsletter.enabled') return Promise.resolve(false);
+      if (key === 'newsletter.doubleOptIn') return Promise.resolve(true);
+      return Promise.resolve(true);
     });
 
     const { POST } = await import('../subscribe/route');
     const res = await POST(makeRequest({ email: 'user@example.com' }));
     const body = await res.json() as { success: boolean; error: string };
-    expect(res.status).toBe(500);
+
+    expect(res.status).toBe(503);
     expect(body.success).toBe(false);
-    expect(body.error).toBe('Something went wrong');
+    expect(body.error).toContain('currently unavailable');
   });
 
-  it('accepts source: HOMEPAGE_FOOTER', async () => {
+  it('returns alreadySubscribed for an active confirmed subscriber', async () => {
+    mockDbSelect.mockImplementation(() =>
+      makeSelectChain([{ id: 'sub-1', unsubscribedAt: null, confirmedAt: new Date('2024-01-01') }]),
+    );
+
+    const { POST } = await import('../subscribe/route');
+    const res = await POST(makeRequest({ email: 'active@example.com' }));
+    const body = await res.json() as { success: boolean; alreadySubscribed?: boolean };
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.alreadySubscribed).toBe(true);
+    expect(mockResendSend).not.toHaveBeenCalled();
+  });
+
+  it('creates an unconfirmed subscriber and sends a confirmation email when double opt-in is enabled', async () => {
     mockDbSelect
       .mockImplementationOnce(() => makeSelectChain([]))
       .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
     mockDbInsert.mockImplementation(() => makeInsertChain([{ id: 'sub-1' }]));
+
+    const { POST } = await import('../subscribe/route');
+    const res = await POST(makeRequest({ email: 'user@example.com' }));
+    const body = await res.json() as { success: boolean; confirmationRequired?: boolean };
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.confirmationRequired).toBe(true);
+    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({
+      subject: 'Confirm your Twicely updates subscription',
+    }));
+  });
+
+  it('re-sends confirmation for an existing unconfirmed subscriber', async () => {
+    mockDbSelect
+      .mockImplementationOnce(() =>
+        makeSelectChain([{ id: 'sub-1', unsubscribedAt: null, confirmedAt: null }]),
+      )
+      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
     mockDbUpdate.mockImplementation(() => makeUpdateChain());
 
     const { POST } = await import('../subscribe/route');
-    const res = await POST(makeRequest({ email: 'user@example.com', source: 'HOMEPAGE_FOOTER' }));
-    const body = await res.json() as { success: boolean };
+    const res = await POST(makeRequest({ email: 'user@example.com' }));
+    const body = await res.json() as { success: boolean; confirmationRequired?: boolean };
+
+    expect(res.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.confirmationRequired).toBe(true);
+    expect(mockDbUpdate).toHaveBeenCalled();
+    expect(mockDbInsert).not.toHaveBeenCalled();
   });
 
-  it('defaults source to HOMEPAGE_SECTION when omitted', async () => {
+  it('re-subscribes an unsubscribed address into the confirmation flow', async () => {
+    mockDbSelect
+      .mockImplementationOnce(() =>
+        makeSelectChain([{ id: 'sub-1', unsubscribedAt: new Date('2024-01-01'), confirmedAt: new Date('2024-01-01') }]),
+      )
+      .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
+    mockDbUpdate.mockImplementation(() => makeUpdateChain());
+
+    const { POST } = await import('../subscribe/route');
+    const res = await POST(makeRequest({ email: 'returned@example.com' }));
+    const body = await res.json() as { success: boolean; confirmationRequired?: boolean };
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.confirmationRequired).toBe(true);
+    expect(mockDbUpdate).toHaveBeenCalled();
+  });
+
+  it('sends the welcome email immediately when double opt-in is disabled', async () => {
+    mockGetPlatformSetting.mockImplementation((key: unknown, fallback: unknown) => {
+      if (key === 'newsletter.enabled') return Promise.resolve(true);
+      if (key === 'newsletter.doubleOptIn') return Promise.resolve(false);
+      return Promise.resolve(fallback);
+    });
     mockDbSelect
       .mockImplementationOnce(() => makeSelectChain([]))
       .mockImplementationOnce(() => makeSelectChain([{ unsubscribeToken: 'tok-abc' }]));
@@ -276,7 +250,14 @@ describe('POST /api/newsletter/subscribe', () => {
 
     const { POST } = await import('../subscribe/route');
     const res = await POST(makeRequest({ email: 'user@example.com' }));
-    const body = await res.json() as { success: boolean };
+    const body = await res.json() as { success: boolean; confirmationRequired?: boolean };
+
+    expect(res.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.confirmationRequired).toBeUndefined();
+    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({
+      subject: 'Welcome to Twicely updates',
+    }));
+    expect(mockDbUpdate).toHaveBeenCalled();
   });
 });

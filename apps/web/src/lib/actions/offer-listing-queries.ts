@@ -29,13 +29,13 @@ export async function getActiveOffersForListingAction(
     return { success: false, error: 'Not authenticated' };
   }
 
+  if (!ability.can('read', sub('Offer', { sellerId: session.userId }))) {
+    return { success: false, error: 'Not authorized' };
+  }
+
   const parsed = getOffersForListingSchema.safeParse({ listingId });
   if (!parsed.success) {
     return { success: false, error: 'Invalid input' };
-  }
-
-  if (!ability.can('read', sub('Offer', { sellerId: session.userId }))) {
-    return { success: false, error: 'Not authorized' };
   }
 
   const offers = await getActiveOffersForListing(parsed.data.listingId);

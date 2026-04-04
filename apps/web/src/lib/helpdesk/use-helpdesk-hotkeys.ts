@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // =============================================================================
 // HELPDESK HOTKEYS HOOK
@@ -22,12 +22,16 @@ interface HotkeyHandlers {
 }
 
 export function useHelpdeskHotkeys(handlers: HotkeyHandlers): void {
+  const handlersRef = useRef(handlers);
+  useEffect(() => { handlersRef.current = handlers; });
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const h = handlersRef.current;
       // Cmd/Ctrl+Shift+R — resolve (fires even in inputs per canonical §6.2)
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "r") {
         e.preventDefault();
-        handlers.resolve();
+        h.resolve();
         return;
       }
 
@@ -37,22 +41,21 @@ export function useHelpdeskHotkeys(handlers: HotkeyHandlers): void {
       if (target.isContentEditable) return;
 
       switch (e.key) {
-        case "[": case "ArrowLeft": handlers.navigatePrev(); break;
-        case "]": case "ArrowRight": handlers.navigateNext(); break;
-        case "r": handlers.focusReply(); break;
-        case "n": handlers.focusNote(); break;
-        case "e": handlers.escalate(); break;
-        case "m": handlers.toggleMacros(); break;
-        case "?": handlers.toggleShortcutHelp(); break;
-        case "1": handlers.setPriority("CRITICAL"); break;
-        case "2": handlers.setPriority("URGENT"); break;
-        case "3": handlers.setPriority("HIGH"); break;
-        case "4": handlers.setPriority("NORMAL"); break;
-        case "5": handlers.setPriority("LOW"); break;
+        case "[": case "ArrowLeft": h.navigatePrev(); break;
+        case "]": case "ArrowRight": h.navigateNext(); break;
+        case "r": h.focusReply(); break;
+        case "n": h.focusNote(); break;
+        case "e": h.escalate(); break;
+        case "m": h.toggleMacros(); break;
+        case "?": h.toggleShortcutHelp(); break;
+        case "1": h.setPriority("CRITICAL"); break;
+        case "2": h.setPriority("URGENT"); break;
+        case "3": h.setPriority("HIGH"); break;
+        case "4": h.setPriority("NORMAL"); break;
+        case "5": h.setPriority("LOW"); break;
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handlers]);
+  }, []);
 }

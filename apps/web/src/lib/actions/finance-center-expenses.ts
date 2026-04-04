@@ -64,11 +64,6 @@ function resolveUserId(session: { delegationId: string | null; onBehalfOfSellerI
 export async function createExpenseAction(
   input: unknown,
 ): Promise<CreateExpenseResponse> {
-  const parsed = createExpenseSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -76,6 +71,11 @@ export async function createExpenseAction(
 
   if (!ability.can('create', sub('Expense', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = createExpenseSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -128,11 +128,6 @@ export async function createExpenseAction(
 export async function updateExpenseAction(
   input: unknown,
 ): Promise<UpdateExpenseResponse> {
-  const parsed = updateExpenseSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -140,6 +135,11 @@ export async function updateExpenseAction(
 
   if (!ability.can('update', sub('Expense', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = updateExpenseSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -209,11 +209,6 @@ export async function updateExpenseAction(
 export async function deleteExpenseAction(
   input: unknown,
 ): Promise<DeleteExpenseResponse> {
-  const parsed = deleteExpenseSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -221,6 +216,11 @@ export async function deleteExpenseAction(
 
   if (!ability.can('delete', sub('Expense', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = deleteExpenseSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -250,11 +250,6 @@ export async function deleteExpenseAction(
 export async function listExpensesAction(
   input: unknown,
 ): Promise<ListExpensesResponse> {
-  const parsed = listExpensesSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -262,6 +257,11 @@ export async function listExpensesAction(
 
   if (!ability.can('read', sub('Expense', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = listExpensesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);

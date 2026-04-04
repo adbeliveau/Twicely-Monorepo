@@ -60,17 +60,17 @@ const delistSchema = z.object({ projectionId: zodId }).strict();
 export async function publishListings(
   input: unknown,
 ): Promise<ActionResult<EnqueueSummary>> {
-  const parsed = publishListingsSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
   if (!ability.can('create', sub('ChannelProjection', { sellerId }))) return { success: false, error: 'Forbidden' };
+
+  const parsed = publishListingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
 
   const { listingIds, channels } = parsed.data;
   const totalNeeded = listingIds.length * channels.length;
@@ -131,17 +131,17 @@ export async function publishListings(
  * Creates a DELIST crossJob and enqueues to BullMQ. Returns immediately.
  */
 export async function delistFromChannel(input: unknown): Promise<ActionResult> {
-  const parsed = delistSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
   if (!ability.can('delete', sub('ChannelProjection', { sellerId }))) return { success: false, error: 'Forbidden' };
+
+  const parsed = delistSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
 
   const [projection] = await db
     .select()
@@ -225,17 +225,17 @@ export async function delistFromChannel(input: unknown): Promise<ActionResult> {
  * If the projection is ACTIVE and sync is enabled, enqueues an UPDATE job.
  */
 export async function updateProjectionOverrides(input: unknown): Promise<ActionResult> {
-  const parsed = updateProjectionOverridesSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
   if (!ability.can('update', sub('ChannelProjection', { sellerId }))) return { success: false, error: 'Forbidden' };
+
+  const parsed = updateProjectionOverridesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
 
   const [projection] = await db
     .select({ id: channelProjection.id, status: channelProjection.status, syncEnabled: channelProjection.syncEnabled, overridesJson: channelProjection.overridesJson, externalId: channelProjection.externalId })

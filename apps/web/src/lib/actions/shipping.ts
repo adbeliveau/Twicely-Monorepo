@@ -41,18 +41,19 @@ export interface PurchaseShippingLabelResult {
 export async function fetchShippingRates(
   orderId: string
 ): Promise<FetchShippingRatesResult> {
+  const { ability, session } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  if (!ability.can('read', sub('Shipment', { sellerId: userId }))) {
+    return { success: false, error: 'Forbidden' };
+  }
+
   const parsedInput = fetchRatesSchema.safeParse({ orderId });
   if (!parsedInput.success) {
     return { success: false, error: parsedInput.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {
-    const { ability, session } = await authorize();
-    if (!session) return { success: false, error: 'Unauthorized' };
-    const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
-    if (!ability.can('read', sub('Shipment', { sellerId: userId }))) {
-      return { success: false, error: 'Forbidden' };
-    }
 
     // Get order detail and verify seller ownership
     const orderData = await getOrderDetail(orderId, userId);
@@ -142,18 +143,19 @@ export async function purchaseShippingLabel(
   orderId: string,
   rateObjectId: string
 ): Promise<PurchaseShippingLabelResult> {
+  const { ability, session } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  if (!ability.can('create', sub('Shipment', { sellerId: userId }))) {
+    return { success: false, error: 'Forbidden' };
+  }
+
   const parsedInput = purchaseLabelSchema.safeParse({ orderId, rateObjectId });
   if (!parsedInput.success) {
     return { success: false, error: parsedInput.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {
-    const { ability, session } = await authorize();
-    if (!session) return { success: false, error: 'Unauthorized' };
-    const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
-    if (!ability.can('create', sub('Shipment', { sellerId: userId }))) {
-      return { success: false, error: 'Forbidden' };
-    }
 
     // Get order detail and verify seller ownership
     const orderData = await getOrderDetail(orderId, userId);

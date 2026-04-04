@@ -65,11 +65,6 @@ function resolveUserId(session: {
 export async function generateReportAction(
   input: unknown,
 ): Promise<GenerateReportResponse> {
-  const parsed = generateReportSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -82,6 +77,11 @@ export async function generateReportAction(
 
   if (!ability.can('create', sub('FinancialReport', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = generateReportSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const financeTier = await getFinanceTier(userId);
@@ -173,11 +173,6 @@ export async function generateReportAction(
 export async function listReportsAction(
   input: unknown,
 ): Promise<ListReportsResponse> {
-  const parsed = listReportsSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -185,6 +180,11 @@ export async function listReportsAction(
 
   if (!ability.can('read', sub('FinancialReport', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = listReportsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {
@@ -203,11 +203,6 @@ export async function listReportsAction(
 export async function getReportAction(
   input: unknown,
 ): Promise<GetReportResponse> {
-  const parsed = getReportSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -215,6 +210,11 @@ export async function getReportAction(
 
   if (!ability.can('read', sub('FinancialReport', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = getReportSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {
@@ -234,11 +234,6 @@ export async function getReportAction(
 export async function deleteReportAction(
   input: unknown,
 ): Promise<DeleteReportResponse> {
-  const parsed = deleteReportSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -251,6 +246,11 @@ export async function deleteReportAction(
 
   if (!ability.can('delete', sub('FinancialReport', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = deleteReportSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {

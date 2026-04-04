@@ -42,12 +42,14 @@ export function VideoTrimmer({ videoFile, minDurationSeconds, maxDurationSeconds
     setObjectUrl(URL.createObjectURL(videoFile));
   }
 
+  const objectUrlRef = useRef(objectUrl);
+  useEffect(() => { objectUrlRef.current = objectUrl; }, [objectUrl]);
+
   useEffect(() => {
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       if (trackRef.current !== null) { clearInterval(trackRef.current); trackRef.current = null; }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
   }, []);
 
   const handleLoadedMetadata = useCallback(() => {

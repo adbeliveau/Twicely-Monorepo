@@ -39,8 +39,9 @@ export async function linkArticleToCase(
 export async function submitArticleFeedback(
   formData: unknown
 ): Promise<ActionResult> {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Not authenticated' };
+  if (!ability.can('read', 'KbArticle')) return { success: false, error: 'Not authorized' };
 
   const parsed = submitArticleFeedbackSchema.safeParse(formData);
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };

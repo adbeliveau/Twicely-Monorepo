@@ -1,13 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { db } from '@twicely/db';
-import { affiliate, auditEvent } from '@twicely/db/schema';
+import { affiliate, auditEvent, staffUser, staffUserRole } from '@twicely/db/schema';
 import { authorize, sub } from '@twicely/casl';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getAffiliateByUserId } from '@/lib/queries/affiliate';
 import { applyInfluencerSchema } from '@/lib/validations/affiliate';
+import { notify } from '@twicely/notifications/service';
 
 interface ApplyInfluencerResult {
   success: boolean;
@@ -56,6 +57,7 @@ export async function applyForInfluencer(input: unknown): Promise<ApplyInfluence
   const serializedNote = JSON.stringify(applicationData);
 
   const existing = await getAffiliateByUserId(session.userId);
+  let affiliateId: string;
 
   if (existing) {
     if (existing.tier === 'INFLUENCER') {
@@ -84,6 +86,8 @@ export async function applyForInfluencer(input: unknown): Promise<ApplyInfluence
       severity: 'LOW',
       detailsJson: { tier: 'INFLUENCER', previousTier: 'COMMUNITY' },
     });
+
+    affiliateId = existing.id;
   } else {
     // No existing affiliate — create new INFLUENCER PENDING record
     const commissionRateBps = await getPlatformSetting('affiliate.influencer.defaultCommissionRateBps', 2500);
@@ -120,8 +124,35 @@ export async function applyForInfluencer(input: unknown): Promise<ApplyInfluence
       severity: 'LOW',
       detailsJson: { tier: 'INFLUENCER', previousTier: null },
     });
+
+    affiliateId = inserted.id;
   }
+
+  // Notify staff with FINANCE or ADMIN roles about the new application
+  void notifyStaffByRoles(['FINANCE', 'ADMIN'], 'affiliate.influencer_application_received', {
+    applicantName: session.email,
+    affiliateId,
+  });
 
   revalidatePath('/my/selling/affiliate');
   return { success: true };
+}
+
+/** Notify all active staff members with any of the given roles */
+async function notifyStaffByRoles(
+  roles: (typeof staffUserRole.$inferInsert.role)[],
+  templateKey: Parameters<typeof notify>[1],
+  vars: Record<string, string>,
+): Promise<void> {
+  const activeRoles = await db
+    .select({ staffUserId: staffUserRole.staffUserId })
+    .from(staffUserRole)
+    .innerJoin(staffUser, eq(staffUserRole.staffUserId, staffUser.id))
+    .where(and(
+      inArray(staffUserRole.role, roles),
+      isNull(staffUserRole.revokedAt),
+      eq(staffUser.isActive, true),
+    ));
+  const uniqueIds = [...new Set(activeRoles.map((r) => r.staffUserId))];
+  await Promise.all(uniqueIds.map((id) => notify(id, templateKey, vars)));
 }

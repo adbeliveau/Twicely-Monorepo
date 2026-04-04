@@ -44,9 +44,6 @@ export function useConversationRealtime({
     const centrifugoUrl = process.env.NEXT_PUBLIC_CENTRIFUGO_URL;
 
     if (!centrifugoUrl) {
-      // Warn once — no crash, just no real-time
-      // eslint-disable-next-line no-console
-      console.warn('[useConversationRealtime] NEXT_PUBLIC_CENTRIFUGO_URL not set — real-time disabled');
       return;
     }
 

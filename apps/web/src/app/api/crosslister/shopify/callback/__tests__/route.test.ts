@@ -11,6 +11,8 @@ import { createHmac } from 'crypto';
 const mockDbSelect = vi.fn();
 const mockDbInsert = vi.fn();
 const mockDbUpdate = vi.fn();
+const mockCookieGet = vi.fn();
+const mockCookieDelete = vi.fn();
 
 vi.mock('@twicely/db', () => ({
   db: {
@@ -33,19 +35,18 @@ vi.mock('@twicely/db/schema', () => ({
   platformSetting: { key: 'key', value: 'value' },
 }));
 
-const mockGetSession = vi.fn();
-vi.mock('@twicely/auth/server', () => ({
-  auth: { api: { getSession: mockGetSession } },
+const mockAuthorize = vi.fn();
+const mockCan = vi.fn();
+vi.mock('@twicely/casl', () => ({
+  authorize: mockAuthorize,
+  sub: vi.fn().mockImplementation((_type: string, val: unknown) => val),
 }));
 
 vi.mock('next/headers', () => ({
-  headers: vi.fn().mockResolvedValue(new Headers()),
-}));
-
-const mockCan = vi.fn();
-vi.mock('@twicely/casl', () => ({
-  defineAbilitiesFor: vi.fn().mockReturnValue({ can: mockCan }),
-  sub: vi.fn().mockImplementation((_type: string, val: unknown) => val),
+  cookies: vi.fn().mockResolvedValue({
+    get: mockCookieGet,
+    delete: mockCookieDelete,
+  }),
 }));
 
 // Mock the ShopifyConnector module — the shared mockAuthFn is accessed via
@@ -139,8 +140,12 @@ const successAuthResult = {
 describe('GET /api/crosslister/shopify/callback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetSession.mockResolvedValue({
-      user: { id: 'seller-1', email: 'seller@example.com', isSeller: true },
+    mockCookieGet.mockReturnValue({
+      value: JSON.stringify({ state: 'state', shopDomain: 'my-store.myshopify.com' }),
+    });
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'seller-1', delegationId: null, onBehalfOfSellerId: null },
+      ability: { can: mockCan },
     });
     mockCan.mockReturnValue(true);
     mockAuthFn.mockResolvedValue(successAuthResult);
@@ -182,7 +187,7 @@ describe('GET /api/crosslister/shopify/callback', () => {
 
   it('redirects to /auth/login when no session exists', async () => {
     setupSecretMock();
-    mockGetSession.mockResolvedValue(null);
+    mockAuthorize.mockResolvedValue({ session: null, ability: { can: mockCan } });
     const { GET } = await import('../route');
     const request = makeRequest({ code: 'auth-code', shop: 'my-store.myshopify.com', state: 'state' });
     const response = await GET(request as never);
@@ -204,6 +209,11 @@ describe('GET /api/crosslister/shopify/callback', () => {
     const { GET } = await import('../route');
     const request = makeRequest({ code: 'auth-code', shop: 'my-store.myshopify.com', state: 'state' });
     const response = await GET(request as never);
+    expect(mockAuthFn).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'OAUTH',
+      code: 'auth-code',
+      shopDomain: 'my-store.myshopify.com',
+    }));
     expect(mockDbInsert).toHaveBeenCalled();
     expect(response.headers.get('Location')).toContain('connected=shopify');
   });
@@ -254,6 +264,37 @@ describe('GET /api/crosslister/shopify/callback', () => {
       state: 'state',
     });
     const request = new Request(`http://localhost/api/crosslister/shopify/callback?${params.toString()}`);
+    const response = await GET(request as never);
+    expect(response.headers.get('Location')).toContain('error=auth_failed');
+  });
+
+  it('redirects to error URL when OAuth state cookie is missing', async () => {
+    setupSecretMock();
+    mockCookieGet.mockReturnValue(undefined);
+    const { GET } = await import('../route');
+    const request = makeRequest({ code: 'auth-code', shop: 'my-store.myshopify.com', state: 'state' });
+    const response = await GET(request as never);
+    expect(response.headers.get('Location')).toContain('error=auth_failed');
+  });
+
+  it('redirects to error URL when OAuth state does not match the cookie', async () => {
+    setupSecretMock();
+    mockCookieGet.mockReturnValue({
+      value: JSON.stringify({ state: 'other-state', shopDomain: 'my-store.myshopify.com' }),
+    });
+    const { GET } = await import('../route');
+    const request = makeRequest({ code: 'auth-code', shop: 'my-store.myshopify.com', state: 'state' });
+    const response = await GET(request as never);
+    expect(response.headers.get('Location')).toContain('error=auth_failed');
+  });
+
+  it('redirects to error URL when shop domain does not match the cookie', async () => {
+    setupSecretMock();
+    mockCookieGet.mockReturnValue({
+      value: JSON.stringify({ state: 'state', shopDomain: 'attacker-store.myshopify.com' }),
+    });
+    const { GET } = await import('../route');
+    const request = makeRequest({ code: 'auth-code', shop: 'my-store.myshopify.com', state: 'state' });
     const response = await GET(request as never);
     expect(response.headers.get('Location')).toContain('error=auth_failed');
   });

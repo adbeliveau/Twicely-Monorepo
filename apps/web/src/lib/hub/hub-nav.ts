@@ -23,6 +23,7 @@ export type HubNavItem = {
   requiresScope?: string;                    // For staff: delegated access scope
   external?: boolean;                        // Links outside /my shell (e.g., /h)
   disabled?: boolean;                        // Grays out item, prevents navigation
+  exact?: boolean;                           // Only highlight on exact pathname match
 };
 
 // ─── Navigation Registry ────────────────────────────────────────────────────
@@ -51,6 +52,8 @@ export const HUB_NAV: HubNavSection[] = [
       { key: 'saved-searches', label: 'Saved Searches', href: '/my/buying/searches', icon: 'Search' },
       { key: 'my-reviews', label: 'My Reviews', href: '/my/buying/reviews', icon: 'Star' },
       { key: 'following', label: 'Following', href: '/my/buying/following', icon: 'UserPlus', disabled: false },
+      { key: 'alerts', label: 'Price Alerts', href: '/my/buying/alerts', icon: 'Bell' },
+      { key: 'history', label: 'History', href: '/my/buying/history', icon: 'Clock' },
     ],
   },
 
@@ -121,7 +124,7 @@ export const HUB_NAV: HubNavSection[] = [
     parent: 'selling',
     items: [
       { key: 'finance-overview', label: 'Overview', href: '/my/selling/finances', icon: 'BarChart2',
-        requiresScope: 'finances.view' },
+        requiresScope: 'finances.view', exact: true },
       { key: 'transactions', label: 'Transactions', href: '/my/selling/finances/transactions', icon: 'FileText',
         requiresScope: 'finances.view' },
       { key: 'payouts', label: 'Payouts', href: '/my/selling/finances/payouts', icon: 'Banknote',

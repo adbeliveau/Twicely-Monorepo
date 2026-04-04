@@ -114,6 +114,9 @@ async function dispatchConnectEvent(event: Stripe.Event): Promise<WebhookResult>
     case 'payout.failed':
       return handlePayoutFailed(event.data.object as Stripe.Payout, event.account);
 
+    case 'payout.canceled':
+      return handlePayoutCanceled(event.data.object as Stripe.Payout, event.account);
+
     default:
       return { handled: false };
   }
@@ -393,6 +396,45 @@ async function handlePayoutFailed(payout: Stripe.Payout, stripeAccountId: string
     return { handled: true };
   } catch (error) {
     logger.error('Error handling payout.failed', { error });
+    return { handled: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Payout canceled — payout was canceled before reaching the seller's bank.
+ * Sets status to FAILED with a clear cancellation reason.
+ */
+async function handlePayoutCanceled(payout: Stripe.Payout, stripeAccountId: string | undefined): Promise<WebhookResult> {
+  if (!stripeAccountId) {
+    return { handled: true };
+  }
+  try {
+    const [seller] = await db
+      .select({ userId: sellerProfile.userId })
+      .from(sellerProfile)
+      .where(eq(sellerProfile.stripeAccountId, stripeAccountId))
+      .limit(1);
+
+    if (!seller) {
+      return { handled: true };
+    }
+
+    await db.update(payoutTable)
+      .set({ status: 'FAILED', failureReason: 'Payout canceled by Stripe', failedAt: new Date(), updatedAt: new Date() })
+      .where(eq(payoutTable.stripePayoutId, payout.id));
+
+    const amountFormatted = `$${(payout.amount / 100).toFixed(2)}`;
+    void notify(seller.userId, 'seller.payout.failed', { amountFormatted, failureReason: 'Your payout was canceled. Please contact support if this was unexpected.' }).catch(() => {});
+
+    logger.warn('[webhook] payout.canceled — seller notified', {
+      stripeAccountId,
+      payoutId: payout.id,
+      amountCents: payout.amount,
+    });
+
+    return { handled: true };
+  } catch (error) {
+    logger.error('Error handling payout.canceled', { error });
     return { handled: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

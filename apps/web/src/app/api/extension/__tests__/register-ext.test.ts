@@ -5,24 +5,33 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT, jwtVerify } from 'jose';
+import { jwtVerify } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
 
-const mockDbSelect = vi.fn();
-vi.mock('@twicely/db', () => ({ db: { select: mockDbSelect } }));
-
-vi.mock('@twicely/db/schema', () => ({
-  user: { id: 'id', displayName: 'display_name', name: 'name', image: 'image', avatarUrl: 'avatar_url' },
+const { MockExtAuthError, mockVerify, mockIssueToken } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockVerify: vi.fn(),
+  mockIssueToken: vi.fn(),
 }));
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((_col: unknown, _val: unknown) => `eq(${String(_col)},${String(_val)})`),
+vi.mock('@/lib/auth/extension-auth', () => ({
+  verifyExtensionToken: mockVerify,
+  issueExtensionToken: mockIssueToken,
+  ExtensionAuthError: MockExtAuthError,
 }));
 
-const mockLogInfo = vi.fn();
+// ─── Other mocks ─────────────────────────────────────────────────────────────
+
 vi.mock('@twicely/logger', () => ({
-  logger: { info: mockLogInfo, error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock('@/lib/queries/platform-settings', () => ({
@@ -41,24 +50,20 @@ function makeRequest(body: unknown): Request {
   });
 }
 
-async function makeTokenWithPayload(payload: Record<string, unknown>, expiresIn = '5m'): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT(payload)
+async function signJwt(claims: Record<string, unknown>, purpose: string, expiresIn: string): Promise<string> {
+  const { SignJWT } = await import('jose');
+  const secret = new TextEncoder().encode(TEST_SECRET);
+  return new SignJWT({ ...claims, purpose })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(expiresIn)
-    .sign(s);
+    .sign(secret);
 }
 
-function setupUserRow(row: Record<string, unknown>): void {
-  mockDbSelect.mockReturnValue({
-    from: vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        limit: vi.fn().mockResolvedValue([row]),
-      }),
-    }),
-  });
-}
+const DEFAULT_CONTEXT = {
+  claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+  principal: { userId: 'user-abc', displayName: 'Jane Seller', name: 'Jane', image: null, avatarUrl: null },
+};
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -67,58 +72,62 @@ describe('POST /api/extension/register — extended', () => {
     vi.clearAllMocks();
     vi.resetModules();
     vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
-
-    setupUserRow({ displayName: 'Jane Seller', name: 'Jane', image: null, avatarUrl: null });
+    mockVerify.mockResolvedValue(DEFAULT_CONTEXT);
+    mockIssueToken.mockImplementation(async (claims: Record<string, unknown>, purpose: string, expiresIn: string) => {
+      return signJwt(claims, purpose, expiresIn);
+    });
   });
 
   it('returns 403 when registration token payload has no userId field', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration' });
+    mockVerify.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '0.1.0' }));
+    const res = await POST(makeRequest({ registrationToken: 'bad-token', extensionVersion: '0.1.0' }));
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid token');
   });
 
   it('returns 403 when userId in payload is numeric (not a string)', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 99999 });
+    mockVerify.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '0.1.0' }));
+    const res = await POST(makeRequest({ registrationToken: 'bad-userid-token', extensionVersion: '0.1.0' }));
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid token');
   });
 
   it('returns 403 when userId is empty string', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: '' });
+    mockVerify.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '0.1.0' }));
+    const res = await POST(makeRequest({ registrationToken: 'empty-userid', extensionVersion: '0.1.0' }));
     expect(res.status).toBe(403);
   });
 
   it('prefers avatarUrl over image in response when both present', async () => {
-    setupUserRow({ displayName: 'Jane', name: 'Jane', image: 'http://img.co/img.jpg', avatarUrl: 'http://cdn.co/avatar.jpg' });
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 'user-abc' });
+    mockVerify.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: 'Jane', name: 'Jane', image: 'http://img.co/img.jpg', avatarUrl: 'http://cdn.co/avatar.jpg' },
+    });
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '0.1.0' }));
+    const res = await POST(makeRequest({ registrationToken: 'valid-token', extensionVersion: '0.1.0' }));
     const body = await res.json() as { avatarUrl: string };
-    // avatarUrl ?? image → avatarUrl takes priority
     expect(body.avatarUrl).toBe('http://cdn.co/avatar.jpg');
   });
 
   it('falls back to image when avatarUrl is null', async () => {
-    setupUserRow({ displayName: 'Jane', name: 'Jane', image: 'http://img.co/img.jpg', avatarUrl: null });
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 'user-abc' });
+    mockVerify.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: 'Jane', name: 'Jane', image: 'http://img.co/img.jpg', avatarUrl: null },
+    });
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '0.1.0' }));
+    const res = await POST(makeRequest({ registrationToken: 'valid-token', extensionVersion: '0.1.0' }));
     const body = await res.json() as { avatarUrl: string };
     expect(body.avatarUrl).toBe('http://img.co/img.jpg');
   });
 
   it('generated extension token has 30-day duration', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 'user-abc' });
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '0.1.0' }));
+    const res = await POST(makeRequest({ registrationToken: 'valid-token', extensionVersion: '0.1.0' }));
     const body = await res.json() as { token: string };
 
     const secret = new TextEncoder().encode(TEST_SECRET);
@@ -130,10 +139,9 @@ describe('POST /api/extension/register — extended', () => {
   });
 
   it('rejects extra fields in request body (strict Zod schema)', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 'user-abc' });
     const { POST } = await import('../register/route');
     const res = await POST(makeRequest({
-      registrationToken: token,
+      registrationToken: 'valid-token',
       extensionVersion: '0.1.0',
       unexpectedField: 'extra',
     }));
@@ -143,17 +151,15 @@ describe('POST /api/extension/register — extended', () => {
   });
 
   it('rejects empty string extensionVersion (Zod min(1))', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 'user-abc' });
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '' }));
+    const res = await POST(makeRequest({ registrationToken: 'valid-token', extensionVersion: '' }));
     expect(res.status).toBe(400);
   });
 
   it('expiresAt is milliseconds-epoch for 30 days from now', async () => {
     const before = Date.now();
-    const token = await makeTokenWithPayload({ purpose: 'extension-registration', userId: 'user-abc' });
     const { POST } = await import('../register/route');
-    const res = await POST(makeRequest({ registrationToken: token, extensionVersion: '1.2.3' }));
+    const res = await POST(makeRequest({ registrationToken: 'valid-token', extensionVersion: '1.2.3' }));
     const after = Date.now();
     const body = await res.json() as { expiresAt: number };
 

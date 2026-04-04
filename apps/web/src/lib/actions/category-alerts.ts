@@ -30,14 +30,14 @@ export interface CategoryAlertFilters {
 export async function saveCategoryAlertAction(
   filters: CategoryAlertFilters
 ): Promise<SaveAlertResult> {
+  const { session, ability } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  if (!ability.can('create', 'Notification')) return { success: false, error: 'Not authorized' };
+
   const parsed = saveCategoryAlertSchema.safeParse(filters);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
-
-  const { session, ability } = await authorize();
-  if (!session) return { success: false, error: 'Unauthorized' };
-  if (!ability.can('create', 'Notification')) return { success: false, error: 'Not authorized' };
 
   try {
     // Check if user already has an alert for this category
@@ -102,14 +102,14 @@ interface DeleteAlertResult {
  * Delete a category alert by ID (owner check).
  */
 export async function deleteCategoryAlertAction(alertId: string): Promise<DeleteAlertResult> {
+  const { session, ability } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  if (!ability.can('delete', 'Notification')) return { success: false, error: 'Not authorized' };
+
   const parsed = deleteCategoryAlertSchema.safeParse({ alertId });
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
-
-  const { session, ability } = await authorize();
-  if (!session) return { success: false, error: 'Unauthorized' };
-  if (!ability.can('delete', 'Notification')) return { success: false, error: 'Not authorized' };
 
   try {
     const [existing] = await db

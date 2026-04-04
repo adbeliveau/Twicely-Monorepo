@@ -40,24 +40,24 @@ interface PurchaseAutomationResult {
 export async function purchaseAutomationAction(
   input: PurchaseAutomationInput,
 ): Promise<PurchaseAutomationResult> {
-  // 1. Validate input
-  const parsed = purchaseAutomationSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-  const { billingCycle } = parsed.data;
-
-  // 2. authorize() session
+  // 1. authorize() session
   const { ability, session } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
   }
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
-  // 3. CASL check
+  // 2. CASL check
   if (!ability.can('manage', sub('AutomationSetting', { sellerId: userId }))) {
     return { success: false, error: 'Forbidden' };
   }
+
+  // 3. Validate input
+  const parsed = purchaseAutomationSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
+  }
+  const { billingCycle } = parsed.data;
 
   // 4. Get sellerProfileId
   const sellerProfileId = await getSellerProfileIdByUserId(userId);

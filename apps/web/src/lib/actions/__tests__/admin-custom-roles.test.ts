@@ -21,6 +21,10 @@ vi.mock('drizzle-orm', () => ({
   count: vi.fn(() => ({ count: 'count' })),
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
+
 vi.mock('@twicely/db/schema', () => ({
   customRole: {
     id: 'id', name: 'name', code: 'code', description: 'description',

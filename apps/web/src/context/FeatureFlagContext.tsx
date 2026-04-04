@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
+import { clientLogger } from "@/lib/client-logger";
 
 type FeatureFlagContextType = {
   flags: Record<string, boolean>;
@@ -27,11 +28,11 @@ export const FeatureFlagProvider: React.FC<{ children: React.ReactNode }> = ({
           const data = await res.json();
           setFlags(data.flags || {});
         } else {
-          console.warn("Feature flags API returned non-JSON response");
+          clientLogger.warn("Feature flags API returned non-JSON response");
         }
       }
     } catch (error) {
-      console.error("Failed to fetch feature flags:", error);
+      clientLogger.error("Failed to fetch feature flags", error);
     } finally {
       setIsLoading(false);
     }

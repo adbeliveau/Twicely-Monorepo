@@ -95,13 +95,10 @@ export const ADMIN_NAV_EXTENDED: AdminNavItem[] = [
     href: '/roles',
     icon: 'UserCog',
     roles: ['ADMIN'],
-  },
-  {
-    key: 'staff',
-    label: 'Staff',
-    href: '/roles/staff',
-    icon: 'Users',
-    roles: ['ADMIN'],
+    children: [
+      { key: 'roles-overview', label: 'Roles Overview', href: '/roles', icon: 'UserCog', roles: ['ADMIN'] },
+      { key: 'staff', label: 'Staff', href: '/roles/staff', icon: 'Users', roles: ['ADMIN'] },
+    ],
   },
   {
     key: 'audit-log',

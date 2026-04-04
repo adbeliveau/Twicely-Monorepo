@@ -37,6 +37,7 @@ export interface OAuthAuthInput {
   code: string;
   redirectUri: string;
   state?: string;
+  shopDomain?: string;
   codeVerifier?: string;
 }
 

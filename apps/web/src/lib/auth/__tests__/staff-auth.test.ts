@@ -1,7 +1,13 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
+const mockValkeyClient = {
+  incr: vi.fn().mockResolvedValue(1),
+  expire: vi.fn().mockResolvedValue(1),
+  del: vi.fn().mockResolvedValue(1),
+};
+const mockGetValkeyClient = vi.fn().mockReturnValue(mockValkeyClient);
 vi.mock('@twicely/db/cache', () => ({
-  getValkeyClient: vi.fn().mockReturnValue({ incr: vi.fn().mockResolvedValue(1), expire: vi.fn().mockResolvedValue(1), del: vi.fn().mockResolvedValue(1) }),
+  getValkeyClient: mockGetValkeyClient,
 }));
 vi.mock('@twicely/logger', () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
@@ -62,6 +68,7 @@ const mockRoleRows = [
 describe('loginStaff', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetValkeyClient.mockReturnValue(mockValkeyClient);
 
     // Default: user not found
     mockDb.limit.mockResolvedValue([]);
@@ -136,6 +143,18 @@ describe('loginStaff', () => {
     await expect(
       loginStaff('unknown@hub.twicely.co', 'password123')
     ).rejects.toThrow('Invalid email or password');
+  });
+
+  test('should deny login when rate limiter is unavailable', async () => {
+    mockGetValkeyClient.mockImplementation(() => {
+      throw new Error('Valkey unavailable');
+    });
+
+    const { loginStaff } = await import('../staff-auth');
+
+    await expect(
+      loginStaff('admin@hub.twicely.co', 'password123')
+    ).rejects.toThrow('Login temporarily unavailable. Please try again later.');
   });
 });
 

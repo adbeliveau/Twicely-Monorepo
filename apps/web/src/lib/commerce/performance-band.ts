@@ -139,8 +139,7 @@ function computeMetricScore(
  * Apply Bayesian smoothing to review average
  * Pulls averages toward 3.5 for sellers with few reviews
  */
-function applyBayesianSmoothing(average: number, reviewCount: number, smoothingFactor: number): number {
-  const priorMean = 3.5;
+function applyBayesianSmoothing(average: number, reviewCount: number, smoothingFactor: number, priorMean: number): number {
   return (reviewCount * average + smoothingFactor * priorMean) / (reviewCount + smoothingFactor);
 }
 
@@ -165,10 +164,15 @@ export async function computePerformanceBand(
   metrics: SellerMetrics,
   previousScore?: number
 ): Promise<PerformanceResult> {
-  const [WEIGHTS, smoothingFactor, newSellerThreshold] = await Promise.all([
+  const [WEIGHTS, smoothingFactor, newSellerThreshold, priorMean, trendModifierMax, trendDampeningFactor, defaultReviewScore, defaultResponseTimeScore] = await Promise.all([
     getWeights(),
     getSmoothingFactor(),
     getPlatformSetting<number>('score.newSellerOrderThreshold', 10),
+    getPlatformSetting<number>('score.priorMean', 3.5),
+    getPlatformSetting<number>('score.trendModifierMax', 0.05),
+    getPlatformSetting<number>('score.trendDampeningFactor', 0.5),
+    getPlatformSetting<number>('score.defaultReviewScore', 500),
+    getPlatformSetting<number>('score.defaultResponseTimeScore', 700),
   ]);
   const isNew = metrics.totalOrders < newSellerThreshold;
 
@@ -188,9 +192,9 @@ export async function computePerformanceBand(
   );
 
   // Review score with Bayesian smoothing
-  let reviewScore = 500; // Default for no reviews
+  let reviewScore = defaultReviewScore; // Default for no reviews
   if (metrics.reviewAverage !== null) {
-    const smoothedAverage = applyBayesianSmoothing(metrics.reviewAverage, metrics.totalOrders, smoothingFactor);
+    const smoothedAverage = applyBayesianSmoothing(metrics.reviewAverage, metrics.totalOrders, smoothingFactor, priorMean);
     reviewScore = computeMetricScore(
       smoothedAverage,
       TARGETS.reviewAverage,
@@ -200,7 +204,7 @@ export async function computePerformanceBand(
   }
 
   // Response time score
-  let responseTimeScore = 700; // Default for no data
+  let responseTimeScore = defaultResponseTimeScore; // Default for no data
   if (metrics.responseTimeHours !== null) {
     responseTimeScore = computeMetricScore(
       metrics.responseTimeHours,
@@ -238,7 +242,7 @@ export async function computePerformanceBand(
   if (previousScore !== undefined && previousScore > 0) {
     const change = rawScore - previousScore;
     const changePercent = change / previousScore;
-    trendModifier = Math.max(-0.05, Math.min(0.05, changePercent * 0.5));
+    trendModifier = Math.max(-trendModifierMax, Math.min(trendModifierMax, changePercent * trendDampeningFactor));
   }
 
   const finalScore = Math.round(rawScore * (1 + trendModifier));

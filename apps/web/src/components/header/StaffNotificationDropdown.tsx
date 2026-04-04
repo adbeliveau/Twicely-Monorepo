@@ -1,6 +1,7 @@
 "use client";
 
 import { useStaffAuth } from "@/context/StaffAuthContext";
+import { clientLogger } from "@/lib/client-logger";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
@@ -55,7 +56,7 @@ export default function StaffNotificationDropdown() {
 
       setNotifications(allNotifs.slice(0, 15));
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      clientLogger.error("Failed to fetch notifications", error);
     } finally {
       setLoading(false);
     }

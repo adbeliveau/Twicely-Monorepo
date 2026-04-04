@@ -14,8 +14,8 @@ import type { ListingContext, MarketSummary, DealBadgeResult } from '@twicely/co
 const getDealBadgeSchema = z.object({
   listingId: zodId,
   priceCents: z.number().int().nonnegative(),
-  categoryId: z.string().nullable(),
-  condition: z.string(),
+  categoryId: zodId.nullable(),
+  condition: z.enum(['NEW_WITH_TAGS', 'NEW_WITHOUT_TAGS', 'NEW_WITH_DEFECTS', 'LIKE_NEW', 'VERY_GOOD', 'GOOD', 'ACCEPTABLE']),
   brand: z.string().nullable(),
   sellerId: zodId,
   sellerAvgDaysToSell: z.number().nullable(),
@@ -24,8 +24,8 @@ const getDealBadgeSchema = z.object({
 }).strict();
 
 const marketSummarySchema = z.object({
-  categoryId: z.string(),
-  condition: z.string(),
+  categoryId: zodId,
+  condition: z.enum(['NEW_WITH_TAGS', 'NEW_WITHOUT_TAGS', 'NEW_WITH_DEFECTS', 'LIKE_NEW', 'VERY_GOOD', 'GOOD', 'ACCEPTABLE']),
   brand: z.string().nullable(),
   sampleSize: z.number().int().nonnegative(),
   medianPriceCents: z.number().int().nonnegative(),

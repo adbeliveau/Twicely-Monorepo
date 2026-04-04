@@ -3,6 +3,10 @@
  * No database access. Takes data in, returns results.
  */
 
+/** Default minimum items required to trigger a BUNDLE_DISCOUNT when the promo doesn't specify one.
+ *  Callers should pass the live value from getPlatformSetting('bundle.minItems', 2). */
+const DEFAULT_BUNDLE_MIN_ITEMS = 2;
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export type PromotionType = 'PERCENT_OFF' | 'AMOUNT_OFF' | 'FREE_SHIPPING' | 'BUNDLE_DISCOUNT';
@@ -112,8 +116,13 @@ export function getApplicableLineItems(promo: PromotionData, lineItems: CartLine
   }
 }
 
+export interface DiscountOptions {
+  /** System-wide bundle minimum items from platform_settings. Defaults to DEFAULT_BUNDLE_MIN_ITEMS (2). */
+  bundleMinItems?: number;
+}
+
 /** Calculates the discount for applicable items */
-export function calculateDiscount(promo: PromotionData, applicableItems: CartLineItem[]): DiscountResult {
+export function calculateDiscount(promo: PromotionData, applicableItems: CartLineItem[], options?: DiscountOptions): DiscountResult {
   const appliedToListingIds = applicableItems.map((item) => item.listingId);
   const baseResult: DiscountResult = {
     promotionId: promo.id,
@@ -155,7 +164,7 @@ export function calculateDiscount(promo: PromotionData, applicableItems: CartLin
     case 'BUNDLE_DISCOUNT': {
       if (promo.discountPercent === null) return baseResult;
       // minimumOrderCents is repurposed as minimum item count for BUNDLE_DISCOUNT
-      const minItemCount = promo.minimumOrderCents ?? 2;
+      const minItemCount = promo.minimumOrderCents ?? (options?.bundleMinItems ?? DEFAULT_BUNDLE_MIN_ITEMS);
       if (totalQuantity < minItemCount) return baseResult;
       // Apply percentage discount to all applicable items
       let totalDiscount = 0;

@@ -23,9 +23,9 @@ function collectKeys(nav: AdminNavItem[]): string[] {
   return flattenNav(nav).map((item) => item.key);
 }
 
-/** Collect every href in the nav tree (deduplicated for leaf checks) */
+/** Collect every href in the nav tree (leaf items only — parents with children are collapsible buttons, not links) */
 function collectAllHrefs(nav: AdminNavItem[]): string[] {
-  return flattenNav(nav).map((item) => item.href);
+  return flattenNav(nav).filter((item) => !item.children?.length).map((item) => item.href);
 }
 
 /**
@@ -166,7 +166,6 @@ describe('ADMIN_NAV registry', () => {
       'admin-messages',
       'search-admin',
       'roles',
-      'staff',
       'audit-log',
       'system-health',
       'settings',
@@ -193,6 +192,15 @@ describe('ADMIN_NAV — group structure', () => {
     expect(childKeys).toContain('usr-sellers');
     expect(childKeys).toContain('usr-verification');
     expect(childKeys).toContain('usr-affiliates');
+  });
+
+  it('roles group is collapsible with 2 children (overview + staff)', () => {
+    const roles = ADMIN_NAV.find((item) => item.key === 'roles');
+    expect(roles).toBeDefined();
+    expect(roles?.children).toHaveLength(2);
+    const childKeys = roles?.children?.map((c) => c.key) ?? [];
+    expect(childKeys).toContain('roles-overview');
+    expect(childKeys).toContain('staff');
   });
 
   it('finance group has 12 children', () => {
@@ -225,13 +233,14 @@ describe('ADMIN_NAV — group structure', () => {
     expect(childKeys).toContain('analytics-sellers');
   });
 
-  it('trust-safety group is collapsible with 4 children', () => {
+  it('trust-safety group is collapsible with 5 children', () => {
     const trustSafety = ADMIN_NAV.find((item) => item.key === 'trust-safety');
     expect(trustSafety).toBeDefined();
-    expect(trustSafety?.children).toHaveLength(4);
+    expect(trustSafety?.children).toHaveLength(5);
     const childKeys = trustSafety?.children?.map((c) => c.key) ?? [];
     expect(childKeys).toContain('trust-overview');
     expect(childKeys).toContain('trust-settings');
+    expect(childKeys).toContain('trust-sellers');
     expect(childKeys).toContain('risk-signals');
     expect(childKeys).toContain('security-events');
   });
@@ -374,7 +383,7 @@ describe('filterAdminNav', () => {
 
 describe('ADMIN_NAV — href filesystem validation', () => {
   it('every leaf href resolves to a page.tsx file', () => {
-    const allItems = flattenNav(ADMIN_NAV);
+    const allItems = flattenNav(ADMIN_NAV).filter((item) => !item.children?.length);
     const missing: string[] = [];
     for (const item of allItems) {
       if (DEFERRED_HREFS.has(item.href)) continue;

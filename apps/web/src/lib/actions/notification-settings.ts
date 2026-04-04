@@ -21,16 +21,16 @@ interface ActionResult {
 export async function updateNotificationSettings(
   input: UpdateNotificationSettingsInput
 ): Promise<ActionResult> {
-  const parsed = updateNotificationSettingsSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   if (!ability.can('update', 'Notification')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = updateNotificationSettingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const data = parsed.data;

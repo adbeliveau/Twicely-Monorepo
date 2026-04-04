@@ -76,4 +76,13 @@ export const AFFILIATE_TEMPLATES: Record<string, TemplateDef> = {
     subjectTemplate: 'Your affiliate account has been permanently banned',
     bodyTemplate: 'Your affiliate account has been permanently banned due to policy violations: {{reason}}. All pending commissions have been forfeited. If you believe this is an error, contact support.',
   },
+  'affiliate.suspension_lifted': {
+    key: 'affiliate.suspension_lifted',
+    name: 'Affiliate Suspension Lifted',
+    category: 'affiliate',
+    priority: 'HIGH',
+    defaultChannels: ['EMAIL', 'IN_APP'],
+    subjectTemplate: 'Your affiliate account suspension has been lifted',
+    bodyTemplate: '{{reason}}',
+  },
 };

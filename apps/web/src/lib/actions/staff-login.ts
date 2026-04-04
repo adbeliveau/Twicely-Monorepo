@@ -5,9 +5,7 @@ import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { loginStaff } from '@twicely/auth/staff-auth';
 import { STAFF_TOKEN_COOKIE } from '@twicely/casl/staff-authorize';
-
-// 8 hours in seconds (matches absolute session expiry)
-const COOKIE_MAX_AGE_SECONDS = 8 * 60 * 60;
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 const loginSchema = z
   .object({
@@ -45,7 +43,7 @@ export async function loginStaffAction(formData: FormData): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: COOKIE_MAX_AGE_SECONDS,
+    maxAge: await getPlatformSetting<number>('general.staffSessionAbsoluteHours', 8) * 3600,
     path: '/',
   });
 

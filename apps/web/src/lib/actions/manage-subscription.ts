@@ -49,12 +49,6 @@ interface PortalResult {
 export async function cancelSubscriptionAction(
   input: z.infer<typeof CancelSubscriptionSchema>
 ): Promise<CancelResult> {
-  const parsed = CancelSubscriptionSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-  const { product } = parsed.data;
-
   const { ability, session } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
@@ -63,6 +57,12 @@ export async function cancelSubscriptionAction(
   if (!ability.can('update', sub('Subscription', { sellerId: userId }))) {
     return { success: false, error: 'Insufficient permissions' };
   }
+
+  const parsed = CancelSubscriptionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
+  }
+  const { product } = parsed.data;
 
   const sellerProfileId = await getSellerProfileIdByUserId(userId);
   if (!sellerProfileId) {
@@ -116,11 +116,6 @@ export async function cancelSubscriptionAction(
 export async function createBillingPortalSession(
   input?: z.infer<typeof BillingPortalSchema>
 ): Promise<PortalResult> {
-  const parsed = BillingPortalSchema.safeParse(input ?? {});
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-
   const { ability, session: caslSession } = await authorize();
   if (!caslSession) {
     return { success: false, error: 'Unauthorized' };
@@ -128,6 +123,11 @@ export async function createBillingPortalSession(
   const userId = caslSession.delegationId ? caslSession.onBehalfOfSellerId! : caslSession.userId;
   if (!ability.can('read', sub('Subscription', { sellerId: userId }))) {
     return { success: false, error: 'Insufficient permissions' };
+  }
+
+  const parsed = BillingPortalSchema.safeParse(input ?? {});
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
   }
 
   const sellerProfileId = await getSellerProfileIdByUserId(userId);

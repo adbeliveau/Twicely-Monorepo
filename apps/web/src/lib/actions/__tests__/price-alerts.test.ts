@@ -235,7 +235,10 @@ describe('createPriceAlertAction', () => {
   });
 
   it('rejects PERCENT_DROP alert with invalid percentage', async () => {
-    // Zod validates targetPercentDrop (max: 50) before auth or DB — no mocks needed.
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'user-1' },
+      ability: { can: vi.fn().mockReturnValue(true) },
+    });
     const { createPriceAlertAction } = await import('../price-alerts');
     const result = await createPriceAlertAction({
       listingId: 'listing-1',

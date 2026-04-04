@@ -7,7 +7,7 @@
 
 import { db } from '@twicely/db';
 import { sellerProfile, payout as payoutTable, auditEvent } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
 import { stripe } from '@twicely/stripe/server';
@@ -58,13 +58,13 @@ export async function requestPayoutAction(
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Please sign in to continue' };
 
-  const parsed = requestPayoutSchema.safeParse({ amountCents, instant });
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('create', sub('Payout', { userId }))) {
     return { success: false, error: 'Not authorized' };
   }
+
+  const parsed = requestPayoutSchema.safeParse({ amountCents, instant });
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
 
   // Load seller profile
   const [profile] = await db
@@ -93,16 +93,38 @@ export async function requestPayoutAction(
 
   // ── On-demand cooldown (24h default) ─────────────────────────────────
   const cooldownKey = `payout-cooldown:${userId}`;
-  let cooldownHours = 24;
+  const cooldownHours = await getPlatformSetting<number>('payout.onDemandCooldownHours', 24);
+  const [lastOnDemandPayout] = await db
+    .select({ initiatedAt: payoutTable.initiatedAt })
+    .from(payoutTable)
+    .where(and(
+      eq(payoutTable.userId, userId),
+      eq(payoutTable.isOnDemand, true),
+    ))
+    .orderBy(desc(payoutTable.initiatedAt))
+    .limit(1);
+
+  if (
+    lastOnDemandPayout?.initiatedAt &&
+    lastOnDemandPayout.initiatedAt.getTime() > Date.now() - cooldownHours * 60 * 60 * 1000
+  ) {
+    return {
+      success: false,
+      error: `You can only request one payout every ${cooldownHours} hours. Please try again later.`,
+    };
+  }
+
   try {
     const valkey = getValkeyClient();
-    cooldownHours = await getPlatformSetting<number>('payout.onDemandCooldownHours', 24);
     const inCooldown = await valkey.get(cooldownKey);
     if (inCooldown) {
-      return { success: false, error: 'You can only request one payout every 24 hours. Please try again later.' };
+      return { success: false, error: `You can only request one payout every ${cooldownHours} hours. Please try again later.` };
     }
   } catch (err) {
-    logger.warn('[requestPayout] Valkey cooldown check failed, proceeding', { userId, error: String(err) });
+    logger.warn('[requestPayout] Valkey cooldown check failed, using DB cooldown only', {
+      userId,
+      error: String(err),
+    });
   }
 
   // ── Instant payout validation ────────────────────────────────────────
@@ -131,15 +153,16 @@ export async function requestPayoutAction(
     stripeMethod = 'instant';
   }
 
-  // ── Stripe payout ────────────────────────────────────────────────────
+  // ── Stripe payout (net of instant fee — Decision #89) ───────────────
+  const netPayoutCents = parsed.data.amountCents - feeCents;
   let stripePayoutId: string;
   try {
     const stripePayout = await stripe.payouts.create(
       {
-        amount: parsed.data.amountCents,
+        amount: netPayoutCents,
         currency: 'usd',
         method: stripeMethod,
-        metadata: { userId, tier, instant: String(parsed.data.instant), feeCents: String(feeCents) },
+        metadata: { userId, tier, instant: String(parsed.data.instant), feeCents: String(feeCents), grossAmountCents: String(parsed.data.amountCents) },
       },
       { stripeAccount: profile.stripeAccountId },
     );
@@ -154,7 +177,9 @@ export async function requestPayoutAction(
     await db.insert(payoutTable).values({
       userId,
       status: 'PENDING',
-      amountCents: parsed.data.amountCents,
+      amountCents: netPayoutCents,
+      feeCents,
+      isInstant: stripeMethod === 'instant',
       stripePayoutId,
       isOnDemand: true,
       initiatedAt: new Date(),
@@ -178,7 +203,11 @@ export async function requestPayoutAction(
     const valkey = getValkeyClient();
     await valkey.set(cooldownKey, '1', 'EX', cooldownHours * 3600);
   } catch (err) {
-    logger.warn('[requestPayout] Cooldown set failed', { userId, payoutId: stripePayoutId, error: String(err) });
+    logger.warn('[requestPayout] Cooldown cache hint set failed', {
+      userId,
+      payoutId: stripePayoutId,
+      error: String(err),
+    });
   }
 
   // ── Audit event ──────────────────────────────────────────────────────
@@ -190,11 +219,11 @@ export async function requestPayoutAction(
       subject: 'Payout',
       subjectId: stripePayoutId,
       severity: 'LOW',
-      detailsJson: { amountCents: parsed.data.amountCents, feeCents, instant: parsed.data.instant, tier, stripePayoutId },
+      detailsJson: { grossAmountCents: parsed.data.amountCents, netAmountCents: netPayoutCents, feeCents, instant: parsed.data.instant, tier, stripePayoutId },
     });
   } catch (err) {
     logger.warn('[requestPayout] Audit insert failed', { userId, payoutId: stripePayoutId, error: String(err) });
   }
 
-  return { success: true, payoutId: stripePayoutId, amountCents: parsed.data.amountCents, feeCents };
+  return { success: true, payoutId: stripePayoutId, amountCents: netPayoutCents, feeCents };
 }

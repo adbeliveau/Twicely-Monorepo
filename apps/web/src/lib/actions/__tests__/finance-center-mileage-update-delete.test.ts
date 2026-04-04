@@ -106,6 +106,7 @@ describe('updateMileageAction', () => {
   });
 
   it('returns validation error for missing id', async () => {
+    mockAuth();
     const { updateMileageAction } = await import('../finance-center-mileage');
     const result = await updateMileageAction({ miles: 5 });
     expect(result.success).toBe(false);
@@ -199,6 +200,7 @@ describe('deleteMileageAction', () => {
   });
 
   it('returns validation error for missing id', async () => {
+    mockAuth();
     const { deleteMileageAction } = await import('../finance-center-mileage');
     const result = await deleteMileageAction({});
     expect(result.success).toBe(false);

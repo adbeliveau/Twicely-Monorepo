@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
 import { db } from '@twicely/db';
 import { crosslisterAccount } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { logger } from '@twicely/logger';
-import { defineAbilitiesFor, sub } from '@twicely/casl';
 import { encryptSessionData } from '@twicely/crosslister/token-crypto';
+import {
+  authenticateExtensionRequest,
+  ExtensionAuthError,
+} from '@/lib/auth/extension-auth';
 
 const sessionSchema = z.object({
   channel: z.enum(['POSHMARK', 'FB_MARKETPLACE', 'THEREALREAL', 'VESTIAIRE'] as const),
@@ -14,32 +16,16 @@ const sessionSchema = z.object({
 }).strict();
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const rawSecret = process.env['EXTENSION_JWT_SECRET'];
-  if (!rawSecret) {
-    return NextResponse.json({ success: false, error: 'Extension authentication unavailable' }, { status: 503 });
-  }
-
-  const token = authHeader.slice(7);
-  const secret = new TextEncoder().encode(rawSecret);
-
   let userId: string;
   try {
-    const { payload } = await jwtVerify(token, secret);
-    if (payload['purpose'] !== 'extension-session') {
-      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 403 });
+    const { principal } = await authenticateExtensionRequest(request);
+    userId = principal.userId;
+  } catch (err) {
+    if (err instanceof ExtensionAuthError) {
+      return NextResponse.json({ success: false, error: err.message }, { status: err.status });
     }
-    const rawUserId = payload['userId'];
-    if (typeof rawUserId !== 'string' || !rawUserId) {
-      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 403 });
-    }
-    userId = rawUserId;
-  } catch {
-    return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+
+    throw err;
   }
 
   let body: unknown;
@@ -56,24 +42,6 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const { channel, sessionData: rawSessionData } = parsed.data;
   const sessionData = encryptSessionData(rawSessionData);
-
-  // CASL authorization check — user must have crosslister account creation/update rights
-  const ability = defineAbilitiesFor({
-    userId,
-    email: '',
-    isSeller: true,
-    sellerId: userId,
-    sellerStatus: null,
-    delegationId: null,
-    onBehalfOfSellerId: null,
-    onBehalfOfSellerProfileId: null,
-    delegatedScopes: [],
-    isPlatformStaff: false,
-    platformRoles: [],
-  });
-  if (!ability.can('create', sub('CrosslisterAccount', { sellerId: userId }))) {
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-  }
 
   try {
     const [existing] = await db

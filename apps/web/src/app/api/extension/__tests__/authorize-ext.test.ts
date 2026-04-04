@@ -6,22 +6,34 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ────���───────────────────────────��────────────────────
 
-const mockGetSession = vi.fn();
-vi.mock('@twicely/auth/server', () => ({
-  auth: { api: { getSession: mockGetSession } },
+const { MockExtAuthError, mockGetCtx, mockIssueToken } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockGetCtx: vi.fn(),
+  mockIssueToken: vi.fn(),
 }));
 
-vi.mock('next/headers', () => ({
-  headers: vi.fn().mockResolvedValue({}),
+vi.mock('@/lib/auth/extension-auth', () => ({
+  getCurrentExtensionRegistrationContext: mockGetCtx,
+  issueExtensionToken: mockIssueToken,
+  ExtensionAuthError: MockExtAuthError,
 }));
+
+// ─── Other mocks ──────────────────────────��────────────────────��─────────────
 
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key, defaultVal) => Promise.resolve(defaultVal)),
 }));
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ���── Helpers ───────────────────────────────────────────��──────────────────────
 
 const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
 
@@ -29,21 +41,40 @@ function makeRequest(url = 'https://twicely.co/api/extension/authorize'): Reques
   return new Request(url);
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+async function signJwt(claims: Record<string, unknown>, purpose: string, expiresIn: string): Promise<string> {
+  const { SignJWT } = await import('jose');
+  const secret = new TextEncoder().encode(TEST_SECRET);
+  return new SignJWT({ ...claims, purpose })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(secret);
+}
+
+const OK_CONTEXT = {
+  kind: 'ok' as const,
+  context: {
+    claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+    principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+  },
+};
+
+// ─── Tests ────────────────────��───────────────────────────────────────────────
 
 describe('GET /api/extension/authorize — extended', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
     vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
-    mockGetSession.mockResolvedValue(null);
+    mockGetCtx.mockResolvedValue({ kind: 'anonymous' });
+    mockIssueToken.mockImplementation(async (claims: Record<string, unknown>, purpose: string, expiresIn: string) => {
+      return signJwt(claims, purpose, expiresIn);
+    });
   });
 
-  it('redirects to login when auth.api.getSession throws', async () => {
-    mockGetSession.mockRejectedValue(new Error('Session service unavailable'));
+  it('redirects to login when context is anonymous (e.g. getSession throws)', async () => {
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
-    // Session read error is treated as unauthenticated → redirect to login
     expect(res.status).toBe(307);
     const location = res.headers.get('location') ?? '';
     expect(location).toContain('/auth/login');
@@ -58,8 +89,8 @@ describe('GET /api/extension/authorize — extended', () => {
     expect(redirectParam).toBe('/api/extension/authorize');
   });
 
-  it('redirects to login when session.user.id is null/undefined', async () => {
-    mockGetSession.mockResolvedValue({ user: { id: null } });
+  it('redirects to login when context is anonymous (session.user.id is null)', async () => {
+    // getCurrentExtensionRegistrationContext handles null/undefined userId internally
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(307);
@@ -68,18 +99,17 @@ describe('GET /api/extension/authorize — extended', () => {
   });
 
   it('callback URL is relative to the request URL origin', async () => {
-    mockGetSession.mockResolvedValue({ user: { id: 'user-abc' } });
+    mockGetCtx.mockResolvedValue(OK_CONTEXT);
     const requestUrl = 'https://twicely.co/api/extension/authorize';
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest(requestUrl));
     const location = res.headers.get('location') ?? '';
-    // The callback must be on the same origin as the request
     expect(location).toContain('twicely.co');
     expect(location).toContain('/api/extension/callback');
   });
 
   it('redirects to login when session returns user with empty string id', async () => {
-    mockGetSession.mockResolvedValue({ user: { id: '' } });
+    // Extension auth handles this internally → returns anonymous
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(307);
@@ -88,13 +118,19 @@ describe('GET /api/extension/authorize — extended', () => {
   });
 
   it('different user id is embedded in the token', async () => {
-    const { jwtVerify } = await import('jose');
-    mockGetSession.mockResolvedValue({ user: { id: 'user-different-123' } });
+    mockGetCtx.mockResolvedValue({
+      kind: 'ok',
+      context: {
+        claims: { userId: 'user-different-123', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+        principal: { userId: 'user-different-123', displayName: null, name: null, image: null, avatarUrl: null },
+      },
+    });
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
     const location = res.headers.get('location') ?? '';
     const url = new URL(location);
     const token = url.searchParams.get('token') ?? '';
+    const { jwtVerify } = await import('jose');
     const secret = new TextEncoder().encode(TEST_SECRET);
     const { payload } = await jwtVerify(token, secret);
     expect(payload['userId']).toBe('user-different-123');

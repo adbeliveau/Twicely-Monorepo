@@ -11,6 +11,7 @@ import {
 } from '@twicely/commerce/offer-engine';
 import { createBundleOffer } from '@twicely/commerce/bundle-offers';
 import { createOfferSchema, counterOfferSchema, createBundleOfferSchema } from '@/lib/validations/offers';
+import { zodId } from '@/lib/validations/shared';
 import { z } from 'zod';
 
 interface ActionResult {
@@ -69,7 +70,7 @@ export async function createOfferAction(data: z.infer<typeof createOfferSchema>)
 
 const acceptOfferInputSchema = z.object({
   offerId: z.string().min(1, 'Offer ID is required'),
-  paymentMethodId: z.string().optional(),
+  paymentMethodId: zodId.optional(),
 }).strict();
 
 /**
@@ -155,7 +156,7 @@ export async function declineOfferAction(
 }
 
 const counterOfferInputSchema = counterOfferSchema.extend({
-  paymentMethodId: z.string().optional(), // Required when buyer counters
+  paymentMethodId: zodId.optional(), // Required when buyer counters
 });
 
 /**

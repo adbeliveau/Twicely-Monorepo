@@ -4,9 +4,27 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockValkeySet = vi.fn().mockResolvedValue('OK');
 vi.mock('@twicely/db/cache', () => ({
@@ -28,8 +46,6 @@ vi.mock('@twicely/casl', () => ({
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
 
 const VALID_LISTING = {
   externalId: 'posh-ext-1',
@@ -56,29 +72,22 @@ function makeRequest(authHeader: string | undefined, body: unknown): Request {
   });
 }
 
-async function makeSessionToken(overrides: Record<string, unknown> = {}): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-session', ...overrides })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('30d')
-    .sign(s);
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/extension/scrape — extended', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     mockValkeySet.mockResolvedValue('OK');
   });
 
   it('returns 400 for title exceeding 500 chars', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, title: 'A'.repeat(501) },
     }));
@@ -86,9 +95,8 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 200 for title exactly 500 chars', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, title: 'A'.repeat(500) },
     }));
@@ -96,9 +104,8 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 400 for description exceeding 10000 chars', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, description: 'D'.repeat(10001) },
     }));
@@ -106,9 +113,8 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 200 for description exactly 10000 chars', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, description: 'D'.repeat(10000) },
     }));
@@ -116,10 +122,9 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 400 for more than 20 imageUrls', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
     const tooManyUrls = Array.from({ length: 21 }, (_, i) => `https://example.com/img${i}.jpg`);
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, imageUrls: tooManyUrls },
     }));
@@ -127,10 +132,9 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 200 for exactly 20 imageUrls', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
     const maxUrls = Array.from({ length: 20 }, (_, i) => `https://example.com/img${i}.jpg`);
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, imageUrls: maxUrls },
     }));
@@ -138,23 +142,21 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 200 for THEREALREAL channel (it is in the enum)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
     const trrListing = {
       ...VALID_LISTING,
       externalId: 'trr-item-789',
       url: 'https://www.therealreal.com/products/trr-item-789',
     };
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'THEREALREAL', listing: trrListing }));
+    const res = await POST(makeRequest('Bearer valid', { channel: 'THEREALREAL', listing: trrListing }));
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
 
   it('accepts VESTIAIRE channel', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: VALID_LISTING,
     }));
@@ -165,19 +167,20 @@ describe('POST /api/extension/scrape — extended', () => {
 
   it('returns 200 even when Valkey cache throws (non-fatal)', async () => {
     mockValkeySet.mockRejectedValue(new Error('Valkey connection refused'));
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, { channel: 'POSHMARK', listing: VALID_LISTING }));
-    // Cache failure should NOT fail the request
+    const res = await POST(makeRequest('Bearer valid', { channel: 'POSHMARK', listing: VALID_LISTING }));
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
 
   it('stores in Valkey with correct key pattern ext:scrape:{userId}:{channel}:{externalId}', async () => {
-    const token = await makeSessionToken({ userId: 'user-xyz' });
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-xyz', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-xyz', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     const { POST } = await import('../scrape/route');
-    await POST(makeRequest(`Bearer ${token}`, {
+    await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, externalId: 'posh-xyz-999' },
     }));
@@ -190,13 +193,12 @@ describe('POST /api/extension/scrape — extended', () => {
   });
 
   it('returns 400 for malformed JSON body', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
     const req = new Request('http://localhost/api/extension/scrape', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: 'Bearer valid',
       },
       body: 'not-valid-json{{',
     });
@@ -204,14 +206,12 @@ describe('POST /api/extension/scrape — extended', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 400 for priceCents = 0 (zero is allowed — free listings)', async () => {
-    const token = await makeSessionToken();
+  it('returns 200 for priceCents = 0 (zero is allowed — free listings)', async () => {
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'POSHMARK',
       listing: { ...VALID_LISTING, priceCents: 0 },
     }));
-    // 0 is valid (min(0) allows it)
     expect(res.status).toBe(200);
   });
 });

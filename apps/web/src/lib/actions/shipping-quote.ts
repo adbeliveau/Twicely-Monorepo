@@ -24,13 +24,6 @@ interface ActionResult {
  * If called after penalty is applied, resolves final price per canonical rules.
  */
 export async function submitShippingQuote(input: unknown): Promise<ActionResult> {
-  const parsed = submitShippingQuoteSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
-  const { quoteId, quotedShippingCents } = parsed.data;
-
   const { session, ability } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
@@ -44,6 +37,13 @@ export async function submitShippingQuote(input: unknown): Promise<ActionResult>
   if (!ability.can('update', sub('CombinedShippingQuote', { sellerId: effectiveSellerId }))) {
     return { success: false, error: 'You do not have permission to submit shipping quotes' };
   }
+
+  const parsed = submitShippingQuoteSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
+  const { quoteId, quotedShippingCents } = parsed.data;
 
   const [quote] = await db
     .select()
@@ -152,13 +152,6 @@ export async function submitShippingQuote(input: unknown): Promise<ActionResult>
  * Buyer can accept (updates order totals) or dispute (flags for support).
  */
 export async function respondToShippingQuote(input: unknown): Promise<ActionResult> {
-  const parsed = respondToShippingQuoteSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
-  const { quoteId, action } = parsed.data;
-
   const { session, ability } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
@@ -167,6 +160,13 @@ export async function respondToShippingQuote(input: unknown): Promise<ActionResu
   if (!ability.can('update', sub('CombinedShippingQuote', { buyerId: session.userId }))) {
     return { success: false, error: 'You do not have permission to respond to shipping quotes' };
   }
+
+  const parsed = respondToShippingQuoteSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
+  const { quoteId, action } = parsed.data;
 
   const [quote] = await db
     .select()

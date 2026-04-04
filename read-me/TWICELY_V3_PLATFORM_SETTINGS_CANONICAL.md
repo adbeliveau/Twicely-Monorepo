@@ -884,21 +884,22 @@ TF uses progressive volume brackets (like income tax). Calendar month reset. NOT
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `fees.stripe.rate` | percent | 2.9 | Stripe processing percentage |
-| `fees.stripe.fixedCents` | cents | 30 | Stripe per-transaction fixed fee |
-| `fees.stripe.refundFeeRetained` | boolean | true | Keep Stripe processing fee on refunds |
+| `commerce.stripe.processingRateBps` | bps | 290 | Stripe processing rate (290 = 2.9%) |
+| `commerce.stripe.processingFixedCents` | cents | 30 | Stripe per-transaction fixed fee |
+
+> **Note:** Stripe refund fee retention is controlled by the `refund_application_fee: true` flag in Stripe API calls, not a configurable setting. The previous `fees.stripe.refundFeeRetained` key was never implemented.
 
 ### 7.10 Overage Packs
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `fees.overage.publishPack.quantity` | number | 500 | Publishes per overage pack |
-| `fees.overage.publishPack.cents` | cents | 900 | Publish overage pack price |
-| `fees.overage.aiPack.quantity` | number | 500 | AI credits per overage pack |
-| `fees.overage.aiPack.cents` | cents | 900 | AI overage pack price |
-| `fees.overage.bgRemovalPack.quantity` | number | 500 | BG removals per overage pack |
-| `fees.overage.bgRemovalPack.cents` | cents | 900 | BG removal overage pack price |
-| `fees.overage.autoMaxPacksPerMonth` | number | 3 | Max auto-purchase packs per month |
+| `overage.publishes.qty` | number | 500 | Publishes per overage pack |
+| `overage.publishes.cents` | cents | 900 | Publish overage pack price |
+| `overage.aiCredits.qty` | number | 500 | AI credits per overage pack |
+| `overage.aiCredits.cents` | cents | 900 | AI overage pack price |
+| `overage.bgRemovals.qty` | number | 500 | BG removals per overage pack |
+| `overage.bgRemovals.cents` | cents | 900 | BG removal overage pack price |
+| `overage.autoMaxPacksPerMonth` | number | 3 | Max auto-purchase packs per month |
 
 ---
 

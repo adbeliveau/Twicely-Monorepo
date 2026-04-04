@@ -50,11 +50,6 @@ export async function bulkUpdateListingStatus(
   listingIds: string[],
   newStatus: ListingStatus
 ): Promise<BulkActionResult> {
-  const parsed = bulkStatusSchema.safeParse({ listingIds, newStatus });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
 
   if (!session) {
@@ -64,6 +59,11 @@ export async function bulkUpdateListingStatus(
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = bulkStatusSchema.safeParse({ listingIds, newStatus });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   if (listingIds.length === 0) {
@@ -145,11 +145,6 @@ export async function bulkUpdateListingStatus(
 export async function bulkDeleteListings(
   listingIds: string[]
 ): Promise<BulkActionResult> {
-  const parsed = bulkDeleteSchema.safeParse({ listingIds });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
 
   if (!session) {
@@ -159,6 +154,11 @@ export async function bulkDeleteListings(
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('delete', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = bulkDeleteSchema.safeParse({ listingIds });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   if (listingIds.length === 0) {

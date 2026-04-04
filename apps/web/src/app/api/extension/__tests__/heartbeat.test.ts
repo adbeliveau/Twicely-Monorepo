@@ -4,9 +4,27 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockDbSelect = vi.fn();
 vi.mock('@twicely/db', () => ({ db: { select: mockDbSelect } }));
@@ -30,8 +48,6 @@ vi.mock('@twicely/logger', () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
-
 function makeRequest(authHeader?: string): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authHeader !== undefined) {
@@ -43,39 +59,16 @@ function makeRequest(authHeader?: string): Request {
   });
 }
 
-async function makeSessionToken(
-  overrides: Record<string, unknown> = {},
-  expiresIn = '30d',
-): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({
-    userId: 'user-abc',
-    purpose: 'extension-session',
-    ...overrides,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(s);
-}
-
-async function makeRegistrationToken(): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-registration' })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('5m')
-    .sign(s);
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/extension/heartbeat', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
-
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue([]),
@@ -84,27 +77,30 @@ describe('POST /api/extension/heartbeat', () => {
   });
 
   it('returns 401 for missing Authorization header', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Unauthorized'));
     const { POST } = await import('../heartbeat/route');
     const res = await POST(makeRequest());
     expect(res.status).toBe(401);
   });
 
   it('returns 401 for Authorization header without Bearer prefix', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Unauthorized'));
     const { POST } = await import('../heartbeat/route');
     const res = await POST(makeRequest('Token some-token'));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 for invalid token', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Invalid token'));
     const { POST } = await import('../heartbeat/route');
     const res = await POST(makeRequest('Bearer invalid-jwt-token'));
     expect(res.status).toBe(401);
   });
 
   it('returns 403 for token with wrong purpose (registration token)', async () => {
-    const regToken = await makeRegistrationToken();
+    mockAuth.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${regToken}`));
+    const res = await POST(makeRequest('Bearer some-reg-token'));
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid token');
@@ -120,9 +116,8 @@ describe('POST /api/extension/heartbeat', () => {
       }),
     });
 
-    const token = await makeSessionToken();
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer valid-token'));
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean; connectedChannels: string[] };
     expect(body.success).toBe(true);
@@ -130,9 +125,8 @@ describe('POST /api/extension/heartbeat', () => {
   });
 
   it('returns empty channels array for seller with no connections', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer valid-token'));
     expect(res.status).toBe(200);
     const body = await res.json() as { connectedChannels: string[] };
     expect(body.connectedChannels).toEqual([]);
@@ -140,9 +134,8 @@ describe('POST /api/extension/heartbeat', () => {
 
   it('returns serverTime as number', async () => {
     const before = Date.now();
-    const token = await makeSessionToken();
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer valid-token'));
     const after = Date.now();
     const body = await res.json() as { serverTime: number };
     expect(typeof body.serverTime).toBe('number');
@@ -151,23 +144,22 @@ describe('POST /api/extension/heartbeat', () => {
   });
 
   it('returns 200 with success: true for valid session token', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer valid-token'));
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
 
   it('returns 401 for expired session token', async () => {
-    const expiredToken = await makeSessionToken({}, '-1s');
+    mockAuth.mockRejectedValue(new MockExtAuthError(401, 'Invalid token'));
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${expiredToken}`));
+    const res = await POST(makeRequest('Bearer expired-token'));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when EXTENSION_JWT_SECRET is missing', async () => {
-    vi.stubEnv('EXTENSION_JWT_SECRET', '');
+    mockAuth.mockRejectedValue(new MockExtAuthError(503, 'Extension authentication unavailable'));
     const { POST } = await import('../heartbeat/route');
     const res = await POST(makeRequest('Bearer some-token'));
     expect(res.status).toBe(503);

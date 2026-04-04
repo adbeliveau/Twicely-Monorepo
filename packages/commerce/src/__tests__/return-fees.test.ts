@@ -11,16 +11,16 @@ describe('Return Fees Module', () => {
   describe('Constants', () => {
     it('defines correct fee percentages and limits', async () => {
       const {
-        RESTOCKING_FEE_PERCENT,
-        RESTOCKING_FEE_MAX_CENTS,
-        RESTOCKING_FEE_MIN_CENTS,
-        TF_REFUND_REMORSE_PERCENT,
+        DEFAULT_RESTOCKING_FEE_PERCENT,
+        DEFAULT_RESTOCKING_FEE_MAX_CENTS,
+        DEFAULT_RESTOCKING_FEE_MIN_CENTS,
+        DEFAULT_TF_REFUND_REMORSE_PERCENT,
       } = await import('@twicely/commerce/return-fees');
 
-      expect(RESTOCKING_FEE_PERCENT).toBe(0.10);
-      expect(RESTOCKING_FEE_MAX_CENTS).toBe(5000); // $50
-      expect(RESTOCKING_FEE_MIN_CENTS).toBe(100); // $1
-      expect(TF_REFUND_REMORSE_PERCENT).toBe(0.50);
+      expect(DEFAULT_RESTOCKING_FEE_PERCENT).toBe(0.10);
+      expect(DEFAULT_RESTOCKING_FEE_MAX_CENTS).toBe(5000); // $50
+      expect(DEFAULT_RESTOCKING_FEE_MIN_CENTS).toBe(100); // $1
+      expect(DEFAULT_TF_REFUND_REMORSE_PERCENT).toBe(0.50);
     });
   });
 
@@ -33,17 +33,17 @@ describe('Return Fees Module', () => {
     });
 
     it('respects minimum of $1 for small orders', async () => {
-      const { calculateRestockingFee, RESTOCKING_FEE_MIN_CENTS } = await import('@twicely/commerce/return-fees');
+      const { calculateRestockingFee, DEFAULT_RESTOCKING_FEE_MIN_CENTS } = await import('@twicely/commerce/return-fees');
 
-      expect(calculateRestockingFee(500)).toBe(RESTOCKING_FEE_MIN_CENTS); // 10% would be $0.50
-      expect(calculateRestockingFee(100)).toBe(RESTOCKING_FEE_MIN_CENTS); // 10% would be $0.10
+      expect(calculateRestockingFee(500)).toBe(DEFAULT_RESTOCKING_FEE_MIN_CENTS); // 10% would be $0.50
+      expect(calculateRestockingFee(100)).toBe(DEFAULT_RESTOCKING_FEE_MIN_CENTS); // 10% would be $0.10
     });
 
     it('respects maximum of $50 for large orders', async () => {
-      const { calculateRestockingFee, RESTOCKING_FEE_MAX_CENTS } = await import('@twicely/commerce/return-fees');
+      const { calculateRestockingFee, DEFAULT_RESTOCKING_FEE_MAX_CENTS } = await import('@twicely/commerce/return-fees');
 
-      expect(calculateRestockingFee(100000)).toBe(RESTOCKING_FEE_MAX_CENTS); // 10% would be $100
-      expect(calculateRestockingFee(200000)).toBe(RESTOCKING_FEE_MAX_CENTS); // 10% would be $200
+      expect(calculateRestockingFee(100000)).toBe(DEFAULT_RESTOCKING_FEE_MAX_CENTS); // 10% would be $100
+      expect(calculateRestockingFee(200000)).toBe(DEFAULT_RESTOCKING_FEE_MAX_CENTS); // 10% would be $200
     });
   });
 

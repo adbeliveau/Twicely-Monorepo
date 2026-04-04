@@ -137,14 +137,14 @@ export async function updatePlatformPromoCode(
 export async function validatePromoCode(
   input: unknown,
 ): Promise<ValidatePromoCodeResult> {
+  const { session } = await authorize();
+  if (!session) return { valid: false, error: 'Unauthorized' };
+
   const parsed = applyPromoCodeSchema.safeParse(input);
   if (!parsed.success) {
     return { valid: false, error: 'Invalid input' };
   }
   const { code, product } = parsed.data;
-
-  const { session } = await authorize();
-  if (!session) return { valid: false, error: 'Unauthorized' };
 
   const record = await getPromoCodeByCode(code);
   if (!record) return { valid: false, error: 'Promo code not found' };

@@ -10,6 +10,7 @@ import { contentReport, auditEvent, listing, review, message, user } from '@twic
 import { eq, and, gte, count } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { contentReportSchema } from '@/lib/validations/enforcement';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 export async function submitContentReportAction(input: unknown) {
   const { session, ability } = await authorize();
@@ -24,7 +25,8 @@ export async function submitContentReportAction(input: unknown) {
   const { targetType, targetId, reason, description } = parsed.data;
   const reporterUserId = session.userId;
 
-  // Rate limit: max 10 reports per user per 24 hours
+  // Rate limit: max N reports per user per 24 hours (from platform settings)
+  const maxReportsPerDay = await getPlatformSetting<number>('moderation.report.maxPerUserPerDay', 10);
   const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [countResult] = await db
     .select({ count: count() })
@@ -35,8 +37,8 @@ export async function submitContentReportAction(input: unknown) {
         gte(contentReport.createdAt, windowStart)
       )
     );
-  if ((countResult?.count ?? 0) >= 10) {
-    return { success: false, error: 'Rate limit exceeded: max 10 reports per 24 hours' };
+  if ((countResult?.count ?? 0) >= maxReportsPerDay) {
+    return { success: false, error: `Rate limit exceeded: max ${maxReportsPerDay} reports per 24 hours` };
   }
 
   // Validate target exists and prevent self-reporting

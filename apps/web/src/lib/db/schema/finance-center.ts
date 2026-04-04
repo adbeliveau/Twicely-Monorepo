@@ -82,14 +82,14 @@ export const accountingIntegration = pgTable('accounting_integration', {
 export const financialProjection = pgTable('financial_projection', {
   id:                        text('id').primaryKey().$defaultFn(() => createId()),
   sellerProfileId:           text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
-  projectedRevenue30dCents:  integer('projected_revenue_30d'),
-  projectedExpenses30dCents: integer('projected_expenses_30d'),
-  projectedProfit30dCents:   integer('projected_profit_30d'),
+  projectedRevenue30dCents:  integer('projected_revenue_30d_cents'),
+  projectedExpenses30dCents: integer('projected_expenses_30d_cents'),
+  projectedProfit30dCents:   integer('projected_profit_30d_cents'),
   sellThroughRate90d:        integer('sell_through_rate_90d'),         // basis points
-  avgSalePrice90dCents:      integer('avg_sale_price_90d'),
+  avgSalePrice90dCents:      integer('avg_sale_price_90d_cents'),
   effectiveFeeRate90d:       integer('effective_fee_rate_90d'),        // basis points
   avgDaysToSell90d:          integer('avg_days_to_sell_90d'),
-  breakEvenRevenueCents:     integer('break_even_revenue'),
+  breakEvenRevenueCents:     integer('break_even_revenue_cents'),
   breakEvenOrders:           integer('break_even_orders'),
   healthScore:               integer('health_score'),                  // 0-100
   healthScoreBreakdownJson:  jsonb('health_score_breakdown_json'),

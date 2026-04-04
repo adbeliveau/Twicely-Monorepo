@@ -26,9 +26,31 @@ import type { ExternalChannel } from '@twicely/crosslister/types';
 
 const refreshAccountSchema = z.object({ accountId: zodId }).strict();
 
+const shopDomainSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/, 'Enter a valid .myshopify.com store domain');
+
 const connectPlatformSchema = z.object({
-  channel: z.enum(['EBAY', 'POSHMARK', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'THEREALREAL']),
-}).strict();
+  channel: z.enum(['EBAY', 'POSHMARK', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'THEREALREAL', 'SHOPIFY']),
+  shopDomain: shopDomainSchema.optional(),
+}).strict().superRefine((data, ctx) => {
+  if (data.channel === 'SHOPIFY' && !data.shopDomain) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Shopify connections require a .myshopify.com store domain',
+      path: ['shopDomain'],
+    });
+  }
+  if (data.channel !== 'SHOPIFY' && data.shopDomain !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'shopDomain is only supported for SHOPIFY',
+      path: ['shopDomain'],
+    });
+  }
+});
 
 const authenticateSessionSchema = z.object({
   channel: z.enum(['EBAY', 'POSHMARK', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'THEREALREAL']),
@@ -37,7 +59,7 @@ const authenticateSessionSchema = z.object({
 }).strict();
 
 /** OAuth channels that use redirect-based auth */
-const OAUTH_CHANNELS = new Set<ExternalChannel>(['EBAY', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED']);
+const OAUTH_CHANNELS = new Set<ExternalChannel>(['EBAY', 'MERCARI', 'DEPOP', 'FB_MARKETPLACE', 'ETSY', 'GRAILED', 'SHOPIFY']);
 /** Session channels that use username/password auth */
 const SESSION_CHANNELS = new Set<ExternalChannel>(['POSHMARK', 'THEREALREAL']);
 
@@ -55,11 +77,6 @@ interface ActionResult<T = undefined> {
 export async function connectPlatformAccount(
   input: unknown,
 ): Promise<ActionResult<{ url?: string; method: 'OAUTH' | 'SESSION' }>> {
-  const parsed = connectPlatformSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -69,7 +86,12 @@ export async function connectPlatformAccount(
     return { success: false, error: 'Forbidden' };
   }
 
-  const { channel } = parsed.data;
+  const parsed = connectPlatformSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
+  const { channel, shopDomain } = parsed.data;
   const channelKey = channel as ExternalChannel;
 
   // Check if seller already has an ACTIVE account for this channel
@@ -100,13 +122,13 @@ export async function connectPlatformAccount(
       if (!connector.buildAuthUrl) {
         return { success: false, error: `Connector for ${channel} does not support OAuth.` };
       }
-      const result = await connector.buildAuthUrl(state);
+      const result = await connector.buildAuthUrl(state, shopDomain);
       const url = typeof result === 'string' ? result : result.url;
       const codeVerifier = typeof result === 'string' ? undefined : result.codeVerifier;
 
       // Store state + optional PKCE verifier in a short-lived httpOnly cookie
       const cookieStore = await cookies();
-      cookieStore.set('crosslister_oauth_state', JSON.stringify({ state, codeVerifier }), {
+      cookieStore.set('crosslister_oauth_state', JSON.stringify({ state, codeVerifier, shopDomain }), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -131,11 +153,6 @@ export async function connectPlatformAccount(
 export async function authenticateSessionAccount(
   input: unknown,
 ): Promise<ActionResult> {
-  const parsed = authenticateSessionSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -143,6 +160,11 @@ export async function authenticateSessionAccount(
 
   if (!ability.can('create', sub('CrosslisterAccount', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = authenticateSessionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const { channel, username, password } = parsed.data;
@@ -270,11 +292,6 @@ export async function connectEbayAccount(): Promise<ActionResult<{ url: string }
 export async function disconnectAccount(
   input: unknown,
 ): Promise<ActionResult> {
-  const parsed = disconnectAccountSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -282,6 +299,11 @@ export async function disconnectAccount(
 
   if (!ability.can('delete', sub('CrosslisterAccount', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = disconnectAccountSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const [account] = await db
@@ -331,11 +353,6 @@ export async function disconnectAccount(
 export async function refreshAccountAuth(
   input: unknown,
 ): Promise<ActionResult> {
-  const parsed = refreshAccountSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -343,6 +360,11 @@ export async function refreshAccountAuth(
 
   if (!ability.can('update', sub('CrosslisterAccount', { sellerId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = refreshAccountSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const [account] = await db

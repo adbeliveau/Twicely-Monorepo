@@ -46,18 +46,18 @@ interface CheckoutResult {
 export async function createBundleCheckout(
   input: z.infer<typeof CreateBundleCheckoutSchema>
 ): Promise<CheckoutResult> {
-  // 0. Validate input
-  const parsed = CreateBundleCheckoutSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Invalid input' };
-  const { bundleTier, billingInterval } = parsed.data;
-
-  // 1. Auth + CASL + Delegation
+  // 0. Auth + CASL + Delegation
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('create', sub('Subscription', { sellerId: userId }))) {
     return { success: false, error: 'Insufficient permissions' };
   }
+
+  // 1. Validate input
+  const parsed = CreateBundleCheckoutSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Invalid input' };
+  const { bundleTier, billingInterval } = parsed.data;
 
   // Resolve sellerProfile.id — subscription tables FK to sellerProfile, not user
   const sellerProfileId = await getSellerProfileIdByUserId(userId);

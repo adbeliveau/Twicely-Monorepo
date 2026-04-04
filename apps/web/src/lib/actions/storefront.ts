@@ -64,16 +64,16 @@ export async function updateStorefrontSettings(data: {
   defaultStoreView?: 'grid' | 'list';
   shippingPolicy?: string | null;
 }): Promise<ActionResult> {
-  const parsed = updateStorefrontSettingsSchema.safeParse(data);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('SellerProfile', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = updateStorefrontSettingsSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const profile = await getSellerProfileForUser(userId);
@@ -235,15 +235,15 @@ const updateCategoriesSchema = z.object({
 export async function updateStoreCategories(
   categories: { name: string; sortOrder: number }[]
 ): Promise<ActionResult> {
-  const parsed = updateCategoriesSchema.safeParse({ categories });
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('SellerProfile', { userId }))) {
     return { success: false, error: 'Forbidden' };
   }
+
+  const parsed = updateCategoriesSchema.safeParse({ categories });
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
 
   const profile = await getSellerProfileForUser(userId);
   if (!profile) return { success: false, error: 'Seller profile required' };

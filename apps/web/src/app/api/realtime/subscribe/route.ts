@@ -44,6 +44,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (!ability.can('read', 'Conversation')) {
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
+
   const secret = getSecret();
   if (!secret) {
     return NextResponse.json({ success: false, error: 'Realtime not configured.' }, { status: 503 });
@@ -65,11 +69,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const { channel } = parsed.data;
-
-  // Gate: must be able to read conversations
-  if (!ability.can('read', 'Conversation')) {
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-  }
 
   // Validate conversation channel — user must be a participant
   const convMatch = /^private-conversation\.(.+)$/.exec(channel);

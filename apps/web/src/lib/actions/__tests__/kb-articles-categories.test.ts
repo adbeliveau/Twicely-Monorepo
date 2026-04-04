@@ -138,14 +138,14 @@ describe('submitArticleFeedback', () => {
   });
 
   it('returns validation error for missing articleId', async () => {
-    mockAuthorize.mockResolvedValue({ session: { userId: 'user-test-001' } });
+    mockAuthorize.mockResolvedValue({ session: { userId: 'user-test-001' }, ability: { can: vi.fn().mockReturnValue(true) } });
     const { submitArticleFeedback } = await import('../kb-feedback');
     const result = await submitArticleFeedback({ helpful: true });
     expect(result.success).toBe(false);
   });
 
   it('submits feedback when authenticated', async () => {
-    mockAuthorize.mockResolvedValue({ session: { userId: 'user-test-001' } });
+    mockAuthorize.mockResolvedValue({ session: { userId: 'user-test-001' }, ability: { can: vi.fn().mockReturnValue(true) } });
     const insertChain = makeChain([]);
     mockInsert.mockReturnValue(insertChain);
 
@@ -156,7 +156,7 @@ describe('submitArticleFeedback', () => {
   });
 
   it('includes userId and helpful value when authenticated', async () => {
-    mockAuthorize.mockResolvedValue({ session: { userId: 'user-test-001' } });
+    mockAuthorize.mockResolvedValue({ session: { userId: 'user-test-001' }, ability: { can: vi.fn().mockReturnValue(true) } });
     const insertChain = makeChain([]);
     mockInsert.mockReturnValue(insertChain);
 

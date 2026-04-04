@@ -31,9 +31,12 @@ interface ReliabilityResult {
 export async function getReliabilityDisplayAction(
   userId: string
 ): Promise<ReliabilityResult> {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) {
     return { success: false, error: 'Not authenticated' };
+  }
+  if (!ability.can('read', 'LocalReliabilityEvent')) {
+    return { success: false, error: 'Not authorized' };
   }
 
   const parsed = getReliabilitySchema.safeParse({ userId });

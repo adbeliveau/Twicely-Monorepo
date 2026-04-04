@@ -39,10 +39,13 @@ async function checkLoginRateLimit(email: string): Promise<{ allowed: boolean; a
       await valkey.expire(key, STAFF_LOGIN_LOCKOUT_SECONDS);
     }
     return { allowed: attempts <= STAFF_LOGIN_MAX_ATTEMPTS, attemptsLeft: Math.max(0, STAFF_LOGIN_MAX_ATTEMPTS - attempts) };
-  } catch {
-    // Valkey unavailable — fail open (allow login, log warning)
-    logger.warn('[staff-auth] Valkey unavailable for rate limiting — allowing login attempt');
-    return { allowed: true, attemptsLeft: STAFF_LOGIN_MAX_ATTEMPTS };
+  } catch (err) {
+    // Valkey unavailable - fail closed so brute-force protection is not bypassed.
+    logger.error('[staff-auth] Valkey unavailable for rate limiting - denying login attempt', {
+      email,
+      error: String(err),
+    });
+    return { allowed: false, attemptsLeft: 0 };
   }
 }
 
@@ -62,6 +65,9 @@ export async function loginStaff(
   // H2 Security: Check brute-force rate limit
   const rateCheck = await checkLoginRateLimit(email);
   if (!rateCheck.allowed) {
+    if (rateCheck.attemptsLeft === 0) {
+      throw new Error('Login temporarily unavailable. Please try again later.');
+    }
     logger.warn('[staff-auth] Login locked out', { email, reason: 'too many attempts' });
     throw new Error('Too many login attempts. Please try again in 15 minutes.');
   }
@@ -86,7 +92,7 @@ export async function loginStaff(
     throw new Error('Invalid email or password');
   }
 
-  // Successful login — clear rate limit counter
+  // Successful login - clear rate limit counter
   await clearLoginAttempts(email);
 
   // Load all roles for this staff user (filter revoked in application layer)

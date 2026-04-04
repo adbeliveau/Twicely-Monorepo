@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, Bell, BellOff } from 'lucide-react';
 import { Button } from '@twicely/ui/button';
@@ -34,18 +34,9 @@ export function WatchButton({
   const [count, setCount] = useState(watcherCount);
   const [isPending, startTransition] = useTransition();
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const autoWatchFiredRef = useRef(false);
 
-  // Auto-watch on mount if redirected back from login
-  useEffect(() => {
-    if (autoWatch && isLoggedIn && !initialWatching) {
-      handleToggleWatch();
-      // Clean URL
-      router.replace(`/i/${listingSlug}`, { scroll: false });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleToggleWatch = () => {
+  const handleToggleWatch = useCallback(() => {
     if (!isLoggedIn) {
       router.push(`/auth/login?callbackUrl=/i/${listingSlug}?action=watch`);
       return;
@@ -58,25 +49,43 @@ export function WatchButton({
     }
 
     startTransition(async () => {
-      const result = await toggleWatchlistAction(listingId);
-      if (!result.success) {
+      try {
+        const result = await toggleWatchlistAction(listingId);
+        if (!result.success) {
+          setWatching(wasWatching);
+          setCount((prev) => (wasWatching ? prev + 1 : prev - 1));
+        } else if (!wasWatching) {
+          setShowConfirmation(true);
+          setTimeout(() => setShowConfirmation(false), 2000);
+        }
+      } catch {
         setWatching(wasWatching);
         setCount((prev) => (wasWatching ? prev + 1 : prev - 1));
-      } else if (!wasWatching) {
-        // Show confirmation when adding to watchlist
-        setShowConfirmation(true);
-        setTimeout(() => setShowConfirmation(false), 2000);
       }
     });
-  };
+  }, [isLoggedIn, watching, listingSlug, listingId, router, startTransition]);
+
+  // Auto-watch on mount if redirected back from login
+  useEffect(() => {
+    if (autoWatchFiredRef.current) return;
+    if (autoWatch && isLoggedIn && !initialWatching) {
+      autoWatchFiredRef.current = true;
+      handleToggleWatch();
+      router.replace(`/i/${listingSlug}`, { scroll: false });
+    }
+  }, [autoWatch, isLoggedIn, initialWatching, handleToggleWatch, router, listingSlug]);
 
   const handleToggleAlert = () => {
     const wasNotifying = notifyPriceDrop;
     setNotifyPriceDrop(!wasNotifying);
 
     startTransition(async () => {
-      const result = await togglePriceAlertAction(listingId);
-      if (!result.success) {
+      try {
+        const result = await togglePriceAlertAction(listingId);
+        if (!result.success) {
+          setNotifyPriceDrop(wasNotifying);
+        }
+      } catch {
         setNotifyPriceDrop(wasNotifying);
       }
     });

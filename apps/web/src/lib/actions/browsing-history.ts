@@ -5,6 +5,7 @@ import { browsingHistory, listing } from '@twicely/db/schema';
 import { authorize } from '@twicely/casl';
 import { eq, and, count, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 const recordViewSchema = z.object({
   listingId: z.string().cuid2(),
@@ -18,7 +19,6 @@ const removeHistorySchema = z.object({
   listingId: z.string().cuid2(),
 }).strict();
 
-const MAX_HISTORY_ITEMS = 50;
 
 interface RecordViewResult {
   success: boolean;
@@ -42,11 +42,6 @@ export async function recordViewAction(
   listingId: string,
   options?: RecordViewOptions
 ): Promise<RecordViewResult> {
-  const parsed = recordViewSchema.safeParse({ listingId, options });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
 
   // Silent no-op for logged out users
@@ -56,6 +51,11 @@ export async function recordViewAction(
 
   if (!ability.can('create', 'BrowsingHistory')) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = recordViewSchema.safeParse({ listingId, options });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Get listing details (check ownership + get categoryId/sellerId)
@@ -107,8 +107,9 @@ export async function recordViewAction(
 
   const historyCount = countResult?.count ?? 0;
 
-  if (historyCount > MAX_HISTORY_ITEMS) {
-    const excess = historyCount - MAX_HISTORY_ITEMS;
+  const maxHistoryItems = await getPlatformSetting<number>('discovery.browsingHistory.maxItems', 50);
+  if (historyCount > maxHistoryItems) {
+    const excess = historyCount - maxHistoryItems;
     const oldestItems = await db
       .select({ id: browsingHistory.id })
       .from(browsingHistory)
@@ -146,11 +147,6 @@ export async function clearBrowsingHistoryAction(): Promise<RecordViewResult> {
  * Remove a single item from the current user's browsing history.
  */
 export async function removeFromHistoryAction(listingId: string): Promise<RecordViewResult> {
-  const parsed = removeHistorySchema.safeParse({ listingId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
 
   if (!session) {
@@ -159,6 +155,11 @@ export async function removeFromHistoryAction(listingId: string): Promise<Record
 
   if (!ability.can('delete', 'BrowsingHistory')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = removeHistorySchema.safeParse({ listingId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   await db

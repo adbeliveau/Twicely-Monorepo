@@ -73,6 +73,7 @@ No authentication required. Accessible to all visitors including guests.
 | 16 | `/h/[category-slug]/[article-slug]` | {Article Title} \| Help Center | marketplace | PUBLIC | E3 | kbArticle (audience-gated: ALL only for guests) |
 | 16a | `/verify/[certNumber]` | Verify Certificate \| Twicely | marketplace | PUBLIC | D6 | Authentication certificate verification page |
 | 16b | `/become-seller` | Become a Seller \| Twicely | marketplace | PUBLIC | G10.9 | 4-state CTA routing (guest/non-seller/PERSONAL/BUSINESS), TF bracket table, Store/Crosslister tier pricing |
+| 16c | `/pricing` | Pricing — Twicely | marketing | PUBLIC | G10 | TF bracket tiers (10%/9%/8%), Store tier pricing toggle (monthly/annual), feature comparison table |
 
 ### 1.1 Public Page States
 
@@ -287,16 +288,18 @@ Requires authenticated user with `isSeller === true`. Non-sellers see an "Enable
 
 ---
 
-## 6. MESSAGING (twicely.co/m)
+## 6. MESSAGING (twicely.co/my/messages)
 
 | # | Path | Title | Layout | Gate | Build Phase | Key Data |
 |---|------|-------|--------|------|-------------|----------|
-| 79 | `/m` | Messages \| Twicely | dashboard | AUTH | E2 | conversations list, unread badges |
-| 80 | `/m/[conversationId]` | {Subject} — Message \| Twicely | dashboard | AUTH + own conversation | E2 | conversation + messages, real-time via Centrifugo |
+| 79 | `/my/messages` | Messages \| Twicely | dashboard | AUTH | E2 | conversations list, unread badges |
+| 80 | `/my/messages/[conversationId]` | {Subject} — Message \| Twicely | dashboard | AUTH + own conversation | E2 | conversation + messages, real-time via Centrifugo |
+
+> **Note:** `/m` and `/m/:id` are permanent redirects to the canonical paths above (configured in `next.config.ts`).
 
 ### 6.1 Messaging Page States
 
-**Inbox (`/m`)**
+**Inbox (`/my/messages`)**
 - LOADING: Conversation list skeleton
 - EMPTY: "No messages yet. Start a conversation from any listing page."
 - POPULATED: Conversation list (avatar, name, last message preview, timestamp, unread dot), listing thumbnail per conversation

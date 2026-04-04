@@ -144,7 +144,7 @@ Meetup coordination happens via standard buyer-seller messaging with enhanced fe
 ## 12. PLATFORM SETTINGS
 
 ```
-commerce.local.transactionFeePercent: 5.0
+## Removed: commerce.local.tfRateBps (Decision #118: local TF uses standard progressive brackets)
 commerce.local.defaultRadiusMiles: 25
 commerce.local.maxRadiusMiles: 50
 commerce.local.noShowFeeCents: 500

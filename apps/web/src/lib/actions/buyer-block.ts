@@ -43,15 +43,15 @@ export async function blockBuyerAction(
   buyerId: string,
   reason?: string
 ): Promise<ActionResult> {
-  const parsed = blockBuyerSchema.safeParse({ buyerId, reason });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('SellerProfile', { userId: sellerId }))) return { success: false, error: 'Not authorized' };
+
+  const parsed = blockBuyerSchema.safeParse({ buyerId, reason });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
 
   // Cannot block yourself
   if (buyerId === sellerId) {
@@ -94,15 +94,15 @@ export async function blockBuyerAction(
  * Unblock a previously blocked buyer.
  */
 export async function unblockBuyerAction(buyerId: string): Promise<ActionResult> {
-  const parsed = unblockBuyerSchema.safeParse({ buyerId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('SellerProfile', { userId: sellerId }))) return { success: false, error: 'Not authorized' };
+
+  const parsed = unblockBuyerSchema.safeParse({ buyerId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
 
   try {
     const result = await db

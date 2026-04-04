@@ -106,14 +106,14 @@ export async function getPayoutsAction(
     return { success: false, error: 'Please sign in to continue' };
   }
 
-  const parsed = getPayoutsSchema.safeParse({ limit, cursor });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('read', sub('Payout', { userId }))) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = getPayoutsSchema.safeParse({ limit, cursor });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const [profile] = await db
@@ -198,13 +198,14 @@ export async function updatePayoutScheduleAction(
     return { success: false, error: 'Please sign in to continue' };
   }
 
-  const parsed = updateScheduleSchema.safeParse({ interval, options });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('SellerProfile', { userId }))) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = updateScheduleSchema.safeParse({ interval, options });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const [profile] = await db

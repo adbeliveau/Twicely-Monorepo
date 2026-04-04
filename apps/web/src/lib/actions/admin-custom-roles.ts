@@ -17,8 +17,7 @@ import {
   updateCustomRoleSchema,
 } from './admin-custom-role-schemas';
 import { requireMfaForCriticalAction } from './staff-mfa';
-
-const MAX_CUSTOM_ROLES = 20;
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 // ─── createCustomRoleAction ───────────────────────────────────────────────────
 
@@ -44,8 +43,9 @@ export async function createCustomRoleAction(input: unknown) {
     .select({ count: count() })
     .from(customRole)
     .where(eq(customRole.isActive, true));
-  if ((countResult?.count ?? 0) >= MAX_CUSTOM_ROLES) {
-    return { error: 'Maximum 20 custom roles allowed' };
+  const maxCustomRoles = await getPlatformSetting<number>('admin.customRoles.maxCount', 20);
+  if ((countResult?.count ?? 0) >= maxCustomRoles) {
+    return { error: `Maximum ${maxCustomRoles} custom roles allowed` };
   }
 
   // Auto-generate code from name

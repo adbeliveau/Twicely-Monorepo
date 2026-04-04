@@ -14,6 +14,7 @@ import { helpdeskCase, caseEvent } from '@twicely/db/schema';
 import { eq, and, lt, inArray } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
+import { notify } from '@twicely/notifications/service';
 
 const QUEUE_NAME = 'helpdesk-auto-close';
 
@@ -42,7 +43,7 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
 
   // Auto-close stale PENDING_USER cases
   const stalePending = await db
-    .select({ id: helpdeskCase.id })
+    .select({ id: helpdeskCase.id, requesterId: helpdeskCase.requesterId, caseNumber: helpdeskCase.caseNumber })
     .from(helpdeskCase)
     .where(
       and(
@@ -68,12 +69,19 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
       }))
     );
 
+    for (const c of stalePending) {
+      void notify(c.requesterId, 'helpdesk.case.closed', {
+        caseNumber: c.caseNumber,
+        contactUrl: '/h/contact',
+      });
+    }
+
     logger.info('Auto-closed stale PENDING_USER cases', { count: ids.length });
   }
 
   // Auto-close stale RESOLVED cases
   const staleResolved = await db
-    .select({ id: helpdeskCase.id })
+    .select({ id: helpdeskCase.id, requesterId: helpdeskCase.requesterId, caseNumber: helpdeskCase.caseNumber })
     .from(helpdeskCase)
     .where(
       and(
@@ -98,6 +106,13 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
         dataJson: { reason: 'resolved_timeout', days: resolvedDays },
       }))
     );
+
+    for (const c of staleResolved) {
+      void notify(c.requesterId, 'helpdesk.case.closed', {
+        caseNumber: c.caseNumber,
+        contactUrl: '/h/contact',
+      });
+    }
 
     logger.info('Auto-closed stale RESOLVED cases', { count: ids.length });
   }

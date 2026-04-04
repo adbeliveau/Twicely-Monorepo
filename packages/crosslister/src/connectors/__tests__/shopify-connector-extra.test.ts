@@ -51,14 +51,14 @@ describe('ShopifyConnector — authenticate edge cases', () => {
     setupDbMock();
   });
 
-  it('returns error when credentials.state (shopDomain) is empty string', async () => {
+  it('returns error when credentials.shopDomain is empty string', async () => {
     const { ShopifyConnector } = await import('../shopify-connector');
     const connector = new ShopifyConnector();
     const result = await connector.authenticate({
       method: 'OAUTH',
       code: 'some-code',
       redirectUri: 'https://twicely.co/api/crosslister/shopify/callback',
-      state: '',   // empty state = no shop domain
+      shopDomain: '',
     });
 
     expect(result.success).toBe(false);
@@ -83,7 +83,7 @@ describe('ShopifyConnector — authenticate edge cases', () => {
       method: 'OAUTH',
       code: 'used-code',
       redirectUri: '',
-      state: 'my-store.myshopify.com',
+      shopDomain: 'my-store.myshopify.com',
     });
 
     expect(result.success).toBe(false);
@@ -108,7 +108,7 @@ describe('ShopifyConnector — authenticate edge cases', () => {
       method: 'OAUTH',
       code: 'bad-response-code',
       redirectUri: '',
-      state: 'my-store.myshopify.com',
+      shopDomain: 'my-store.myshopify.com',
     });
 
     expect(result.success).toBe(false);
@@ -136,7 +136,7 @@ describe('ShopifyConnector — authenticate edge cases', () => {
       method: 'OAUTH',
       code: 'code',
       redirectUri: '',
-      state: 'my-store.myshopify.com',
+      shopDomain: 'my-store.myshopify.com',
     });
 
     // Auth is still successful even when shop info is unavailable
@@ -169,7 +169,7 @@ describe('ShopifyConnector — authenticate edge cases', () => {
       method: 'OAUTH',
       code: 'code',
       redirectUri: '',
-      state: 'test.myshopify.com',
+      shopDomain: 'test.myshopify.com',
     });
 
     expect(result.refreshToken).toBeNull();

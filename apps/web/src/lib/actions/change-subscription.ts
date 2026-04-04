@@ -76,20 +76,20 @@ const VALID_TIERS: Record<string, string[]> = {
 export async function changeSubscriptionAction(
   input: z.infer<typeof ChangeSubscriptionSchema>
 ): Promise<ChangeResult> {
-  const parsed = ChangeSubscriptionSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Invalid input' };
-  const { product, targetTier, targetInterval } = parsed.data;
-
-  if (!VALID_TIERS[product]?.includes(targetTier)) {
-    return { success: false, error: 'Invalid tier for this product' };
-  }
-
   // 1. Auth + CASL
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Subscription', { sellerId: userId }))) {
     return { success: false, error: 'Insufficient permissions' };
+  }
+
+  const parsed = ChangeSubscriptionSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Invalid input' };
+  const { product, targetTier, targetInterval } = parsed.data;
+
+  if (!VALID_TIERS[product]?.includes(targetTier)) {
+    return { success: false, error: 'Invalid tier for this product' };
   }
 
   const sellerProfileId = await getSellerProfileIdByUserId(userId);
@@ -233,16 +233,16 @@ export async function changeSubscriptionAction(
 export async function cancelPendingChangeAction(
   input: z.infer<typeof CancelPendingSchema>
 ): Promise<{ success: boolean; error?: string }> {
-  const parsed = CancelPendingSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: 'Invalid input' };
-  const { product } = parsed.data;
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Subscription', { sellerId: userId }))) {
     return { success: false, error: 'Insufficient permissions' };
   }
+
+  const parsed = CancelPendingSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: 'Invalid input' };
+  const { product } = parsed.data;
 
   const sellerProfileId = await getSellerProfileIdByUserId(userId);
   if (!sellerProfileId) return { success: false, error: 'Seller profile not found' };

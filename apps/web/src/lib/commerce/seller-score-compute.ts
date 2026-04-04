@@ -22,6 +22,7 @@ import {
   type SellerMetrics,
 } from '@twicely/commerce/performance-band';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 export interface ComputeSellerScoreResult {
   success: boolean;
@@ -86,9 +87,10 @@ export async function computeAndStoreSellerScore(
     .limit(1);
 
   // Derive metrics with safe defaults for sellers with no performance row yet
+  const defaultOnTimePct = await getPlatformSetting<number>('commerce.seller.defaultOnTimeShippingPct', 100);
   const metrics: SellerMetrics = {
     totalOrders:         perf?.totalOrders ?? 0,
-    onTimeShippingPct:   perf?.onTimeShippingPct ?? 100,
+    onTimeShippingPct:   perf?.onTimeShippingPct ?? defaultOnTimePct,
     inadRate:            perf?.inadRate ?? 0,
     reviewAverage:       perf?.averageRating ?? null,
     responseTimeHours:   perf?.avgResponseTimeHours ?? null,

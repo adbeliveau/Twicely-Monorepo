@@ -4,9 +4,27 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockValkeySet = vi.fn().mockResolvedValue('OK');
 vi.mock('@twicely/db/cache', () => ({
@@ -28,8 +46,6 @@ vi.mock('@twicely/casl', () => ({
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
 
 const VALID_LISTING = {
   externalId: '12345678',
@@ -56,29 +72,22 @@ function makeRequest(authHeader: string | undefined, body: unknown): Request {
   });
 }
 
-async function makeSessionToken(overrides: Record<string, unknown> = {}): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT({ userId: 'user-abc', purpose: 'extension-session', ...overrides })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('30d')
-    .sign(s);
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     mockValkeySet.mockResolvedValue('OK');
   });
 
   it('accepts VESTIAIRE channel with valid listing data (returns 200)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: VALID_LISTING,
     }));
@@ -88,9 +97,8 @@ describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   });
 
   it('accepts listing with optional currency field (3-letter ISO code)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: { ...VALID_LISTING, currency: 'EUR' },
     }));
@@ -100,9 +108,12 @@ describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   });
 
   it('caches scraped data in Valkey with correct key pattern', async () => {
-    const token = await makeSessionToken({ userId: 'user-vc-test' });
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-vc-test', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-vc-test', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     const { POST } = await import('../scrape/route');
-    await POST(makeRequest(`Bearer ${token}`, {
+    await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: { ...VALID_LISTING, externalId: 'vc-99887766' },
     }));
@@ -115,10 +126,9 @@ describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   });
 
   it('rejects missing required fields (returns 400)', async () => {
-    const token = await makeSessionToken();
-    const { POST } = await import('../scrape/route');
     const { title: _dropped, ...listingWithout } = VALID_LISTING;
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const { POST } = await import('../scrape/route');
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: listingWithout,
     }));
@@ -126,9 +136,8 @@ describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   });
 
   it('rejects invalid currency code (non-3-letter, returns 400)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: { ...VALID_LISTING, currency: 'EU' },
     }));
@@ -136,9 +145,8 @@ describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   });
 
   it('accepts GBP currency code', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: { ...VALID_LISTING, currency: 'GBP' },
     }));
@@ -146,9 +154,8 @@ describe('POST /api/extension/scrape — VESTIAIRE channel', () => {
   });
 
   it('accepts listing without currency field (optional)', async () => {
-    const token = await makeSessionToken();
     const { POST } = await import('../scrape/route');
-    const res = await POST(makeRequest(`Bearer ${token}`, {
+    const res = await POST(makeRequest('Bearer valid', {
       channel: 'VESTIAIRE',
       listing: VALID_LISTING,
     }));

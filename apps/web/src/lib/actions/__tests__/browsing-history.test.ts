@@ -15,6 +15,9 @@ const mockAuthorize = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
 vi.mock('@twicely/casl', () => ({ authorize: mockAuthorize }));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
 
 // Valid cuid2 IDs for use in tests
 const LISTING_ID = 'wnrw7r9n3j5h2wzb1fuz3knt';

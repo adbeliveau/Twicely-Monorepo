@@ -45,6 +45,10 @@ vi.mock('../staff-mfa', () => ({
   requireMfaForCriticalAction: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeAdminSession() {

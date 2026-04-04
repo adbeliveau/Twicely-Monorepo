@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
+import { clientLogger } from "@/lib/client-logger";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
@@ -50,7 +51,7 @@ export default function NotificationDropdown() {
           );
         }
       } catch (error) {
-        console.error("Failed to fetch notifications:", error);
+        clientLogger.error("Failed to fetch notifications", error);
       } finally {
         setLoading(false);
       }

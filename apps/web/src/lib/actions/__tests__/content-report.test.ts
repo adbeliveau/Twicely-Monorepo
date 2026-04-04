@@ -10,6 +10,10 @@ vi.mock('@twicely/db', () => ({
   db: { select: vi.fn(), insert: vi.fn(), update: vi.fn() },
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
+}));
+
 vi.mock('@twicely/db/schema', () => ({
   contentReport: {
     id: 'id',

@@ -19,6 +19,7 @@ vi.mock('drizzle-orm', () => ({
 
 vi.mock('@twicely/casl', () => ({
   authorize: vi.fn(),
+  sub: vi.fn((type: string, props: Record<string, unknown>) => ({ __caslSubjectType__: type, ...props })),
 }));
 
 vi.mock('@/lib/queries/platform-settings', () => ({
@@ -73,7 +74,7 @@ describe('updateCookieConsent', () => {
     const { authorize } = await import('@/lib/casl');
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-1' },
-      ability: {},
+      ability: { can: vi.fn().mockReturnValue(true) },
     } as unknown as Awaited<ReturnType<typeof authorize>>);
 
     const { updateCookieConsent } = await import('../cookie-consent');
@@ -91,7 +92,7 @@ describe('updateCookieConsent', () => {
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-2' },
-      ability: {},
+      ability: { can: vi.fn().mockReturnValue(true) },
     } as unknown as Awaited<ReturnType<typeof authorize>>);
     vi.mocked(getPlatformSetting).mockResolvedValue(false as unknown as never);
 
@@ -109,7 +110,7 @@ describe('updateCookieConsent', () => {
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-3' },
-      ability: {},
+      ability: { can: vi.fn().mockReturnValue(true) },
     } as unknown as Awaited<ReturnType<typeof authorize>>);
     vi.mocked(getPlatformSetting).mockResolvedValue(true as unknown as never);
 
@@ -130,7 +131,7 @@ describe('updateCookieConsent', () => {
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-4' },
-      ability: {},
+      ability: { can: vi.fn().mockReturnValue(true) },
     } as unknown as Awaited<ReturnType<typeof authorize>>);
     vi.mocked(getPlatformSetting).mockResolvedValue(true as unknown as never);
 
@@ -170,7 +171,7 @@ describe('getCookieConsent', () => {
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-5' },
-      ability: {},
+      ability: { can: vi.fn().mockReturnValue(true) },
     } as unknown as Awaited<ReturnType<typeof authorize>>);
     vi.mocked(db.select).mockReturnValue(
       makeSelectChain([{ cookieConsentJson: null }]) as unknown as ReturnType<typeof db.select>
@@ -188,7 +189,7 @@ describe('getCookieConsent', () => {
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-6' },
-      ability: {},
+      ability: { can: vi.fn().mockReturnValue(true) },
     } as unknown as Awaited<ReturnType<typeof authorize>>);
     vi.mocked(db.select).mockReturnValue(
       makeSelectChain([

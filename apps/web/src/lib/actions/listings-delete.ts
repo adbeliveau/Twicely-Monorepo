@@ -27,14 +27,14 @@ export async function deleteListing(listingId: string): Promise<ActionResult> {
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
-  const parsed = deleteListingSchema.safeParse({ listingId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('delete', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = deleteListingSchema.safeParse({ listingId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {

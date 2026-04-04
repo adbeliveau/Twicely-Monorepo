@@ -78,8 +78,8 @@ function validateCreateInput(data: CreatePromotionInput): ActionResult {
   if (!data.name || data.name.length < 1 || data.name.length > 100)
     return { success: false, error: 'Name must be 1-100 characters' };
   if ((data.type === 'PERCENT_OFF' || data.type === 'BUNDLE_DISCOUNT') &&
-      (data.discountPercent === undefined || data.discountPercent < 1 || data.discountPercent > 100))
-    return { success: false, error: 'Discount percent must be between 1 and 100' };
+      (data.discountPercent === undefined || data.discountPercent < 1 || data.discountPercent > 95))
+    return { success: false, error: 'Discount percent must be between 1 and 95' };
   if (data.type === 'AMOUNT_OFF' && (data.discountAmountCents === undefined || data.discountAmountCents < 1))
     return { success: false, error: 'Discount amount must be greater than 0' };
   if (data.scope === 'CATEGORY' && (!data.applicableCategoryIds || data.applicableCategoryIds.length === 0))
@@ -103,15 +103,15 @@ function validateCreateInput(data: CreatePromotionInput): ActionResult {
 }
 
 export async function createPromotion(data: CreatePromotionInput): Promise<CreateActionResult> {
-  const parsed = createPromotionSchema.safeParse(data);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('create', sub('Promotion', { sellerId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+  const parsed = createPromotionSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
   const profile = await getSellerProfileWithTier(userId);
   if (!profile) return { success: false, error: 'Seller profile required' };
@@ -141,6 +141,12 @@ export async function createPromotion(data: CreatePromotionInput): Promise<Creat
 }
 
 export async function updatePromotion(promotionId: string, data: Partial<CreatePromotionInput>): Promise<ActionResult> {
+  const { ability, session } = await authorize();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  if (!ability.can('update', sub('Promotion', { sellerId: userId }))) {
+    return { success: false, error: 'Forbidden' };
+  }
   const parsedId = updatePromotionIdSchema.safeParse({ promotionId });
   if (!parsedId.success) {
     return { success: false, error: parsedId.error.issues[0]?.message ?? 'Invalid promotion ID' };
@@ -148,12 +154,6 @@ export async function updatePromotion(promotionId: string, data: Partial<CreateP
   const parsedData = updatePromotionSchema.safeParse(data);
   if (!parsedData.success) {
     return { success: false, error: parsedData.error.issues[0]?.message ?? 'Invalid input' };
-  }
-  const { ability, session } = await authorize();
-  if (!session) return { success: false, error: 'Unauthorized' };
-  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
-  if (!ability.can('update', sub('Promotion', { sellerId: userId }))) {
-    return { success: false, error: 'Forbidden' };
   }
   const [existing] = await db.select({ id: promotion.id, sellerId: promotion.sellerId })
     .from(promotion).where(eq(promotion.id, promotionId)).limit(1);
@@ -169,8 +169,8 @@ export async function updatePromotion(promotionId: string, data: Partial<CreateP
     updates.name = data.name;
   }
   if (data.discountPercent !== undefined) {
-    if (data.discountPercent < 1 || data.discountPercent > 100)
-      return { success: false, error: 'Discount percent must be between 1 and 100' };
+    if (data.discountPercent < 1 || data.discountPercent > 95)
+      return { success: false, error: 'Discount percent must be between 1 and 95' };
     updates.discountPercent = data.discountPercent;
   }
   if (data.discountAmountCents !== undefined) {

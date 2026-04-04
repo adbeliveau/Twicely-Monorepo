@@ -146,8 +146,10 @@ export const V32_SETTINGS_OPERATIONS: PlatformSettingSeed[] = [
   { key: 'commerce.shipping.autoDiscountMaxPercent', value: 75, type: 'number', category: 'commerce.shipping', description: 'Maximum auto-discount percentage for AUTO_DISCOUNT combined shipping mode' },
   { key: 'commerce.shipping.lostInTransitDays', value: 7, type: 'number', category: 'commerce.shipping', description: 'Days without tracking update before marking lost in transit' },
   { key: 'commerce.shipping.significantDelayDays', value: 14, type: 'number', category: 'commerce.shipping', description: 'Days past expected delivery before marking significant delay' },
-  { key: 'commerce.returns.estimatedShippingCents', value: 800, type: 'number', category: 'commerce.returns', description: 'Estimated return shipping cost in cents' },
+  { key: 'commerce.returns.estimatedShippingCents', value: 800, type: 'cents', category: 'commerce.returns', description: 'Estimated return shipping cost in cents' },
   { key: 'commerce.returns.sellerResponseDeadlineDays', value: 3, type: 'number', category: 'commerce.returns', description: 'Business days seller has to respond to a return request' },
+  { key: 'commerce.returns.sellerResponseDeadlineHour', value: 17, type: 'number', category: 'commerce.returns', description: 'Hour of day (0-23) for seller response deadline cutoff (e.g. 17 = 5 PM)' },
+  { key: 'commerce.seller.defaultOnTimeShippingPct', value: 100, type: 'number', category: 'commerce.seller', description: 'Default on-time shipping percentage for new sellers with no performance history' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FEATURE FLAGS (E4)

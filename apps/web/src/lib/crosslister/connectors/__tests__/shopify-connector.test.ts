@@ -156,7 +156,7 @@ describe('ShopifyConnector', () => {
         method: 'OAUTH',
         code: 'auth-code-123',
         redirectUri: 'https://twicely.co/api/crosslister/shopify/callback',
-        state: 'my-vintage-store.myshopify.com',
+        shopDomain: 'my-vintage-store.myshopify.com',
       });
 
       expect(result.success).toBe(true);
@@ -191,7 +191,7 @@ describe('ShopifyConnector', () => {
         method: 'OAUTH',
         code: 'bad-code',
         redirectUri: 'u',
-        state: 'my-store.myshopify.com',
+        shopDomain: 'my-store.myshopify.com',
       });
 
       expect(result.success).toBe(false);
@@ -207,7 +207,7 @@ describe('ShopifyConnector', () => {
         method: 'OAUTH',
         code: 'code',
         redirectUri: 'u',
-        state: 'my-store.myshopify.com',
+        shopDomain: 'my-store.myshopify.com',
       });
 
       expect(result.success).toBe(false);
@@ -232,7 +232,7 @@ describe('ShopifyConnector', () => {
         method: 'OAUTH',
         code: 'code',
         redirectUri: 'u',
-        state: 'my-store.myshopify.com',
+        shopDomain: 'my-store.myshopify.com',
       });
 
       expect(result.success).toBe(true);

@@ -9,8 +9,13 @@ vi.mock('@twicely/casl', () => ({
   sub: vi.fn((_type: string, cond: Record<string, unknown>) => cond),
 }));
 
-vi.mock('@twicely/db', () => ({
-  db: { select: vi.fn(), insert: vi.fn(), update: vi.fn() },
+vi.mock('@twicely/db', () => {
+  const selectChain = { from: vi.fn().mockReturnValue({ innerJoin: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) }) };
+  return { db: { select: vi.fn().mockReturnValue(selectChain), insert: vi.fn(), update: vi.fn() } };
+});
+
+vi.mock('@twicely/notifications/service', () => ({
+  notify: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/lib/queries/platform-settings', () => ({
@@ -28,10 +33,22 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getAffiliateByUserId } from '@/lib/queries/affiliate';
 
 const mockAuthorize = vi.mocked(authorize);
+const mockSelect = vi.mocked(db.select);
 const mockInsert = vi.mocked(db.insert);
 const mockUpdate = vi.mocked(db.update);
 const mockGetPlatformSetting = vi.mocked(getPlatformSetting);
 const mockGetAffiliateByUserId = vi.mocked(getAffiliateByUserId);
+
+/** Re-setup db.select chain for notifyStaffByRoles (lost on vi.resetAllMocks) */
+function makeSelectChain() {
+  mockSelect.mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      innerJoin: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
+    }),
+  } as never);
+}
 
 const validInput = {
   applicationNote: 'I have 50,000 followers on Instagram and post resale content daily.',
@@ -185,8 +202,9 @@ describe('applyForInfluencer — validation', () => {
 describe('applyForInfluencer — existing affiliate edge cases', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    makeSelectChain();
     mockAuthorize.mockResolvedValue({
-      session: makeSession() as never,
+      session: makeSession({ email: 'seller@example.com' }) as never,
       ability: makeAbility() as never,
     });
     setupEnabledFlags();
@@ -238,8 +256,9 @@ describe('applyForInfluencer — existing affiliate edge cases', () => {
 describe('applyForInfluencer — new affiliate happy path', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    makeSelectChain();
     mockAuthorize.mockResolvedValue({
-      session: makeSession() as never,
+      session: makeSession({ email: 'user@example.com' }) as never,
       ability: makeAbility() as never,
     });
     setupEnabledFlags();

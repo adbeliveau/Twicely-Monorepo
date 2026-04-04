@@ -259,8 +259,12 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
  * Calls finalizeOrder for each paymentIntentId.
  */
 export async function finalizeOrders(paymentIntentIds: string[]): Promise<FinalizeOrderResult> {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
+
+  if (!ability.can('create', 'Order')) {
+    return { success: false, error: 'Not authorized to create orders' };
+  }
 
   const parsed = finalizeOrdersSchema.safeParse({ paymentIntentIds });
   if (!parsed.success) {

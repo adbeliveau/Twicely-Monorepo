@@ -50,11 +50,6 @@ export interface ActivateBoostInput {
 }
 
 export async function activateBoost(input: ActivateBoostInput): Promise<ActionResult> {
-  const parsed = activateBoostSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
@@ -62,6 +57,11 @@ export async function activateBoost(input: ActivateBoostInput): Promise<ActionRe
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = activateBoostSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const profile = await getSellerProfileWithTier(userId);
@@ -139,11 +139,6 @@ export interface DeactivateBoostInput {
 }
 
 export async function deactivateBoost(input: DeactivateBoostInput): Promise<ActionResult> {
-  const parsed = deactivateBoostSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
@@ -151,6 +146,11 @@ export async function deactivateBoost(input: DeactivateBoostInput): Promise<Acti
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = deactivateBoostSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   // Verify seller owns the listing
@@ -200,11 +200,6 @@ export interface UpdateBoostRateInput {
 }
 
 export async function updateBoostRate(input: UpdateBoostRateInput): Promise<ActionResult> {
-  const parsed = updateBoostRateSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
@@ -212,6 +207,11 @@ export async function updateBoostRate(input: UpdateBoostRateInput): Promise<Acti
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
   if (!ability.can('update', sub('Listing', { ownerUserId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = updateBoostRateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const profile = await getSellerProfileWithTier(userId);

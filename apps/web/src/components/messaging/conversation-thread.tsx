@@ -48,10 +48,10 @@ export function ConversationThread({ conversation, messages: initialMessages, cu
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
-  const clearTypingTimeout = () => {
+  const clearTypingTimeout = useCallback(() => {
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => setTypingUserId(null), 3000);
-  };
+  }, []);
 
   const handleNewMessage = useCallback((msg: MessageItem) => {
     setMessages((prev) => {
@@ -73,8 +73,7 @@ export function ConversationThread({ conversation, messages: initialMessages, cu
 
   const handleTyping = useCallback((userId: string) => {
     setTypingUserId(userId); clearTypingTimeout();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearTypingTimeout]);
 
   useConversationRealtime({
     conversationId: conversation.id,

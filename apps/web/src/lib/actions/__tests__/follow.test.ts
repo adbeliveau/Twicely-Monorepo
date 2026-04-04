@@ -166,20 +166,26 @@ describe('toggleFollow', () => {
     expect(result).toEqual({ success: false, error: 'Forbidden' });
   });
 
-  it('validation runs BEFORE authorize — invalid input does not call authorize', async () => {
-    // Implementation: safeParse first, then authorize(). Invalid input must short-circuit.
+  it('rejects invalid cuid2 sellerUserId after authorize', async () => {
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'clm1a2b3c4d5e6f7g8h9i0j1k' },
+      ability: { can: vi.fn().mockReturnValue(true) },
+    });
     const { toggleFollow } = await import('../follow');
     const result = await toggleFollow('not-a-cuid2');
     expect(result.success).toBe(false);
-    expect(mockAuthorize).not.toHaveBeenCalled();
+    expect(mockAuthorize).toHaveBeenCalled();
   });
 
   it('returns error for empty string sellerUserId', async () => {
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'clm1a2b3c4d5e6f7g8h9i0j1k' },
+      ability: { can: vi.fn().mockReturnValue(true) },
+    });
     const { toggleFollow } = await import('../follow');
     const result = await toggleFollow('');
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
-    expect(mockAuthorize).not.toHaveBeenCalled();
   });
 });
 

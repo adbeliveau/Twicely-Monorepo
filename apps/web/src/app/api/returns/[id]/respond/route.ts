@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authorize } from '@twicely/casl/authorize';
+import { sub } from '@twicely/casl';
 import { respondToReturn } from '@twicely/commerce/returns';
 import { db } from '@twicely/db';
 import { returnRequest, order } from '@twicely/db/schema';
@@ -25,11 +26,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!ability.can('update', 'Return')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Verify user is the seller
+    // Fetch the return to get ownership fields for scoped CASL check
     const [ret] = await db
       .select({
         id: returnRequest.id,
@@ -44,7 +41,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Return not found' }, { status: 404 });
     }
 
-    if (ret.sellerId !== session.userId) {
+    if (!ability.can('update', sub('Return', { sellerId: ret.sellerId }))) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 

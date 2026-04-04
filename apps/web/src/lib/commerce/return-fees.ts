@@ -29,11 +29,6 @@ export const DEFAULT_RESTOCKING_FEE_MAX_CENTS = 5000; // $50
 export const DEFAULT_RESTOCKING_FEE_MIN_CENTS = 100; // $1
 export const DEFAULT_TF_REFUND_REMORSE_PERCENT = 0.50; // 50% TF refund
 
-// Short aliases for convenience
-export const RESTOCKING_FEE_PERCENT = DEFAULT_RESTOCKING_FEE_PERCENT;
-export const RESTOCKING_FEE_MAX_CENTS = DEFAULT_RESTOCKING_FEE_MAX_CENTS;
-export const RESTOCKING_FEE_MIN_CENTS = DEFAULT_RESTOCKING_FEE_MIN_CENTS;
-export const TF_REFUND_REMORSE_PERCENT = DEFAULT_TF_REFUND_REMORSE_PERCENT;
 
 /** Load return fee config from platform_settings. */
 export async function getReturnFeeConfig(): Promise<{

@@ -12,6 +12,7 @@ import {
   type PromotionData,
 } from '@twicely/commerce/promotions';
 import { applyCouponSchema } from '@/lib/validations/coupon';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 interface ApplyCouponInput {
   couponCode: string;
@@ -39,17 +40,17 @@ interface ApplyCouponResult {
 }
 
 export async function applyCoupon(input: ApplyCouponInput): Promise<ApplyCouponResult> {
-  const parsed = applyCouponSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) {
     return { success: false, error: 'Please sign in to apply a coupon' };
   }
   if (!ability.can('update', 'Cart')) {
     return { success: false, error: 'Not authorized' };
+  }
+
+  const parsed = applyCouponSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   const buyerId = session.userId;
@@ -121,7 +122,8 @@ export async function applyCoupon(input: ApplyCouponInput): Promise<ApplyCouponR
   }
 
   // Calculate discount
-  const discountResult = calculateDiscount(promo, applicableItems);
+  const bundleMinItems = await getPlatformSetting<number>('bundle.minItems', 2);
+  const discountResult = calculateDiscount(promo, applicableItems, { bundleMinItems });
 
   return {
     success: true,

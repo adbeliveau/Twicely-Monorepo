@@ -79,11 +79,6 @@ export async function getTransactionHistoryAction(
   type?: string,
   typeGroup?: string,
 ): Promise<TransactionHistoryResponse> {
-  const parsed = transactionHistorySchema.safeParse({ page, pageSize, type, typeGroup });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
 
   if (!session) {
@@ -94,6 +89,11 @@ export async function getTransactionHistoryAction(
 
   if (!ability.can('read', sub('LedgerEntry', { userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = transactionHistorySchema.safeParse({ page, pageSize, type, typeGroup });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
   try {
@@ -119,11 +119,6 @@ export async function getTransactionHistoryAction(
 export async function getCogsSummaryAction(
   input?: unknown,
 ): Promise<CogsSummaryResponse> {
-  const parsed = cogsSummarySchema.safeParse(input ?? {});
-  if (!parsed.success) {
-    return { success: false, error: 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
@@ -131,6 +126,11 @@ export async function getCogsSummaryAction(
 
   if (!ability.can('read', sub('Analytics', { sellerId: userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = cogsSummarySchema.safeParse(input ?? {});
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
   }
 
   try {

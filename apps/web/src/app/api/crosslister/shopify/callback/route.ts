@@ -15,8 +15,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import { auth } from '@twicely/auth/server';
+import { cookies } from 'next/headers';
 import { db } from '@twicely/db';
 import { crosslisterAccount, platformSetting } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -24,7 +23,7 @@ import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
 import { ShopifyConnector } from '@twicely/crosslister/connectors/shopify-connector';
 import { encryptToken } from '@twicely/crosslister/token-crypto';
 import { logger } from '@twicely/logger';
-import { defineAbilitiesFor, sub } from '@twicely/casl';
+import { authorize, sub } from '@twicely/casl';
 import { createHmac } from 'crypto';
 
 const CONNECT_SUCCESS_URL = '/my/selling/crosslist/connect?connected=shopify';
@@ -66,6 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const shop = searchParams.get('shop');
+  const state = searchParams.get('state');
 
   if (!code || !shop) {
     logger.warn('[shopify/callback] Missing code or shop param');
@@ -92,40 +92,55 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
   }
 
+  const normalizedShop = shop.trim().toLowerCase();
+
+  // Validate OAuth state to prevent CSRF and bind the callback to the intended store.
+  const cookieStore = await cookies();
+  const stateCookie = cookieStore.get('crosslister_oauth_state')?.value;
+  cookieStore.delete('crosslister_oauth_state');
+  if (!stateCookie || !state) {
+    logger.warn('[shopify/callback] Missing OAuth state — possible CSRF', { state });
+    return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+  }
+  try {
+    const stored = JSON.parse(stateCookie) as { state?: string; shopDomain?: string };
+    if (stored.state !== state) {
+      logger.warn('[shopify/callback] OAuth state mismatch — possible CSRF', { expected: stored.state, got: state });
+      return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+    }
+    if (stored.shopDomain !== normalizedShop) {
+      logger.warn('[shopify/callback] Shop domain mismatch — possible CSRF', {
+        expected: stored.shopDomain,
+        got: normalizedShop,
+      });
+      return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+    }
+  } catch {
+    logger.warn('[shopify/callback] Invalid OAuth state cookie');
+    return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+  }
+
   // Verify session — seller must be logged in
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
+  const { session, ability } = await authorize();
+  if (!session) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  const sellerId = session.user.id;
+  const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
   // CASL authorization check — user must have crosslister account creation rights
-  const ability = defineAbilitiesFor({
-    userId: sellerId,
-    email: session.user.email,
-    isSeller: (session.user as { isSeller?: boolean }).isSeller ?? false,
-    sellerId: (session.user as { isSeller?: boolean }).isSeller ? sellerId : null,
-    sellerStatus: null,
-    delegationId: null,
-    onBehalfOfSellerId: null,
-    onBehalfOfSellerProfileId: null,
-    delegatedScopes: [],
-    isPlatformStaff: false,
-    platformRoles: [],
-  });
   if (!ability.can('create', sub('CrosslisterAccount', { sellerId }))) {
     return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
   }
 
   try {
     const connector = new ShopifyConnector();
-    // Pass shop domain via credentials.state for use in token exchange
+    // Pass the validated shop domain explicitly so token exchange is bound to the intended store.
     const authResult = await connector.authenticate({
       method: 'OAUTH',
       code,
       redirectUri: '', // loaded from platform_settings inside connector
-      state: shop,
+      shopDomain: normalizedShop,
     });
 
     if (!authResult.success || !authResult.accessToken) {

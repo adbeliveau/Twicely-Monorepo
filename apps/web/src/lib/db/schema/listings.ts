@@ -153,7 +153,7 @@ export const listingOffer = pgTable('listing_offer', {
 export const watcherOffer = pgTable('watcher_offer', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
   listingId:             text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
-  sellerId:              text('seller_id').notNull(),  // userId
+  sellerId:              text('seller_id').notNull().references(() => user.id),
   discountedPriceCents:  integer('discounted_price_cents').notNull(),
   currency:              text('currency').notNull().default('USD'),
   expiresAt:             timestamp('expires_at', { withTimezone: true }).notNull(),

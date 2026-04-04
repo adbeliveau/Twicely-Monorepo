@@ -15,6 +15,7 @@ import { db } from '@twicely/db';
 import { helpdeskCase, helpdeskSlaPolicy, caseEvent, helpdeskTeam } from '@twicely/db/schema';
 import { eq, and, isNotNull, inArray } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
+import { notify } from '@twicely/notifications/service';
 
 const QUEUE_NAME = 'helpdesk-sla-check';
 
@@ -46,6 +47,10 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
       slaFirstResponseBreached: helpdeskCase.slaFirstResponseBreached,
       slaResolutionBreached: helpdeskCase.slaResolutionBreached,
       createdAt: helpdeskCase.createdAt,
+      assignedAgentId: helpdeskCase.assignedAgentId,
+      caseNumber: helpdeskCase.caseNumber,
+      subject: helpdeskCase.subject,
+      requesterId: helpdeskCase.requesterId,
     })
     .from(helpdeskCase)
     .where(
@@ -100,6 +105,21 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
         dataJson: { priority: c.priority, breachedAt: now.toISOString() },
       });
 
+      if (c.assignedAgentId) {
+        void notify(c.assignedAgentId, 'helpdesk.agent.sla_breach', {
+          caseNumber: c.caseNumber,
+          subject: c.subject,
+        });
+      }
+
+      // Notify user if case was escalated
+      if (policy?.escalateOnBreach && escalationTeamId) {
+        void notify(c.requesterId, 'helpdesk.case.escalated_user', {
+          caseNumber: c.caseNumber,
+          subject: c.subject,
+        });
+      }
+
     } else if (!c.slaResolutionBreached && elapsedRatio >= 0.75) {
       // 75% warning — insert event only once
       await db.insert(caseEvent).values({
@@ -111,6 +131,20 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
       }).catch(() => {
         // Ignore duplicate insertions from concurrent runs
       });
+
+      const remainingMs = resolutionDue - nowMs;
+      const remainingMins = Math.max(1, Math.round(remainingMs / 60_000));
+      const timeRemaining = remainingMins >= 60
+        ? `${Math.round(remainingMins / 60)}h`
+        : `${remainingMins}m`;
+
+      if (c.assignedAgentId) {
+        void notify(c.assignedAgentId, 'helpdesk.agent.sla_warning', {
+          caseNumber: c.caseNumber,
+          subject: c.subject,
+          timeRemaining,
+        });
+      }
     }
   }
 

@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { db } from '@twicely/db';
 import { user as userTable, auditEvent } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { authorize } from '@twicely/casl';
+import { authorize, sub } from '@twicely/casl';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
 import { cookies } from 'next/headers';
@@ -44,9 +44,12 @@ export interface CookieConsentResult {
 export async function updateCookieConsent(
   input: CookieConsentInput
 ): Promise<CookieConsentResult> {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) {
     return { success: false, error: 'Unauthorized' };
+  }
+  if (!ability.can('update', sub('User', { id: session.userId }))) {
+    return { success: false, error: 'Forbidden' };
   }
 
   const parsed = UpdateCookieConsentSchema.safeParse(input);
@@ -149,8 +152,9 @@ const GUEST_CONSENT_COOKIE = 'twicely_consent';
  * No-op if the user already has cookieConsentJson or the cookie is absent/invalid.
  */
 export async function mergeGuestCookieConsent(): Promise<void> {
-  const { session } = await authorize();
+  const { session, ability } = await authorize();
   if (!session) return;
+  if (!ability.can('update', sub('User', { id: session.userId }))) return;
 
   const cookieStore = await cookies();
   const raw = cookieStore.get(GUEST_CONSENT_COOKIE)?.value;

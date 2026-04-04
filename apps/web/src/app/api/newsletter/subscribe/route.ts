@@ -14,6 +14,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
 import NewsletterWelcomeEmail from '@twicely/email/templates/newsletter-welcome';
+import NewsletterConfirmationEmail from '@twicely/email/templates/newsletter-confirmation';
 
 const subscribeSchema = z.object({
   email: z.string().email().max(254).transform((e) => e.toLowerCase().trim()),
@@ -21,6 +22,39 @@ const subscribeSchema = z.object({
 }).strict();
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+
+async function sendConfirmationEmail(email: string, unsubscribeToken: string): Promise<void> {
+  const confirmUrl = `${APP_URL}/api/newsletter/confirm?token=${unsubscribeToken}`;
+  const unsubscribeUrl = `${APP_URL}/api/newsletter/unsubscribe?token=${unsubscribeToken}`;
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: 'Twicely <noreply@twicely.co>',
+    to: [email],
+    subject: 'Confirm your Twicely updates subscription',
+    react: NewsletterConfirmationEmail({ confirmUrl, unsubscribeUrl }),
+    headers: {
+      'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
+  });
+}
+
+async function sendWelcomeEmail(email: string, unsubscribeToken: string): Promise<void> {
+  const unsubscribeUrl = `${APP_URL}/api/newsletter/unsubscribe?token=${unsubscribeToken}`;
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  await resend.emails.send({
+    from: 'Twicely <noreply@twicely.co>',
+    to: [email],
+    subject: 'Welcome to Twicely updates',
+    react: NewsletterWelcomeEmail({ unsubscribeUrl }),
+    headers: {
+      'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
+  });
+}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // M1 Security: IP-based rate limiting (3 per hour)
@@ -33,8 +67,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (count > 3) {
       return NextResponse.json({ success: false, error: 'Too many requests' }, { status: 429 });
     }
-  } catch {
-    logger.warn('[newsletter] Valkey unavailable for rate limiting');
+  } catch (error) {
+    logger.warn('[newsletter] Valkey unavailable for rate limiting', { error: String(error) });
+    return NextResponse.json(
+      { success: false, error: 'Newsletter subscriptions are temporarily unavailable' },
+      { status: 503 },
+    );
   }
 
   let body: unknown;
@@ -59,31 +97,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 503 },
       );
     }
+    const doubleOptIn = await getPlatformSetting<boolean>('newsletter.doubleOptIn', true);
 
     const [existing] = await db
-      .select({ id: newsletterSubscriber.id, unsubscribedAt: newsletterSubscriber.unsubscribedAt })
+      .select({
+        id: newsletterSubscriber.id,
+        unsubscribedAt: newsletterSubscriber.unsubscribedAt,
+        confirmedAt: newsletterSubscriber.confirmedAt,
+      })
       .from(newsletterSubscriber)
       .where(eq(newsletterSubscriber.email, email))
       .limit(1);
 
-    if (existing && existing.unsubscribedAt === null) {
+    if (existing && existing.unsubscribedAt === null && existing.confirmedAt !== null) {
       return NextResponse.json({ success: true, alreadySubscribed: true });
     }
 
     let subscriberId: string;
 
-    if (existing && existing.unsubscribedAt !== null) {
-      // Re-subscribe: clear unsubscribedAt and reset welcome state
+    if (existing) {
+      // Re-subscribe or re-send confirmation: normalize subscriber state before emailing again.
       await db
         .update(newsletterSubscriber)
-        .set({ unsubscribedAt: null, confirmedAt: new Date(), welcomeSentAt: null })
+        .set({
+          unsubscribedAt: null,
+          confirmedAt: doubleOptIn ? null : new Date(),
+          welcomeSentAt: null,
+        })
         .where(eq(newsletterSubscriber.id, existing.id));
       subscriberId = existing.id;
     } else {
       // New subscriber
       const [inserted] = await db
         .insert(newsletterSubscriber)
-        .values({ email, source })
+        .values({
+          email,
+          source,
+          confirmedAt: doubleOptIn ? null : new Date(),
+        })
         .returning({ id: newsletterSubscriber.id });
       if (!inserted) {
         return NextResponse.json({ success: false, error: 'Something went wrong' }, { status: 500 });
@@ -102,19 +153,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ success: false, error: 'Something went wrong' }, { status: 500 });
     }
 
-    const unsubscribeUrl = `${APP_URL}/api/newsletter/unsubscribe?token=${row.unsubscribeToken}`;
+    if (doubleOptIn) {
+      await sendConfirmationEmail(email, row.unsubscribeToken);
+      return NextResponse.json({ success: true, confirmationRequired: true });
+    }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Twicely <noreply@twicely.co>',
-      to: [email],
-      subject: 'Welcome to Twicely updates',
-      react: NewsletterWelcomeEmail({ unsubscribeUrl }),
-      headers: {
-        'List-Unsubscribe': `<${unsubscribeUrl}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      },
-    });
+    await sendWelcomeEmail(email, row.unsubscribeToken);
 
     await db
       .update(newsletterSubscriber)

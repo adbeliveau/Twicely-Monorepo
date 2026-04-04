@@ -46,17 +46,17 @@ export async function getPublishAllowanceAction(): Promise<ActionResult<PublishA
  * For CREATE jobs: reverts projection status from QUEUED to DRAFT.
  */
 export async function cancelJob(input: unknown): Promise<ActionResult> {
-  const parsed = cancelJobSchema.safeParse(input);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'Unauthorized' };
 
   const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
   if (!ability.can('delete', sub('CrossJob', { sellerId }))) return { success: false, error: 'Forbidden' };
+
+  const parsed = cancelJobSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
 
   const [job] = await db
     .select()

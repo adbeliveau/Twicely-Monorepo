@@ -85,6 +85,8 @@ export const payout = pgTable('payout', {
   batchId:             text('batch_id').references(() => payoutBatch.id),
   status:              payoutStatusEnum('status').notNull().default('PENDING'),
   amountCents:         integer('amount_cents').notNull(),
+  feeCents:            integer('fee_cents').notNull().default(0),
+  isInstant:           boolean('is_instant').notNull().default(false),
   currency:            text('currency').notNull().default('USD'),
   stripeTransferId:    text('stripe_transfer_id'),
   stripePayoutId:      text('stripe_payout_id'),

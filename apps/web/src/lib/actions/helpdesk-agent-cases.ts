@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@twicely/db';
-import { helpdeskCase, caseMessage, caseEvent, helpdeskTeamMember } from '@twicely/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { helpdeskCase, caseMessage, caseEvent, helpdeskTeamMember, staffUser } from '@twicely/db/schema';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import {
   agentReplySchema,
@@ -22,6 +22,17 @@ interface ActionResult<T = undefined> {
   data?: T;
 }
 
+/** Extract staff IDs from structured mentions like @[Display Name](staff:abc123) */
+function extractMentionedStaffIds(body: string): string[] {
+  const mentionRegex = /@\[([^\]]+)\]\(staff:([a-z0-9]+)\)/g;
+  const ids: string[] = [];
+  let match;
+  while ((match = mentionRegex.exec(body)) !== null) {
+    if (match[2]) ids.push(match[2]);
+  }
+  return [...new Set(ids)];
+}
+
 /** Staff replies to a case */
 export async function addAgentReply(formData: unknown): Promise<ActionResult> {
   const { session, ability } = await staffAuthorize();
@@ -37,7 +48,7 @@ export async function addAgentReply(formData: unknown): Promise<ActionResult> {
   const now = new Date();
 
   const existingCase = await db
-    .select({ id: helpdeskCase.id, firstResponseAt: helpdeskCase.firstResponseAt, requesterId: helpdeskCase.requesterId, status: helpdeskCase.status })
+    .select({ id: helpdeskCase.id, firstResponseAt: helpdeskCase.firstResponseAt, requesterId: helpdeskCase.requesterId, status: helpdeskCase.status, caseNumber: helpdeskCase.caseNumber, subject: helpdeskCase.subject })
     .from(helpdeskCase)
     .where(eq(helpdeskCase.id, caseId))
     .limit(1);
@@ -76,6 +87,25 @@ export async function addAgentReply(formData: unknown): Promise<ActionResult> {
 
   notifyCaseWatchers(caseId, session.staffUserId, isInternal ? 'New internal note added' : 'New reply sent').catch(() => undefined);
 
+  // Parse @mentions in internal notes and notify mentioned agents
+  if (isInternal) {
+    const mentionedIds = extractMentionedStaffIds(body)
+      .filter((id) => id !== session.staffUserId);
+    if (mentionedIds.length > 0) {
+      const validStaff = await db
+        .select({ id: staffUser.id })
+        .from(staffUser)
+        .where(and(eq(staffUser.isActive, true), inArray(staffUser.id, mentionedIds)));
+      for (const s of validStaff) {
+        void notify(s.id, 'helpdesk.agent.mention', {
+          mentionedBy: session.displayName,
+          caseNumber: caseRecord.caseNumber,
+          subject: caseRecord.subject,
+        });
+      }
+    }
+  }
+
   if (!isInternal) {
     void notify(caseRecord.requesterId, 'helpdesk.case.agent_reply', {});
   }
@@ -98,7 +128,13 @@ export async function updateCaseStatus(formData: unknown): Promise<ActionResult>
   const now = new Date();
 
   const existingCase = await db
-    .select({ id: helpdeskCase.id, status: helpdeskCase.status })
+    .select({
+      id: helpdeskCase.id,
+      status: helpdeskCase.status,
+      requesterId: helpdeskCase.requesterId,
+      caseNumber: helpdeskCase.caseNumber,
+      subject: helpdeskCase.subject,
+    })
     .from(helpdeskCase)
     .where(eq(helpdeskCase.id, caseId))
     .limit(1);
@@ -121,6 +157,28 @@ export async function updateCaseStatus(formData: unknown): Promise<ActionResult>
   });
 
   notifyCaseWatchers(caseId, '', `Status changed to ${status}`).catch(() => undefined);
+
+  // Notify the user about the status change
+  if (status === 'RESOLVED') {
+    void notify(existingStatusRow.requesterId, 'helpdesk.case.resolved', {
+      caseNumber: existingStatusRow.caseNumber,
+      reopenWindowDays: '7',
+      caseUrl: `/my/support/${caseId}`,
+    });
+  } else if (status === 'ESCALATED') {
+    void notify(existingStatusRow.requesterId, 'helpdesk.case.escalated_user', {
+      caseNumber: existingStatusRow.caseNumber,
+      subject: existingStatusRow.subject,
+    });
+  } else if (oldStatus !== status) {
+    void notify(existingStatusRow.requesterId, 'helpdesk.case.status_changed_user', {
+      caseNumber: existingStatusRow.caseNumber,
+      subject: existingStatusRow.subject,
+      statusLabel: status,
+      caseUrl: `/my/support/${caseId}`,
+    });
+  }
+
   revalidatePath(`/hd/cases/${caseId}`);
   revalidatePath('/hd');
   return { success: true };
@@ -140,7 +198,13 @@ export async function assignCase(formData: unknown): Promise<ActionResult> {
   const now = new Date();
 
   const existingCase = await db
-    .select({ assignedAgentId: helpdeskCase.assignedAgentId, assignedTeamId: helpdeskCase.assignedTeamId })
+    .select({
+      assignedAgentId: helpdeskCase.assignedAgentId,
+      assignedTeamId: helpdeskCase.assignedTeamId,
+      caseNumber: helpdeskCase.caseNumber,
+      subject: helpdeskCase.subject,
+      priority: helpdeskCase.priority,
+    })
     .from(helpdeskCase)
     .where(eq(helpdeskCase.id, caseId))
     .limit(1);
@@ -178,6 +242,16 @@ export async function assignCase(formData: unknown): Promise<ActionResult> {
     actorId: session.staffUserId,
     dataJson: { assignedAgentId, assignedTeamId },
   });
+
+  // Notify the newly assigned agent
+  if (assignedAgentId && assignedAgentId !== old.assignedAgentId) {
+    void notify(assignedAgentId, 'helpdesk.agent.assigned', {
+      caseNumber: old.caseNumber,
+      subject: old.subject,
+      priority: old.priority,
+      caseUrl: `/hd/cases/${caseId}`,
+    });
+  }
 
   revalidatePath(`/hd/cases/${caseId}`);
   revalidatePath('/hd');

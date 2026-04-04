@@ -31,6 +31,7 @@ export default defineConfig({
       '@/lib/cache/valkey': path.resolve(__dirname, '../../packages/db/src/cache'),
       '@/lib/encryption': path.resolve(__dirname, '../../packages/db/src/encryption'),
       '@/lib/casl': path.resolve(__dirname, '../../packages/casl/src'),
+      '@/lib/auth/extension-auth': path.resolve(__dirname, './src/lib/auth/extension-auth'),
       '@/lib/auth': path.resolve(__dirname, '../../packages/auth/src'),
       '@/lib/logger': path.resolve(__dirname, '../../packages/logger/src'),
 

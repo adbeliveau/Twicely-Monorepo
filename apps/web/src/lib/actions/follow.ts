@@ -22,15 +22,15 @@ interface ActionResult {
  * Returns the new follow state.
  */
 export async function toggleFollow(sellerUserId: string): Promise<ActionResult> {
-  const parsed = toggleFollowSchema.safeParse({ sellerUserId });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
-  }
-
   const { ability, session } = await authorize();
   if (!session) return { success: false, error: 'Not authenticated' };
   if (!ability.can('update', sub('User', { id: session.userId }))) {
     return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = toggleFollowSchema.safeParse({ sellerUserId });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
   const userId = session.userId;
 

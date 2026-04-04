@@ -90,6 +90,11 @@ export async function createCase(
   });
 
   void notify(session.userId, 'helpdesk.case.created', { caseNumber: newCase.caseNumber });
+  void notify(session.userId, 'helpdesk.case.auto_reply', {
+    subject: data.subject,
+    caseNumber: newCase.caseNumber,
+    suggestedArticles: '',
+  });
 
   revalidatePath('/my/support');
   return { success: true, data: { caseNumber: newCase.caseNumber } };
@@ -156,7 +161,14 @@ export async function reopenCase(caseId: string): Promise<ActionResult> {
   }
 
   const existingCase = await db
-    .select({ requesterId: helpdeskCase.requesterId, status: helpdeskCase.status, resolvedAt: helpdeskCase.resolvedAt })
+    .select({
+      requesterId: helpdeskCase.requesterId,
+      status: helpdeskCase.status,
+      resolvedAt: helpdeskCase.resolvedAt,
+      caseNumber: helpdeskCase.caseNumber,
+      subject: helpdeskCase.subject,
+      assignedAgentId: helpdeskCase.assignedAgentId,
+    })
     .from(helpdeskCase)
     .where(eq(helpdeskCase.id, caseId))
     .limit(1);
@@ -187,6 +199,14 @@ export async function reopenCase(caseId: string): Promise<ActionResult> {
     actorId: session.userId,
     dataJson: {},
   });
+
+  // Notify assigned agent that the case was reopened
+  if (caseRecord.assignedAgentId) {
+    void notify(caseRecord.assignedAgentId, 'helpdesk.case.reopened', {
+      subject: caseRecord.subject,
+      caseNumber: caseRecord.caseNumber,
+    });
+  }
 
   revalidatePath(`/my/support/${caseId}`);
   return { success: true };

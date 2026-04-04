@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clientLogger } from "@/lib/client-logger";
 
 type User = {
   id: string;
@@ -9,7 +10,7 @@ type User = {
   displayName: string;
   username: string;
   role: "BUYER" | "SELLER" | "STAFF";
-  sellerTier?: string;
+  storeTier?: string;
   avatarUrl?: string;
   staffRoles?: string[];
   permissions?: string[]; // Flattened permissions for RBAC gating
@@ -142,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Failed to refresh user:", error);
+      clientLogger.error("Failed to refresh user", error);
     }
   };
 

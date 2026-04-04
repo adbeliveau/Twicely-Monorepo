@@ -40,6 +40,10 @@ export function QrScanner({ localTransactionId, onSuccess }: QrScannerProps) {
     });
   }
 
+  // Stable ref so the scanner callback always calls the latest handler without restarting
+  const handleScanSuccessRef = useRef(handleScanSuccess);
+  useEffect(() => { handleScanSuccessRef.current = handleScanSuccess; });
+
   useEffect(() => {
     let scanner: Html5Qrcode | null = null;
 
@@ -55,7 +59,7 @@ export function QrScanner({ localTransactionId, onSuccess }: QrScannerProps) {
           (decodedText: string) => {
             if (hasConfirmedRef.current) return;
             hasConfirmedRef.current = true;
-            handleScanSuccess(decodedText);
+            handleScanSuccessRef.current(decodedText);
           },
           () => {
             // Per-frame error — not a fatal error, scanner continues
@@ -84,7 +88,6 @@ export function QrScanner({ localTransactionId, onSuccess }: QrScannerProps) {
         }
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (cameraDenied) {

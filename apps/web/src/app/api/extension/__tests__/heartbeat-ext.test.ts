@@ -1,13 +1,31 @@
 /**
  * Additional tests for POST /api/extension/heartbeat (H1.1)
- * Covers: userId-absent payload → 403, DB throws (caught by outer try/catch → 401),
+ * Covers: userId-absent payload → 403, DB throws → 500,
  * userId is non-string → 403, multiple channels, response shape.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignJWT } from 'jose';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+// ─── Extension-auth mock ─────────────────────────────────────────────────────
+
+const { MockExtAuthError, mockAuth } = vi.hoisted(() => ({
+  MockExtAuthError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'ExtensionAuthError';
+      this.status = status;
+    }
+  },
+  mockAuth: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/extension-auth', () => ({
+  authenticateExtensionRequest: mockAuth,
+  ExtensionAuthError: MockExtAuthError,
+}));
+
+// ─── Other mocks ─────────────────────────────────────────────────────────────
 
 const mockDbSelect = vi.fn();
 vi.mock('@twicely/db', () => ({ db: { select: mockDbSelect } }));
@@ -31,8 +49,6 @@ vi.mock('@twicely/logger', () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
-
 function makeRequest(authHeader?: string): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authHeader !== undefined) headers['Authorization'] = authHeader;
@@ -42,23 +58,16 @@ function makeRequest(authHeader?: string): Request {
   });
 }
 
-async function makeTokenWithPayload(payload: Record<string, unknown>, expiresIn = '30d'): Promise<string> {
-  const s = new TextEncoder().encode(TEST_SECRET);
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(s);
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('POST /api/extension/heartbeat — extended', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv('EXTENSION_JWT_SECRET', TEST_SECRET);
-
+    mockAuth.mockResolvedValue({
+      claims: { userId: 'user-abc', sessionId: 'sess-1', credentialUpdatedAtMs: null },
+      principal: { userId: 'user-abc', displayName: null, name: null, image: null, avatarUrl: null },
+    });
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue([]),
@@ -66,44 +75,41 @@ describe('POST /api/extension/heartbeat — extended', () => {
     });
   });
 
-  it('returns 403 when JWT purpose is extension-session but userId is absent', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-session' });
+  it('returns 403 when auth rejects with invalid token', async () => {
+    mockAuth.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer bad-token'));
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid token');
   });
 
   it('returns 403 when userId is a number (non-string type)', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-session', userId: 12345 });
+    mockAuth.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer bad-userid-token'));
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Invalid token');
   });
 
   it('returns 403 when userId is an empty string', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-session', userId: '' });
+    mockAuth.mockRejectedValue(new MockExtAuthError(403, 'Invalid token'));
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer empty-userid-token'));
     expect(res.status).toBe(403);
   });
 
-  it('returns 401 when DB query throws (caught by outer try/catch)', async () => {
-    // The heartbeat try/catch wraps everything including the DB call.
-    // A DB error surfaces as 401 (implementation behavior).
+  it('returns 500 when DB query throws (caught by outer try/catch)', async () => {
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockRejectedValue(new Error('DB timeout')),
       }),
     });
 
-    const token = await makeTokenWithPayload({ purpose: 'extension-session', userId: 'user-abc' });
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
-    expect(res.status).toBe(401);
+    const res = await POST(makeRequest('Bearer valid-token'));
+    expect(res.status).toBe(500);
   });
 
   it('maps multiple active channels correctly', async () => {
@@ -117,18 +123,16 @@ describe('POST /api/extension/heartbeat — extended', () => {
       }),
     });
 
-    const token = await makeTokenWithPayload({ purpose: 'extension-session', userId: 'user-abc' });
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer valid-token'));
     expect(res.status).toBe(200);
     const body = await res.json() as { connectedChannels: string[] };
     expect(body.connectedChannels).toEqual(['POSHMARK', 'FB_MARKETPLACE', 'THEREALREAL']);
   });
 
   it('response shape has success, serverTime, and connectedChannels keys', async () => {
-    const token = await makeTokenWithPayload({ purpose: 'extension-session', userId: 'user-abc' });
     const { POST } = await import('../heartbeat/route');
-    const res = await POST(makeRequest(`Bearer ${token}`));
+    const res = await POST(makeRequest('Bearer valid-token'));
     const body = await res.json() as Record<string, unknown>;
     expect(Object.keys(body).sort()).toEqual(expect.arrayContaining(['connectedChannels', 'serverTime', 'success']));
   });

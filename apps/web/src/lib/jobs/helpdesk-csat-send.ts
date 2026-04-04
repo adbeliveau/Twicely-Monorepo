@@ -15,6 +15,7 @@ import { helpdeskCase, caseCsat } from '@twicely/db/schema';
 import { eq, and, lt } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
+import { notify } from '@twicely/notifications/service';
 
 const QUEUE_NAME = 'helpdesk-csat-send';
 
@@ -41,7 +42,7 @@ createWorker<HelpdeskCsatSendData>(QUEUE_NAME, async (_job) => {
 
   // Find cases resolved more than surveyDelayMinutes ago with no CSAT record
   const candidates = await db
-    .select({ id: helpdeskCase.id, requesterId: helpdeskCase.requesterId, resolvedAt: helpdeskCase.resolvedAt })
+    .select({ id: helpdeskCase.id, requesterId: helpdeskCase.requesterId, resolvedAt: helpdeskCase.resolvedAt, caseNumber: helpdeskCase.caseNumber })
     .from(helpdeskCase)
     .where(
       and(
@@ -69,8 +70,11 @@ createWorker<HelpdeskCsatSendData>(QUEUE_NAME, async (_job) => {
       respondedAt: null,
     });
 
+    void notify(c.requesterId, 'helpdesk.csat.request', {
+      caseNumber: c.caseNumber,
+      csatUrl: `/my/support/${c.id}/rate`,
+    });
     logger.info('CSAT survey record created', { caseId: c.id });
-    // Notification send deferred to notification system — insert event here
   }
 }, 1);
 
