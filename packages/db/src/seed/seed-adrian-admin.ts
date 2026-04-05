@@ -28,7 +28,7 @@ async function main() {
   if (!seedPassword) {
     throw new Error('SEED_ADRIAN_PASSWORD env var is required — set it before running seed');
   }
-  const passwordHash = await hash(seedPassword, 10);
+  const passwordHash = await hash(seedPassword, 12);
 
   await db.insert(staffUser).values({
     id: staffId,

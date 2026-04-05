@@ -8,6 +8,7 @@ import { staffUser, staffUserRole } from '@/lib/db/schema/staff';
 import { customRole, staffUserCustomRole } from '@/lib/db/schema/platform';
 import { eq, or, ilike, count, desc, and, isNull } from 'drizzle-orm';
 import type { PlatformRole } from '@twicely/casl/types';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 export interface StaffListItem {
   id: string;
@@ -35,10 +36,11 @@ export async function getStaffList(opts: {
 
   const conditions = [];
   if (search) {
+    const escaped = escapeLike(search);
     conditions.push(
       or(
-        ilike(staffUser.email, `%${search}%`),
-        ilike(staffUser.displayName, `%${search}%`)
+        ilike(staffUser.email, `%${escaped}%`),
+        ilike(staffUser.displayName, `%${escaped}%`)
       )
     );
   }

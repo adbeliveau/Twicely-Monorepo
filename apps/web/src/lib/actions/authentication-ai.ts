@@ -10,6 +10,8 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { generateCertNumber } from '@/lib/authentication/cert-number';
 import { getAiAuthProvider } from '@/lib/authentication/ai-provider-factory';
 import { AUTH_SETTINGS_KEYS } from '@/lib/authentication/constants';
+import { getValkeyClient } from '@twicely/db/cache';
+import { logger } from '@twicely/logger';
 
 interface ActionResult {
   success: boolean;
@@ -38,6 +40,19 @@ export async function requestAiAuthentication(
 ): Promise<ActionResult> {
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'You must be logged in' };
+
+  // SEC-028: Rate limit AI auth request creation (3 per hour per user)
+  try {
+    const valkey = getValkeyClient();
+    const rlKey = `auth-req-rate:${session.userId}`;
+    const attempts = await valkey.incr(rlKey);
+    if (attempts === 1) await valkey.expire(rlKey, 3600);
+    if (attempts > 3) {
+      return { success: false, error: 'Too many authentication requests. Please try again later.' };
+    }
+  } catch (err) {
+    logger.warn('[authentication-ai] Rate limit check failed', { error: String(err) });
+  }
 
   const aiEnabled = await getPlatformSetting<boolean>(
     AUTH_SETTINGS_KEYS.AI_ENABLED,
@@ -92,7 +107,8 @@ export async function requestAiAuthentication(
   );
 
   const certNumber = await generateCertNumber();
-  const verifyUrl = `https://twicely.co/verify/${certNumber}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+  const verifyUrl = `${baseUrl}/verify/${certNumber}`;
 
   const [newRequest] = await db
     .insert(authenticationRequest)
@@ -222,7 +238,8 @@ export async function retryAiAuthentication(
   if (!listingRow) return { success: false, error: 'Listing not found' };
 
   const certNumber = await generateCertNumber();
-  const verifyUrl = `https://twicely.co/verify/${certNumber}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+  const verifyUrl = `${baseUrl}/verify/${certNumber}`;
 
   const [newRequest] = await db
     .insert(authenticationRequest)

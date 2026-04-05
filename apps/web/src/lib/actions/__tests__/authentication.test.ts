@@ -17,6 +17,12 @@ const mockAuthorize = vi.fn();
 const mockStaffAuthorize = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue({ incr: vi.fn().mockResolvedValue(1), expire: vi.fn().mockResolvedValue(1) }),
+}));
+vi.mock('@twicely/logger', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: (...args: unknown[]) => mockGetPlatformSetting(...args),

@@ -50,6 +50,11 @@ vi.mock('@twicely/jobs/local-auto-cancel', () => ({
   localAutoCancelQueue: { getJob: vi.fn().mockResolvedValue(null) },
 }));
 
+vi.mock('@twicely/jobs/local-meetup-reminder', () => ({
+  enqueueLocalMeetupReminders: vi.fn().mockResolvedValue(undefined),
+  removeLocalMeetupReminders: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { postReliabilityMark } from '@twicely/commerce/local-reliability';

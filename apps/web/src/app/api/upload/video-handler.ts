@@ -81,7 +81,9 @@ export async function handleVideoUpload(
   // LIMITATION: durationSeconds is provided by the client and cannot be
   // trusted. A malicious client could send an arbitrary value. The file-size
   // gates above provide a coarse server-side sanity check, but true
-  // server-side duration validation requires ffprobe (TODO).
+  // server-side duration validation requires ffprobe.
+  // SEC-033: Accepted risk — file-size gates enforce practical limits.
+  // Full fix requires ffprobe binary in deployment container.
   const durationStr = formData.get('durationSeconds') as string | null;
   const durationSeconds = durationStr ? parseInt(durationStr, 10) : null;
 

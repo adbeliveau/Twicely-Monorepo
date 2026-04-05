@@ -8,6 +8,7 @@ import { authorize, sub } from '@twicely/casl';
 import { createId } from '@paralleldrive/cuid2';
 import { canUseFeature } from '@twicely/utils/tier-gates';
 import { z } from 'zod';
+import { sanitizeHtml } from '@/lib/utils/sanitize-html';
 
 const updateStorefrontSettingsSchema = z.object({
   storeName: z.string().min(1).max(100).optional(),
@@ -128,7 +129,8 @@ export async function updateStorefrontSettings(data: {
   if (data.aboutHtml !== undefined) {
     if (data.aboutHtml && data.aboutHtml.length > 2000)
       return { success: false, error: 'About section max 2000 characters' };
-    brandingUpdates.aboutHtml = data.aboutHtml;
+    // SEC-032: Sanitize at write time (defense-in-depth alongside client DOMPurify)
+    brandingUpdates.aboutHtml = data.aboutHtml ? sanitizeHtml(data.aboutHtml) : data.aboutHtml;
   }
 
   if (data.socialLinks !== undefined) {

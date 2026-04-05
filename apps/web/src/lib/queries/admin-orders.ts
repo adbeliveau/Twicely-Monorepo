@@ -6,6 +6,7 @@
 import { db } from '@twicely/db';
 import { order, user, ledgerEntry, orderItem, orderPayment, dispute } from '@twicely/db/schema';
 import { eq, or, ilike, count, desc, sql, and, gte, lte, inArray, isNotNull } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 interface OrderListItem {
   id: string;
@@ -37,11 +38,12 @@ export async function getAdminOrderList(opts: {
 
   const conditions = [];
   if (search) {
+    const escaped = escapeLike(search);
     conditions.push(
       or(
-        ilike(order.orderNumber, `%${search}%`),
-        sql`${order.buyerId} IN (SELECT id FROM "user" WHERE email ILIKE ${`%${search}%`})`,
-        sql`${order.sellerId} IN (SELECT id FROM "user" WHERE email ILIKE ${`%${search}%`})`
+        ilike(order.orderNumber, `%${escaped}%`),
+        sql`${order.buyerId} IN (SELECT id FROM "user" WHERE email ILIKE ${`%${escaped}%`})`,
+        sql`${order.sellerId} IN (SELECT id FROM "user" WHERE email ILIKE ${`%${escaped}%`})`
       )
     );
   }

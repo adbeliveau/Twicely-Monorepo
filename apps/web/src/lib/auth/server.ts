@@ -94,6 +94,8 @@ export const auth = betterAuth({
     minPasswordLength: 10,
     maxPasswordLength: 128,
     requireEmailVerification: true,
+    // SEC-047: Better Auth handles email enumeration prevention internally.
+    // This callback only fires for known users; unknown emails get same HTTP response.
     sendResetPassword: async ({ user: u, url }) => {
       logger.info('Password reset email sending', { to: u.email });
       await sendEmail({
@@ -128,6 +130,8 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 60 * 5, // 5 minutes
     },
+    // SEC-036: 7-day sessions accepted for marketplace UX. Concurrent session
+    // limits require Better Auth plugin or custom session table migration.
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },

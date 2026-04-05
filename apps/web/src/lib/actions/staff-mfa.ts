@@ -25,7 +25,9 @@ export async function requireMfaForCriticalAction(
     .where(eq(staffUser.id, actingStaffUserId))
     .limit(1);
 
-  if (!actor?.mfaEnabled) return null; // MFA not set up — passes (enforced when enabled)
+  // SEC-031: MFA not enforced for ADMIN/SUPER_ADMIN yet. Requires DB migration to add
+  // mfaRequired column + UI to force MFA setup on first admin login.
+  if (!actor?.mfaEnabled) return null;
 
   const cookieStore = await cookies();
   const token = cookieStore.get(STAFF_TOKEN_COOKIE)?.value;

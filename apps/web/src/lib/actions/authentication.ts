@@ -11,6 +11,8 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { computeCompositeHash } from '@/lib/authentication/phash';
 import { AUTH_SETTINGS_KEYS } from '@/lib/authentication/constants';
 import { generateCertNumber } from '@/lib/authentication/cert-number';
+import { getValkeyClient } from '@twicely/db/cache';
+import { logger } from '@twicely/logger';
 
 interface ActionResult {
   success: boolean;
@@ -101,6 +103,19 @@ export async function requestItemAuthentication(
   const { session, ability } = await authorize();
   if (!session) return { success: false, error: 'You must be logged in' };
 
+  // SEC-028: Rate limit auth request creation (3 per hour per user)
+  try {
+    const valkey = getValkeyClient();
+    const rlKey = `auth-req-rate:${session.userId}`;
+    const attempts = await valkey.incr(rlKey);
+    if (attempts === 1) await valkey.expire(rlKey, 3600);
+    if (attempts > 3) {
+      return { success: false, error: 'Too many authentication requests. Please try again later.' };
+    }
+  } catch (err) {
+    logger.warn('[authentication] Rate limit check failed', { error: String(err) });
+  }
+
   const parsed = requestItemAuthSchema.safeParse(rawData);
   if (!parsed.success) return { success: false, error: 'Invalid input' };
   if (session.delegationId !== null) {
@@ -133,7 +148,8 @@ export async function requestItemAuthentication(
 
   const totalFeeCents = await getPlatformSetting<number>(AUTH_SETTINGS_KEYS.EXPERT_FEE_CENTS, 3999);
   const certNumber = await generateCertNumber();
-  const verifyUrl = `https://twicely.co/verify/${certNumber}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+  const verifyUrl = `${baseUrl}/verify/${certNumber}`;
 
   const [newRequest] = await db
     .insert(authenticationRequest)

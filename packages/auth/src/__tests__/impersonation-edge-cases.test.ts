@@ -161,14 +161,14 @@ describe('verifyImpersonationToken — uncovered branches', () => {
 // ---------------------------------------------------------------------------
 
 describe('CASL impersonate — combined platform roles', () => {
-  it('HELPDESK_AGENT + SUPPORT: SUPPORT grants impersonate despite agent role', () => {
+  it('HELPDESK_AGENT + SUPPORT: SUPPORT no longer grants impersonate (SEC-009)', () => {
     const ability = defineAbilitiesFor(makeStaffSession(['HELPDESK_AGENT', 'SUPPORT']));
-    expect(ability.can('impersonate', 'User')).toBe(true);
+    expect(ability.can('impersonate', 'User')).toBe(false);
   });
 
-  it('MODERATION + SUPPORT: SUPPORT grants impersonate', () => {
+  it('MODERATION + SUPPORT: SUPPORT no longer grants impersonate (SEC-009)', () => {
     const ability = defineAbilitiesFor(makeStaffSession(['MODERATION', 'SUPPORT']));
-    expect(ability.can('impersonate', 'User')).toBe(true);
+    expect(ability.can('impersonate', 'User')).toBe(false);
   });
 
   it('MODERATION + ADMIN: admin path grants impersonate', () => {

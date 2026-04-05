@@ -47,7 +47,9 @@ export async function isWebhookDuplicate(eventId: string): Promise<boolean> {
       return true;
     }
   } catch (error) {
-    logger.warn('[webhook-idempotency] DB check failed, failing open', { eventId, error });
+    // SEC-022: Fail closed — if both Valkey and DB are down, treat as duplicate to prevent double-processing
+    logger.error('[webhook-idempotency] DB check failed, failing closed', { eventId, error });
+    return true;
   }
 
   return false;

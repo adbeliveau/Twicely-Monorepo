@@ -3,6 +3,7 @@ import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { db } from '@twicely/db';
 import { helpdeskCase, helpdeskTeam, caseMessage } from '@twicely/db/schema';
 import { eq, and, desc, ilike, inArray, isNull, sql, type SQL } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 type CaseStatus = typeof helpdeskCase.status.enumValues[number];
 type CasePriority = typeof helpdeskCase.priority.enumValues[number];
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     conditions.push(isNull(helpdeskCase.assignedAgentId));
   }
   if (search) {
-    const sanitized = search.slice(0, 200);
+    const sanitized = escapeLike(search.slice(0, 200));
     conditions.push(
       sql`(${ilike(helpdeskCase.caseNumber, `%${sanitized}%`)} OR ${ilike(helpdeskCase.subject, `%${sanitized}%`)})`
     );

@@ -9,6 +9,7 @@ import {
   sellerBalance, address, storefront,
 } from '@twicely/db/schema';
 import { eq, or, ilike, count, desc, sql, and, asc } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,10 +139,11 @@ export async function getAdminUserList(opts: {
 
   const conditions = [];
   if (search) {
+    const escaped = escapeLike(search);
     conditions.push(or(
-      ilike(user.name, `%${search}%`),
-      ilike(user.email, `%${search}%`),
-      ilike(user.username, `%${search}%`)
+      ilike(user.name, `%${escaped}%`),
+      ilike(user.email, `%${escaped}%`),
+      ilike(user.username, `%${escaped}%`)
     ));
   }
   if (sellerOnly) conditions.push(eq(user.isSeller, true));

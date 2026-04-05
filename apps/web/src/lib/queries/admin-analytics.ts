@@ -7,6 +7,7 @@ import { db } from '@twicely/db';
 import { order, user, listing, ledgerEntry, sellerProfile, sellerPerformance } from '@twicely/db/schema';
 import type { InferSelectModel } from 'drizzle-orm';
 import { sql, gte, lt, and, eq, count, desc, asc, ilike, or } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 type PerformanceBand = InferSelectModel<typeof sellerProfile>['performanceBand'];
 type StoreTier = InferSelectModel<typeof sellerProfile>['storeTier'];
@@ -357,8 +358,8 @@ export async function getSellerAnalyticsTable(
 
   const searchCondition = search
     ? or(
-        ilike(sellerProfile.storeName, `%${search}%`),
-        ilike(user.username, `%${search}%`)
+        ilike(sellerProfile.storeName, `%${escapeLike(search)}%`),
+        ilike(user.username, `%${escapeLike(search)}%`)
       )
     : undefined;
 

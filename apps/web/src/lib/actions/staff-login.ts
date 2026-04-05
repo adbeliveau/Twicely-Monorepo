@@ -8,6 +8,8 @@ import { STAFF_TOKEN_COOKIE } from '@twicely/casl/staff-authorize';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
+import { headers } from 'next/headers';
+import { getClientIp } from '@/lib/utils/get-client-ip';
 
 const loginSchema = z
   .object({
@@ -32,16 +34,26 @@ export async function loginStaffAction(formData: FormData): Promise<void> {
     redirect('/login?error=1');
   }
 
-  // SEC-004: Rate limiting — 5 attempts per email per 15 minutes
-  const rateLimitKey = `staff-login-rl:${parsed.data.email.toLowerCase()}`;
+  // SEC-004 + SEC-046: Rate limiting — per-email AND per-IP to prevent lockout DoS
+  const clientIp = getClientIp(await headers());
   try {
     const valkey = getValkeyClient();
-    const attempts = await valkey.incr(rateLimitKey);
-    if (attempts === 1) {
-      await valkey.expire(rateLimitKey, 900); // 15 min window
+
+    // Per-email limit (prevents brute force on a single account)
+    const emailKey = `staff-login-rl:${parsed.data.email.toLowerCase()}`;
+    const emailAttempts = await valkey.incr(emailKey);
+    if (emailAttempts === 1) await valkey.expire(emailKey, 900);
+    if (emailAttempts > 5) {
+      logger.warn('[staffLogin] Email rate limited', { email: parsed.data.email });
+      redirect('/login?error=locked');
     }
-    if (attempts > 5) {
-      logger.warn('[staffLogin] Rate limited', { email: parsed.data.email });
+
+    // Per-IP limit (prevents single IP from locking out multiple accounts)
+    const ipKey = `staff-login-ip:${clientIp}`;
+    const ipAttempts = await valkey.incr(ipKey);
+    if (ipAttempts === 1) await valkey.expire(ipKey, 900);
+    if (ipAttempts > 20) {
+      logger.warn('[staffLogin] IP rate limited', { ip: clientIp });
       redirect('/login?error=locked');
     }
   } catch (err) {
@@ -83,5 +95,7 @@ export async function logoutStaffAction(): Promise<void> {
   }
 
   cookieStore.delete(STAFF_TOKEN_COOKIE);
+  // SEC-045: Clear impersonation cookie on staff logout
+  cookieStore.delete('twicely.impersonation_token');
   redirect('/login');
 }

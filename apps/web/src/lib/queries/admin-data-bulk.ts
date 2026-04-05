@@ -6,6 +6,7 @@
 import { db } from '@twicely/db';
 import { listing, user } from '@twicely/db/schema';
 import { and, count, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,10 +74,11 @@ export async function getBulkListings(opts: {
   const conditions = [];
   if (status) conditions.push(eq(listing.status, status as 'ACTIVE' | 'PAUSED' | 'ENDED' | 'REMOVED' | 'DRAFT' | 'SOLD' | 'RESERVED'));
   if (search) {
+    const escaped = escapeLike(search);
     conditions.push(
       or(
-        ilike(listing.title, `%${search}%`),
-        ilike(listing.id, `%${search}%`)
+        ilike(listing.title, `%${escaped}%`),
+        ilike(listing.id, `%${escaped}%`)
       )
     );
   }
@@ -148,10 +150,11 @@ export async function getBulkUsers(opts: {
   const conditions = [];
   if (bannedOnly) conditions.push(eq(user.isBanned, true));
   if (search) {
+    const escaped = escapeLike(search);
     conditions.push(
       or(
-        ilike(user.name, `%${search}%`),
-        ilike(user.email, `%${search}%`)
+        ilike(user.name, `%${escaped}%`),
+        ilike(user.email, `%${escaped}%`)
       )
     );
   }

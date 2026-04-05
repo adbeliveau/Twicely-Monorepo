@@ -142,7 +142,7 @@ export async function resetStaffPasswordAction(input: unknown) {
     }
   }
 
-  const passwordHash = await hash(newPassword, 10);
+  const passwordHash = await hash(newPassword, 12);
   await db.update(staffUser).set({ passwordHash }).where(eq(staffUser.id, staffUserId));
   await db.delete(staffSession).where(eq(staffSession.staffUserId, staffUserId));
 

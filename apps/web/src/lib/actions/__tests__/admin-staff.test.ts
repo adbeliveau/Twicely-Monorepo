@@ -173,7 +173,7 @@ describe('createStaffUserAction', () => {
     mockDbInsert.mockReturnValue(makeInsertChain());
     const { createStaffUserAction } = await import('../admin-staff');
     await createStaffUserAction({ email: 'new@x.com', displayName: 'New', password: 'password123', roles: ['SUPPORT'] });
-    expect(hash).toHaveBeenCalledWith('password123', 10);
+    expect(hash).toHaveBeenCalledWith('password123', 12);
   });
 });
 

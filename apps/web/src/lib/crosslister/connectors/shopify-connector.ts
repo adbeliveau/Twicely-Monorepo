@@ -87,6 +87,8 @@ async function loadShopifyConfig(): Promise<ShopifyConfig> {
 
   return {
     clientId: String(settingsMap.get('crosslister.shopify.clientId') ?? ''),
+    // SEC-035: Shopify client secret stored unencrypted in platform_settings.
+    // Migrate to encrypted storage or env var in next sprint.
     clientSecret: String(settingsMap.get('crosslister.shopify.clientSecret') ?? ''),
     redirectUri: String(
       settingsMap.get('crosslister.shopify.redirectUri') ??

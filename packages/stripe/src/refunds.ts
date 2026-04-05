@@ -22,6 +22,8 @@ export interface ProcessRefundInput {
   returnId: string;
   amountCents?: number; // Optional: defaults to full refund amount
   reason?: 'duplicate' | 'fraudulent' | 'requested_by_customer';
+  /** SEC-024: Caller must pass the authenticated user/staff ID for auth verification */
+  callerUserId: string;
 }
 
 export interface ProcessRefundResult {
@@ -64,6 +66,11 @@ export async function processReturnRefund(
 
   if (!req) {
     return { success: false, error: 'Return request not found' };
+  }
+
+  // SEC-024: Verify the caller is authorized (seller or platform staff)
+  if (input.callerUserId !== req.sellerId && input.callerUserId !== 'SYSTEM') {
+    return { success: false, error: 'Not authorized to issue refunds for this return' };
   }
 
   if (!['DELIVERED', 'APPROVED', 'ESCALATED'].includes(req.status)) {

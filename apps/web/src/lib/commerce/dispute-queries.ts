@@ -212,6 +212,7 @@ export async function resolveDispute(
     const refundResult = await processReturnRefund({
       returnId: disp.returnRequestId,
       amountCents: refundAmount,
+      callerUserId: 'SYSTEM',
     }, applyReturnFees);
     if (!refundResult.success) {
       logger.error('Failed to process refund for dispute', { disputeId, error: refundResult.error });

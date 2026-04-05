@@ -46,6 +46,17 @@ export async function authorize(): Promise<{
   // sellerId is the user's own id — all ownership columns in DB use user.id
   const sellerId: string | null = user.isSeller ? user.id : null;
 
+  // SEC-034: Load seller status from DB so CASL rules that gate on sellerStatus work
+  let sellerStatus: string | null = null;
+  if (sellerId) {
+    const [sp] = await db
+      .select({ status: sellerProfile.status })
+      .from(sellerProfile)
+      .where(eq(sellerProfile.userId, sellerId))
+      .limit(1);
+    sellerStatus = sp?.status ?? null;
+  }
+
   // Lookup active delegation for this user (D5 staff context)
   let delegationId: string | null = null;
   let onBehalfOfSellerId: string | null = null;
@@ -85,7 +96,7 @@ export async function authorize(): Promise<{
     email: user.email,
     isSeller: user.isSeller ?? false,
     sellerId,
-    sellerStatus: null,
+    sellerStatus,
     delegationId,
     onBehalfOfSellerId,
     onBehalfOfSellerProfileId,

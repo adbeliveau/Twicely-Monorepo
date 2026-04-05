@@ -1,6 +1,7 @@
 import { db } from '@twicely/db';
 import { listing, listingImage, user, sellerProfile, category, sellerPerformance } from '@twicely/db/schema';
 import { eq, and, or, ilike, gte, lte, inArray, desc, asc, sql } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 import type { SearchFilters, SearchResult } from '@/types/listings';
 import { mapToListingCard } from '@/lib/queries/shared';
 
@@ -31,7 +32,7 @@ export async function searchListings(filters: SearchFilters): Promise<SearchResu
   if (filters.q) {
     const words = filters.q.trim().split(/\s+/).filter(Boolean);
     for (const word of words) {
-      const pattern = `%${word}%`;
+      const pattern = `%${escapeLike(word)}%`;
       conditions.push(
         or(ilike(listing.title, pattern), ilike(listing.description, pattern))!
       );
@@ -69,7 +70,7 @@ export async function searchListings(filters: SearchFilters): Promise<SearchResu
 
   // Brand filter
   if (filters.brand) {
-    conditions.push(ilike(listing.brand, `%${filters.brand}%`));
+    conditions.push(ilike(listing.brand, `%${escapeLike(filters.brand)}%`));
   }
 
   const whereClause = and(...conditions);

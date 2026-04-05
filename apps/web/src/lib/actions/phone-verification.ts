@@ -12,6 +12,8 @@ import { eq } from 'drizzle-orm';
 import { sendVerificationCode, verifyCode } from '@twicely/sms';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { getValkeyClient } from '@twicely/db/cache';
+import { logger } from '@twicely/logger';
 
 const phoneSchema = z.object({
   phone: z.string().min(10).max(20).regex(/^\+?[1-9]\d{9,14}$/, 'Invalid phone number format'),
@@ -33,6 +35,19 @@ export async function sendPhoneVerificationAction(input: unknown) {
   if (!parsed.success) return { error: 'Invalid phone number' };
 
   const { phone } = parsed.data;
+
+  // SEC-029: Rate limit SMS sends (5 per hour per user to prevent SMS cost abuse)
+  try {
+    const valkey = getValkeyClient();
+    const rlKey = `phone-verify-rate:${session.userId}`;
+    const attempts = await valkey.incr(rlKey);
+    if (attempts === 1) await valkey.expire(rlKey, 3600);
+    if (attempts > 5) {
+      return { error: 'Too many verification attempts. Please try again later.' };
+    }
+  } catch (err) {
+    logger.warn('[phone-verification] Rate limit check failed', { error: String(err) });
+  }
 
   // Update phone on user record
   await db.update(user).set({

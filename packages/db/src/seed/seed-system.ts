@@ -30,7 +30,7 @@ export async function seedSystem(db: PostgresJsDatabase): Promise<void> {
   if (!seedPassword) {
     throw new Error('SEED_ADMIN_PASSWORD env var is required — set it before running seed');
   }
-  const staffPasswordHash = await hash(seedPassword, 10);
+  const staffPasswordHash = await hash(seedPassword, 12);
 
   await db.insert(staffUser).values({
     id: STAFF_ADMIN_ID,

@@ -253,7 +253,7 @@ export async function markReturnReceived(
   });
 
   // Process refund via Stripe (applies fees + issues refund)
-  const refundResult = await processReturnRefund({ returnId }, applyReturnFees);
+  const refundResult = await processReturnRefund({ returnId, callerUserId: 'SYSTEM' }, applyReturnFees);
   if (!refundResult.success) {
     // Refund failure is non-blocking; item was received. Manual review needed.
     // TODO: replace with structured logger (e.g. pino) when logging infra is in place

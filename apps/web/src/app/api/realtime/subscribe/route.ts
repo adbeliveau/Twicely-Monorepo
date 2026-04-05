@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
+import { SignJWT } from 'jose';
 import { z } from 'zod';
 import { authorize } from '@twicely/casl/authorize';
 import { db } from '@twicely/db';
@@ -21,21 +21,18 @@ const subscribeSchema = z.object({
   channel: z.string().min(1).max(200),
 }).strict();
 
-function getSecret(): string | null {
-  return process.env.CENTRIFUGO_TOKEN_HMAC_SECRET ?? null;
+function getSecret(): Uint8Array | null {
+  const raw = process.env.CENTRIFUGO_TOKEN_HMAC_SECRET;
+  return raw ? new TextEncoder().encode(raw) : null;
 }
 
-function generateToken(userId: string, channel: string, secret: string): string {
-  const payload = JSON.stringify({
-    sub: userId,
-    channel,
-    exp: Math.floor(Date.now() / 1000) + 3600,
-  });
-  const encodedPayload = Buffer.from(payload).toString('base64url');
-  const signature = createHmac('sha256', secret)
-    .update(encodedPayload)
-    .digest('hex');
-  return `${encodedPayload}.${signature}`;
+// SEC-030: Standard HS256 JWT instead of hand-rolled token format
+async function generateToken(userId: string, channel: string, secret: Uint8Array): Promise<string> {
+  return new SignJWT({ sub: userId, channel })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('1h')
+    .setIssuedAt()
+    .sign(secret);
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -94,7 +91,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ success: false, error: 'Not found.' }, { status: 403 });
     }
 
-    const token = generateToken(session.userId, channel, secret);
+    const token = await generateToken(session.userId, channel, secret);
     return NextResponse.json({ success: true, token });
   }
 
@@ -105,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (channelUserId !== session.userId) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
-    const token = generateToken(session.userId, channel, secret);
+    const token = await generateToken(session.userId, channel, secret);
     return NextResponse.json({ success: true, token });
   }
 
@@ -127,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!isTxParticipant) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
-    const token = generateToken(session.userId, channel, secret);
+    const token = await generateToken(session.userId, channel, secret);
     return NextResponse.json({ success: true, token });
   }
 

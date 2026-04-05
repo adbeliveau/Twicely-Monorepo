@@ -7,6 +7,7 @@ import { db } from '@twicely/db';
 import { user, sellerProfile, sellerBalance } from '@twicely/db/schema';
 import type { InferSelectModel } from 'drizzle-orm';
 import { eq, and, or, ilike, count, desc, asc, isNull, inArray, sql } from 'drizzle-orm';
+import { escapeLike } from '@/lib/utils/escape-like';
 
 type StoreTier = InferSelectModel<typeof sellerProfile>['storeTier'];
 type ListerTier = InferSelectModel<typeof sellerProfile>['listerTier'];
@@ -65,10 +66,11 @@ export async function getAdminSellerList(
 
   const conditions = [];
   if (search) {
+    const escaped = escapeLike(search);
     conditions.push(or(
-      ilike(user.name, `%${search}%`),
-      ilike(user.email, `%${search}%`),
-      ilike(user.username, `%${search}%`)
+      ilike(user.name, `%${escaped}%`),
+      ilike(user.email, `%${escaped}%`),
+      ilike(user.username, `%${escaped}%`)
     ));
   }
   if (sellerType) conditions.push(eq(sellerProfile.sellerType, sellerType));

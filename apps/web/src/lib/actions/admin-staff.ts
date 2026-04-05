@@ -50,7 +50,7 @@ export async function createStaffUserAction(input: unknown) {
     .limit(1);
   if (existing) return { error: 'Email already in use' };
 
-  const passwordHash = await hash(password, 10);
+  const passwordHash = await hash(password, 12);
   const newStaffUserId = createId();
 
   await db.insert(staffUser).values({ id: newStaffUserId, email, displayName, passwordHash });

@@ -181,10 +181,11 @@ describe('POST /api/realtime/subscribe — extended edge cases', () => {
 
     expect(body.success).toBe(true);
     const parts = body.token.split('.');
-    // base64url.hexsignature — exactly 2 parts
-    expect(parts).toHaveLength(2);
+    // SEC-030: Standard JWT — header.payload.signature (3 parts)
+    expect(parts).toHaveLength(3);
     expect(parts[0]!.length).toBeGreaterThan(0);
     expect(parts[1]!.length).toBeGreaterThan(0);
+    expect(parts[2]!.length).toBeGreaterThan(0);
   });
 
   it('token payload contains the correct sub claim', async () => {
@@ -200,7 +201,8 @@ describe('POST /api/realtime/subscribe — extended edge cases', () => {
     const body = await res.json() as { success: boolean; token: string };
 
     expect(body.success).toBe(true);
-    const [encodedPayload] = body.token.split('.');
+    // SEC-030: Standard JWT — payload is the second part (index 1)
+    const [, encodedPayload] = body.token.split('.');
     const decodedPayload = JSON.parse(Buffer.from(encodedPayload!, 'base64url').toString('utf-8')) as {
       sub: string;
       channel: string;

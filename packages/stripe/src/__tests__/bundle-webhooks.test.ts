@@ -4,6 +4,11 @@ vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn().mockReturnValue({ set: vi.fn().mockResolvedValue('OK'), get: vi.fn().mockResolvedValue(null) }),
 }));
 
+vi.mock('../webhook-idempotency', () => ({
+  isWebhookDuplicate: vi.fn().mockResolvedValue(false),
+  markWebhookProcessed: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../server', () => ({
   stripe: { subscriptions: { update: vi.fn() } },
 }));

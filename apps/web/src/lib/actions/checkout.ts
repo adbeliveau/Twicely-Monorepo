@@ -88,8 +88,9 @@ export async function initiateCheckout(input: InitiateCheckoutInput): Promise<In
       return { success: false, error: 'Too many checkout attempts. Please wait a few minutes.' };
     }
   } catch (err) {
-    // Valkey unavailable — fail open (rate limiting best-effort only)
-    logger.warn('[checkout] Valkey rate-limit check failed, proceeding', { userId: session.userId, error: String(err) });
+    // SEC-023: Fail closed — if Valkey is unavailable, reject checkout to prevent abuse
+    logger.error('[checkout] Valkey rate-limit check failed, failing closed', { userId: session.userId, error: String(err) });
+    return { success: false, error: 'Service temporarily unavailable. Please try again shortly.' };
   }
 
   const parsed = initiateCheckoutSchema.safeParse(input);

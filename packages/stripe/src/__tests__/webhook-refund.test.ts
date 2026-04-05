@@ -4,6 +4,11 @@ vi.mock('@twicely/db/cache', () => ({
   getValkeyClient: vi.fn().mockReturnValue({ get: vi.fn().mockResolvedValue(null), set: vi.fn().mockResolvedValue('OK') }),
 }));
 
+vi.mock('../webhook-idempotency', () => ({
+  isWebhookDuplicate: vi.fn().mockResolvedValue(false),
+  markWebhookProcessed: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ─── Module-level mocks ───────────────────────────────────────────────────────
 
 const mockDbSelect = vi.fn();

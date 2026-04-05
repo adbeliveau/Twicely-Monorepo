@@ -35,6 +35,10 @@ vi.mock('@twicely/db', () => ({
   db: { select: mockDbSelect, update: vi.fn() },
 }));
 
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue({ incr: vi.fn().mockResolvedValue(1), expire: vi.fn().mockResolvedValue(1) }),
+}));
+
 // ─── Import route after mocks ─────────────────────────────────────────────────
 
 import { POST } from '../route';

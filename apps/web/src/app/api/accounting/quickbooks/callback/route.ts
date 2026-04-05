@@ -29,8 +29,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // Validate OAuth state — CSRF protection
   const cookieStore = await cookies();
-  const stateCookie = cookieStore.get('accounting_oauth_state')?.value;
-  cookieStore.delete('accounting_oauth_state');
+  const stateCookie = cookieStore.get('qb_oauth_state')?.value;
+  cookieStore.delete('qb_oauth_state');
 
   if (!stateCookie || !state) {
     logger.warn('[quickbooks/callback] Missing OAuth state — possible CSRF', { state });

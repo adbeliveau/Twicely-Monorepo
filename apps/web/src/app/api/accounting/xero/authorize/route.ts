@@ -48,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const authUrl = await adapter.getAuthorizationUrl(state, redirectUri);
 
     const cookieStore = await cookies();
-    cookieStore.set('accounting_oauth_state', JSON.stringify({ state, userId }), {
+    cookieStore.set('xero_oauth_state', JSON.stringify({ state, userId }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -16,6 +16,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/?unsubscribed=error', request.url));
   }
 
+  // SEC-041: Unsubscribe token never expires. Low risk (no auth gate, just unsubscribe).
+  // Full fix requires DB migration to add tokenExpiresAt column.
   const [row] = await db
     .select({ id: newsletterSubscriber.id, unsubscribedAt: newsletterSubscriber.unsubscribedAt })
     .from(newsletterSubscriber)
