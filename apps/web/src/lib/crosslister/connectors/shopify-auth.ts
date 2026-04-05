@@ -62,6 +62,21 @@ export async function authenticateShopify(
 
   const shopDomain = credentials.shopDomain ?? '';
 
+  // SEC-014: Validate Shopify domain to prevent SSRF
+  if (shopDomain && !/^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/.test(shopDomain)) {
+    return {
+      success: false,
+      externalAccountId: null,
+      externalUsername: null,
+      accessToken: null,
+      refreshToken: null,
+      sessionData: null,
+      tokenExpiresAt: null,
+      capabilities,
+      error: 'Invalid Shopify domain — must be a *.myshopify.com domain',
+    };
+  }
+
   if (!shopDomain) {
     return {
       success: false,

@@ -13,6 +13,9 @@ import { createBundleOffer } from '@twicely/commerce/bundle-offers';
 import { createOfferSchema, counterOfferSchema, createBundleOfferSchema } from '@/lib/validations/offers';
 import { zodId } from '@/lib/validations/shared';
 import { z } from 'zod';
+import { db } from '@twicely/db';
+import { listingOffer } from '@twicely/db/schema';
+import { eq } from 'drizzle-orm';
 
 interface ActionResult {
   success: boolean;
@@ -95,6 +98,13 @@ export async function acceptOfferAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
+  // SEC-003: Verify caller is a party to this offer (defense-in-depth)
+  const [offerRow] = await db.select({ buyerId: listingOffer.buyerId, sellerId: listingOffer.sellerId })
+    .from(listingOffer).where(eq(listingOffer.id, parsed.data.offerId)).limit(1);
+  if (!offerRow || (offerRow.buyerId !== session.userId && offerRow.sellerId !== session.userId)) {
+    return { success: false, error: 'Offer not found' };
+  }
+
   const result = await acceptOffer(
     parsed.data.offerId,
     session.userId,
@@ -143,6 +153,13 @@ export async function declineOfferAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
+  // SEC-003: Verify caller is a party to this offer
+  const [decOfferRow] = await db.select({ sellerId: listingOffer.sellerId })
+    .from(listingOffer).where(eq(listingOffer.id, parsed.data.offerId)).limit(1);
+  if (!decOfferRow || decOfferRow.sellerId !== session.userId) {
+    return { success: false, error: 'Offer not found' };
+  }
+
   const result = await declineOffer(parsed.data.offerId, session.userId);
 
   if (!result.success) {
@@ -179,6 +196,13 @@ export async function counterOfferAction(
   const parsed = counterOfferInputSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
+  // SEC-003: Verify caller is a party to this offer
+  const [ctrOfferRow] = await db.select({ buyerId: listingOffer.buyerId, sellerId: listingOffer.sellerId })
+    .from(listingOffer).where(eq(listingOffer.id, parsed.data.offerId)).limit(1);
+  if (!ctrOfferRow || (ctrOfferRow.buyerId !== session.userId && ctrOfferRow.sellerId !== session.userId)) {
+    return { success: false, error: 'Offer not found' };
   }
 
   const result = await counterOffer(
@@ -222,6 +246,13 @@ export async function cancelOfferAction(
   const parsed = cancelOfferInputSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
+  // SEC-003: Verify caller is the buyer (only buyer can cancel)
+  const [canOfferRow] = await db.select({ buyerId: listingOffer.buyerId })
+    .from(listingOffer).where(eq(listingOffer.id, parsed.data.offerId)).limit(1);
+  if (!canOfferRow || canOfferRow.buyerId !== session.userId) {
+    return { success: false, error: 'Offer not found' };
   }
 
   const result = await cancelOffer(parsed.data.offerId, session.userId);

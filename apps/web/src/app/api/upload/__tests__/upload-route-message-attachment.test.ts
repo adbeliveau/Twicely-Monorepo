@@ -91,6 +91,15 @@ vi.mock('@twicely/logger', () => ({
 
 vi.mock('fs/promises', () => ({ writeFile: vi.fn(), mkdir: vi.fn() }));
 vi.mock('fs', () => ({ existsSync: vi.fn().mockReturnValue(true) }));
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue({
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+  }),
+}));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockResolvedValue(10),
+}));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

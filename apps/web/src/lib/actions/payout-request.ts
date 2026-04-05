@@ -91,6 +91,21 @@ export async function requestPayoutAction(
     return { success: false, error: `Minimum payout for your plan is ${minDisplay}.` };
   }
 
+  // ── Distributed lock to prevent concurrent payout requests (SEC-007) ──
+  const lockKey = `payout-lock:${userId}`;
+  let lockAcquired = false;
+  try {
+    const valkey = getValkeyClient();
+    const result = await valkey.set(lockKey, '1', 'EX', 30, 'NX');
+    lockAcquired = result === 'OK';
+  } catch {
+    // If Valkey is down, fall through to DB check — still safer than nothing
+  }
+  if (!lockAcquired) {
+    return { success: false, error: 'A payout request is already in progress. Please wait and try again.' };
+  }
+
+  try {
   // ── On-demand cooldown (24h default) ─────────────────────────────────
   const cooldownKey = `payout-cooldown:${userId}`;
   const cooldownHours = await getPlatformSetting<number>('payout.onDemandCooldownHours', 24);
@@ -169,7 +184,7 @@ export async function requestPayoutAction(
     stripePayoutId = stripePayout.id;
   } catch (err) {
     logger.error('[requestPayout] Stripe payout failed', { userId, tier, error: err });
-    return { success: false, error: err instanceof Error ? err.message : 'Payout could not be initiated.' };
+    return { success: false, error: 'Payout could not be initiated. Please try again or contact support.' };
   }
 
   // ── Persist payout record (mandatory — must succeed for webhook reconciliation) ──
@@ -226,4 +241,13 @@ export async function requestPayoutAction(
   }
 
   return { success: true, payoutId: stripePayoutId, amountCents: netPayoutCents, feeCents };
+  } finally {
+    // Release distributed lock (SEC-007)
+    try {
+      const valkey = getValkeyClient();
+      await valkey.del(lockKey);
+    } catch {
+      // Lock will auto-expire in 30s if Valkey delete fails
+    }
+  }
 }

@@ -148,9 +148,9 @@ export class FbMarketplaceConnector implements PlatformConnector {
         image_urls: listing.images.map((i) => i.url),
         category: listing.category.externalCategoryName || undefined,
       };
-      const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(pageId)}/commerce_listings?access_token=${account.accessToken}`, {
+      const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(pageId)}/commerce_listings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${account.accessToken}` },
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -176,9 +176,9 @@ export class FbMarketplaceConnector implements PlatformConnector {
       if (changes.title) body['name'] = changes.title;
       if (changes.priceCents !== undefined) body['price'] = changes.priceCents;
       if (changes.description) body['description'] = changes.description;
-      const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(externalId)}?access_token=${account.accessToken}`, {
+      const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(externalId)}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${account.accessToken}` },
         body: JSON.stringify(body),
       });
       if (!resp.ok) return { success: false, error: `Facebook API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
@@ -192,8 +192,9 @@ export class FbMarketplaceConnector implements PlatformConnector {
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
     if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
-      const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(externalId)}?access_token=${account.accessToken}`, {
+      const resp = await fetch(`${FB_API_BASE}/${encodeURIComponent(externalId)}`, {
         method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${account.accessToken}` },
       });
       if (!resp.ok && resp.status !== 404) return { success: false, error: `Facebook API error: ${resp.status}`, retryable: resp.status >= 500 };
       return { success: true, retryable: false };

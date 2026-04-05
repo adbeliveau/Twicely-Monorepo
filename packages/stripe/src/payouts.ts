@@ -198,7 +198,8 @@ export async function updatePayoutSchedule(
     }
 
     if (options?.delayDays !== undefined) {
-      scheduleUpdate.delay_days = options.delayDays;
+      // SEC-016: Enforce minimum 2-day delay to reduce chargeback exposure
+      scheduleUpdate.delay_days = Math.max(2, options.delayDays);
     }
 
     await stripe.accounts.update(stripeAccountId, {

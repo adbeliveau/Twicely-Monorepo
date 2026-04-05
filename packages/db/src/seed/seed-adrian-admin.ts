@@ -24,9 +24,9 @@ async function main() {
 
   const staffId = createId();
   const roleId = createId();
-  const seedPassword = process.env.SEED_ADRIAN_PASSWORD ?? 'TwicelyAdmin123!';
-  if (process.env.NODE_ENV === 'production' && !process.env.SEED_ADRIAN_PASSWORD) {
-    throw new Error('SEED_ADRIAN_PASSWORD must be set in production — never use default seed passwords');
+  const seedPassword = process.env.SEED_ADRIAN_PASSWORD;
+  if (!seedPassword) {
+    throw new Error('SEED_ADRIAN_PASSWORD env var is required — set it before running seed');
   }
   const passwordHash = await hash(seedPassword, 10);
 

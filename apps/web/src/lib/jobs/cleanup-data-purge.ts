@@ -26,6 +26,12 @@ interface PurgeResult {
   skipped?: string;
 }
 
+// SEC-027: Allowlist of tables that can be purged
+const ALLOWED_PURGE_TABLES = new Set([
+  'search_log', 'webhook_log', 'analytics_event', 'notification_log',
+]);
+const ALLOWED_PURGE_COLUMNS = new Set(['created_at']);
+
 /**
  * Attempt to purge a table by raw SQL. Gracefully skips if table doesn't exist.
  */
@@ -34,6 +40,9 @@ async function purgeTableGracefully(
   columnName: string,
   cutoff: Date
 ): Promise<PurgeResult> {
+  if (!ALLOWED_PURGE_TABLES.has(tableName) || !ALLOWED_PURGE_COLUMNS.has(columnName)) {
+    throw new Error(`Purge not allowed for table=${tableName}, column=${columnName}`);
+  }
   try {
     const result = await db.execute(
       sql`DELETE FROM ${sql.identifier(tableName)}

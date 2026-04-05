@@ -39,7 +39,25 @@ function applyDCT(pixels: number[], n: number): number[] {
  * Compute perceptual hash (pHash) for an image URL.
  * Returns a 16-character hex string (64-bit hash).
  */
+/** Allowed hostnames for image fetching (SSRF prevention — SEC-006). */
+const ALLOWED_PHASH_HOSTNAMES = new Set([
+  'twicely.co',
+  'www.twicely.co',
+  'cdn.twicely.co',
+  'images.twicely.co',
+  'storage.googleapis.com',
+  'res.cloudinary.com',
+  'utfs.io',
+]);
+
 export async function computePerceptualHash(imageUrl: string): Promise<string> {
+  const parsed = new URL(imageUrl);
+  if (!ALLOWED_PHASH_HOSTNAMES.has(parsed.hostname)) {
+    throw new Error(`Image URL hostname not allowed: ${parsed.hostname}`);
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Only HTTPS image URLs are allowed');
+  }
   const response = await fetch(imageUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch image: ${response.status}`);

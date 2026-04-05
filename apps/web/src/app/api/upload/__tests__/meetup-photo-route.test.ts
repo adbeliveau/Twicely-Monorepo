@@ -77,6 +77,23 @@ vi.mock('fs', () => ({
   existsSync: vi.fn().mockReturnValue(true),
 }));
 
+vi.mock('../video-handler', () => ({
+  handleVideoUpload: vi.fn(),
+  handleVideoThumbnailUpload: vi.fn(),
+}));
+vi.mock('../message-attachment-handler', () => ({
+  handleMessageAttachmentUpload: vi.fn(),
+}));
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue({
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+  }),
+}));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockResolvedValue(10),
+}));
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const BUYER_ID = 'buyer-upload-001';

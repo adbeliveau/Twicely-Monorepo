@@ -1,3 +1,5 @@
+'use client';
+
 import DOMPurify from 'dompurify';
 import { Shield, Truck, Calendar } from 'lucide-react';
 import { SocialLinks } from './social-links';

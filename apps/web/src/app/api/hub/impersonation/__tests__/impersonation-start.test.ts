@@ -92,7 +92,7 @@ vi.mock('drizzle-orm', () => ({
 
 const VALID_SECRET = 'test-secret-32-bytes-long-at-least';
 
-function makeStaffSession(roles: string[] = ['SUPPORT']) {
+function makeStaffSession(roles: string[] = ['ADMIN']) {
   return {
     token: 'staff-tok-123',
     staffUserId: 'su-001',
@@ -202,7 +202,7 @@ describe('POST /api/hub/impersonation/start', () => {
     expect(res.status).toBe(500);
   });
 
-  it('returns 302 redirect to hub /usr/[id] with impersonation cookie set on success (SUPPORT role)', async () => {
+  it('returns 302 redirect to hub /usr/[id] with impersonation cookie set on success (ADMIN role)', async () => {
     mockCookieGet.mockReturnValue({ value: 'tok-123' });
     mockGetStaffSession.mockResolvedValue(makeStaffSession());
     let selectCallCount = 0;

@@ -2,7 +2,7 @@
 
 import { db } from '@twicely/db';
 import { order, orderItem, listing, ledgerEntry, orderPayment, cart, promotionUsage, promotion, platformSetting } from '@twicely/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { stripe } from '@twicely/stripe/server';
 import { declineAllPendingOffersForListing } from '@twicely/commerce/offer-transitions';
@@ -216,6 +216,24 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
     const discountCentsFromMeta = parseInt(paymentIntent.metadata?.discountCents ?? '0', 10);
 
     if (promotionId && discountCentsFromMeta > 0) {
+      // SEC-002: Atomic check-and-increment to prevent coupon race condition.
+      // UPDATE only succeeds if usageCount < maxUsesTotal (or maxUsesTotal is null/0 = unlimited).
+      const [updated] = await tx
+        .update(promotion)
+        .set({
+          usageCount: sql`${promotion.usageCount} + 1`,
+          updatedAt: now,
+        })
+        .where(and(
+          eq(promotion.id, promotionId),
+          sql`(${promotion.maxUsesTotal} IS NULL OR ${promotion.maxUsesTotal} = 0 OR ${promotion.usageCount} < ${promotion.maxUsesTotal})`,
+        ))
+        .returning({ id: promotion.id });
+
+      if (!updated) {
+        throw new Error('Coupon usage limit reached — discount could not be applied');
+      }
+
       // Record promotionUsage
       await tx.insert(promotionUsage).values({
         promotionId,
@@ -223,15 +241,6 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
         buyerId: ord.buyerId,
         discountCents: discountCentsFromMeta,
       });
-
-      // Increment promotion.usageCount
-      await tx
-        .update(promotion)
-        .set({
-          usageCount: sql`${promotion.usageCount} + 1`,
-          updatedAt: now,
-        })
-        .where(eq(promotion.id, promotionId));
     }
 
     // Return listing IDs for engagement tracking

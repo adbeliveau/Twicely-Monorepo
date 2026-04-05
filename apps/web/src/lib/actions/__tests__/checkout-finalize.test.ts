@@ -23,6 +23,7 @@ vi.mock('@twicely/commerce/offer-transitions', () => ({
 }));
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ type: 'eq', a, b })),
+  and: vi.fn((...args: unknown[]) => ({ type: 'and', args })),
   inArray: vi.fn((col, vals) => ({ type: 'inArray', col, vals })),
   sql: vi.fn(),
 }));
@@ -30,6 +31,19 @@ vi.mock('@twicely/commerce/create-order', () => ({ createOrdersFromCart: vi.fn()
 vi.mock('@twicely/stripe/server', () => ({
   createConnectPaymentIntent: vi.fn(),
   stripe: { paymentIntents: { retrieve: vi.fn() } },
+}));
+vi.mock('@/lib/actions/browsing-history-helpers', () => ({
+  updateEngagement: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('@twicely/commerce/auth-offer', () => ({
+  getAuthOfferConfig: vi.fn().mockResolvedValue({ buyerFeeCents: 500 }),
+}));
+vi.mock('@/lib/validations/checkout-finalize', () => ({
+  finalizeOrderSchema: { safeParse: vi.fn().mockReturnValue({ success: true, data: { paymentIntentId: 'pi_123' } }) },
+  finalizeOrdersSchema: { safeParse: vi.fn().mockReturnValue({ success: true, data: { paymentIntentIds: [] } }) },
+}));
+vi.mock('@twicely/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 
 import { finalizeOrder } from '../checkout-finalize';

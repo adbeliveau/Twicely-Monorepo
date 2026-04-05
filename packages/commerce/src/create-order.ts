@@ -123,6 +123,7 @@ export async function createOrdersFromCart(
             availableQuantity: listing.availableQuantity,
             quantity: listing.quantity,
             shippingCents: listing.shippingCents,
+            priceCents: listing.priceCents,
             categoryId: listing.categoryId,
           })
           .from(listing)
@@ -140,6 +141,10 @@ export async function createOrdersFromCart(
           const available = lst.availableQuantity ?? lst.quantity;
           if (available < cartItm.quantity) throw new Error(`Not enough stock for "${lst.title}"`);
 
+          // SEC-001: Use live price from locked listing, not stale cart price
+          const livePriceCents = lst.priceCents ?? 0;
+          if (livePriceCents <= 0) throw new Error(`Item "${lst.title}" has an invalid price`);
+
           // Get fee bucket from category
           let feeBucket: CartItemWithDetails['feeBucket'] = 'HOME_GENERAL';
           if (lst.categoryId) {
@@ -153,7 +158,7 @@ export async function createOrdersFromCart(
 
           sellerItems.push({
             cartItemId: cartItm.cartItemId, listingId: cartItm.listingId,
-            quantity: cartItm.quantity, priceCents: cartItm.priceCents,
+            quantity: cartItm.quantity, priceCents: livePriceCents,
             shippingCents: lst.shippingCents, sellerId: cartItm.sellerId,
             title: lst.title ?? 'Untitled', categoryId: lst.categoryId, feeBucket,
           });

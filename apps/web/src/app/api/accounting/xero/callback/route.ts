@@ -38,11 +38,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const stored = JSON.parse(stateCookie) as { state?: string };
+    const stored = JSON.parse(stateCookie) as { state?: string; userId?: string };
     if (stored.state !== state) {
       logger.warn('[xero/callback] OAuth state mismatch — possible CSRF', {
         expected: stored.state,
         got: state,
+      });
+      return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
+    }
+
+    // SEC-010: Verify the session user matches who initiated the OAuth flow
+    const { session: earlySession } = await authorize();
+    if (!earlySession) {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+    const earlyUserId = earlySession.delegationId ? earlySession.onBehalfOfSellerId! : earlySession.userId;
+    if (stored.userId && stored.userId !== earlyUserId) {
+      logger.warn('[xero/callback] OAuth userId mismatch — possible session swap', {
+        cookieUserId: stored.userId,
+        sessionUserId: earlyUserId,
       });
       return NextResponse.redirect(new URL(CONNECT_FAILURE_URL, request.url));
     }

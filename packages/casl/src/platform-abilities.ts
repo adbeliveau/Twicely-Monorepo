@@ -80,8 +80,7 @@ export function definePlatformAgentAbilities(
     // G6 — Support can read verification status for support context
     can('read', 'IdentityVerification');
     can('read', 'DataRetention');
-    // G10.8 — read-only dashboard preview — Actors & Security §4.3.4
-    can('impersonate', 'User');
+    // SEC-009: Impersonation restricted to ADMIN/SUPER_ADMIN only (not SUPPORT)
   }
 
   if (roles.includes('MODERATION')) {

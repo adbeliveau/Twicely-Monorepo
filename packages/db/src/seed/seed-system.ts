@@ -26,9 +26,9 @@ const STAFF_ROLE_ID = 'seed-staff-role-admin';
  */
 export async function seedSystem(db: PostgresJsDatabase): Promise<void> {
   // 1. Staff user (need ID for fee schedules createdByStaffId)
-  const seedPassword = process.env.SEED_ADMIN_PASSWORD ?? 'AdminPass123!';
-  if (process.env.NODE_ENV === 'production' && !process.env.SEED_ADMIN_PASSWORD) {
-    throw new Error('SEED_ADMIN_PASSWORD must be set in production — never use default seed passwords');
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD env var is required — set it before running seed');
   }
   const staffPasswordHash = await hash(seedPassword, 10);
 

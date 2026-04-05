@@ -19,9 +19,9 @@ function createPlatformStaffSession(roles: PlatformRole[]): CaslSession {
 }
 
 describe('impersonate ability — role coverage', () => {
-  it('SUPPORT: can impersonate User', () => {
+  it('SUPPORT: cannot impersonate User (SEC-009)', () => {
     const ability = defineAbilitiesFor(createPlatformStaffSession(['SUPPORT']));
-    expect(ability.can('impersonate', 'User')).toBe(true);
+    expect(ability.can('impersonate', 'User')).toBe(false);
   });
 
   it('ADMIN: can impersonate User', () => {

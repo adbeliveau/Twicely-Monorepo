@@ -92,7 +92,7 @@ vi.mock('drizzle-orm', () => ({
 
 const VALID_SECRET = 'test-secret-32-bytes-long-at-least';
 
-function makeStaffSession(roles: string[] = ['SUPPORT']) {
+function makeStaffSession(roles: string[] = ['ADMIN']) {
   return {
     token: 'staff-tok-gaps',
     staffUserId: 'su-gaps-001',

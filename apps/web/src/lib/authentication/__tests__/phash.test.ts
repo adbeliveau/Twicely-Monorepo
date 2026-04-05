@@ -66,22 +66,22 @@ describe('computePerceptualHash', () => {
 
   it('computes a 16-character hex hash for a valid image', async () => {
     const { computePerceptualHash } = await import('../phash');
-    const hash = await computePerceptualHash('https://example.com/image.jpg');
+    const hash = await computePerceptualHash('https://cdn.twicely.co/image.jpg');
     expect(hash).toHaveLength(16);
     expect(/^[0-9a-f]{16}$/.test(hash)).toBe(true);
   });
 
   it('returns identical hashes for identical images', async () => {
     const { computePerceptualHash } = await import('../phash');
-    const hash1 = await computePerceptualHash('https://example.com/image1.jpg');
-    const hash2 = await computePerceptualHash('https://example.com/image2.jpg');
+    const hash1 = await computePerceptualHash('https://cdn.twicely.co/image1.jpg');
+    const hash2 = await computePerceptualHash('https://cdn.twicely.co/image2.jpg');
     expect(hash1).toBe(hash2);
   });
 
   it('throws on failed image fetch', async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 404 });
     const { computePerceptualHash } = await import('../phash');
-    await expect(computePerceptualHash('https://example.com/missing.jpg')).rejects.toThrow(
+    await expect(computePerceptualHash('https://cdn.twicely.co/missing.jpg')).rejects.toThrow(
       'Failed to fetch image: 404'
     );
   });
@@ -96,9 +96,9 @@ describe('computeCompositeHash', () => {
   it('computeCompositeHash combines multiple image hashes', async () => {
     const { computeCompositeHash } = await import('../phash');
     const hash = await computeCompositeHash([
-      'https://example.com/img1.jpg',
-      'https://example.com/img2.jpg',
-      'https://example.com/img3.jpg',
+      'https://cdn.twicely.co/img1.jpg',
+      'https://cdn.twicely.co/img2.jpg',
+      'https://cdn.twicely.co/img3.jpg',
     ]);
     // Should be 3 hashes joined by '|'
     const parts = hash.split('|');
@@ -117,8 +117,8 @@ describe('verifyPhotoFingerprint', () => {
 
   it('verifyPhotoFingerprint returns matches=true for matching photos', async () => {
     const { computeCompositeHash, verifyPhotoFingerprint } = await import('../phash');
-    const storedHash = await computeCompositeHash(['https://example.com/auth1.jpg']);
-    const result = await verifyPhotoFingerprint(['https://example.com/auth1.jpg'], storedHash);
+    const storedHash = await computeCompositeHash(['https://cdn.twicely.co/auth1.jpg']);
+    const result = await verifyPhotoFingerprint(['https://cdn.twicely.co/auth1.jpg'], storedHash);
     expect(result.matches).toBe(true);
     expect(result.distance).toBe(0);
   });
@@ -128,7 +128,7 @@ describe('verifyPhotoFingerprint', () => {
     const { verifyPhotoFingerprint } = await import('../phash');
     // Use a hash that differs by more than threshold (10)
     const result = await verifyPhotoFingerprint(
-      ['https://example.com/different.jpg'],
+      ['https://cdn.twicely.co/different.jpg'],
       // stored hash that differs significantly from the mock (all-128 pixel) hash
       'ffffffffffffffff'
     );
@@ -145,8 +145,8 @@ describe('verifyPhotoFingerprint', () => {
 
   it('returns similar hashes for slightly modified images (distance < 10 for identical mock)', async () => {
     const { computePerceptualHash } = await import('../phash');
-    const h1 = await computePerceptualHash('https://example.com/img1.jpg');
-    const h2 = await computePerceptualHash('https://example.com/img2.jpg');
+    const h1 = await computePerceptualHash('https://cdn.twicely.co/img1.jpg');
+    const h2 = await computePerceptualHash('https://cdn.twicely.co/img2.jpg');
     // Both are from identical mock pixel data, so distance should be 0
     expect(compareHashes(h1, h2)).toBeLessThan(10);
   });

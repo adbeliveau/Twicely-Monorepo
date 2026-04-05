@@ -22,27 +22,25 @@ import { localTransaction } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { handleVideoUpload, handleVideoThumbnailUpload } from './video-handler';
 import { handleMessageAttachmentUpload } from './message-attachment-handler';
+import { getValkeyClient } from '@twicely/db/cache';
 
-// Simple in-memory rate limiter (per-instance, resets on restart)
-const uploadCounts = new Map<string, { count: number; resetAt: number }>();
+// SEC-011: Valkey-backed rate limiter (consistent across instances)
 const RATE_LIMIT = 20;
-const RATE_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_WINDOW_SECONDS = 60;
 
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const record = uploadCounts.get(userId);
-
-  if (!record || now > record.resetAt) {
-    uploadCounts.set(userId, { count: 1, resetAt: now + RATE_WINDOW_MS });
+async function checkRateLimit(userId: string): Promise<boolean> {
+  try {
+    const valkey = getValkeyClient();
+    const key = `upload-rl:${userId}`;
+    const count = await valkey.incr(key);
+    if (count === 1) {
+      await valkey.expire(key, RATE_WINDOW_SECONDS);
+    }
+    return count <= RATE_LIMIT;
+  } catch {
+    // If Valkey is down, allow the upload (fail-open for availability)
     return true;
   }
-
-  if (record.count >= RATE_LIMIT) {
-    return false;
-  }
-
-  record.count++;
-  return true;
 }
 
 const LOCAL_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
@@ -83,7 +81,7 @@ export async function POST(request: NextRequest) {
   const userId = session.userId;
 
   // Rate limit check
-  if (!checkRateLimit(userId)) {
+  if (!(await checkRateLimit(userId))) {
     return NextResponse.json(
       { success: false, error: 'Rate limit exceeded. Please wait before uploading more.' },
       { status: 429 }
@@ -258,7 +256,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('[Upload API] Error', { error });
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Upload failed' },
+      { success: false, error: 'Upload failed. Please try again.' },
       { status: 500 }
     );
   }

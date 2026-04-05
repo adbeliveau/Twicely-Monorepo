@@ -5,7 +5,8 @@ import { NextRequest } from 'next/server';
 
 const { mockAuthorize, mockAbility, mockValidateImageBytes,
         mockDetectImageType, mockIsR2Configured,
-        mockHandleVideoUpload, mockHandleVideoThumbnailUpload } = vi.hoisted(() => {
+        mockHandleVideoUpload, mockHandleVideoThumbnailUpload,
+        mockValkeyIncr, mockValkeyExpire } = vi.hoisted(() => {
   const mockAbility = { can: vi.fn().mockReturnValue(true) };
   const mockAuthorize = vi.fn();
   const mockValidateImageBytes = vi.fn();
@@ -13,9 +14,12 @@ const { mockAuthorize, mockAbility, mockValidateImageBytes,
   const mockIsR2Configured = vi.fn();
   const mockHandleVideoUpload = vi.fn();
   const mockHandleVideoThumbnailUpload = vi.fn();
+  const mockValkeyIncr = vi.fn().mockResolvedValue(1);
+  const mockValkeyExpire = vi.fn().mockResolvedValue(1);
   return {
     mockAuthorize, mockAbility, mockValidateImageBytes, mockDetectImageType, mockIsR2Configured,
     mockHandleVideoUpload, mockHandleVideoThumbnailUpload,
+    mockValkeyIncr, mockValkeyExpire,
   };
 });
 
@@ -69,6 +73,15 @@ vi.mock('@twicely/logger', () => ({
 
 vi.mock('fs/promises', () => ({ writeFile: vi.fn(), mkdir: vi.fn() }));
 vi.mock('fs', () => ({ existsSync: vi.fn().mockReturnValue(true) }));
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: vi.fn().mockReturnValue({
+    incr: (...args: unknown[]) => mockValkeyIncr(...args),
+    expire: (...args: unknown[]) => mockValkeyExpire(...args),
+  }),
+}));
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockResolvedValue(10),
+}));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -90,7 +103,7 @@ function makeFileRequest(type: string): NextRequest {
 
 describe('POST /api/upload — image validation and type routing', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     mockAbility.can.mockReturnValue(true);
     mockAuthorize.mockResolvedValue({
       session: makeSession(BUYER_ID),
@@ -99,6 +112,8 @@ describe('POST /api/upload — image validation and type routing', () => {
     mockValidateImageBytes.mockReturnValue({ valid: true });
     mockDetectImageType.mockReturnValue('jpeg');
     mockIsR2Configured.mockReturnValue(true);
+    mockValkeyIncr.mockResolvedValue(1);
+    mockValkeyExpire.mockResolvedValue(1);
     mockHandleVideoUpload.mockResolvedValue(
       new Response(JSON.stringify({ success: true, video: { id: 'v-1', url: 'https://cdn.twicely.com/v.mp4', durationSeconds: 30 } }), { status: 200 })
     );
@@ -154,22 +169,16 @@ describe('POST /api/upload — image validation and type routing', () => {
       session: { userId: rateLimitUserId, isSeller: false, delegationId: null, onBehalfOfSellerId: null },
       ability: mockAbility,
     });
+    // Configure Valkey mock to return 21 (over the 20 limit)
+    mockValkeyIncr.mockResolvedValue(21);
     // Short-circuit image validation so each request is cheap
     mockValidateImageBytes.mockReturnValue({ valid: false, error: 'stop here' });
     const { POST } = await import('../route');
-    // Route limits to 20/min per userId — the 21st request returns 429
-    let last429 = false;
-    for (let i = 0; i < 21; i++) {
-      const req = makeFileRequest('listing');
-      const res = await POST(req);
-      if (res.status === 429) {
-        last429 = true;
-        const body = await res.json() as { error: string };
-        expect(body.error).toContain('Rate limit');
-        break;
-      }
-    }
-    expect(last429).toBe(true);
+    const req = makeFileRequest('listing');
+    const res = await POST(req);
+    expect(res.status).toBe(429);
+    const body = await res.json() as { error: string };
+    expect(body.error).toContain('Rate limit');
   });
 
   it('returns 403 when CASL denies listing upload', async () => {
