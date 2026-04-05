@@ -13,10 +13,12 @@ import {
 } from '@twicely/commerce/promotions';
 import { applyCouponSchema } from '@/lib/validations/coupon';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getCartWithItems } from '@/lib/queries/cart';
 
 interface ApplyCouponInput {
   couponCode: string;
-  cartItems: Array<{
+  // SEC-019: cartItems kept for backward compat but prices/categories are loaded server-side
+  cartItems?: Array<{
     listingId: string;
     categoryId: string;
     sellerId: string;
@@ -56,6 +58,27 @@ export async function applyCoupon(input: ApplyCouponInput): Promise<ApplyCouponR
   const buyerId = session.userId;
   const normalizedCode = normalizeCouponCode(parsed.data.couponCode);
 
+  // SEC-019: Load cart items from DB — never trust client-supplied prices/categories
+  const cartData = await getCartWithItems(buyerId);
+  if (!cartData || cartData.itemCount === 0) {
+    return { success: false, error: 'Your cart is empty' };
+  }
+
+  // Flatten cart groups into line items using server-side data
+  const serverCartItems: Array<{ listingId: string; categoryId: string; sellerId: string; priceCents: number; quantity: number }> = [];
+  for (const group of cartData.groups) {
+    for (const item of group.items) {
+      if (!item.isAvailable) continue;
+      serverCartItems.push({
+        listingId: item.listingId,
+        categoryId: item.categoryId ?? '',
+        sellerId: group.sellerId,
+        priceCents: item.unitPriceCents,
+        quantity: item.quantity,
+      });
+    }
+  }
+
   // Find the coupon
   const promoRow = await findCouponByCode(normalizedCode);
   if (!promoRow) {
@@ -91,8 +114,8 @@ export async function applyCoupon(input: ApplyCouponInput): Promise<ApplyCouponR
   // Get buyer usage count for per-buyer limit
   const buyerUsageCount = await getPromotionUsageCount(promo.id, buyerId);
 
-  // Filter cart items for this seller
-  const sellerItems = parsed.data.cartItems.filter((i) => i.sellerId === promo.sellerId);
+  // Filter cart items for this seller (using server-loaded data)
+  const sellerItems = serverCartItems.filter((i) => i.sellerId === promo.sellerId);
   if (sellerItems.length === 0) {
     return { success: false, error: 'No items in your cart from this seller' };
   }

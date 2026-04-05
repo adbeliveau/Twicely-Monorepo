@@ -10,6 +10,7 @@ import { db } from '@twicely/db';
 import { listing, category } from '@twicely/db/schema';
 import { eq, ilike, sql, and } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
+import { getClientIp } from '@/lib/utils/get-client-ip';
 
 export interface SearchSuggestion {
   text: string;
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { getValkeyClient } = await import('@twicely/db/cache');
     const valkey = getValkeyClient();
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const ip = getClientIp(request.headers);
     const key = `search-rate:${ip}`;
     const count = await valkey.incr(key);
     if (count === 1) await valkey.expire(key, 60);

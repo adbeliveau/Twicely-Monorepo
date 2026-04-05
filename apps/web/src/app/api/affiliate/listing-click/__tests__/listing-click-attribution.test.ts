@@ -114,13 +114,14 @@ describe('POST /api/affiliate/listing-click — IP and userAgent extraction', ()
     vi.resetAllMocks();
   });
 
-  it('uses first segment of x-forwarded-for header as IP', async () => {
+  it('uses rightmost segment of x-forwarded-for header as IP (SEC-013)', async () => {
     setupPreInsert();
     mockCookiesGet.mockReturnValue(undefined);
     const mv = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 'r1' }]) });
     mockDbInsert.mockReturnValue({ values: mv });
     await POST(makeRequest({ 'x-forwarded-for': '1.2.3.4, 5.6.7.8' }));
-    expect((mv.mock.calls[0]![0] as Record<string, unknown>).ipAddress).toBe('1.2.3.4');
+    // SEC-013: Rightmost IP is closest to our proxy and not spoofable
+    expect((mv.mock.calls[0]![0] as Record<string, unknown>).ipAddress).toBe('5.6.7.8');
   });
 
   it('falls back to x-real-ip when x-forwarded-for is absent', async () => {

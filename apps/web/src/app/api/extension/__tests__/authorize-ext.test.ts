@@ -1,12 +1,12 @@
 /**
  * Additional tests for GET /api/extension/authorize (H1.1)
- * Covers: session-read throws → redirect to login, redirect param value,
- * callback URL is relative to request URL, null user id → redirect.
+ * Covers: session-read throws -> redirect to login, redirect param value,
+ * callback URL is relative to request URL, null user id -> redirect.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ─── Extension-auth mock ────���───────────────────────────��────────────────────
+// --- Extension-auth mock ---
 
 const { MockExtAuthError, mockGetCtx, mockIssueToken } = vi.hoisted(() => ({
   MockExtAuthError: class extends Error {
@@ -27,13 +27,26 @@ vi.mock('@/lib/auth/extension-auth', () => ({
   ExtensionAuthError: MockExtAuthError,
 }));
 
-// ─── Other mocks ──────────────────────────��────────────────────��─────────────
+// --- Other mocks ---
 
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key, defaultVal) => Promise.resolve(defaultVal)),
 }));
 
-// ���── Helpers ───────────────────────────────────────────��──────────────────────
+let storedTokenInValkey = '';
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: () => ({
+    set: vi.fn().mockImplementation((_key: string, token: string) => {
+      storedTokenInValkey = token;
+      return Promise.resolve('OK');
+    }),
+    get: vi.fn().mockImplementation(() => Promise.resolve(storedTokenInValkey)),
+    del: vi.fn().mockResolvedValue(1),
+  }),
+}));
+vi.mock('@twicely/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
+
+// --- Helpers ---
 
 const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
 
@@ -59,9 +72,9 @@ const OK_CONTEXT = {
   },
 };
 
-// ─── Tests ────────────────────��───────────────────────────────────────────────
+// --- Tests ---
 
-describe('GET /api/extension/authorize — extended', () => {
+describe('GET /api/extension/authorize - extended', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
@@ -70,6 +83,7 @@ describe('GET /api/extension/authorize — extended', () => {
     mockIssueToken.mockImplementation(async (claims: Record<string, unknown>, purpose: string, expiresIn: string) => {
       return signJwt(claims, purpose, expiresIn);
     });
+    storedTokenInValkey = '';
   });
 
   it('redirects to login when context is anonymous (e.g. getSession throws)', async () => {
@@ -90,7 +104,6 @@ describe('GET /api/extension/authorize — extended', () => {
   });
 
   it('redirects to login when context is anonymous (session.user.id is null)', async () => {
-    // getCurrentExtensionRegistrationContext handles null/undefined userId internally
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(307);
@@ -109,7 +122,6 @@ describe('GET /api/extension/authorize — extended', () => {
   });
 
   it('redirects to login when session returns user with empty string id', async () => {
-    // Extension auth handles this internally → returns anonymous
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(307);
@@ -117,7 +129,7 @@ describe('GET /api/extension/authorize — extended', () => {
     expect(location).toContain('/auth/login');
   });
 
-  it('different user id is embedded in the token', async () => {
+  it('different user id is embedded in the token stored in Valkey', async () => {
     mockGetCtx.mockResolvedValue({
       kind: 'ok',
       context: {
@@ -126,10 +138,10 @@ describe('GET /api/extension/authorize — extended', () => {
       },
     });
     const { GET } = await import('../authorize/route');
-    const res = await GET(makeRequest());
-    const location = res.headers.get('location') ?? '';
-    const url = new URL(location);
-    const token = url.searchParams.get('token') ?? '';
+    await GET(makeRequest());
+    // SEC-018: Token is now stored in Valkey, not in URL
+    const token = storedTokenInValkey;
+    expect(token).toBeTruthy();
     const { jwtVerify } = await import('jose');
     const secret = new TextEncoder().encode(TEST_SECRET);
     const { payload } = await jwtVerify(token, secret);

@@ -10,6 +10,7 @@ import { db } from '@twicely/db';
 import { browsingHistory } from '@twicely/db/schema';
 import { sql } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
+import { getClientIp } from '@/lib/utils/get-client-ip';
 
 const TRENDING_LIMIT = 8;
 const WINDOW_DAYS = 7;
@@ -29,7 +30,7 @@ export async function GET(request?: NextRequest): Promise<NextResponse> {
   try {
     const { getValkeyClient } = await import('@twicely/db/cache');
     const valkey = getValkeyClient();
-    const ip = request?.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const ip = request ? getClientIp(request.headers) : 'unknown';
     const key = `search-rate:${ip}`;
     const count = await valkey.incr(key);
     if (count === 1) await valkey.expire(key, 60);

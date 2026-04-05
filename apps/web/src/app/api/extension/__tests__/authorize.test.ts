@@ -33,6 +33,20 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key, defaultVal) => Promise.resolve(defaultVal)),
 }));
 
+// Valkey mock — captures stored token for verification
+let storedTokenInValkey = '';
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: () => ({
+    set: vi.fn().mockImplementation((_key: string, token: string) => {
+      storedTokenInValkey = token;
+      return Promise.resolve('OK');
+    }),
+    get: vi.fn().mockImplementation(() => Promise.resolve(storedTokenInValkey)),
+    del: vi.fn().mockResolvedValue(1),
+  }),
+}));
+vi.mock('@twicely/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
+
 // ─── Helpers ���─────────────────────��──────────────────────��────────────────────
 
 const TEST_SECRET = 'test-extension-jwt-secret-32chars!!';
@@ -83,23 +97,26 @@ describe('GET /api/extension/authorize', () => {
     expect(location).toContain('redirect');
   });
 
-  it('generates registration token and redirects to callback', async () => {
+  it('generates registration token, stores in Valkey, and redirects with code', async () => {
     mockGetCtx.mockResolvedValue(OK_CONTEXT);
     const { GET } = await import('../authorize/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(307);
     const location = res.headers.get('location') ?? '';
     expect(location).toContain('/api/extension/callback');
-    expect(location).toContain('token=');
+    // SEC-018: URL now contains a one-time code, not the JWT token
+    expect(location).toContain('code=');
+    expect(location).not.toContain('token=');
   });
 
   it('registration token expires in 5 minutes', async () => {
     mockGetCtx.mockResolvedValue(OK_CONTEXT);
+    storedTokenInValkey = '';
     const { GET } = await import('../authorize/route');
-    const res = await GET(makeRequest());
-    const location = res.headers.get('location') ?? '';
-    const url = new URL(location);
-    const token = url.searchParams.get('token') ?? '';
+    await GET(makeRequest());
+    // Token is now stored in Valkey, not in URL
+    const token = storedTokenInValkey;
+    expect(token).toBeTruthy();
 
     const secret = new TextEncoder().encode(TEST_SECRET);
     const { payload } = await jwtVerify(token, secret);
@@ -121,11 +138,11 @@ describe('GET /api/extension/authorize', () => {
         principal: { userId: 'user-xyz', displayName: null, name: null, image: null, avatarUrl: null },
       },
     });
+    storedTokenInValkey = '';
     const { GET } = await import('../authorize/route');
-    const res = await GET(makeRequest());
-    const location = res.headers.get('location') ?? '';
-    const url = new URL(location);
-    const token = url.searchParams.get('token') ?? '';
+    await GET(makeRequest());
+    const token = storedTokenInValkey;
+    expect(token).toBeTruthy();
 
     const secret = new TextEncoder().encode(TEST_SECRET);
     const { payload } = await jwtVerify(token, secret);

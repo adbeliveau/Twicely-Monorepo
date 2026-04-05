@@ -7,6 +7,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { REFERRAL_COOKIE_NAME } from '@/lib/affiliate/referral-cookie';
 import { checkSelfReferralByIp } from '@/lib/affiliate/fraud-detection';
 import { escalateAffiliate } from '@/lib/affiliate/fraud-escalation';
+import { getClientIp } from '@/lib/utils/get-client-ip';
 
 export async function GET(
   request: NextRequest,
@@ -36,10 +37,8 @@ export async function GET(
   const expiresAt = new Date(Date.now() + aff.cookieDurationDays * 24 * 60 * 60 * 1000);
 
   // 5. Extract fraud signals
-  const ipAddress =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    null;
+  const rawIp = getClientIp(request.headers);
+  const ipAddress = rawIp === 'unknown' ? null : rawIp;
   const userAgent = request.headers.get('user-agent') ?? null;
 
   // 6. Extract UTM params

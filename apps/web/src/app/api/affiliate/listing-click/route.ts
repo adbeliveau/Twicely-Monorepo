@@ -9,6 +9,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { LISTING_REF_COOKIE_NAME } from '@/lib/affiliate/referral-cookie';
 import { checkSelfReferralByIp } from '@/lib/affiliate/fraud-detection';
 import { escalateAffiliate } from '@/lib/affiliate/fraud-escalation';
+import { getClientIp } from '@/lib/utils/get-client-ip';
 
 const listingClickSchema = z.object({
   referralCode: z.string().min(1).max(50),
@@ -37,8 +38,7 @@ function checkClickRateLimit(ip: string): boolean {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // IP rate limiting (unauthenticated endpoint)
-  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    ?? request.headers.get('x-real-ip') ?? 'unknown';
+  const clientIp = getClientIp(request.headers);
   if (!checkClickRateLimit(clientIp)) {
     return NextResponse.json({ success: false, error: 'Too many requests' }, { status: 429 });
   }

@@ -5,71 +5,105 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// ─── Valkey mock ─────────────────────────────────────────────────────────────
+const mockValkeyGet = vi.fn();
+const mockValkeyDel = vi.fn();
+vi.mock('@twicely/db/cache', () => ({
+  getValkeyClient: () => ({ get: mockValkeyGet, del: mockValkeyDel }),
+}));
+vi.mock('@twicely/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('GET /api/extension/callback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    mockValkeyGet.mockResolvedValue(null);
+    mockValkeyDel.mockResolvedValue(1);
   });
 
-  function makeRequest(token?: string): Request {
-    const url = token
-      ? `http://localhost/api/extension/callback?token=${encodeURIComponent(token)}`
-      : 'http://localhost/api/extension/callback';
-    return new Request(url);
+  function makeRequest(params?: Record<string, string>): Request {
+    const url = new URL('http://localhost/api/extension/callback');
+    if (params) {
+      for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    }
+    return new Request(url.toString());
   }
 
-  it('returns 400 when token query param is absent', async () => {
+  it('returns 400 when no code or token provided', async () => {
     const { GET } = await import('../callback/route');
     const res = await GET(makeRequest());
     expect(res.status).toBe(400);
     const text = await res.text();
-    expect(text).toContain('Missing token');
+    expect(text).toContain('Missing authorization');
   });
 
-  it('returns 200 with HTML content-type for valid token', async () => {
+  it('exchanges one-time code for token via Valkey', async () => {
+    mockValkeyGet.mockResolvedValue('some-jwt-token');
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest('some-jwt-token'));
+    const res = await GET(makeRequest({ code: 'abc123' }));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(mockValkeyGet).toHaveBeenCalledWith('ext-auth-code:abc123');
+    expect(mockValkeyDel).toHaveBeenCalledWith('ext-auth-code:abc123');
+  });
+
+  it('returns 400 when code is expired or invalid', async () => {
+    mockValkeyGet.mockResolvedValue(null);
+    const { GET } = await import('../callback/route');
+    const res = await GET(makeRequest({ code: 'expired-code' }));
+    expect(res.status).toBe(400);
+    const text = await res.text();
+    expect(text).toContain('expired or invalid');
+  });
+
+  it('backward compat: returns 200 with HTML for direct token param', async () => {
+    const { GET } = await import('../callback/route');
+    const res = await GET(makeRequest({ token: 'some-jwt-token' }));
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
   });
 
   it('HTML response contains the token value', async () => {
     const testToken = 'eyJhbGciOiJIUzI1NiJ9.test.payload';
+    mockValkeyGet.mockResolvedValue(testToken);
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest(testToken));
+    const res = await GET(makeRequest({ code: 'c1' }));
     const html = await res.text();
-    // Token must appear in the HTML (JSON.stringify-encoded)
     expect(html).toContain(testToken);
   });
 
   it('HTML response posts TWICELY_EXTENSION_TOKEN message type', async () => {
+    mockValkeyGet.mockResolvedValue('any-token');
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest('any-token'));
+    const res = await GET(makeRequest({ code: 'c2' }));
     const html = await res.text();
     expect(html).toContain('TWICELY_EXTENSION_TOKEN');
     expect(html).toContain('postMessage');
   });
 
   it('HTML response includes sessionStorage fallback (security: not localStorage)', async () => {
+    mockValkeyGet.mockResolvedValue('any-token');
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest('any-token'));
+    const res = await GET(makeRequest({ code: 'c3' }));
     const html = await res.text();
     expect(html).toContain('sessionStorage');
     expect(html).toContain('twicely_extension_token');
   });
 
   it('HTML response includes close-tab instruction', async () => {
+    mockValkeyGet.mockResolvedValue('any-token');
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest('any-token'));
+    const res = await GET(makeRequest({ code: 'c4' }));
     const html = await res.text();
     expect(html).toContain('window.close');
   });
 
   it('HTML response is valid HTML with DOCTYPE', async () => {
+    mockValkeyGet.mockResolvedValue('any-token');
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest('any-token'));
+    const res = await GET(makeRequest({ code: 'c5' }));
     const html = await res.text();
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('<html>');
@@ -77,22 +111,17 @@ describe('GET /api/extension/callback', () => {
   });
 
   it('token with special characters is safely JSON-encoded in HTML', async () => {
-    // JSON.stringify handles escaping — angle brackets in the token must not break HTML
     const specialToken = 'header.<script>alert(1)</script>.sig';
+    mockValkeyGet.mockResolvedValue(specialToken);
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest(specialToken));
+    const res = await GET(makeRequest({ code: 'c6' }));
     const html = await res.text();
-    // JSON.stringify wraps in quotes and escapes — the raw <script> tag should NOT
-    // appear as an unquoted literal (it's inside a JS string literal)
-    // The token IS JSON.stringify'd so it appears as "header.<script>alert(1)</script>.sig"
-    // We verify the token content is present (encoded by JSON.stringify)
     expect(html).toContain(JSON.stringify(specialToken));
   });
 
-  it('returns 400 when token param is empty string', async () => {
+  it('returns 400 when neither code nor token provided', async () => {
     const { GET } = await import('../callback/route');
-    const res = await GET(makeRequest(''));
-    // Empty string is falsy — treated as missing
+    const res = await GET(makeRequest());
     expect(res.status).toBe(400);
   });
 });

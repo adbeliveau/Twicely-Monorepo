@@ -171,7 +171,7 @@ describe('GET /ref/[code] — fraud signals and UTM parameters', () => {
     mockCookiesGet.mockReturnValue(undefined);
   });
 
-  it('stores IP from x-forwarded-for header (first segment only)', async () => {
+  it('stores IP from x-forwarded-for header (rightmost for spoof-resistance)', async () => {
     const mockValues = makeValuesChain('ref-test-001');
 
     await GET(
@@ -180,7 +180,8 @@ describe('GET /ref/[code] — fraud signals and UTM parameters', () => {
     );
 
     const insertedData = mockValues.mock.calls[0]![0] as Record<string, unknown>;
-    expect(insertedData.ipAddress).toBe('1.2.3.4');
+    // SEC-013: Use rightmost IP (closest to our proxy, not spoofable)
+    expect(insertedData.ipAddress).toBe('5.6.7.8');
   });
 
   it('stores user agent from user-agent header', async () => {

@@ -216,6 +216,24 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
     const discountCentsFromMeta = parseInt(paymentIntent.metadata?.discountCents ?? '0', 10);
 
     if (promotionId && discountCentsFromMeta > 0) {
+      // SEC-017: Re-validate promotionId exists and discount amount is plausible
+      // (defense-in-depth against PaymentIntent metadata tampering)
+      const [promoRow] = await tx
+        .select({
+          id: promotion.id,
+          discountPercent: promotion.discountPercent,
+          discountAmountCents: promotion.discountAmountCents,
+          isActive: promotion.isActive,
+        })
+        .from(promotion)
+        .where(eq(promotion.id, promotionId));
+
+      if (!promoRow || !promoRow.isActive) {
+        logger.warn('[finalizeOrder] Promotion not found or inactive in metadata', {
+          promotionId, paymentIntentId,
+        });
+        // Continue without recording promotion usage — don't block order
+      } else {
       // SEC-002: Atomic check-and-increment to prevent coupon race condition.
       // UPDATE only succeeds if usageCount < maxUsesTotal (or maxUsesTotal is null/0 = unlimited).
       const [updated] = await tx
@@ -241,6 +259,7 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
         buyerId: ord.buyerId,
         discountCents: discountCentsFromMeta,
       });
+      } // end else (promoRow valid)
     }
 
     // Return listing IDs for engagement tracking

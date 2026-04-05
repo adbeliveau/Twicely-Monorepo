@@ -256,15 +256,26 @@ describe('finalizeOrder', () => {
         }),
       }),
     });
-    const txMock = {
-      update: txUpdateMock,
-      select: vi.fn().mockReturnValue({
+    const txSelectMock = vi.fn()
+      // First call: order items
+      .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([
             { id: 'item1', listingId: 'listing1', quantity: 1, unitPriceCents: 8000, tfAmountCents: 800 },
           ]),
         }),
-      }),
+      })
+      // Second call: SEC-017 promotion validation
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([
+            { id: 'promo-1', discountPercent: 20, discountAmountCents: null, isActive: true },
+          ]),
+        }),
+      });
+    const txMock = {
+      update: txUpdateMock,
+      select: txSelectMock,
       insert: insertMock,
     };
     mockTransaction.mockImplementation(async (cb) => {

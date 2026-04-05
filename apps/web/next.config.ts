@@ -18,11 +18,9 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.twicely.com cdn.twicely.com *.stripe.com; font-src 'self' data:; connect-src 'self' api.stripe.com *.twicely.com wss://*.twicely.com; frame-src 'self' js.stripe.com hooks.stripe.com; object-src 'none'; base-uri 'self';",
-          },
+          { key: 'X-DNS-Prefetch-Control', value: 'off' },
+          // SEC-008: CSP moved to middleware.ts for nonce-based policy
+          // SEC-039: X-DNS-Prefetch-Control set to 'off' to prevent navigation leakage
         ],
       },
     ];

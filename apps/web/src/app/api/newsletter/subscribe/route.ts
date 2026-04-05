@@ -13,6 +13,7 @@ import { eq } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
+import { getClientIp } from '@/lib/utils/get-client-ip';
 import NewsletterWelcomeEmail from '@twicely/email/templates/newsletter-welcome';
 import NewsletterConfirmationEmail from '@twicely/email/templates/newsletter-confirmation';
 
@@ -58,7 +59,7 @@ async function sendWelcomeEmail(email: string, unsubscribeToken: string): Promis
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   // M1 Security: IP-based rate limiting (3 per hour)
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const ip = getClientIp(request.headers);
   try {
     const valkey = getValkeyClient();
     const key = `newsletter-rate:${ip}`;

@@ -1,13 +1,36 @@
 import { NextResponse } from 'next/server';
+import { getValkeyClient } from '@twicely/db/cache';
+import { logger } from '@twicely/logger';
 
 const MARKETPLACE_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
 
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const token = searchParams.get('token');
+
+  // SEC-018: Exchange one-time code for token (never passes JWT in URL)
+  const code = searchParams.get('code');
+  // Backward compat: also accept direct token (will be removed in next release)
+  let token = searchParams.get('token');
+
+  if (code) {
+    try {
+      const valkey = getValkeyClient();
+      const codeKey = `ext-auth-code:${code}`;
+      const storedToken = await valkey.get(codeKey);
+      if (!storedToken) {
+        return new NextResponse('Authorization code expired or invalid', { status: 400 });
+      }
+      // Delete immediately — one-time use
+      await valkey.del(codeKey);
+      token = storedToken;
+    } catch (err) {
+      logger.error('[extension/callback] Failed to exchange auth code', { error: String(err) });
+      return new NextResponse('Authorization service temporarily unavailable', { status: 503 });
+    }
+  }
 
   if (!token) {
-    return new NextResponse('Missing token', { status: 400 });
+    return new NextResponse('Missing authorization', { status: 400 });
   }
 
   // Security: Use specific origin for postMessage (not '*'), and use sessionStorage instead of localStorage
