@@ -29,9 +29,10 @@ vi.mock('@twicely/db/schema', () => ({
   caseEvent: { caseId: 'case_id' },
   caseWatcher: { caseId: 'case_id' },
   caseCsat: { caseId: 'case_id' },
+  accountingIntegration: { id: 'id', status: 'status', syncFrequency: 'sync_frequency', accessToken: 'access_token' },
 }));
 vi.mock('drizzle-orm', () => ({
-  and: vi.fn(), eq: vi.fn(), gte: vi.fn(), lt: vi.fn(), lte: vi.fn(), isNotNull: vi.fn(), inArray: vi.fn(),
+  and: vi.fn(), eq: vi.fn(), gte: vi.fn(), lt: vi.fn(), lte: vi.fn(), isNotNull: vi.fn(), isNull: vi.fn(), not: vi.fn(), inArray: vi.fn(),
 }));
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback?: unknown) =>
@@ -48,9 +49,9 @@ describe('cron-jobs', () => {
     const { registerCronJobs } = await import('../cron-jobs');
     await registerCronJobs();
 
-    // 6 platform cron jobs + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8)
+    // 7 platform cron jobs + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8)
     // + 1 helpdesk retention purge (G9.6) + 1 helpdesk auto-close + 1 helpdesk SLA check + 1 helpdesk CSAT send
-    expect(mockQueueAdd).toHaveBeenCalledTimes(16);
+    expect(mockQueueAdd).toHaveBeenCalledTimes(17);
   });
 
   it('registers orders cron at every hour', async () => {
@@ -122,7 +123,7 @@ describe('cron-jobs', () => {
     await registerCronJobs();
 
     const tasks = mockQueueAdd.mock.calls.map((c: unknown[]) => (c[1] as { task: string }).task);
-    expect(tasks).toEqual(expect.arrayContaining(['orders', 'returns', 'shipping', 'health', 'vacation', 'seller-score-recalc']));
+    expect(tasks).toEqual(expect.arrayContaining(['orders', 'returns', 'shipping', 'health', 'vacation', 'seller-score-recalc', 'accounting-sync']));
   });
 
   it('cronQueue is created with platform-cron name', async () => {

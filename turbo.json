@@ -24,6 +24,14 @@
     "lint": {
       "dependsOn": [],
       "cache": true
+    },
+    "audit": {
+      "dependsOn": [],
+      "cache": false
+    },
+    "security": {
+      "dependsOn": [],
+      "cache": false
     }
   }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "@twicely/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "vitest": "^4.0.18"
+  }
+}

@@ -25,7 +25,7 @@ export async function updatePolicyVersionAction(
   newVersion: string
 ): Promise<ActionResult> {
   const { ability, session } = await staffAuthorize();
-  if (!ability.can('manage', 'PlatformConfig')) {
+  if (!ability.can('manage', 'Setting')) {
     return { error: 'Forbidden' };
   }
 
@@ -49,7 +49,7 @@ export async function updatePolicyVersionAction(
     actorType: 'STAFF',
     actorId: session.staffUserId,
     action: 'admin.policy.version_updated',
-    subject: 'PlatformConfig',
+    subject: 'Setting',
     subjectId: `policy.${policyType}`,
     severity: 'HIGH',
     detailsJson: { policyType, newVersion, effectiveDate: today },

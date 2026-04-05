@@ -142,6 +142,11 @@ export function defineStaffAbilities(
     can('manage', 'AutomationSetting', { sellerId });
   }
 
+  // Accounting integrations — G10.3 (staff can view, manage for any user)
+  if (scopes.includes('finance.view')) {
+    can(['read', 'manage'], 'AccountingIntegration');
+  }
+
   // Staff can NEVER do these regardless of scopes
   cannot('create', 'AuthenticationRequest');
   cannot('manage', 'Subscription');

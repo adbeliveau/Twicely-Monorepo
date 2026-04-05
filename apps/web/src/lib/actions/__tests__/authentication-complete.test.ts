@@ -154,15 +154,25 @@ describe('completeAuthentication', () => {
     expect(mockDbUpdate).toHaveBeenCalled();
   });
 
-  it('rejects INCONCLUSIVE for Expert tier (not a valid Expert outcome)', async () => {
+  it('rejects INCONCLUSIVE for Expert tier (AI-only outcome)', async () => {
     mockStaffAuthorize.mockResolvedValue(makeAdminStaffSession());
+    mockDbSelect.mockReturnValueOnce(chainSelect([{
+      id: 'creq4xxxxxxxxxxxxxxxxxxx',
+      listingId: 'clst4xxxxxxxxxxxxxxxxxxx',
+      sellerId: 'cusersellerxxxxxxxxxxxxxxxx',
+      initiator: 'SELLER',
+      tier: 'EXPERT',
+      status: 'EXPERT_PENDING',
+      totalFeeCents: 3999,
+      certificateNumber: 'TW-AUTH-ABCD4',
+    }]));
     const { completeAuthentication } = await import('../authentication-complete');
     const result = await completeAuthentication({
       requestId: 'creq4xxxxxxxxxxxxxxxxxxx',
       result: 'INCONCLUSIVE',
     });
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Invalid input');
+    expect(result.error).toBe('INCONCLUSIVE result is only valid for AI tier requests');
   });
 
   it('rejects non-EXPERT_PENDING requests', async () => {

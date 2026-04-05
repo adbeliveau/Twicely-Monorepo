@@ -9,7 +9,8 @@ import { authorize, sub } from '@twicely/casl';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { computeCompositeHash } from '@/lib/authentication/phash';
-import { CERTIFICATE_PREFIX, AUTH_SETTINGS_KEYS } from '@/lib/authentication/constants';
+import { AUTH_SETTINGS_KEYS } from '@/lib/authentication/constants';
+import { generateCertNumber } from '@/lib/authentication/cert-number';
 
 interface ActionResult {
   success: boolean;
@@ -37,8 +38,7 @@ const submitPhotosSchema = z.object({
 }).strict();
 
 // ─── Certificate number generation ─────────────────────────────────────────
-
-const CERT_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+// Thin wrapper — core logic lives in cert-number.ts (no CASL dependency).
 
 export async function generateUniqueCertNumber(): Promise<string> {
   const { session, ability } = await authorize();
@@ -46,21 +46,7 @@ export async function generateUniqueCertNumber(): Promise<string> {
   if (!ability.can('create', 'AuthenticationRequest')) {
     throw new Error('Not authorized to generate certificate numbers');
   }
-
-  for (let attempt = 0; attempt < 10; attempt++) {
-    let suffix = '';
-    for (let i = 0; i < 5; i++) {
-      suffix += CERT_CHARS[Math.floor(Math.random() * CERT_CHARS.length)];
-    }
-    const certNumber = `${CERTIFICATE_PREFIX}${suffix}`;
-    const [existing] = await db
-      .select({ id: authenticationRequest.id })
-      .from(authenticationRequest)
-      .where(eq(authenticationRequest.certificateNumber, certNumber))
-      .limit(1);
-    if (!existing) return certNumber;
-  }
-  throw new Error('Failed to generate unique certificate number after 10 attempts');
+  return generateCertNumber();
 }
 
 // ─── Action 1: approveVerifiedSeller (D6.1) ─────────────────────────────────
@@ -146,7 +132,7 @@ export async function requestItemAuthentication(
   }
 
   const totalFeeCents = await getPlatformSetting<number>(AUTH_SETTINGS_KEYS.EXPERT_FEE_CENTS, 3999);
-  const certNumber = await generateUniqueCertNumber();
+  const certNumber = await generateCertNumber();
   const verifyUrl = `https://twicely.co/verify/${certNumber}`;
 
   const [newRequest] = await db

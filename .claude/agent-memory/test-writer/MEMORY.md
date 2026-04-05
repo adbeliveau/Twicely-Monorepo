@@ -217,7 +217,14 @@ mockInsert.mockReturnValue({ values: vi.fn().mockReturnValue({ returning: vi.fn(
 
 ### H3.1 Shopify Connector patterns
 See [h3-shopify-patterns.md](h3-shopify-patterns.md) for full details.
-Key: authenticate tests cover empty-state, HTTP-200-with-error, schema rejection, shop-info-non-ok separately. revokeAuth: two no-op guard cases (null token, null shopDomain). healthCheck: null-token/null-shopDomain/fetch-throws all tested. buildAuthUrl: use `new URL(url).searchParams.get('scope')` for exact match.
+
+### G10 Accounting + Authentication patterns (G10.2, G10.3)
+See [g10-accounting-auth-patterns.md](g10-accounting-auth-patterns.md) for full details. Key points:
+- `refreshIntegrationTokens`: mock both `decrypt` AND `encrypt` from `@twicely/db/encryption`
+- `syncPayouts`: payout query uses `makeSelectChainNoLimit` (no `.limit()`); entityMap check uses `makeSelectChain` (has `.limit(1)`)
+- Cron route uses `new Request(...)` not `NextRequest`; length mismatch returns 401 before `timingSafeEqual`
+- `ai-webhook.test.ts` (old) is broken by G10.2 listing-title fetch; new tests need 2+ chained selects
+- `notifyAuthResult` error suppression: always resolves undefined; logs result type in error context
 
 ## Mock Queue Contamination — Critical Rule
 

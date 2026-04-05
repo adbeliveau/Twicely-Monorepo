@@ -1,0 +1,116 @@
+name: Load Test
+
+on:
+  schedule:
+    # Weekly on Sunday at 02:00 UTC
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Scenario to run (smoke, full, or a specific scenario name)"
+        required: false
+        default: "smoke"
+        type: choice
+        options:
+          - smoke
+          - full
+          - homepage-browse
+          - search-load
+          - listing-detail
+          - auth-flow
+          - checkout-flow
+          - api-stress
+          - websocket-connect
+          - image-upload
+          - rate-limit-verify
+      target_url:
+        description: "Target URL for load test"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  smoke:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' &&
+       (github.event.inputs.scenario == 'smoke' || github.event.inputs.scenario == ''))
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run k6 Smoke Test
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: tests/load/smoke.js
+        env:
+          BASE_URL: ${{ github.event.inputs.target_url || secrets.LOAD_TEST_TARGET_URL }}
+
+      - name: Upload Smoke Results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: smoke-results-${{ github.run_id }}
+          path: "*.json"
+          retention-days: 14
+
+  full-suite:
+    name: Full Load Test Suite
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.scenario == 'full')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run k6 Full Suite
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: tests/load/full-suite.js
+        env:
+          BASE_URL: ${{ github.event.inputs.target_url || secrets.LOAD_TEST_TARGET_URL }}
+          TEST_BUYER_EMAIL: ${{ secrets.LOAD_TEST_BUYER_EMAIL }}
+          TEST_BUYER_PASSWORD: ${{ secrets.LOAD_TEST_BUYER_PASSWORD }}
+          TEST_SELLER_EMAIL: ${{ secrets.LOAD_TEST_SELLER_EMAIL }}
+          TEST_SELLER_PASSWORD: ${{ secrets.LOAD_TEST_SELLER_PASSWORD }}
+
+      - name: Upload Full Suite Results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: full-suite-results-${{ github.run_id }}
+          path: "*.html"
+          retention-days: 30
+
+  single-scenario:
+    name: Single Scenario — ${{ github.event.inputs.scenario }}
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.scenario != 'smoke' &&
+      github.event.inputs.scenario != 'full'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run k6 Scenario
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: tests/load/scenarios/${{ github.event.inputs.scenario }}.js
+        env:
+          BASE_URL: ${{ github.event.inputs.target_url || secrets.LOAD_TEST_TARGET_URL }}
+          TEST_BUYER_EMAIL: ${{ secrets.LOAD_TEST_BUYER_EMAIL }}
+          TEST_BUYER_PASSWORD: ${{ secrets.LOAD_TEST_BUYER_PASSWORD }}
+          TEST_SELLER_EMAIL: ${{ secrets.LOAD_TEST_SELLER_EMAIL }}
+          TEST_SELLER_PASSWORD: ${{ secrets.LOAD_TEST_SELLER_PASSWORD }}
+
+      - name: Upload Results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: scenario-${{ github.event.inputs.scenario }}-results-${{ github.run_id }}
+          path: "*.json"
+          retention-days: 14

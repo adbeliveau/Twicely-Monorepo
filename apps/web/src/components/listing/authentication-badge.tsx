@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShieldCheck, Clock, BadgeCheck } from 'lucide-react';
+import { ShieldCheck, Clock, BadgeCheck, Loader2 } from 'lucide-react';
 
 type AuthenticationBadgeProps = {
   authenticationStatus: string;
@@ -35,6 +35,15 @@ export function AuthenticationBadge({
       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
         <ShieldCheck className="h-3.5 w-3.5" />
         AI Authenticated
+      </span>
+    );
+  }
+
+  if (authenticationStatus === 'AI_PENDING') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        AI Authentication in Progress
       </span>
     );
   }

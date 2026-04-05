@@ -77,6 +77,8 @@ export const SUBJECTS = [
   // Finance -- I3
   'Chargeback',
   'Hold',
+  // Accounting — G10.3
+  'AccountingIntegration',
   // Helpdesk & KB -- G9
   'KbArticle',
   'KbCategory',

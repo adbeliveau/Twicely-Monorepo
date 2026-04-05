@@ -41,21 +41,26 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'listing.maxImagesPerListing', value: 24, type: 'number', category: 'commerce', description: 'Maximum photos per listing' },
   { key: 'listing.minTitleLength', value: 10, type: 'number', category: 'commerce', description: 'Minimum characters in listing title' },
   { key: 'listing.maxTitleLength', value: 80, type: 'number', category: 'commerce', description: 'Maximum characters in listing title' },
+  { key: 'listing.maxDescriptionLength', value: 5000, type: 'number', category: 'commerce', description: 'Maximum characters in listing description' },
   { key: 'listing.durationDays', value: 90, type: 'number', category: 'commerce', description: 'Default listing duration in days' },
   { key: 'listing.autoRenewEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Allow auto-renew of expired listings' },
   { key: 'commerce.cancel.buyerWindowHours', value: 1, type: 'number', category: 'commerce', description: 'Hours buyer can cancel after purchase' },
   { key: 'commerce.cancel.sellerPenaltyEnabled', value: true, type: 'boolean', category: 'commerce', description: 'Penalize sellers who cancel orders' },
   { key: 'commerce.cancel.autoRefundOnCancel', value: true, type: 'boolean', category: 'commerce', description: 'Automatically refund on cancellation' },
+  { key: 'commerce.cancel.sellerCancelAffectsStandards', value: true, type: 'boolean', category: 'commerce', description: 'Seller cancels impact seller standards metrics' },
+  { key: 'commerce.condition.requireFlawDescription', value: true, type: 'boolean', category: 'commerce', description: 'Require flaw description for non-new condition items' },
+  { key: 'commerce.condition.allowCategorySpecific', value: true, type: 'boolean', category: 'commerce', description: 'Allow category-specific condition labels' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FULFILLMENT — Shipping, Returns, Insurance
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'fulfillment.shipping.defaultHandlingDays', value: 3, type: 'number', category: 'fulfillment', description: 'Default handling time in business days' },
-  { key: 'fulfillment.shipping.maxHandlingDays', value: 7, type: 'number', category: 'fulfillment', description: 'Maximum allowed handling time' },
+  { key: 'fulfillment.shipping.maxHandlingDays', value: 10, type: 'number', category: 'fulfillment', description: 'Maximum allowed handling time' },
   { key: 'fulfillment.shipping.trackingRequiredAboveCents', value: 5000, type: 'cents', category: 'fulfillment', description: 'Require tracking for orders above this amount' },
   { key: 'fulfillment.shipping.signatureRequiredAboveCents', value: 75000, type: 'cents', category: 'fulfillment', description: 'Require signature for orders above this amount' },
   { key: 'fulfillment.shipping.defaultCarrier', value: 'USPS', type: 'string', category: 'fulfillment', description: 'Default shipping carrier' },
   { key: 'fulfillment.shipping.labelGenerationEnabled', value: true, type: 'boolean', category: 'fulfillment', description: 'Enable shipping label generation via Shippo' },
+  { key: 'fulfillment.shipping.labelDiscountPercent', value: 0, type: 'number', category: 'fulfillment', description: 'Discount percentage on shipping label generation (0 = no discount)' },
   { key: 'fulfillment.insurance.autoInsureAboveCents', value: 10000, type: 'cents', category: 'fulfillment', description: 'Auto-insure shipments above this amount ($100)' },
   { key: 'fulfillment.returns.windowDays', value: 30, type: 'number', category: 'fulfillment', description: 'Default return window in days' },
   { key: 'fulfillment.returns.restockingFeeBps', value: 0, type: 'bps', category: 'fulfillment', description: 'Restocking fee in basis points' },
@@ -141,6 +146,8 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.priceAlert.maxPerUser', value: 50, type: 'number', category: 'discovery', description: 'Maximum price alerts per user' },
   { key: 'discovery.marketIndex.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Compute market price indexes' },
   { key: 'discovery.marketIndex.dealBadgesEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Show Great Deal badges on listings' },
+  { key: 'discovery.personalization.purchaseWeight', value: 2, type: 'number', category: 'discovery', description: 'Weight multiplier for purchase-based interest signals' },
+  { key: 'discovery.personalization.purchaseExpiryDays', value: 90, type: 'number', category: 'discovery', description: 'Days before a purchase interest signal expires' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // COMMUNICATIONS — Messaging channel settings (email/push/sms/digest in seed-comms-settings.ts)
@@ -448,4 +455,42 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.browsingHistory.maxItems', value: 50, type: 'number' as const, category: 'discovery', description: 'Max browsing history items per user (FIFO)' },
   { key: 'admin.customRoles.maxCount', value: 20, type: 'number' as const, category: 'admin', description: 'Max number of active custom staff roles' },
   { key: 'privacy.dataExportRateLimitHours', value: 24, type: 'number' as const, category: 'privacy', description: 'Minimum hours between user data export requests' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRUST — AI Authentication (G10.2)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'trust.authentication.aiEnabled', value: false, type: 'boolean' as const, category: 'trust', description: 'Enable AI authentication tier (requires active provider contract)' },
+  { key: 'trust.authentication.aiFeeCents', value: 1999, type: 'cents' as const, category: 'trust', description: 'Total fee for AI authentication ($19.99)' },
+  { key: 'trust.authentication.aiProviderName', value: 'entrupy', type: 'string' as const, category: 'trust', description: 'Active AI authentication provider name' },
+  { key: 'trust.authentication.aiProviderApiUrl', value: 'https://api.entrupy.com/v1', type: 'string' as const, category: 'trust', description: 'AI authentication provider API base URL' },
+  { key: 'trust.authentication.aiProviderWebhookSecret', value: '', type: 'string' as const, category: 'trust', description: 'Webhook signing secret for AI auth provider callbacks' },
+  { key: 'trust.authentication.aiMaxTurnaroundHours', value: 24, type: 'number' as const, category: 'trust', description: 'Maximum expected turnaround for AI authentication (hours)' },
+  { key: 'trust.authentication.aiSupportedCategories', value: ['HANDBAGS', 'WATCHES', 'SNEAKERS', 'TRADING_CARDS'], type: 'array' as const, category: 'trust', description: 'Item categories eligible for AI authentication' },
+  { key: 'trust.authentication.offerThresholdCents', value: 50000, type: 'cents' as const, category: 'trust', description: 'Show auth option for items >= this amount' },
+  { key: 'trust.authentication.buyerFeeCents', value: 1999, type: 'cents' as const, category: 'trust', description: 'Buyer share of AI auth fee when authentic' },
+  { key: 'trust.authentication.sellerFeeCents', value: 1999, type: 'cents' as const, category: 'trust', description: 'Seller share of AI auth fee when authentic' },
+  { key: 'trust.authentication.expertFeeCents', value: 3999, type: 'cents' as const, category: 'trust', description: 'Expert human auth fee (standard items)' },
+  { key: 'trust.authentication.expertHighValueFeeCents', value: 6999, type: 'cents' as const, category: 'trust', description: 'Expert human auth fee (high-value items)' },
+  { key: 'trust.authentication.mandatoryAboveCents', value: null, type: 'cents' as const, category: 'trust', description: 'Mandatory auth above this price (null = never)' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ACCOUNTING INTEGRATIONS — G10.3
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'accounting.quickbooks.enabled', value: false, type: 'boolean' as const, category: 'accounting', description: 'Enable QuickBooks Online integration' },
+  { key: 'accounting.quickbooks.clientId', value: '', type: 'string' as const, category: 'accounting', description: 'QuickBooks OAuth client ID' },
+  { key: 'accounting.quickbooks.clientSecret', value: '', type: 'string' as const, category: 'accounting', description: 'QuickBooks OAuth client secret' },
+  { key: 'accounting.quickbooks.apiUrl', value: 'https://quickbooks.api.intuit.com', type: 'string' as const, category: 'accounting', description: 'QuickBooks API base URL' },
+  { key: 'accounting.quickbooks.tokenUrl', value: 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', type: 'string' as const, category: 'accounting', description: 'QuickBooks OAuth token endpoint' },
+  { key: 'accounting.quickbooks.authUrl', value: 'https://appcenter.intuit.com/connect/oauth2', type: 'string' as const, category: 'accounting', description: 'QuickBooks OAuth authorization URL' },
+  { key: 'accounting.quickbooks.scopes', value: 'com.intuit.quickbooks.accounting', type: 'string' as const, category: 'accounting', description: 'QuickBooks OAuth scopes' },
+  { key: 'accounting.xero.enabled', value: false, type: 'boolean' as const, category: 'accounting', description: 'Enable Xero integration' },
+  { key: 'accounting.xero.clientId', value: '', type: 'string' as const, category: 'accounting', description: 'Xero OAuth client ID' },
+  { key: 'accounting.xero.clientSecret', value: '', type: 'string' as const, category: 'accounting', description: 'Xero OAuth client secret' },
+  { key: 'accounting.xero.apiUrl', value: 'https://api.xero.com/api.xro/2.0', type: 'string' as const, category: 'accounting', description: 'Xero API base URL' },
+  { key: 'accounting.xero.tokenUrl', value: 'https://identity.xero.com/connect/token', type: 'string' as const, category: 'accounting', description: 'Xero OAuth token endpoint' },
+  { key: 'accounting.xero.authUrl', value: 'https://login.xero.com/identity/connect/authorize', type: 'string' as const, category: 'accounting', description: 'Xero OAuth authorization URL' },
+  { key: 'accounting.xero.scopes', value: 'openid profile email accounting.transactions', type: 'string' as const, category: 'accounting', description: 'Xero OAuth scopes' },
+  { key: 'accounting.sync.defaultFrequency', value: 'DAILY', type: 'string' as const, category: 'accounting', description: 'Default sync frequency for new integrations' },
+  { key: 'accounting.sync.maxRetries', value: 3, type: 'number' as const, category: 'accounting', description: 'Max retry attempts for failed sync operations' },
+  { key: 'accounting.sync.batchSize', value: 50, type: 'number' as const, category: 'accounting', description: 'Number of records to sync per batch' },
 ];

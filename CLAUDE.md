@@ -9,7 +9,7 @@ Turborepo monorepo for Twicely, a peer-to-peer resale marketplace. Converted fro
 Phases A–I complete. Monorepo conversion done. All features built. Audit-clean.
 
 - TypeScript: 25/25 packages pass
-- Tests: 23/23 packages pass, 9224+ tests green
+- Tests: 23/23 packages pass, 13443+ tests green
 - Audit: 11/11 streams clean (0 blockers, 0 warnings)
 
 ### Important Notes
@@ -42,4 +42,6 @@ npx turbo dev         # Start dev server
 - TypeScript strict mode, zero `as any`
 - Integer cents for money, never floats
 - All settings from `platform_settings` table
-- 9,224+ tests must pass (baseline)
+- 13,254+ tests must pass (baseline)
+
+BASELINE_TESTS=13443

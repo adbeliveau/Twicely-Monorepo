@@ -113,7 +113,7 @@ export function getApplicableLineItems(promo: PromotionData, lineItems: CartLine
 }
 
 export interface DiscountOptions {
-  /** System-wide bundle minimum items from platform_settings. Defaults to 2. */
+  /** System-wide bundle minimum items from platform_settings — required for BUNDLE_DISCOUNT type. */
   bundleMinItems?: number;
 }
 
@@ -160,8 +160,8 @@ export function calculateDiscount(promo: PromotionData, applicableItems: CartLin
     case 'BUNDLE_DISCOUNT': {
       if (promo.discountPercent === null) return baseResult;
       // minimumOrderCents is repurposed as minimum item count for BUNDLE_DISCOUNT
-      const minItemCount = promo.minimumOrderCents ?? (options?.bundleMinItems ?? 2);
-      if (totalQuantity < minItemCount) return baseResult;
+      const minItemCount = promo.minimumOrderCents ?? options?.bundleMinItems;
+      if (minItemCount == null || totalQuantity < minItemCount) return baseResult;
       // Apply percentage discount to all applicable items
       let totalDiscount = 0;
       for (const item of applicableItems) {

@@ -70,4 +70,24 @@ describe('authentication constants', () => {
     expect(AUTH_SETTINGS_KEYS.EXPERT_HIGH_VALUE_FEE_CENTS).toBe('trust.authentication.expertHighValueFeeCents');
     expect(AUTH_SETTINGS_KEYS.MANDATORY_ABOVE_CENTS).toBe('trust.authentication.mandatoryAboveCents');
   });
+
+  it('exports AI_ENABLED settings key', () => {
+    expect(AUTH_SETTINGS_KEYS.AI_ENABLED).toBe('trust.authentication.aiEnabled');
+  });
+
+  it('exports AI_FEE_CENTS settings key', () => {
+    expect(AUTH_SETTINGS_KEYS.AI_FEE_CENTS).toBe('trust.authentication.aiFeeCents');
+  });
+
+  it('exports AI_PROVIDER_NAME settings key', () => {
+    expect(AUTH_SETTINGS_KEYS.AI_PROVIDER_NAME).toBe('trust.authentication.aiProviderName');
+  });
+
+  it('exports AI_PROVIDER_API_URL settings key', () => {
+    expect(AUTH_SETTINGS_KEYS.AI_PROVIDER_API_URL).toBe('trust.authentication.aiProviderApiUrl');
+  });
+
+  it('exports AI_SUPPORTED_CATEGORIES settings key', () => {
+    expect(AUTH_SETTINGS_KEYS.AI_SUPPORTED_CATEGORIES).toBe('trust.authentication.aiSupportedCategories');
+  });
 });

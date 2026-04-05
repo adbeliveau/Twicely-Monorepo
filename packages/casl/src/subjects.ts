@@ -92,6 +92,8 @@ export const SUBJECTS = [
   // Trust & Safety — I7
   'TrustSafety',
   'SecurityEvent',
+  // Accounting integrations — G10.3
+  'AccountingIntegration',
   // FraudCase — deferred until fraud_case table exists
 ] as const;
 

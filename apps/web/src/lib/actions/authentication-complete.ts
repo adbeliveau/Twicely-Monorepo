@@ -16,7 +16,7 @@ interface ActionResult {
 
 const completeAuthSchema = z.object({
   requestId: z.string().cuid2(),
-  result: z.enum(['AUTHENTICATED', 'COUNTERFEIT']),
+  result: z.enum(['AUTHENTICATED', 'COUNTERFEIT', 'INCONCLUSIVE']),
   resultNotes: z.string().max(5000).optional(),
   authenticatorId: z.string().cuid2().optional(),
 }).strict();
@@ -26,10 +26,11 @@ const invalidateCertSchema = z.object({
   reason: z.enum(['RELISTED', 'LISTING_ENDED', 'ADMIN_REVOKED', 'FRAUD_DETECTED']),
 }).strict();
 
-// ─── Action: completeAuthentication (D6.2) ───────────────────────────────────
+// ─── Action: completeAuthentication (D6.2 + G10.2) ──────────────────────────
 
 export async function completeAuthentication(rawData: unknown): Promise<ActionResult> {
   const { session, ability } = await staffAuthorize();
+  if (!session) return { success: false, error: 'Staff access required' };
   if (!ability.can('manage', 'AuthenticationRequest')) {
     return { success: false, error: 'Admin access required' };
   }
@@ -46,18 +47,55 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
     .limit(1);
 
   if (!req) return { success: false, error: 'Authentication request not found' };
-  if (req.status !== 'EXPERT_PENDING') {
+
+  const isPending = req.status === 'EXPERT_PENDING' || req.status === 'AI_PENDING';
+  if (!isPending) {
     return { success: false, error: 'Request is not in EXPERT_PENDING status' };
   }
 
-  const initiator = req.initiator as 'BUYER' | 'SELLER';
-  const split = calculateAuthCostSplit(initiator, result, req.totalFeeCents);
-  const now = new Date();
+  // INCONCLUSIVE is AI-only — Expert tier always commits to AUTHENTICATED or COUNTERFEIT
+  if (result === 'INCONCLUSIVE' && req.tier !== 'AI') {
+    return { success: false, error: 'INCONCLUSIVE result is only valid for AI tier requests' };
+  }
 
-  if (result === 'AUTHENTICATED') {
-    const certUrl = `https://twicely.co/verify/${req.certificateNumber ?? ''}`;
+  const initiator = req.initiator as 'BUYER' | 'SELLER';
+  const now = new Date();
+  const isAi = req.tier === 'AI';
+
+  if (result === 'INCONCLUSIVE') {
+    // Twicely absorbs cost — 0/0, listing not removed
     await db.update(authenticationRequest).set({
-      status: 'EXPERT_AUTHENTICATED',
+      status: 'AI_INCONCLUSIVE',
+      completedAt: now,
+      buyerFeeCents: 0,
+      sellerFeeCents: 0,
+      resultNotes: resultNotes ?? null,
+      authenticatorId: authenticatorId ?? null,
+      updatedAt: now,
+    }).where(eq(authenticationRequest.id, requestId));
+
+    await db.update(listing).set({
+      authenticationStatus: 'AI_INCONCLUSIVE',
+      updatedAt: now,
+    }).where(eq(listing.id, req.listingId));
+
+    await db.insert(auditEvent).values({
+      actorType: 'PLATFORM_STAFF',
+      actorId: session.staffUserId,
+      action: 'AI_AUTH_INCONCLUSIVE',
+      subject: 'AuthenticationRequest',
+      subjectId: requestId,
+      severity: 'LOW',
+      detailsJson: { listingId: req.listingId },
+    });
+
+  } else if (result === 'AUTHENTICATED') {
+    const split = calculateAuthCostSplit(initiator, 'AUTHENTICATED', req.totalFeeCents);
+    const certUrl = `https://twicely.co/verify/${req.certificateNumber ?? ''}`;
+    const newStatus = isAi ? 'AI_AUTHENTICATED' : 'EXPERT_AUTHENTICATED';
+
+    await db.update(authenticationRequest).set({
+      status: newStatus,
       completedAt: now,
       expiresAt: null,
       buyerFeeCents: split.buyerShareCents,
@@ -69,14 +107,16 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
     }).where(eq(authenticationRequest.id, requestId));
 
     await db.update(listing).set({
-      authenticationStatus: 'EXPERT_AUTHENTICATED',
+      authenticationStatus: newStatus,
       updatedAt: now,
     }).where(eq(listing.id, req.listingId));
 
   } else if (result === 'COUNTERFEIT') {
     const refundedBuyer = initiator === 'BUYER' ? req.totalFeeCents : 0;
+    const newStatus = isAi ? 'AI_COUNTERFEIT' : 'EXPERT_COUNTERFEIT';
+
     await db.update(authenticationRequest).set({
-      status: 'EXPERT_COUNTERFEIT',
+      status: newStatus,
       completedAt: now,
       buyerFeeCents: 0,
       sellerFeeCents: req.totalFeeCents,
@@ -87,7 +127,7 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
     }).where(eq(authenticationRequest.id, requestId));
 
     await db.update(listing).set({
-      authenticationStatus: 'EXPERT_COUNTERFEIT',
+      authenticationStatus: newStatus,
       enforcementState: 'REMOVED',
       updatedAt: now,
     }).where(eq(listing.id, req.listingId));
@@ -101,10 +141,7 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
       severity: 'HIGH',
       detailsJson: { authRequestId: requestId, sellerId: req.sellerId },
     });
-
   }
-  // NOTE: INCONCLUSIVE result handling will be added with AI tier (G10.2).
-  // Expert tier only produces AUTHENTICATED or COUNTERFEIT per spec (Feature Lock-in Addendum §48).
 
   revalidatePath(`/i/${req.listingId}`);
   return { success: true };
@@ -114,6 +151,7 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
 
 export async function invalidateCertificate(rawData: unknown): Promise<ActionResult> {
   const { session, ability } = await staffAuthorize();
+  if (!session) return { success: false, error: 'Staff access required' };
   if (!ability.can('manage', 'AuthenticationRequest')) {
     return { success: false, error: 'Admin access required' };
   }

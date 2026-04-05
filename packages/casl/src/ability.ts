@@ -153,6 +153,9 @@ function defineSellerAbilities(
   can('create', 'IdentityVerification', { userId });
   can('read', 'DataExportRequest', { userId });
   can('create', 'DataExportRequest', { userId });
+
+  // Accounting integrations — G10.3 (seller owns their integrations)
+  can(['create', 'read', 'update', 'delete'], 'AccountingIntegration', { userId });
 }
 
 /**

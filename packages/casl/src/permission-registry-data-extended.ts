@@ -114,6 +114,18 @@ export const PERMISSION_MODULES_EXTENDED: PermissionModule[] = [
       { action: 'delete', label: 'Delete' },
     ],
   },
+  {
+    subject: 'AccountingIntegration',
+    name: 'Accounting Integrations',
+    description: 'QuickBooks/Xero integrations — connect, sync, and manage accounting data',
+    category: 'FINANCE',
+    actions: [
+      { action: 'read', label: 'View' },
+      { action: 'create', label: 'Connect' },
+      { action: 'update', label: 'Sync' },
+      { action: 'delete', label: 'Disconnect' },
+    ],
+  },
   // ─── TRUST_AND_SAFETY (additions) ──────────────────────────────────────────
   {
     subject: 'ContentReport',

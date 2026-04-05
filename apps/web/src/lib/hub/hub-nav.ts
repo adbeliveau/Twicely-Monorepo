@@ -76,6 +76,8 @@ export const HUB_NAV: HubNavSection[] = [
         requiresScope: 'shipping.manage' },
       { key: 'promotions', label: 'Promotions', href: '/my/selling/promotions', icon: 'Megaphone',
         requiresScope: 'promotions.view' },
+      { key: 'authentication', label: 'Authentication', href: '/my/selling/authentication', icon: 'ShieldCheck',
+        requiresScope: 'listings.view' },
     ],
   },
 
@@ -130,6 +132,8 @@ export const HUB_NAV: HubNavSection[] = [
       { key: 'payouts', label: 'Payouts', href: '/my/selling/finances/payouts', icon: 'Banknote',
         requiresScope: 'finances.view' },
       { key: 'platform-revenue', label: 'Platform Revenue', href: '/my/selling/finances/platforms', icon: 'TrendingUp',
+        requiresScope: 'finances.view' },
+      { key: 'integrations', label: 'Integrations', href: '/my/selling/finances/integrations', icon: 'Link2',
         requiresScope: 'finances.view' },
     ],
   },

@@ -72,10 +72,44 @@ export const accountingIntegration = pgTable('accounting_integration', {
   externalAccountId: text('external_account_id'),
   lastSyncAt:        timestamp('last_sync_at', { withTimezone: true }),
   status:            text('status').notNull(),          // 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
+  syncFrequency:     text('sync_frequency').default('DAILY'),   // 'HOURLY' | 'DAILY' | 'MANUAL'
+  lastSyncStatus:    text('last_sync_status'),                  // 'COMPLETED' | 'FAILED'
+  syncErrorCount:    integer('sync_error_count').notNull().default(0),
+  companyName:       text('company_name'),                      // From QB/Xero after connect
   createdAt:         timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:         timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   userProviderIdx:   unique().on(table.userId, table.provider),
+}));
+
+// §18.5b accountingSyncLog
+export const accountingSyncLog = pgTable('accounting_sync_log', {
+  id:             text('id').primaryKey().$defaultFn(() => createId()),
+  integrationId:  text('integration_id').notNull().references(() => accountingIntegration.id, { onDelete: 'cascade' }),
+  syncType:       text('sync_type').notNull(),     // 'SALES' | 'EXPENSES' | 'INVOICES' | 'FULL'
+  status:         text('status').notNull(),         // 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED'
+  recordsSynced:  integer('records_synced').notNull().default(0),
+  recordsFailed:  integer('records_failed').notNull().default(0),
+  errorMessage:   text('error_message'),
+  startedAt:      timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  completedAt:    timestamp('completed_at', { withTimezone: true }),
+}, (table) => ({
+  integrationIdx: index('asl_integration').on(table.integrationId),
+  statusIdx:      index('asl_status').on(table.status),
+}));
+
+// §18.5c accountingEntityMap
+export const accountingEntityMap = pgTable('accounting_entity_map', {
+  id:                  text('id').primaryKey().$defaultFn(() => createId()),
+  integrationId:       text('integration_id').notNull().references(() => accountingIntegration.id, { onDelete: 'cascade' }),
+  twicelyEntityType:   text('twicely_entity_type').notNull(),   // 'ORDER' | 'EXPENSE' | 'PAYOUT'
+  twicelyEntityId:     text('twicely_entity_id').notNull(),
+  externalEntityType:  text('external_entity_type').notNull(),  // 'INVOICE' | 'BILL' | 'JOURNAL_ENTRY'
+  externalEntityId:    text('external_entity_id').notNull(),
+  lastSyncedAt:        timestamp('last_synced_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  integrationEntityIdx: unique().on(table.integrationId, table.twicelyEntityType, table.twicelyEntityId),
+  externalIdx:          index('aem_external').on(table.integrationId, table.externalEntityId),
 }));
 
 // §18.6 financialProjection — nightly cache for intelligence layer metrics

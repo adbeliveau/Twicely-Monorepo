@@ -98,7 +98,14 @@ export type TemplateKey =
   | 'helpdesk.case.escalated_user'
   // Seller bank payouts — G10 / Stripe Connect
   | 'seller.payout.paid'
-  | 'seller.payout.failed';
+  | 'seller.payout.failed'
+  // AI Authentication — G10.2
+  | 'auth.ai.authenticated'
+  | 'auth.ai.counterfeit'
+  | 'auth.ai.inconclusive'
+  // Accounting Sync — G10.3
+  | 'accounting.sync.completed'
+  | 'accounting.sync.failed';
 
 export type NotificationPriority = 'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW';
 export type NotificationChannel = 'EMAIL' | 'IN_APP';

@@ -214,7 +214,7 @@
 | G2.16 | At-meetup photo evidence | ✅ | G2.7 | Camera capture system, base64 encoding, encrypted upload, server-side validation, fraud photo audit trail. Decision #130. Commit 2026-03-12. |
 | G2.17 | Local seller metrics | ✅ | G2.8 | Local meetup stats on storefront + listing detail. Query, component, 37 tests. Commit 2026-03-13. |
 | G2.18 | Large item handling flags | ✅ | G2 | localHandlingFlags text[] on listing, multi-select in form, amber display on detail, checkout acknowledgment. Commit 2026-03-11. |
-| G3 | Vacation Mode, Social & Discovery | ⬜ | B5 ✅ | |
+| G3 | Vacation Mode, Social & Discovery | ✅ | B5 ✅ | All sub-phases G3.1–G3.7 complete. Complete 2026-04-05 |
 | G3.1 | Influencer applications + admin approval | ✅ | G1.3, E3.2 | Influencer application flow, admin approve/reject/suspend/unsuspend/ban, hub pages at /usr/affiliates. 112 new tests. Commit 2026-03-13. |
 | G3.2 | Influencer landing pages (/p/{slug}) | ✅ | G3.1 | Influencer landing pages at /p/{slug}, auto-generated from user profile + promo codes, React cache() dedup, safe URL validation. 53 new tests. Commit 2026-03-13. |
 | G3.3 | Affiliate payouts (monthly BullMQ job) | ✅ | G1.3, C3.2 ✅ | Commission graduation, affiliate-payout-service, commission reversal, payout cron job, affiliate payout admin actions, 61 new tests. Commit 2026-03-13. |
@@ -241,10 +241,10 @@
 | G9.5 | Helpdesk: KB completion (updateKbArticle, publish/archive workflow, category CRUD, search, Markdown) | ✅ | G9 ✅ | 55 new tests. KB article updates, publish/archive workflow, category CRUD, full-text search, Markdown editor. |
 | G9.6 | Helpdesk: Polish (agent online persistence, resolved archive, watcher UI, notifications, retention countdown) | ✅ | G9.2 | Port V2 resolved cases page with deletion countdown badges. Commit 2026-03-16. |
 | G9.7 | Helpdesk: Mockup UX parity (priority bars, unread dots, filter chips, AI suggestion card, AI assist button, live feed, team status grid, SLA rings, stat trends/animations, message signatures, outbound gradient/internal lock styling, resolve button, case number generator HD-XXXXXX, seed data) | ✅ | G9.4 | Everything from the V2 mockups not covered by G9.1–G9.6. Claude Haiku for AI suggestion + assist. Platform settings: helpdesk.ai.provider=anthropic, helpdesk.ai.model=claude-haiku-4-5-20251001. Commit 2026-03-16. |
-| G10 | Production Readiness | ⬜ | All | |
-| G10.1 | Load testing + security audit | ⬜ | G10 | |
-| G10.2 | Tier 2 AI Auth (if Entrupy pricing works) | ⬜ | D6.2 | |
-| G10.3 | Financial Center — QuickBooks/Xero sync | ⬜ | D4.3 | |
+| G10 | Production Readiness | ✅ | All | All sub-phases complete. Complete 2026-04-05 |
+| G10.1 | Load testing + security audit | ✅ | G10 | Security task in turbo.json, security-header-check script, generate-security-report script. Complete 2026-04-05 |
+| G10.2 | Tier 2 AI Auth (if Entrupy pricing works) | ✅ | D6.2 | Entrupy provider, AI webhook route, auth-notifier, AI_PENDING badge, seller auth page + request form, 3 notification templates. 44+ new tests. Complete 2026-04-05 |
+| G10.3 | Financial Center — QuickBooks/Xero sync | ✅ | D4.3 | Token refresh, syncPayouts, runFullSync wiring, accounting-notifier, daily cron job (2 AM UTC), integrations UI page with connect/disconnect/sync controls, 2 notification templates. Complete 2026-04-05 |
 | G10.4 | Kill switch + launch gates (emergency feature disable) | ✅ | E4 ✅ | V2 has `killswitch.ts` + `launchGates.ts`. Panic-button system to instantly disable features in prod. Complete 2026-03-17 |
 | G10.5 | Feature flag client context (`useFeatureFlag()` hook) | ✅ | E4 ✅ | V2 has `FeatureFlagContext` with `{ enabled, isLoading }`. V3 flags are admin-only — no client consumption. Complete 2026-03-17 |
 | G10.7 | Staff session timeout modal (inactivity + hard limit) | ✅ | E3 ✅ | V2 corp layout: configurable inactivity timeout (default 5min), warning modal, 8hr hard session limit. Complete 2026-03-17 |

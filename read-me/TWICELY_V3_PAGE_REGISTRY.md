@@ -1,7 +1,7 @@
 # TWICELY V3 — Page Registry
-**Version:** v1.8
+**Version:** v1.9
 **Status:** LOCKED
-**Date:** 2026-03-15
+**Date:** 2026-04-05
 **Purpose:** Every route, every page, every role gate, every page state. This IS the sitemap. No page exists that isn't in this file.
 
 **Governing documents:** Feature Lock-in §23 (URL structure), Actors & Security §5 (route protection), Platform Settings §17 (admin tabs), Helpdesk Canonical (helpdesk routes), Build Brief (phase mapping)
@@ -241,6 +241,9 @@ Requires authenticated user with `isSeller === true`. Non-sellers see an "Enable
 | 73c | `/my/selling/affiliate` | Affiliate Program \| Twicely | dashboard | SELLER | G1.4 | Affiliate overview, promo code, referral stats summary |
 | 73d | `/my/selling/affiliate/referrals` | Referrals \| Twicely | dashboard | SELLER | G1.4 | Referral list, per-referral status, conversion tracking |
 | 73e | `/my/selling/affiliate/payouts` | Affiliate Payouts \| Twicely | dashboard | SELLER | G1.4 | Commission history, payout status, pending earnings |
+| 73f | `/my/selling/authentication` | Authentication \| Twicely | dashboard | SELLER | D6 | AI/expert authentication requests, pending/completed history, cert numbers |
+| 73g | `/my/selling/finances/integrations` | Accounting Integrations \| Twicely | dashboard | SELLER or DELEGATE(finances.manage) | D4 | QuickBooks/Xero connection, sync status, OAuth flow |
+| 73h | `/my/selling/settings/local` | Local Pickup Settings \| Twicely | dashboard | SELLER or DELEGATE(settings.manage) | E3 | Max meetup distance (miles), platform radius defaults |
 
 ### 4.1 Seller Page States
 
@@ -345,6 +348,10 @@ All hub pages require platform staff authentication. Hub uses its own auth flow 
 | 87 | `/usr/[id]` | User Detail \| Twicely Hub | hub | STAFF(ADMIN, SUPPORT) | E3 ✅ | Full user profile, orders, listings, cases, balance, actions toolbar |
 | 87a | `/usr/affiliates` | Influencers \| Twicely Hub | hub | STAFF(ADMIN) | G3.1 | Influencer applications list, status filters, approve/reject/suspend actions |
 | 87b | `/usr/affiliates/[id]` | Influencer Detail \| Twicely Hub | hub | STAFF(ADMIN) | G3.1 | Influencer profile, application status, approve/reject/suspend/unsuspend/ban actions |
+| 87c | `/usr/[id]/edit` | Edit User \| Twicely Hub | hub | STAFF(ADMIN) | E3 | Admin user edit form (name, email, status, roles) |
+| 87d | `/usr/new` | Create User \| Twicely Hub | hub | STAFF(ADMIN) | E3 | Create new user account, sends password-reset email |
+| 87e | `/usr/sellers` | Sellers \| Twicely Hub | hub | STAFF(ADMIN, SUPPORT) | E3 | Seller list filterable by tier/band/status, links to user detail |
+| 87f | `/usr/sellers/verification` | Verification Queue \| Twicely Hub | hub | STAFF(ADMIN) | G6 | Sellers pending KYC/identity verification or enforcement review |
 
 **User Detail Tabs:**
 - Overview: account info, seller status, trust scores, subscription tiers
@@ -393,6 +400,11 @@ All hub pages require platform staff authentication. Hub uses its own auth flow 
 | 97b | `/fin/promo-codes` | Promo Code Management \| Twicely Hub | hub | STAFF(ADMIN) | G1.5 ✅ | Platform + affiliate promo codes, create/edit/deactivate |
 | 97c | `/fin/affiliate-payouts` | Affiliate Payouts \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | G3.4 ✅ | Affiliate payout batches, monthly commission details, payout status, performance metrics, reversal audit trail |
 | 97d | `/fin/tax` | Tax Compliance \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | G5 ✅ | 1099-K/1099-NEC document generation status, threshold tracking, seller tax compliance dashboard, TaxJar integration status |
+| 97e | `/fin/chargebacks` | Chargebacks \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | E3 | Stripe dispute ledger entries, stats (30d), filter by status/date |
+| 97f | `/fin/chargebacks/[id]` | Chargeback Detail \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | E3 | Dispute ledger entries, timeline, linked order/seller, reversal status |
+| 97g | `/fin/holds` | Reserve Holds \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | E3 | Active escrow holds and releases, filter active/released/all |
+| 97h | `/fin/payouts/[id]` | Payout Detail \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | E3 | Payout info, seller, batch, Stripe correlation, related ledger entries |
+| 97i | `/fin/subscriptions` | Subscriptions \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | D3 | Subscription metrics by axis (Store/Lister/Finance/Automation), recent changes |
 
 ### 8.6 Moderation
 
@@ -410,6 +422,13 @@ All hub pages require platform staff authentication. Hub uses its own auth flow 
 | 101f | `/mod/enforcement` | Enforcement Actions \| Hub | hub | STAFF(ADMIN, MODERATION) | G4 ✅ | Active enforcement actions (warnings, removals, suspensions, bans), search by user/reason, status filters |
 | 101g | `/mod/enforcement/[id]` | Enforcement {id} \| Hub | hub | STAFF(ADMIN, MODERATION) | G4 ✅ | Enforcement action detail, reason/evidence/duration, appeal review (if enabled), status update actions |
 | 101h | `/mod/enforcement/new` | New Enforcement Action \| Hub | hub | STAFF(ADMIN, MODERATION) | G4 ✅ | Create enforcement action form (user search, action type, reason, duration, escalation notes) |
+| 101i | `/mod/disputes/[id]` | Dispute Detail \| Hub | hub | STAFF(ADMIN, SUPPORT) | C4 | Dispute claim type, buyer/seller, evidence photos, resolution form, linked return request |
+| 101j | `/mod/disputes/rules` | Dispute Resolution Rules \| Hub | hub | STAFF(ADMIN) | C4 | Claim windows, seller response hours, auto-approve settings, chargeback fee config |
+| 101k | `/mod/listings/[id]` | Listing Detail \| Hub | hub | STAFF(ADMIN, MODERATION) | B2 | Listing images/details, enforcement state, seller context, moderation actions |
+| 101l | `/mod/listings/pending` | Listings Pending Review \| Hub | hub | STAFF(ADMIN, MODERATION) | B2 | Flagged listings with no content report, awaiting first review |
+| 101m | `/mod/listings/suppressed` | Suppressed Listings \| Hub | hub | STAFF(ADMIN, MODERATION) | B2 | Listings hidden from search but not deleted, unsuppress action |
+| 101n | `/mod/queue` | Moderation Queue \| Hub | hub | STAFF(ADMIN, MODERATION) | E3 | Unified prioritised queue: flagged listings + reports + flagged reviews, stats |
+| 101o | `/mod/reviews/[id]` | Review Detail \| Hub | hub | STAFF(ADMIN, MODERATION) | C1 | Review content, DSR scores, seller response, report history, approve/remove actions |
 
 ### 8.7 Helpdesk (hub.twicely.co/hd)
 
@@ -482,6 +501,26 @@ Reference: Platform Settings Canonical §17.
 | 116c9 | `/cfg/therealreal` | The RealReal Connector \| Twicely Hub | hub | ADMIN | G10.13 ✅ | OAuth/API config, capabilities, connected accounts, test connection |
 | 116c10 | `/cfg/integrations` | Third-Party Integrations \| Twicely Hub | hub | ADMIN | G10.13 ✅ | Dependency status dashboard, version checks, update availability |
 | 116m | `/cfg/monetization` | Monetization \| Twicely Hub | hub | ADMIN | G1.4 | TF bracket schedule, payout settings, subscription pricing config |
+| 116n | `/cfg/data-retention/anonymize` | Anonymization Queue \| Twicely Hub | hub | ADMIN | G6 | Users pending data deletion/anonymization, pending/processed counts |
+| 116o | `/cfg/data-retention/exports` | Data Export Requests \| Twicely Hub | hub | ADMIN | G6 | GDPR data portability requests, SLA monitoring, status table |
+| 116p | `/cfg/environment` | Environment Settings \| Twicely Hub | hub | ADMIN | A1 | API keys, secrets, environment-related platform settings by category |
+| 116q | `/cfg/infrastructure` | Infrastructure \| Twicely Hub | hub | ADMIN | A1 | Valkey/Typesense/Centrifugo connection settings, restart-required notice |
+| 116r | `/cfg/jobs` | Jobs & Scheduler \| Twicely Hub | hub | ADMIN | A1 | Cron job schedules (orders, returns, shipping, health, vacation, score recalc), scheduler tick interval |
+| 116s | `/cfg/meetup-locations` | Safe Meetup Locations \| Twicely Hub | hub | ADMIN | E3 | Create/manage safe meetup locations for local sales, filter by type/city/state |
+| 116t | `/cfg/messaging/keywords` | Banned Keywords \| Twicely Hub | hub | ADMIN | E2 | Auto-flagging/blocking keyword management for messaging |
+| 116u | `/cfg/modules` | Modules \| Twicely Hub | hub | ADMIN | E3 | Enable/disable platform modules, module stats (total/enabled/disabled) |
+| 116v | `/cfg/platform` | Platform Config \| Twicely Hub | hub | ADMIN | E3 | All platform settings organized by category in tabs |
+| 116w | `/cfg/providers` | Providers \| Twicely Hub | hub | ADMIN | E3 | Provider health overview, quick links to adapters/instances/mappings/health logs |
+| 116x | `/cfg/providers/adapters` | Provider Adapters \| Twicely Hub | hub | ADMIN | E3 | Registered service adapters by service type, create instance action |
+| 116y | `/cfg/providers/health` | Health Logs \| Twicely Hub | hub | ADMIN | E3 | Provider health check history, latency, error messages |
+| 116z | `/cfg/providers/instances` | Provider Instances \| Twicely Hub | hub | ADMIN | E3 | Active provider instances, health status, configure links |
+| 116z1 | `/cfg/providers/instances/[id]` | Configure Instance \| Twicely Hub | hub | ADMIN | E3 | Instance config form, secret masks, health card |
+| 116z2 | `/cfg/providers/instances/new` | New Instance \| Twicely Hub | hub | ADMIN | E3 | Create new provider instance from selected adapter |
+| 116z3 | `/cfg/providers/mappings` | Usage Mappings \| Twicely Hub | hub | ADMIN | E3 | Service routing: primary + fallback provider instance per usage key |
+| 116z4 | `/cfg/providers/mappings/new` | New Usage Mapping \| Twicely Hub | hub | ADMIN | E3 | Create usage mapping: usage key, primary/fallback instances, auto-failover |
+| 116z5 | `/cfg/shippo` | Shippo Settings \| Twicely Hub | hub | ADMIN | B4 | Shippo API key, fulfillment settings, webhook config |
+| 116z6 | `/cfg/trust` | Trust & Safety Settings \| Twicely Hub | hub | ADMIN | C1 | Review moderation toggle, seller response toggle |
+| 116z7 | `/cfg/vestiaire` | Vestiaire Collective Settings \| Twicely Hub | hub | ADMIN | F1 | Session config, capabilities, crosslister settings for Vestiaire Collective |
 
 **Settings Tabs (query param `?tab=`):**
 
@@ -517,6 +556,42 @@ Reference: Platform Settings Canonical §17.
 | 128 | `/mod/disputes` | Disputes \| Hub | hub | STAFF(ADMIN, SUPPORT) | C4 ✅ | disputes queue, resolve actions |
 | 129 | `/mod/returns` | Returns \| Hub | hub | STAFF(ADMIN, SUPPORT) | C4 ✅ | returnRequests queue, admin override actions |
 | 130 | `/cfg/data-retention` | Data Retention \| Hub | hub | ADMIN | G6 | Retention policies, scheduled purges, GDPR request queue |
+| 131 | `/admin-messages` | Admin Messages \| Twicely Hub | hub | STAFF(ADMIN) | E1 | Broadcast messages across the platform, manage broadcast.* settings |
+| 132 | `/analytics/sellers` | Seller Analytics \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | D4 | Seller GMV, orders, cancel rate, return rate, rating by seller; filter by band/tier |
+| 133 | `/bulk` | Bulk Operations \| Twicely Hub | hub | STAFF(ADMIN, MODERATION) | E3 | Batch status changes across multiple listings or users |
+| 134 | `/categories/[id]` | Category Detail \| Twicely Hub | hub | STAFF(ADMIN, MODERATION) | B1 | Category info, subcategories, attribute schemas, edit form |
+| 135 | `/categories/catalog` | Catalog Browser \| Twicely Hub | hub | STAFF(ADMIN, MODERATION) | B1 | All categories table filterable by status/feeBucket/depth/search |
+| 136 | `/categories/new` | New Category \| Twicely Hub | hub | STAFF(ADMIN) | B1 | Create root or subcategory form |
+| 137 | `/currency` | Currency \| Twicely Hub | hub | STAFF(ADMIN) | E3 | Platform currency configuration (currently USD only, multi-currency roadmap) |
+| 138 | `/delegated-access` | Delegated Access \| Twicely Hub | hub | STAFF(ADMIN) | D5 | Platform-wide staff delegation oversight, KPIs, all delegations table |
+| 139 | `/errors` | Error Log \| Twicely Hub | hub | STAFF(any) | E4 | High/critical severity audit events, filter by severity/subject |
+| 140 | `/exports` | Data Exports \| Twicely Hub | hub | STAFF(ADMIN) | G6 | GDPR data export requests, SLA monitoring, status table |
+| 141 | `/flags/[id]` | Feature Flag Detail \| Twicely Hub | hub | STAFF(ADMIN, DEVELOPER) | E4 | Flag metadata (key/type/rollout%), audit history |
+| 142 | `/health/[id]` | Provider Instance Detail \| Twicely Hub | hub | STAFF(ADMIN, DEVELOPER, SRE) | E4 | Instance health details, health check history (last 50) |
+| 143 | `/imports` | Import Batches \| Twicely Hub | hub | STAFF(ADMIN, MODERATION) | F1 | Crosslister import batches, stats, health metrics (avg completion, success rate) |
+| 144 | `/maintenance` | Maintenance \| Twicely | minimal | PUBLIC | A | Static maintenance page shown during downtime |
+| 145 | `/notifications/[id]` | Edit Template \| Twicely Hub | hub | STAFF(ADMIN) | E1 | Edit notification template (channels, subject, body, HTML, category) |
+| 146 | `/notifications/new` | New Template \| Twicely Hub | hub | STAFF(ADMIN) | E1 | Create new notification template |
+| 147 | `/operations` | Platform Operations \| Twicely Hub | hub | STAFF(ADMIN, DEVELOPER, SRE) | E4 | Live platform health summary: providers, kill switches, critical events 24h, enabled flags |
+| 148 | `/policies` | Policy Versions \| Twicely Hub | hub | STAFF(ADMIN) | G1 | View current versions and effective dates for ToS/Privacy/Seller Agreement/Refund policies |
+| 149 | `/promotions` | Promotions \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | D2 | Seller promotions + platform/affiliate promo codes, overview stats, tabbed view |
+| 150 | `/promotions/[id]` | Promotion Detail \| Twicely Hub | hub | STAFF(ADMIN, FINANCE) | D2 | Promotion or promo code detail, activate/deactivate actions |
+| 151 | `/promotions/new` | Create Promo Code \| Twicely Hub | hub | STAFF(ADMIN) | D2 | Create new platform promo code form |
+| 152 | `/risk` | Risk Signals \| Twicely Hub | hub | STAFF(ADMIN, MODERATION, SUPPORT) | C4 | Fraud detection KPIs, fraud pattern reference, risk signal table |
+| 153 | `/roles/custom/[id]` | Edit Role \| Twicely Hub | hub | STAFF(ADMIN) | A4 | Custom role edit form, permission toggle grid, staff list |
+| 154 | `/roles/custom/new` | Create Role \| Twicely Hub | hub | STAFF(ADMIN) | A4 | Create new custom role (SUPER_ADMIN only) |
+| 155 | `/roles/staff` | Employees \| Twicely Hub | hub | STAFF(ADMIN) | A4 | Staff user list with roles, avatar, invite/manage actions |
+| 156 | `/roles/staff/new` | Add Staff \| Twicely Hub | hub | STAFF(ADMIN) | A4 | Create new staff user with system roles |
+| 157 | `/roles/system/[code]` | Role Details \| Twicely Hub | hub | STAFF(ADMIN) | A4 | System role permission grid (read-only), all permission pairs |
+| 158 | `/search-admin` | Search Admin \| Twicely Hub | hub | STAFF(ADMIN, DEVELOPER) | E4 | Typesense collection status, rebuild index action |
+| 159 | `/security` | Security Events \| Twicely Hub | hub | STAFF(ADMIN, SRE) | E4 | Security event KPIs, event log (failed logins, session revocations, 2FA changes, payout dest changes) |
+| 160 | `/shipping-admin` | Shipping Admin \| Twicely Hub | hub | STAFF(ADMIN) | B4 | Platform shipping settings (handling days, carriers, label settings) |
+| 161 | `/taxes` | Tax Rules \| Twicely Hub | hub | STAFF(ADMIN) | G5 | Platform tax configuration and rules |
+| 162 | `/translations` | Translations \| Twicely Hub | hub | STAFF(ADMIN) | G1 | i18n platform settings (i18n.* prefix), locale/currency/timezone config |
+| 163 | `/trust` | Trust & Safety \| Twicely Hub | hub | STAFF(ADMIN, MODERATION, SUPPORT) | C1 | Trust overview KPIs (band distribution, score stats), recent band transitions |
+| 164 | `/trust/sellers` | Sellers \| Trust & Safety \| Hub | hub | STAFF(ADMIN, MODERATION, SUPPORT) | C1 | Seller trust list filterable by band, links to trust profile |
+| 165 | `/trust/sellers/[id]` | Seller Trust Profile \| Hub | hub | STAFF(ADMIN, MODERATION, SUPPORT) | C1 | Trust score history, band override form, revoke override action |
+| 166 | `/trust/settings` | Trust Score Configuration \| Hub | hub | STAFF(ADMIN) | C1 | Band thresholds, event weights, decay config, volume caps |
 
 ---
 
@@ -548,32 +623,33 @@ Reference: Platform Settings Canonical §17.
 | Public / Browse | 17 | `/`, `/explore`, `/s`, `/c`, `/i`, `/st`, `/p`, `/h` |
 | Auth | 6 | `/auth/*` |
 | Buyer | 16 | `/my/buying/*`, `/my/feed`, `/cart`, `/checkout` |
-| Seller | 36 | `/my/selling/*` |
+| Seller | 39 | `/my/selling/*` |
 | Account Settings | 5 | `/my/settings/*` |
 | Messaging | 2 | `/m/*` |
 | User Support | 3 | `/my/support/*`, `/h/contact` |
+| Maintenance | 1 | `/maintenance` |
 | Hub Dashboard | 1 | `/d` |
-| Hub Users | 2 | `/usr/*` |
+| Hub Users | 8 | `/usr/*` |
 | Hub Transactions | 4 | `/tx/*` |
-| Hub Finance | 7 | `/fin/*` |
-| Hub Moderation | 10 | `/mod/*` |
+| Hub Finance | 12 | `/fin/*` |
+| Hub Moderation | 18 | `/mod/*` |
 | Hub Helpdesk | 10 | `/hd/*` |
 | Hub KB Admin | 4 | `/kb/*` |
-| Hub Config | 11 (+11 tabs) | `/cfg`, `/cfg/stripe`, `/cfg/{ebay,etsy,mercari,poshmark,depop,grailed,fb-marketplace,therealreal}`, `/cfg/integrations` |
-| Hub Other | 14 | `/roles`, `/audit`, `/health`, `/flags`, etc. |
-| **Total** | **~150 pages** | |
+| Hub Config | 33 (+11 tabs) | `/cfg/*` (all cfg sub-pages including providers, data-retention, messaging, etc.) |
+| Hub Other | 36 | `/roles`, `/audit`, `/health`, `/flags`, `/trust`, `/analytics`, `/promotions`, `/risk`, `/security`, `/operations`, etc. |
+| **Total** | **~219 pages** | |
 
 ### 10.2 By Build Phase
 
 | Phase | Pages | Description |
 |-------|-------|-------------|
-| A (Foundation) | ~8 | Auth pages, hub login, CASL setup, staff roles |
-| B (Core Marketplace) | ~25 | Browse, search, listing CRUD, cart, checkout, orders, shipping profiles |
-| C (Trust & Monetization) | ~12 | Reviews, offers, Stripe Connect, returns, disputes, seller finances |
-| D (Seller Tools) | ~18 | Storefront, promotions, boosting, subscriptions, analytics, delegation |
-| E (Platform Infra) | ~35 | Messaging, notifications, full hub admin, helpdesk, KB, audit, health, config |
-| F (Crosslister) | ~8 | Connect, import, crosslist, automation, platform revenue |
-| G (Polish & Launch) | ~12 | Onboarding, verification, policies, privacy, data retention, accessibility |
+| A (Foundation) | ~11 | Auth pages, hub login, CASL setup, staff roles, environment/infra settings |
+| B (Core Marketplace) | ~30 | Browse, search, listing CRUD, cart, checkout, orders, shipping profiles, categories, mod listing detail |
+| C (Trust & Monetization) | ~18 | Reviews, offers, Stripe Connect, returns, disputes, seller finances, trust, risk |
+| D (Seller Tools) | ~21 | Storefront, promotions, boosting, subscriptions, analytics, delegation, accounting integrations |
+| E (Platform Infra) | ~60 | Messaging, notifications, full hub admin, helpdesk, KB, audit, health, config, providers, moderation queue, bulk ops |
+| F (Crosslister) | ~9 | Connect, import, crosslist, automation, platform revenue, imports, vestiaire |
+| G (Polish & Launch) | ~20 | Onboarding, verification, policies, privacy, data retention, accessibility, GDPR exports, translations, currency |
 
 ---
 

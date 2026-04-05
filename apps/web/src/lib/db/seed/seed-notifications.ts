@@ -192,6 +192,58 @@ const TEMPLATES = [
     bodyTemplate: 'We noticed a potential shipping issue with order {{orderNumber}}: {{exceptionType}}. We have automatically opened a protection claim on your behalf.',
     channels: ['EMAIL', 'IN_APP'],
   },
+  // AI Authentication — G10.2
+  {
+    id: 'seed-tpl-auth-ai-authenticated',
+    key: 'auth.ai.authenticated',
+    name: 'AI Authentication Passed',
+    description: 'Sent when AI authentication confirms item authenticity',
+    category: 'authentication',
+    subjectTemplate: '{{itemTitle}} has been authenticated',
+    bodyTemplate: 'Great news! {{itemTitle}} passed AI authentication with {{confidencePercent}}% confidence. Your listing now displays a verified authentication badge.',
+    channels: ['EMAIL', 'IN_APP'],
+  },
+  {
+    id: 'seed-tpl-auth-ai-counterfeit',
+    key: 'auth.ai.counterfeit',
+    name: 'AI Authentication — Counterfeit Detected',
+    description: 'Sent when AI authentication flags item as potentially counterfeit',
+    category: 'authentication',
+    subjectTemplate: 'Authentication issue with {{itemTitle}}',
+    bodyTemplate: 'Our AI authentication system flagged {{itemTitle}} as potentially not authentic. The listing has been delisted. If you believe this is an error, you may request expert review.',
+    channels: ['EMAIL', 'IN_APP'],
+  },
+  {
+    id: 'seed-tpl-auth-ai-inconclusive',
+    key: 'auth.ai.inconclusive',
+    name: 'AI Authentication — Inconclusive',
+    description: 'Sent when AI authentication cannot determine authenticity',
+    category: 'authentication',
+    subjectTemplate: 'Authentication inconclusive for {{itemTitle}}',
+    bodyTemplate: 'Our AI authentication could not determine the authenticity of {{itemTitle}}. You may request an expert review for a definitive result.',
+    channels: ['EMAIL', 'IN_APP'],
+  },
+  // Accounting Sync — G10.3
+  {
+    id: 'seed-tpl-accounting-sync-completed',
+    key: 'accounting.sync.completed',
+    name: 'Accounting Sync Completed',
+    description: 'Sent when accounting integration sync completes successfully',
+    category: 'accounting',
+    subjectTemplate: '{{provider}} sync completed — {{recordsSynced}} records',
+    bodyTemplate: 'Your {{provider}} accounting sync completed successfully. {{recordsSynced}} records were synced. Last sync: {{syncDate}}.',
+    channels: ['EMAIL', 'IN_APP'],
+  },
+  {
+    id: 'seed-tpl-accounting-sync-failed',
+    key: 'accounting.sync.failed',
+    name: 'Accounting Sync Failed',
+    description: 'Sent when accounting integration sync fails',
+    category: 'accounting',
+    subjectTemplate: '{{provider}} sync failed — action required',
+    bodyTemplate: 'Your {{provider}} accounting sync failed. {{errorMessage}} Please check your integration settings at /my/selling/finances/integrations.',
+    channels: ['EMAIL', 'IN_APP'],
+  },
 ];
 
 export async function seedNotifications(db: ReturnType<typeof drizzle>): Promise<void> {

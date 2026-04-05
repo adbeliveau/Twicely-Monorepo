@@ -13,7 +13,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 const QUEUE_NAME = 'platform-cron';
 
-type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc';
+type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc' | 'accounting-sync';
 
 interface CronJobData {
   task: CronTask;
@@ -32,6 +32,7 @@ export async function registerCronJobs(): Promise<void> {
     healthPattern,
     vacationPattern,
     sellerScorePattern,
+    accountingSyncPattern,
   ] = await Promise.all([
     getPlatformSetting('jobs.cron.orders.pattern', '0 * * * *'),
     getPlatformSetting('jobs.cron.returns.pattern', '10 * * * *'),
@@ -39,6 +40,7 @@ export async function registerCronJobs(): Promise<void> {
     getPlatformSetting('jobs.cron.health.pattern', '*/5 * * * *'),
     getPlatformSetting('jobs.cron.vacation.pattern', '0 0 * * *'),
     getPlatformSetting('jobs.cron.sellerScoreRecalc.pattern', '0 3 * * *'),
+    getPlatformSetting('jobs.cron.accountingSync.pattern', '0 2 * * *'),
   ]);
 
   // Orders: auto-complete after escrow hold
@@ -83,7 +85,14 @@ export async function registerCronJobs(): Promise<void> {
     { jobId: 'cron-seller-score-recalc', repeat: { pattern: sellerScorePattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
-  logger.info('[cronJobs] Registered 6 platform cron jobs');
+  // Accounting sync — daily at 2 AM UTC (G10.3)
+  await cronQueue.add(
+    'cron:accounting-sync',
+    { task: 'accounting-sync', triggeredAt: new Date().toISOString() },
+    { jobId: 'cron-accounting-sync', repeat: { pattern: accountingSyncPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
+  );
+
+  logger.info('[cronJobs] Registered 7 platform cron jobs');
 
   // Tax document generation — separate queue, January 15 annually
   const { registerTaxDocumentGenerationJob } = await import('./tax-document-generation');
@@ -163,6 +172,35 @@ async function processCronJob(task: CronTask): Promise<void> {
       const { processSellerScoreRecalc } = await import('@/lib/jobs/seller-score-recalc');
       await processSellerScoreRecalc();
       logger.info('[cronJobs] seller-score-recalc complete');
+      break;
+    }
+    case 'accounting-sync': {
+      const { db } = await import('@twicely/db');
+      const { accountingIntegration } = await import('@twicely/db/schema');
+      const { eq, and, not, isNull } = await import('drizzle-orm');
+      const { runFullSync } = await import('@/lib/accounting/sync-engine');
+
+      const integrations = await db
+        .select({ id: accountingIntegration.id })
+        .from(accountingIntegration)
+        .where(
+          and(
+            eq(accountingIntegration.status, 'CONNECTED'),
+            not(eq(accountingIntegration.syncFrequency, 'MANUAL')),
+            not(isNull(accountingIntegration.accessToken)),
+          ),
+        );
+
+      let synced = 0;
+      for (const integration of integrations) {
+        try {
+          await runFullSync(integration.id);
+          synced++;
+        } catch (err) {
+          logger.error('[cronJobs] accounting-sync failed', { integrationId: integration.id, error: String(err) });
+        }
+      }
+      logger.info('[cronJobs] accounting-sync complete', { synced, total: integrations.length });
       break;
     }
   }

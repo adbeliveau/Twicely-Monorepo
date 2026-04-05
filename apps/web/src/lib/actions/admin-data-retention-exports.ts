@@ -10,7 +10,7 @@ export async function retryExportAction(
   exportId: string
 ): Promise<{ success: true } | { error: string }> {
   const { ability, session } = await staffAuthorize();
-  if (!ability.can('manage', 'DataExport')) {
+  if (!ability.can('manage', 'DataExportRequest')) {
     return { error: 'Forbidden' };
   }
 
@@ -41,7 +41,7 @@ export async function retryExportAction(
     actorType: 'STAFF',
     actorId: session.staffUserId,
     action: 'DATA_EXPORT_RETRY',
-    subject: 'DataExport',
+    subject: 'DataExportRequest',
     subjectId: exportId,
     detailsJson: { previousStatus: record.status },
   });

@@ -328,10 +328,19 @@
       "Bash(sed -i \"s|const { removeReviewAction } = await import\\(''../admin-moderation''\\);|const { removeReviewAction } = await import\\(''../admin-moderation-helpers''\\);|g\" apps/web/src/lib/actions/__tests__/admin-moderation.test.ts)",
       "Bash(sed -i \"s|const { approveReviewAction } = await import\\(''../admin-moderation''\\);|const { approveReviewAction } = await import\\(''../admin-moderation-helpers''\\);|g\" apps/web/src/lib/actions/__tests__/admin-moderation.test.ts)",
       "Read(//^@twicely/web:lint: [A-Z]/{file=$0} /  \\(error|warning\\)  / && !/no-unused-vars/**)",
-      "Bash(bc)"
+      "Bash(bc)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx turbo build --force --concurrency=1)",
+      "Bash(pnpm --filter @twicely/web add -D eslint-plugin-security)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx tsc --noEmit)",
+      "Bash(wmic logicaldisk get freespace,caption)",
+      "Bash(npm cache clean --force)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts"
+      "C:\\Users\\XPS-15\\Projects\\Twicely\\.claude\\install-prompts",
+      "C:\\Users\\XPS-15\\Projects\\Twicely\\read-me",
+      "c:\\Users\\XPS-15\\AppData\\Local",
+      "c:\\Users\\XPS-15\\Projects\\Twicely Mono\\packages\\*",
+      "C:\\Users\\XPS-15\\Projects\\Twicely\\.next"
     ]
   }
 }

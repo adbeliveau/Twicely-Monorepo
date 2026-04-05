@@ -88,7 +88,9 @@
 
 - I3+I4 Finance Gaps + Enrichment -- See [i3-i4-finance-findings.md]
 
-## Recent Prompts Written (2026-03-18/19/20)
+## Recent Prompts Written (2026-03-18/19/20/04-04)
+- G10.3 QuickBooks/Xero Accounting Sync -- See [g103-accounting-sync-findings.md]
+- G10.1 Load Testing + Security Audit — See [g101-load-test-security-findings.md]
 - I17 Admin Sidebar Final Update — See [i17-admin-sidebar-findings.md]
 - I16 Remaining Page Enrichment — See [i16-remaining-page-enrichment-findings.md]
 - I15 Settings & Config Enrichment — See [i15-settings-config-findings.md]
@@ -144,6 +146,7 @@
 - [h13-therealreal-findings.md] - H1.3 TheRealReal content script: consignment model, session data shape, no Next.js
 - [h12-content-scripts-findings.md] - H1.2 Poshmark/FB content script architecture, session data shapes, DOM scraping strategies
 - [h11-extension-scaffold-findings.md] - H1.1 browser extension architecture decisions, no canonical spec
+- [g101-load-test-security-findings.md] - G10.1 load testing + security audit: no middleware.ts, no CI/CD, CSP unsafe-eval deviation, 6 header mismatches, rate-limit gap (seeded but no middleware), k6 chosen
 - [g1013-connector-admin-findings.md] - G10.13 full gap analysis, existing code inventory
 - [g1012-newsletter-findings.md] - G10.12 newsletter spec gaps
 - [g1011-chat-polish-findings.md] - G10.11 chat polish 4 sub-steps
@@ -154,3 +157,4 @@
 - [g8-gdpr-findings.md] - G8 GDPR schema gaps
 - [crosslister-automation-details.md] - Crosslister E2.1-F6 architecture
 - [g1-affiliate-findings.md] - G1 affiliate program details
+- [g103-accounting-sync-findings.md] - G10.3 QB/Xero sync: 2 new tables, 8 new columns on accountingIntegration, accountingSyncLog+accountingEntityMap, outbound-only, Finance PRO gate, CASL AccountingIntegration subject, 17 platform settings, 4 OAuth routes, 6 server actions, ~70 tests

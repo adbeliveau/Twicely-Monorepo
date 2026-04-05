@@ -37,7 +37,7 @@ echo ""
 # ── 1. TypeScript ────────────────────────────────────────────────────
 echo -e "${BOLD}[1/7] TypeScript Check${NC}"
 echo "────────────────────────────────────────"
-TS_OUTPUT=$(pnpm typecheck 2>&1) || true
+TS_OUTPUT=$(npx turbo typecheck --force 2>&1) || true
 TS_ERRORS=$(echo "$TS_OUTPUT" | grep -c "error TS" || true)
 
 if [ "$TS_ERRORS" -eq 0 ]; then
@@ -52,18 +52,18 @@ echo ""
 # ── 2. Test Count ────────────────────────────────────────────────────
 echo -e "${BOLD}[2/7] Test Count${NC}"
 echo "────────────────────────────────────────"
-TEST_OUTPUT=$(pnpm test 2>&1) || true
+TEST_OUTPUT=$(npx turbo test --force --concurrency=1 2>&1) || true
 
 # Strip ANSI escape codes for reliable parsing
 CLEAN_OUTPUT=$(echo "$TEST_OUTPUT" | sed 's/\x1b\[[0-9;]*m//g' | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g')
 
-# Parse total from "(NNN)" at end of Tests summary line (includes passed + todo + skipped)
-TEST_COUNT=$(echo "$CLEAN_OUTPUT" | grep -E '^\s*Tests\s' | tail -1 | grep -oE '\([0-9]+\)' | grep -o '[0-9]*' || true)
-# Fallback: parse "N passed" if total not found
-if [ -z "$TEST_COUNT" ]; then
-  TEST_COUNT=$(echo "$CLEAN_OUTPUT" | grep -o '[0-9]* passed' | tail -1 | grep -o '[0-9]*' || true)
+# Parse total from "(NNN)" at end of ALL Tests summary lines and sum them (turbo runs multiple packages)
+TEST_COUNT=$(echo "$CLEAN_OUTPUT" | grep -E '^\s*Tests\s' | grep -oE '\([0-9]+\)' | grep -o '[0-9]*' | awk '{s+=$1} END {print s}' || true)
+# Fallback: sum all "N passed" values if total not found
+if [ -z "$TEST_COUNT" ] || [ "$TEST_COUNT" = "0" ]; then
+  TEST_COUNT=$(echo "$CLEAN_OUTPUT" | grep -oE '[0-9]+ passed' | grep -o '[0-9]*' | awk '{s+=$1} END {print s}' || true)
 fi
-TEST_FAILED=$(echo "$CLEAN_OUTPUT" | grep -o '[0-9]* failed' | head -1 | grep -o '[0-9]*' || true)
+TEST_FAILED=$(echo "$CLEAN_OUTPUT" | grep -oE '[0-9]+ failed' | grep -o '[0-9]*' | awk '{s+=$1} END {print s}' || true)
 if [ -z "$TEST_FAILED" ]; then
   TEST_FAILED=0
 fi
@@ -114,7 +114,7 @@ BANNED_PATTERNS=(
 
 BANNED_FOUND=0
 for pattern in "${BANNED_PATTERNS[@]}"; do
-  MATCHES=$(grep -rn "$pattern" src/ --include="*.ts" --include="*.tsx" 2>/dev/null || true)
+  MATCHES=$(grep -rn "$pattern" apps/web/src/ --include="*.ts" --include="*.tsx" 2>/dev/null || true)
   if [ -n "$MATCHES" ]; then
     COUNT=$(echo "$MATCHES" | wc -l)
     echo -e "${RED}❌ \"${pattern}\" — ${COUNT} occurrence(s):${NC}"
@@ -150,7 +150,7 @@ WRONG_ROUTES=(
 
 ROUTE_FOUND=0
 for pattern in "${WRONG_ROUTES[@]}"; do
-  MATCHES=$(grep -rn "$pattern" src/ --include="*.ts" --include="*.tsx" 2>/dev/null || true)
+  MATCHES=$(grep -rn "$pattern" apps/web/src/ --include="*.ts" --include="*.tsx" 2>/dev/null || true)
   if [ -n "$MATCHES" ]; then
     COUNT=$(echo "$MATCHES" | wc -l)
     echo -e "${RED}❌ Wrong route ${pattern} — ${COUNT} occurrence(s):${NC}"
@@ -170,7 +170,7 @@ echo ""
 # ── 5. File Size Check ───────────────────────────────────────────────
 echo -e "${BOLD}[5/7] File Size Check (300 line max)${NC}"
 echo "────────────────────────────────────────"
-OVERSIZED=$(find src -name "*.ts" -o -name "*.tsx" 2>/dev/null | xargs wc -l 2>/dev/null | awk '$1 > 300 && !/total$/ {print $0}' | sort -rn || true)
+OVERSIZED=$(find apps/web/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | grep -v "__tests__\|\.test\.\|\.spec\." | xargs wc -l 2>/dev/null | awk '$1 > 300 && !/total$/ {print $0}' | sort -rn || true)
 
 if [ -z "$OVERSIZED" ]; then
   echo -e "${GREEN}✅ All files under 300 lines${NC}"
@@ -199,7 +199,7 @@ UX_PATTERNS=(
 
 UX_FOUND=0
 for pattern in "${UX_PATTERNS[@]}"; do
-  MATCHES=$(grep -rn "$pattern" src/ --include="*.ts" --include="*.tsx" 2>/dev/null || true)
+  MATCHES=$(grep -rn "$pattern" apps/web/src/ --include="*.ts" --include="*.tsx" 2>/dev/null || true)
   if [ -n "$MATCHES" ]; then
     COUNT=$(echo "$MATCHES" | wc -l)
     echo -e "${RED}❌ Banned UX term ${pattern} — ${COUNT} occurrence(s):${NC}"
@@ -219,7 +219,7 @@ echo ""
 # ── 7. console.log in Production ─────────────────────────────────────
 echo -e "${BOLD}[7/7] console.log Check${NC}"
 echo "────────────────────────────────────────"
-CONSOLE_MATCHES=$(grep -rn "console\.log(" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
+CONSOLE_MATCHES=$(grep -rn "console\.log(" apps/web/src/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
   grep -v "__tests__\|\.test\.\|test-\|seed\|seed-\|mock\|\.spec\.\|//.*console\|logger\.ts" || true)
 
 if [ -z "$CONSOLE_MATCHES" ]; then

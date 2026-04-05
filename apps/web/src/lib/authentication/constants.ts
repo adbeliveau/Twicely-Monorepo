@@ -58,4 +58,12 @@ export const AUTH_SETTINGS_KEYS = {
   EXPERT_FEE_CENTS: 'trust.authentication.expertFeeCents',
   EXPERT_HIGH_VALUE_FEE_CENTS: 'trust.authentication.expertHighValueFeeCents',
   MANDATORY_ABOVE_CENTS: 'trust.authentication.mandatoryAboveCents',
+  // AI tier (G10.2)
+  AI_ENABLED: 'trust.authentication.aiEnabled',
+  AI_FEE_CENTS: 'trust.authentication.aiFeeCents',
+  AI_PROVIDER_NAME: 'trust.authentication.aiProviderName',
+  AI_PROVIDER_API_URL: 'trust.authentication.aiProviderApiUrl',
+  AI_PROVIDER_WEBHOOK_SECRET: 'trust.authentication.aiProviderWebhookSecret',
+  AI_MAX_TURNAROUND_HOURS: 'trust.authentication.aiMaxTurnaroundHours',
+  AI_SUPPORTED_CATEGORIES: 'trust.authentication.aiSupportedCategories',
 } as const;

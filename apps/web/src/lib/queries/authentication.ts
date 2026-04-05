@@ -157,6 +157,8 @@ const BADGE_LABELS: Record<string, string | null> = {
   EXPERT_AUTHENTICATED: 'Expert Authenticated',
   EXPERT_PENDING: 'Authentication Pending',
   AI_AUTHENTICATED: 'AI Authenticated',
+  AI_INCONCLUSIVE: 'Authentication Inconclusive',
+  AI_PENDING: 'AI Authentication Pending',
 };
 
 export async function getAuthenticationBadgeForListing(

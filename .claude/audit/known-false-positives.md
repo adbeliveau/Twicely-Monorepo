@@ -156,10 +156,9 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   needed — updating your own email signature is a self-service staff feature, not role-gated.
   All authenticated staff can update their own signature.
 
-- **FP-079:** W-07 — `cookie-consent.ts` has no auth gate
-  — File correctly calls `authorize()` (user-level auth). Cookie consent is a user privacy
-  preference (GDPR G8.3 feature), not a staff permission. Intentionally not CASL-gated.
-  Unauthenticated users get a guest cookie; consent is merged on login.
+- **FP-079:** ~~RETIRED 2026-04-05~~ — `cookie-consent.ts` now has full `authorize()` +
+  `ability.can('update', sub('User', { id: session.userId }))` CASL checks. Original FP
+  (no auth gate needed) is no longer applicable. Code is properly secured.
 
 - **FP-080:** W-11 — `localTransaction.scheduledAt` should be `notNull`
   — Nullable is correct by design. Local transactions are created before a meetup time is
@@ -269,6 +268,20 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   to `session.userId`. Same pattern as FP-004 (personal data reads). No privilege escalation risk.
 
 ---
+
+## Hygiene (Stream 9) — continued (2026-04-05 audit)
+
+- **FP-101:** `client-logger.ts` console.error/warn flagged by hygiene stream
+  — This is the client-side logging utility that MUST use `console.warn` and `console.error`
+  to provide browser-side logging. It cannot use the server-side structured logger (`@twicely/logger`)
+  because it runs in the browser. The `[twicely]` prefix provides structured context.
+
+## Auth & CASL (Stream 2) — continued (2026-04-05 audit)
+
+- **FP-102:** `admin-staff-schemas.ts` accepts `role` enum from client input in `createStaffSchema`
+  — Architecturally correct for admin-creating-staff flow. The action (`admin-staff.ts:createStaffAction`)
+  requires `staffAuthorize()` + `ability.can('manage', 'StaffUser')` which is ADMIN-only.
+  Client-supplied roles are validated against `PLATFORM_ROLES` enum. Accepted risk.
 
 ---
 

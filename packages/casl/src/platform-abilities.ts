@@ -137,6 +137,8 @@ export function definePlatformAgentAbilities(
     // G6 — Finance can read verification status (for payout decisions)
     can('read', 'IdentityVerification');
     can('read', 'DataRetention');
+    // Accounting integrations — G10.3 (staff can view, manage for any user)
+    can(['read'], 'AccountingIntegration');
   }
 
   if (roles.includes('DEVELOPER')) {

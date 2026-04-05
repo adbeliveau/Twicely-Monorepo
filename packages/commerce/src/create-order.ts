@@ -106,7 +106,7 @@ export async function createOrdersFromCart(
   const results: OrderCreationResult[] = [];
 
   for (const [sellerId, sellerCartItems] of cartItemsBySeller) {
-    const defaultHandlingDays = await getPlatformSetting<number>('shipping.defaultHandlingDays', 3);
+    const defaultHandlingDays = await getPlatformSetting<number>('fulfillment.shipping.defaultHandlingDays', 3);
     const sellerInfo = sellerInfoMap.get(sellerId) ?? { handlingTimeDays: defaultHandlingDays };
     const { handlingTimeDays } = sellerInfo;
     const sellerMonthlyGmv = sellerGmvMap.get(sellerId) ?? 0;

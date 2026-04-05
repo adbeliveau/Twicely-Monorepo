@@ -8,6 +8,8 @@ import { TAX_TEMPLATES } from './templates-tax';
 import { KYC_TEMPLATES } from './templates-kyc';
 import { PRIVACY_TEMPLATES } from './templates-privacy';
 import { HELPDESK_TEMPLATES } from './templates-helpdesk';
+import { AUTHENTICATION_TEMPLATES } from './templates-authentication';
+import { ACCOUNTING_TEMPLATES } from './templates-accounting';
 import type { TemplateKey, TemplateDef } from './templates-types';
 
 export type { TemplateKey, NotificationPriority, NotificationChannel, TemplateDef } from './templates-types';
@@ -230,6 +232,8 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   ...KYC_TEMPLATES,
   ...PRIVACY_TEMPLATES,
   ...HELPDESK_TEMPLATES,
+  ...AUTHENTICATION_TEMPLATES,
+  ...ACCOUNTING_TEMPLATES,
   'seller.payout.paid': {
     key: 'seller.payout.paid',
     name: 'Payout Sent to Bank',

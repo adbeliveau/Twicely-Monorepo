@@ -126,6 +126,46 @@ in `src/lib/actions/listings-update.ts`. Pattern: `.then().catch()` on the promi
 - Webhook route: `src/app/api/crosslister/shopify/webhook/route.ts`
 - Seed file: `src/lib/db/seed/seed-crosslister.ts`
 
+## G10.1 Load Testing + Security Audit — Key Findings (2026-04-04)
+
+### Adding a new workspace package (scripts/)
+To add a new workspace package outside apps/ and packages/:
+1. Add entry to pnpm-workspace.yaml: `- "scripts"`
+2. Create package.json with name, scripts (typecheck, test), devDependencies
+3. Create tsconfig.json extending `../../tsconfig.base.json` (adjust path if top-level)
+4. Create vitest.config.ts with correct `include` pattern (e.g., `["__tests__/**/*.test.ts"]`)
+5. Run `pnpm install` (NOT `--frozen-lockfile`) to update lockfile
+
+### scripts/ tsconfig: use commonjs module for Node.js scripts
+When scripts use `require.main === module` (CommonJS pattern), override in tsconfig:
+```json
+{ "module": "commonjs", "moduleResolution": "node" }
+```
+Vitest still works fine for the test file imports via its own transform.
+
+### eslint-plugin-security v4 integration
+- Install: `pnpm --filter @twicely/web add -D eslint-plugin-security`
+- Import in eslint.config.mjs: `import security from "eslint-plugin-security";`
+- Add as separate config block after TS rules — apply to js, ts, tsx, mjs files
+- The plugin's flat config does NOT use its own `recommended` export — declare rules manually
+
+### GitHub Actions SHA pins (verified 2026-04-04)
+- actions/checkout@v4.2.2 → `11bd71901bbe5b1630ceea73d27597364c9af683`
+- actions/setup-node@v4.3.0 → `cdca7365b2dadb8aad0a33bc7601856ffabcc48e`
+- pnpm/action-setup@v4.1.0 → `a7487c7e89a18df4991f7f222e4898a00d66ddda` (annotated tag, dereference needed)
+- actions/cache@v4.2.3 → `5a3ec84eff668545956fd18022155c47e93e2684`
+- actions/upload-artifact@v4.6.2 → `ea165f8d65b6e75b540449e92b4886f43607fa02`
+- zaproxy/action-full-scan@v0.12.0 → `75ee1686750ab1511a73b26b77a2aedd295053ed`
+- grafana/k6-action@v0.3.1 → `e4714b734f2b0afaabeb7b4a69142745548ab9ec`
+
+### File size linter: pre-existing violations
+38 files over 300 lines — ALL pre-existing before G10.1. User accepts this (see H3.4 note).
+New files in this install: all well under 300 lines.
+
+### Test baseline update
+After G10.1: 13,322 tests total (was 13,254). New scripts package adds 24 tests.
+Linter shows 13,279 (difference is linter running before scripts cache fully built).
+
 ## I17 Admin Sidebar Final Update — Key Findings (2026-03-20)
 
 ### Admin nav key files
