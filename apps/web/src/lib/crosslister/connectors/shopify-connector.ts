@@ -17,6 +17,7 @@
 
 import { db } from '@twicely/db';
 import { platformSetting } from '@twicely/db/schema';
+import { decrypt } from '@twicely/db/encryption';
 import { eq } from 'drizzle-orm';
 import type { PlatformConnector } from '../connector-interface';
 import type { CrosslisterAccount } from '../db-types';
@@ -87,9 +88,11 @@ async function loadShopifyConfig(): Promise<ShopifyConfig> {
 
   return {
     clientId: String(settingsMap.get('crosslister.shopify.clientId') ?? ''),
-    // SEC-035: Shopify client secret stored unencrypted in platform_settings.
-    // Migrate to encrypted storage or env var in next sprint.
-    clientSecret: String(settingsMap.get('crosslister.shopify.clientSecret') ?? ''),
+    // SEC-035: Decrypt client secret (backward-compatible with plaintext fallback)
+    clientSecret: (() => {
+      const raw = String(settingsMap.get('crosslister.shopify.clientSecret') ?? '');
+      try { return decrypt(raw); } catch { return raw; }
+    })(),
     redirectUri: String(
       settingsMap.get('crosslister.shopify.redirectUri') ??
         'https://twicely.co/api/crosslister/shopify/callback',

@@ -65,6 +65,7 @@
     "jose": "^6.2.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.564.0",
+    "music-metadata": "^11.12.3",
     "next": "16.1.6",
     "postgres": "^3.4.8",
     "prom-client": "^15.1.3",

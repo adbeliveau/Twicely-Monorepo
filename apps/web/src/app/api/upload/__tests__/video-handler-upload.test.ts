@@ -10,6 +10,7 @@ const {
   mockUploadListingVideo,
   mockIsR2Configured,
   mockWriteFile, mockMkdir, mockExistsSync,
+  mockExtractVideoDuration,
 } = vi.hoisted(() => ({
   mockValidateVideoBytes: vi.fn(),
   mockDetectVideoType: vi.fn(),
@@ -18,6 +19,7 @@ const {
   mockWriteFile: vi.fn(),
   mockMkdir: vi.fn(),
   mockExistsSync: vi.fn(),
+  mockExtractVideoDuration: vi.fn(),
 }));
 
 vi.mock('@/lib/upload/validate-video', () => ({
@@ -49,6 +51,14 @@ vi.mock('fs/promises', () => ({
 
 vi.mock('fs', () => ({
   existsSync: (...args: unknown[]) => mockExistsSync(...args),
+}));
+
+vi.mock('@/lib/upload/extract-video-duration', () => ({
+  extractVideoDuration: (...args: unknown[]) => mockExtractVideoDuration(...args),
+}));
+
+vi.mock('@twicely/logger', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -85,6 +95,8 @@ describe('handleVideoUpload', () => {
     mockExistsSync.mockReturnValue(true);
     mockWriteFile.mockResolvedValue(undefined);
     mockMkdir.mockResolvedValue(undefined);
+    // SEC-033: Server-side extraction succeeds by default
+    mockExtractVideoDuration.mockResolvedValue({ durationSeconds: 30 });
   });
 
   it('returns 400 when validateVideoBytes fails', async () => {
@@ -106,24 +118,29 @@ describe('handleVideoUpload', () => {
   });
 
   it('returns 400 when durationSeconds is missing', async () => {
+    // Server extraction fails → falls back to client → client missing → 400
+    mockExtractVideoDuration.mockResolvedValueOnce({ durationSeconds: null, error: 'Could not extract duration' });
     const { handleVideoUpload } = await import('../video-handler');
     const res = await handleVideoUpload(makeVideoFormData({ durationSeconds: null }), makeFile());
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
-    expect(body.error).toContain('durationSeconds');
+    expect(body.error).toContain('duration');
   });
 
   it('returns 400 when durationSeconds is not a number', async () => {
+    // Server extraction fails → falls back to client → client NaN → 400
+    mockExtractVideoDuration.mockResolvedValueOnce({ durationSeconds: null, error: 'Could not extract duration' });
     const { handleVideoUpload } = await import('../video-handler');
     const res = await handleVideoUpload(makeVideoFormData({ durationSeconds: 'not-a-number' }), makeFile());
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
-    expect(body.error).toContain('durationSeconds');
+    expect(body.error).toContain('duration');
   });
 
   it('returns 400 when durationSeconds is below 15', async () => {
+    mockExtractVideoDuration.mockResolvedValueOnce({ durationSeconds: 14 });
     const { handleVideoUpload } = await import('../video-handler');
-    const res = await handleVideoUpload(makeVideoFormData({ durationSeconds: '14' }), makeFile());
+    const res = await handleVideoUpload(makeVideoFormData(), makeFile());
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toContain('15');
@@ -131,22 +148,25 @@ describe('handleVideoUpload', () => {
   });
 
   it('returns 400 when durationSeconds is above 60', async () => {
+    mockExtractVideoDuration.mockResolvedValueOnce({ durationSeconds: 61 });
     const { handleVideoUpload } = await import('../video-handler');
-    const res = await handleVideoUpload(makeVideoFormData({ durationSeconds: '61' }), makeFile());
+    const res = await handleVideoUpload(makeVideoFormData(), makeFile());
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toContain('60');
   });
 
   it('accepts durationSeconds of exactly 15', async () => {
+    mockExtractVideoDuration.mockResolvedValueOnce({ durationSeconds: 15 });
     const { handleVideoUpload } = await import('../video-handler');
-    const res = await handleVideoUpload(makeVideoFormData({ durationSeconds: '15' }), makeFile());
+    const res = await handleVideoUpload(makeVideoFormData(), makeFile());
     expect(res.status).toBe(200);
   });
 
   it('accepts durationSeconds of exactly 60', async () => {
+    mockExtractVideoDuration.mockResolvedValueOnce({ durationSeconds: 60 });
     const { handleVideoUpload } = await import('../video-handler');
-    const res = await handleVideoUpload(makeVideoFormData({ durationSeconds: '60' }), makeFile());
+    const res = await handleVideoUpload(makeVideoFormData(), makeFile());
     expect(res.status).toBe(200);
   });
 

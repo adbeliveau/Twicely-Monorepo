@@ -7,6 +7,7 @@ export const newsletterSubscriber = pgTable('newsletter_subscriber', {
   email:            text('email').notNull(),
   source:           newsletterSourceEnum('source').notNull().default('HOMEPAGE_SECTION'),
   unsubscribeToken: text('unsubscribe_token').notNull().$defaultFn(() => createId()),
+  unsubscribeTokenExpiresAt: timestamp('unsubscribe_token_expires_at', { withTimezone: true }),
   confirmedAt:      timestamp('confirmed_at', { withTimezone: true }),
   unsubscribedAt:   timestamp('unsubscribed_at', { withTimezone: true }),
   welcomeSentAt:    timestamp('welcome_sent_at', { withTimezone: true }),

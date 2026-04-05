@@ -128,8 +128,8 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 60 * 5, // 5 minutes
     },
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24, // SEC-036: 24 hours (was 7 days)
+    updateAge: 60 * 60, // SEC-036: 1-hour sliding window for active users
   },
   rateLimit: {
     window: 60, // 1 minute

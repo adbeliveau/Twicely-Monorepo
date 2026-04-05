@@ -9,6 +9,7 @@ export const staffUser = pgTable('staff_user', {
   displayName:     text('display_name').notNull(),
   passwordHash:    text('password_hash').notNull(),
   mfaEnabled:      boolean('mfa_enabled').notNull().default(false),
+  mfaRequired:     boolean('mfa_required').notNull().default(false),
   mfaSecret:       text('mfa_secret'),
   recoveryCodes:   text('recovery_codes'),
   isActive:        boolean('is_active').notNull().default(true),

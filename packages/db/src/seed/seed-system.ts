@@ -38,6 +38,7 @@ export async function seedSystem(db: PostgresJsDatabase): Promise<void> {
     displayName: 'Platform Admin',
     passwordHash: staffPasswordHash,
     mfaEnabled: false,
+    mfaRequired: true,
     isActive: true,
   }).onConflictDoNothing();
 

@@ -36,6 +36,7 @@ async function main() {
     displayName: 'Adrian',
     passwordHash,
     mfaEnabled: false,
+    mfaRequired: true,
     isActive: true,
   }).onConflictDoNothing();
 

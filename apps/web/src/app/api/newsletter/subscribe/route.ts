@@ -23,6 +23,7 @@ const subscribeSchema = z.object({
 }).strict();
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+const UNSUBSCRIBE_TOKEN_EXPIRY_MS = 90 * 24 * 60 * 60 * 1000; // SEC-041: 90 days
 
 async function sendConfirmationEmail(email: string, unsubscribeToken: string): Promise<void> {
   const confirmUrl = `${APP_URL}/api/newsletter/confirm?token=${unsubscribeToken}`;
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           unsubscribedAt: null,
           confirmedAt: doubleOptIn ? null : new Date(),
           welcomeSentAt: null,
+          unsubscribeTokenExpiresAt: new Date(Date.now() + UNSUBSCRIBE_TOKEN_EXPIRY_MS),
         })
         .where(eq(newsletterSubscriber.id, existing.id));
       subscriberId = existing.id;
@@ -135,6 +137,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           email,
           source,
           confirmedAt: doubleOptIn ? null : new Date(),
+          unsubscribeTokenExpiresAt: new Date(Date.now() + UNSUBSCRIBE_TOKEN_EXPIRY_MS),
         })
         .returning({ id: newsletterSubscriber.id });
       if (!inserted) {
