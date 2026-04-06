@@ -72,6 +72,9 @@ const AUTH_REQUIRED_PREFIXES = [
   '/api/upload', // Upload API
   '/api/returns/', // Returns API
   '/api/protection/', // Buyer protection API
+  '/api/user/', // User API (SEC-012)
+  '/api/accounting/', // Accounting integrations (SEC-012)
+  '/api/crosslister/', // Crosslister API (SEC-012)
 ];
 
 const CRON_PREFIXES = [
@@ -105,7 +108,7 @@ function isHubSubdomain(request: NextRequest): boolean {
   return hostname === 'hub.twicely.co' || hostname === 'hub.twicely.local';
 }
 
-function handleHub(request: NextRequest): NextResponse {
+function handleHub(request: NextRequest, nonce: string): NextResponse {
   const { pathname } = request.nextUrl;
 
   // Redirect hub root to /d (dashboard)
@@ -117,7 +120,7 @@ function handleHub(request: NextRequest): NextResponse {
 
   // /login is public on hub subdomain
   if (pathname === '/login') {
-    const response = NextResponse.next();
+    const response = nextWithCsp(nonce);
     response.headers.set('x-pathname', pathname);
     response.headers.set('x-subdomain', 'hub');
     return response;
@@ -131,18 +134,47 @@ function handleHub(request: NextRequest): NextResponse {
     return NextResponse.redirect(url);
   }
 
-  const response = NextResponse.next();
+  const response = nextWithCsp(nonce);
   response.headers.set('x-pathname', pathname);
   response.headers.set('x-subdomain', 'hub');
   return response;
 }
 
+// ── SEC-008: CSP nonce generation ────────────────────────────────────
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array));
+}
+
+function buildCsp(nonce: string): string {
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' js.stripe.com`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' data: blob: *.twicely.com cdn.twicely.com *.stripe.com`,
+    `font-src 'self' data:`,
+    `connect-src 'self' api.stripe.com *.twicely.com wss://*.twicely.com`,
+    `frame-src 'self' js.stripe.com hooks.stripe.com`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+  ].join('; ');
+}
+
+function nextWithCsp(nonce: string): NextResponse {
+  const response = NextResponse.next();
+  response.headers.set('x-nonce', nonce);
+  response.headers.set('Content-Security-Policy', buildCsp(nonce));
+  return response;
+}
+
 export default function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  const nonce = generateNonce();
 
   // 0. Hub subdomain — separate routing
   if (isHubSubdomain(request)) {
-    return handleHub(request);
+    return handleHub(request, nonce);
   }
 
   // 0.5. Maintenance mode — block all public traffic except auth + webhooks + cron
@@ -172,18 +204,18 @@ export default function proxy(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
-  // 1.5. Hub API routes - require staff token
-  if (pathname.startsWith('/api/hub/')) {
+  // 1.5. Hub & Platform API routes - require staff token (SEC-012)
+  if (pathname.startsWith('/api/hub/') || pathname.startsWith('/api/platform/')) {
     const staffToken = request.cookies.get('twicely.staff_token');
     if (!staffToken?.value) {
       return NextResponse.json({ error: 'Staff authentication required' }, { status: 401 });
     }
-    return NextResponse.next();
+    return nextWithCsp(nonce);
   }
 
-  // 2. Public routes - pass through
+  // 2. Public routes - pass through with CSP
   if (isPublicPath(pathname)) {
-    const response = NextResponse.next();
+    const response = nextWithCsp(nonce);
     response.headers.set('x-pathname', pathname);
     return response;
   }
@@ -199,7 +231,7 @@ export default function proxy(request: NextRequest): NextResponse {
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const response = NextResponse.next();
+    const response = nextWithCsp(nonce);
     response.headers.set('x-pathname', pathname);
     return response;
   }
@@ -210,8 +242,8 @@ export default function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(new URL('/my', request.url));
   }
 
-  // 5. Default - pass through with x-pathname header
-  const response = NextResponse.next();
+  // 5. Default - pass through with CSP + x-pathname header
+  const response = nextWithCsp(nonce);
   response.headers.set('x-pathname', pathname);
   return response;
 }
