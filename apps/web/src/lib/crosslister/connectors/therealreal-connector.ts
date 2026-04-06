@@ -8,10 +8,10 @@
  * The RealReal has no public API. Uses internal API at https://www.therealreal.com/api/v1.
  * Auth: username/password → session cookie stored in sessionData.
  *
- * TODO: Token encryption must be added before production.
  */
 
 import { db } from '@twicely/db';
+import { withDecryptedTokens } from '../token-crypto';
 import { platformSetting } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
@@ -188,7 +188,8 @@ export class TheRealRealConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) {
       return {
         success: false,
@@ -222,7 +223,7 @@ export class TheRealRealConnector implements PlatformConnector {
           externalUsername: account.externalUsername,
           accessToken: null,
           refreshToken: null,
-          sessionData: account.sessionData as Record<string, unknown> | null,
+          sessionData: acc.sessionData as Record<string, unknown> | null,
           tokenExpiresAt: null,
           capabilities: TRR_CAPABILITIES,
         };
@@ -256,7 +257,8 @@ export class TheRealRealConnector implements PlatformConnector {
   }
 
   async revokeAuth(account: CrosslisterAccount): Promise<void> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) return;
 
     const config = await loadTrrConfig();
@@ -275,7 +277,8 @@ export class TheRealRealConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
@@ -327,7 +330,8 @@ export class TheRealRealConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) throw new Error('No session data');
 
     const config = await loadTrrConfig();
@@ -350,7 +354,8 @@ export class TheRealRealConnector implements PlatformConnector {
    * Adds a 2-8 second human-like delay before the API call.
    */
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     const config = await loadTrrConfig();
     await tierCDelay();
@@ -396,7 +401,8 @@ export class TheRealRealConnector implements PlatformConnector {
 
   /** Withdraw a TRR consignment by setting status to withdrawn. */
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) return { success: false, error: 'No credentials', retryable: false };
     const config = await loadTrrConfig();
     await tierCDelay();
@@ -423,7 +429,8 @@ export class TheRealRealConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
-    const sd = extractSessionData(account);
+    const acc = withDecryptedTokens(account);
+    const sd = extractSessionData(acc);
     if (!sd?.sessionId) return { healthy: false, latencyMs: 0, error: 'No session data' };
 
     const config = await loadTrrConfig();

@@ -262,7 +262,7 @@ export function ShipOrderForm({ orderId }: ShipOrderFormProps) {
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-gray-900">
-                          ${rate.amount.toFixed(2)}
+                          ${(rate.amountCents / 100).toFixed(2)}
                         </div>
                       </div>
                     </div>

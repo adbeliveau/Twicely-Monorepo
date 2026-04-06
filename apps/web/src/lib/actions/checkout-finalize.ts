@@ -2,13 +2,14 @@
 
 import { db } from '@twicely/db';
 import { order, orderItem, listing, ledgerEntry, orderPayment, cart, promotionUsage, promotion, platformSetting } from '@twicely/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, ne, sql } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { stripe } from '@twicely/stripe/server';
 import { declineAllPendingOffersForListing } from '@twicely/commerce/offer-transitions';
 import { updateEngagement } from '@/lib/actions/browsing-history-helpers';
 import { getAuthOfferConfig } from '@twicely/commerce/auth-offer';
 import { finalizeOrderSchema, finalizeOrdersSchema } from '@/lib/validations/checkout-finalize';
+import { revalidatePath } from 'next/cache';
 import { logger } from '@twicely/logger';
 
 interface FinalizeOrderResult {
@@ -105,15 +106,20 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
   const stripeFixedCents = Number(fixedSetting?.value) || 30; // $0.30 default
 
   const purchasedListingIds = await db.transaction(async (tx) => {
-    // Update order status to PAID
-    await tx
+    // Idempotency: atomic conditional update — only transitions non-PAID → PAID.
+    // Prevents duplicate ledger entries when concurrent calls both pass the outer check.
+    const [updatedOrder] = await tx
       .update(order)
       .set({
         status: 'PAID',
         paidAt: now,
         updatedAt: now,
       })
-      .where(eq(order.id, ord.id));
+      .where(and(eq(order.id, ord.id), ne(order.status, 'PAID')))
+      .returning({ id: order.id });
+
+    // Already finalized by a concurrent call — return empty to signal no-op
+    if (!updatedOrder) return [];
 
     // Get order items
     const items = await tx
@@ -278,6 +284,9 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
       .set({ status: 'CONVERTED', updatedAt: new Date() })
       .where(eq(cart.id, ord.sourceCartId));
   }
+
+  revalidatePath('/my/orders');
+  revalidatePath('/my/selling/orders');
 
   return { success: true };
 }

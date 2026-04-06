@@ -5,8 +5,6 @@
  * NOT a 'use server' file — plain TypeScript module.
  * Self-registers at module load: registerConnector(new EbayConnector()).
  *
- * TODO: Token encryption must be added before production.
- *       Tokens stored as plain text in crosslisterAccount.accessToken / refreshToken.
  */
 
 import { db } from '@twicely/db';
@@ -31,6 +29,7 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
+import { withDecryptedTokens } from '../token-crypto';
 import { normalizeEbayListing, toExternalListing } from '@twicely/crosslister/connectors/ebay-normalizer';
 import type { EbayInventoryResponse, EbayTokenResponse } from '@twicely/crosslister/connectors/ebay-types';
 
@@ -216,7 +215,8 @@ export class EbayConnector implements PlatformConnector {
    * Refresh an expired or expiring access token using the refresh token.
    */
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
-    if (!account.refreshToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.refreshToken) {
       return {
         success: false,
         externalAccountId: account.externalAccountId,
@@ -243,7 +243,7 @@ export class EbayConnector implements PlatformConnector {
         },
         body: new URLSearchParams({
           grant_type: 'refresh_token',
-          refresh_token: account.refreshToken,
+          refresh_token: acc.refreshToken,
           scope: EBAY_SCOPES,
         }).toString(),
       });
@@ -271,7 +271,7 @@ export class EbayConnector implements PlatformConnector {
         externalAccountId: account.externalAccountId,
         externalUsername: account.externalUsername,
         accessToken: data.access_token,
-        refreshToken: data.refresh_token ?? account.refreshToken,
+        refreshToken: data.refresh_token ?? acc.refreshToken,
         sessionData: null,
         tokenExpiresAt,
         capabilities: EBAY_CAPABILITIES,
@@ -306,7 +306,8 @@ export class EbayConnector implements PlatformConnector {
    * Only returns listings with status ACTIVE.
    */
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
-    if (!account.accessToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
 
@@ -320,7 +321,7 @@ export class EbayConnector implements PlatformConnector {
     try {
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${account.accessToken}`,
+          Authorization: `Bearer ${acc.accessToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -365,7 +366,8 @@ export class EbayConnector implements PlatformConnector {
    * Fetch a single inventory item by SKU.
    */
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
-    if (!account.accessToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) {
       throw new Error('No access token');
     }
 
@@ -375,7 +377,7 @@ export class EbayConnector implements PlatformConnector {
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${account.accessToken}`,
+        Authorization: `Bearer ${acc.accessToken}`,
         'Content-Type': 'application/json',
       },
     });
@@ -400,7 +402,8 @@ export class EbayConnector implements PlatformConnector {
     account: CrosslisterAccount,
     listing: TransformedListing,
   ): Promise<PublishResult> {
-    if (!account.accessToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) {
       return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     }
     const config = await loadEbayConfig();
@@ -422,7 +425,7 @@ export class EbayConnector implements PlatformConnector {
       };
       const putResp = await fetch(`${apiBase}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json', 'Content-Language': 'en-US' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json', 'Content-Language': 'en-US' },
         body: JSON.stringify(itemBody),
       });
       if (!putResp.ok) {
@@ -448,7 +451,7 @@ export class EbayConnector implements PlatformConnector {
       };
       const offerResp = await fetch(`${apiBase}/sell/inventory/v1/offer`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json', 'Content-Language': 'en-US' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json', 'Content-Language': 'en-US' },
         body: JSON.stringify(offerBody),
       });
       if (!offerResp.ok) {
@@ -463,7 +466,7 @@ export class EbayConnector implements PlatformConnector {
       // Step 3: Publish offer
       const publishResp = await fetch(`${apiBase}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}/publish`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: '{}',
       });
       if (!publishResp.ok) {
@@ -487,7 +490,8 @@ export class EbayConnector implements PlatformConnector {
     externalId: string,
     changes: Partial<TransformedListing>,
   ): Promise<UpdateResult> {
-    if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { success: false, error: 'No credentials', retryable: false };
     const config = await loadEbayConfig();
     const apiBase = this.getApiBase(config.environment);
     const sku = externalId.startsWith('tw-') ? externalId : `tw-${externalId}`;
@@ -497,7 +501,7 @@ export class EbayConnector implements PlatformConnector {
       if (changes.priceCents !== undefined) body['pricingSummary'] = { price: { value: (changes.priceCents / 100).toFixed(2), currency: 'USD' } };
       const resp = await fetch(`${apiBase}/sell/inventory/v1/offer/${encodeURIComponent(sku)}`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -514,13 +518,14 @@ export class EbayConnector implements PlatformConnector {
     account: CrosslisterAccount,
     externalId: string,
   ): Promise<DelistResult> {
-    if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { success: false, error: 'No credentials', retryable: false };
     const config = await loadEbayConfig();
     const apiBase = this.getApiBase(config.environment);
     try {
       const offerResp = await fetch(`${apiBase}/sell/inventory/v1/offer/${encodeURIComponent(externalId)}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${account.accessToken}` },
+        headers: { Authorization: `Bearer ${acc.accessToken}` },
       });
       if (!offerResp.ok && offerResp.status !== 404) {
         return { success: false, error: `eBay API error: ${offerResp.status}`, retryable: offerResp.status >= 500 };
@@ -550,7 +555,8 @@ export class EbayConnector implements PlatformConnector {
    * Health check: try fetching 1 item. Returns healthy if 200 OK.
    */
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
-    if (!account.accessToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) {
       return { healthy: false, latencyMs: 0, error: 'No access token' };
     }
 
@@ -561,7 +567,7 @@ export class EbayConnector implements PlatformConnector {
 
     try {
       const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${account.accessToken}` },
+        headers: { Authorization: `Bearer ${acc.accessToken}` },
       });
 
       const latencyMs = Date.now() - start;

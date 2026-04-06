@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { authorize } from '@twicely/casl';
 import { qualifiesForAuthOffer, getAuthOfferConfig } from '@twicely/commerce/auth-offer';
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
@@ -27,6 +28,11 @@ interface AuthOfferCheckResult {
 export async function checkAuthOfferAction(
   itemPriceCents: number
 ): Promise<AuthOfferCheckResult> {
+  const { session } = await authorize();
+  if (!session) {
+    return { qualifies: false, thresholdCents: 0, buyerFeeCents: 0 };
+  }
+
   const parsed = checkAuthOfferSchema.safeParse({ itemPriceCents });
   if (!parsed.success) {
     return { qualifies: false, thresholdCents: 0, buyerFeeCents: 0 };

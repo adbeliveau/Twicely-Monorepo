@@ -9,7 +9,6 @@
  * Token URL: https://api.etsy.com/v3/public/oauth/token
  * API base: https://openapi.etsy.com/v3
  *
- * TODO: Token encryption must be added before production.
  */
 
 import { db } from '@twicely/db';
@@ -34,6 +33,7 @@ import type {
   HealthResult,
 } from '../types';
 import { registerConnector } from '../connector-registry';
+import { withDecryptedTokens } from '../token-crypto';
 import { normalizeEtsyListing, toExternalListing } from '@twicely/crosslister/connectors/etsy-normalizer';
 import type { EtsyListingsResponse, EtsyTokenResponse, EtsyUserProfile } from '@twicely/crosslister/connectors/etsy-types';
 
@@ -205,7 +205,8 @@ export class EtsyConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
-    if (!account.refreshToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.refreshToken) {
       return {
         success: false,
         externalAccountId: account.externalAccountId,
@@ -228,7 +229,7 @@ export class EtsyConnector implements PlatformConnector {
         body: new URLSearchParams({
           grant_type: 'refresh_token',
           client_id: config.clientId,
-          refresh_token: account.refreshToken,
+          refresh_token: acc.refreshToken,
         }).toString(),
       });
 
@@ -255,7 +256,7 @@ export class EtsyConnector implements PlatformConnector {
         externalAccountId: account.externalAccountId,
         externalUsername: account.externalUsername,
         accessToken: data.access_token,
-        refreshToken: data.refresh_token ?? account.refreshToken,
+        refreshToken: data.refresh_token ?? acc.refreshToken,
         sessionData: null,
         tokenExpiresAt,
         capabilities: ETSY_CAPABILITIES,
@@ -281,7 +282,8 @@ export class EtsyConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
-    if (!account.accessToken || !account.externalAccountId) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken || !account.externalAccountId) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
 
@@ -295,7 +297,7 @@ export class EtsyConnector implements PlatformConnector {
     try {
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${account.accessToken}`,
+          Authorization: `Bearer ${acc.accessToken}`,
           'x-api-key': config.clientId,
         },
       });
@@ -334,14 +336,15 @@ export class EtsyConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
-    if (!account.accessToken) throw new Error('No access token');
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) throw new Error('No access token');
 
     const config = await loadEtsyConfig();
     const url = `${ETSY_API_BASE}/application/listings/${encodeURIComponent(externalId)}?includes[]=images&includes[]=prices`;
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${account.accessToken}`,
+        Authorization: `Bearer ${acc.accessToken}`,
         'x-api-key': config.clientId,
       },
     });
@@ -354,7 +357,8 @@ export class EtsyConnector implements PlatformConnector {
 
   /** Create a listing on Etsy via POST /v3/application/shops/{shopId}/listings. */
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
-    if (!account.accessToken || !account.externalAccountId) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken || !account.externalAccountId) {
       return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     }
     const shopId = account.externalAccountId;
@@ -372,7 +376,7 @@ export class EtsyConnector implements PlatformConnector {
       };
       const resp = await fetch(`${ETSY_API_BASE}/application/shops/${encodeURIComponent(shopId)}/listings`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -392,7 +396,8 @@ export class EtsyConnector implements PlatformConnector {
 
   /** Update an Etsy listing. */
   async updateListing(account: CrosslisterAccount, externalId: string, changes: Partial<TransformedListing>): Promise<UpdateResult> {
-    if (!account.accessToken || !account.externalAccountId) return { success: false, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken || !account.externalAccountId) return { success: false, error: 'No credentials', retryable: false };
     const shopId = account.externalAccountId;
     try {
       const body: Record<string, unknown> = {};
@@ -401,7 +406,7 @@ export class EtsyConnector implements PlatformConnector {
       if (changes.description) body['description'] = changes.description;
       const resp = await fetch(`${ETSY_API_BASE}/application/shops/${encodeURIComponent(shopId)}/listings/${encodeURIComponent(externalId)}`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!resp.ok) return { success: false, error: `Etsy API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
@@ -413,12 +418,13 @@ export class EtsyConnector implements PlatformConnector {
 
   /** Delete an Etsy listing. */
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
-    if (!account.accessToken || !account.externalAccountId) return { success: false, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken || !account.externalAccountId) return { success: false, error: 'No credentials', retryable: false };
     const shopId = account.externalAccountId;
     try {
       const resp = await fetch(`${ETSY_API_BASE}/application/shops/${encodeURIComponent(shopId)}/listings/${encodeURIComponent(externalId)}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${account.accessToken}` },
+        headers: { Authorization: `Bearer ${acc.accessToken}` },
       });
       if (!resp.ok && resp.status !== 404) return { success: false, error: `Etsy API error: ${resp.status}`, retryable: resp.status >= 500 };
       return { success: true, retryable: false };
@@ -432,7 +438,8 @@ export class EtsyConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
-    if (!account.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
 
     const config = await loadEtsyConfig();
     const url = `${ETSY_API_BASE}/application/openapi-ping`;
@@ -441,7 +448,7 @@ export class EtsyConnector implements PlatformConnector {
     try {
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${account.accessToken}`,
+          Authorization: `Bearer ${acc.accessToken}`,
           'x-api-key': config.clientId,
         },
       });

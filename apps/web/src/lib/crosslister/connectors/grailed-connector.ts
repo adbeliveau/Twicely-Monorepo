@@ -9,10 +9,10 @@
  * Token URL: https://www.grailed.com/oauth/token
  * API base: https://www.grailed.com/api
  *
- * TODO: Token encryption must be added before production.
  */
 
 import { db } from '@twicely/db';
+import { withDecryptedTokens } from '../token-crypto';
 import { platformSetting } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
@@ -197,7 +197,8 @@ export class GrailedConnector implements PlatformConnector {
   }
 
   async refreshAuth(account: CrosslisterAccount): Promise<AuthResult> {
-    if (!account.refreshToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.refreshToken) {
       return {
         success: false,
         externalAccountId: account.externalAccountId,
@@ -221,7 +222,7 @@ export class GrailedConnector implements PlatformConnector {
           grant_type: 'refresh_token',
           client_id: config.clientId,
           client_secret: config.clientSecret,
-          refresh_token: account.refreshToken,
+          refresh_token: acc.refreshToken,
         }).toString(),
       });
 
@@ -248,7 +249,7 @@ export class GrailedConnector implements PlatformConnector {
         externalAccountId: account.externalAccountId,
         externalUsername: account.externalUsername,
         accessToken: data.access_token,
-        refreshToken: data.refresh_token ?? account.refreshToken,
+        refreshToken: data.refresh_token ?? acc.refreshToken,
         sessionData: null,
         tokenExpiresAt,
         capabilities: GRAILED_CAPABILITIES,
@@ -274,7 +275,8 @@ export class GrailedConnector implements PlatformConnector {
   }
 
   async fetchListings(account: CrosslisterAccount, cursor?: string): Promise<PaginatedListings> {
-    if (!account.accessToken) {
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) {
       return { listings: [], cursor: null, hasMore: false, totalEstimate: null };
     }
 
@@ -284,7 +286,7 @@ export class GrailedConnector implements PlatformConnector {
 
     try {
       const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${account.accessToken}` },
+        headers: { Authorization: `Bearer ${acc.accessToken}` },
       });
 
       if (response.status === 401) {
@@ -322,10 +324,11 @@ export class GrailedConnector implements PlatformConnector {
   }
 
   async fetchSingleListing(account: CrosslisterAccount, externalId: string): Promise<ExternalListing> {
-    if (!account.accessToken) throw new Error('No access token');
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) throw new Error('No access token');
 
     const response = await fetch(`${GRAILED_API_BASE}/listings/${encodeURIComponent(externalId)}`, {
-      headers: { Authorization: `Bearer ${account.accessToken}` },
+      headers: { Authorization: `Bearer ${acc.accessToken}` },
     });
 
     if (!response.ok) throw new Error(`Grailed API error: ${response.status}`);
@@ -336,7 +339,8 @@ export class GrailedConnector implements PlatformConnector {
 
   /** Create a listing on Grailed via POST /api/listings. */
   async createListing(account: CrosslisterAccount, listing: TransformedListing): Promise<PublishResult> {
-    if (!account.accessToken) return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { success: false, externalId: null, externalUrl: null, error: 'No credentials', retryable: false };
     try {
       const body = {
         listing: {
@@ -352,7 +356,7 @@ export class GrailedConnector implements PlatformConnector {
       };
       const resp = await fetch(`${GRAILED_API_BASE}/listings`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
@@ -373,7 +377,8 @@ export class GrailedConnector implements PlatformConnector {
 
   /** Update a Grailed listing via PUT /api/listings/{id}. */
   async updateListing(account: CrosslisterAccount, externalId: string, changes: Partial<TransformedListing>): Promise<UpdateResult> {
-    if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
       const listingBody: Record<string, unknown> = {};
       if (changes.title) listingBody['title'] = changes.title;
@@ -381,7 +386,7 @@ export class GrailedConnector implements PlatformConnector {
       if (changes.description) listingBody['description'] = changes.description;
       const resp = await fetch(`${GRAILED_API_BASE}/listings/${encodeURIComponent(externalId)}`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ listing: listingBody }),
       });
       if (!resp.ok) return { success: false, error: `Grailed API error: ${resp.status}`, retryable: resp.status >= 500 || resp.status === 429 };
@@ -393,11 +398,12 @@ export class GrailedConnector implements PlatformConnector {
 
   /** Set Grailed listing status to 'removed'. */
   async delistListing(account: CrosslisterAccount, externalId: string): Promise<DelistResult> {
-    if (!account.accessToken) return { success: false, error: 'No credentials', retryable: false };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { success: false, error: 'No credentials', retryable: false };
     try {
       const resp = await fetch(`${GRAILED_API_BASE}/listings/${encodeURIComponent(externalId)}`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${account.accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${acc.accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ listing: { status: 'removed' } }),
       });
       if (!resp.ok && resp.status !== 404) return { success: false, error: `Grailed API error: ${resp.status}`, retryable: resp.status >= 500 };
@@ -412,12 +418,13 @@ export class GrailedConnector implements PlatformConnector {
   }
 
   async healthCheck(account: CrosslisterAccount): Promise<HealthResult> {
-    if (!account.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
+    const acc = withDecryptedTokens(account);
+    if (!acc.accessToken) return { healthy: false, latencyMs: 0, error: 'No access token' };
 
     const start = Date.now();
     try {
       const response = await fetch(`${GRAILED_API_BASE}/users/me`, {
-        headers: { Authorization: `Bearer ${account.accessToken}` },
+        headers: { Authorization: `Bearer ${acc.accessToken}` },
       });
       const latencyMs = Date.now() - start;
       if (response.ok) return { healthy: true, latencyMs };

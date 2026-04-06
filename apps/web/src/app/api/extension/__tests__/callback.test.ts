@@ -58,11 +58,10 @@ describe('GET /api/extension/callback', () => {
     expect(text).toContain('expired or invalid');
   });
 
-  it('backward compat: returns 200 with HTML for direct token param', async () => {
+  it('rejects direct token param (legacy fallback removed for security)', async () => {
     const { GET } = await import('../callback/route');
     const res = await GET(makeRequest({ token: 'some-jwt-token' }));
-    expect(res.status).toBe(200);
-    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.status).toBe(400);
   });
 
   it('HTML response contains the token value', async () => {

@@ -9,8 +9,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   // SEC-018: Exchange one-time code for token (never passes JWT in URL)
   const code = searchParams.get('code');
-  // Backward compat: also accept direct token (will be removed in next release)
-  let token = searchParams.get('token');
+  let token: string | null = null;
 
   if (code) {
     try {

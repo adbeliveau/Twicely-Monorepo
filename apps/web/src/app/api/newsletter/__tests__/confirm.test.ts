@@ -29,6 +29,7 @@ vi.mock('@twicely/db/schema', () => ({
     unsubscribedAt: 'unsubscribed_at',
     unsubscribeToken: 'unsubscribe_token',
     welcomeSentAt: 'welcome_sent_at',
+    createdAt: 'created_at',
   },
 }));
 
@@ -87,6 +88,7 @@ describe('GET /api/newsletter/confirm', () => {
         confirmedAt: null,
         unsubscribedAt: null,
         welcomeSentAt: null,
+        createdAt: new Date(),
       }]),
     );
     mockDbUpdate.mockImplementation(() => makeUpdateChain());
@@ -108,6 +110,7 @@ describe('GET /api/newsletter/confirm', () => {
         confirmedAt: new Date('2024-01-01'),
         unsubscribedAt: null,
         welcomeSentAt: new Date('2024-01-01'),
+        createdAt: new Date('2024-01-01'),
       }]),
     );
 

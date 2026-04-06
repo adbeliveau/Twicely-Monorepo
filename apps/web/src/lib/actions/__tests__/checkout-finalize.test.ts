@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@twicely/casl', () => ({ authorize: vi.fn() }));
 vi.mock('@twicely/db', () => ({
   db: { select: vi.fn(), update: vi.fn(), transaction: vi.fn() },
@@ -23,6 +24,7 @@ vi.mock('@twicely/commerce/offer-transitions', () => ({
 }));
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ type: 'eq', a, b })),
+  ne: vi.fn((a, b) => ({ type: 'ne', a, b })),
   and: vi.fn((...args: unknown[]) => ({ type: 'and', args })),
   inArray: vi.fn((col, vals) => ({ type: 'inArray', col, vals })),
   sql: vi.fn(),

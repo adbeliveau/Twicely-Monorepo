@@ -39,11 +39,17 @@ export async function loginStaffAction(formData: FormData): Promise<void> {
   try {
     const valkey = getValkeyClient();
 
+    // Read configurable rate-limit thresholds from platform_settings
+    const maxEmailAttempts = await getPlatformSetting<number>('rateLimit.loginMaxAttempts', 5);
+    const lockoutMinutes = await getPlatformSetting<number>('rateLimit.loginLockoutMinutes', 15);
+    const lockoutSeconds = lockoutMinutes * 60;
+    const maxIpAttempts = await getPlatformSetting<number>('rateLimit.staffLoginIpMaxAttempts', 20);
+
     // Per-email limit (prevents brute force on a single account)
     const emailKey = `staff-login-rl:${parsed.data.email.toLowerCase()}`;
     const emailAttempts = await valkey.incr(emailKey);
-    if (emailAttempts === 1) await valkey.expire(emailKey, 900);
-    if (emailAttempts > 5) {
+    if (emailAttempts === 1) await valkey.expire(emailKey, lockoutSeconds);
+    if (emailAttempts > maxEmailAttempts) {
       logger.warn('[staffLogin] Email rate limited', { email: parsed.data.email });
       redirect('/login?error=locked');
     }
@@ -51,8 +57,8 @@ export async function loginStaffAction(formData: FormData): Promise<void> {
     // Per-IP limit (prevents single IP from locking out multiple accounts)
     const ipKey = `staff-login-ip:${clientIp}`;
     const ipAttempts = await valkey.incr(ipKey);
-    if (ipAttempts === 1) await valkey.expire(ipKey, 900);
-    if (ipAttempts > 20) {
+    if (ipAttempts === 1) await valkey.expire(ipKey, lockoutSeconds);
+    if (ipAttempts > maxIpAttempts) {
       logger.warn('[staffLogin] IP rate limited', { ip: clientIp });
       redirect('/login?error=locked');
     }

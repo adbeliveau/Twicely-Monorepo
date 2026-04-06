@@ -6,6 +6,7 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '@twicely/db';
 import { authenticationRequest, listing, auditEvent } from '@twicely/db/schema';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { sub } from '@twicely/casl';
 import { calculateAuthCostSplit } from '@/lib/authentication/cost-split';
 import { AUTH_STATUS_AUTHENTICATED } from '@/lib/authentication/constants';
 
@@ -31,10 +32,6 @@ const invalidateCertSchema = z.object({
 export async function completeAuthentication(rawData: unknown): Promise<ActionResult> {
   const { session, ability } = await staffAuthorize();
   if (!session) return { success: false, error: 'Staff access required' };
-  if (!ability.can('manage', 'AuthenticationRequest')) {
-    return { success: false, error: 'Admin access required' };
-  }
-
   const parsed = completeAuthSchema.safeParse(rawData);
   if (!parsed.success) return { success: false, error: 'Invalid input' };
 
@@ -47,6 +44,10 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
     .limit(1);
 
   if (!req) return { success: false, error: 'Authentication request not found' };
+
+  if (!ability.can('manage', sub('AuthenticationRequest', { id: req.id, sellerId: req.sellerId }))) {
+    return { success: false, error: 'Admin access required' };
+  }
 
   const isPending = req.status === 'EXPERT_PENDING' || req.status === 'AI_PENDING';
   if (!isPending) {
@@ -152,14 +153,15 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
 export async function invalidateCertificate(rawData: unknown): Promise<ActionResult> {
   const { session, ability } = await staffAuthorize();
   if (!session) return { success: false, error: 'Staff access required' };
-  if (!ability.can('manage', 'AuthenticationRequest')) {
-    return { success: false, error: 'Admin access required' };
-  }
 
   const parsed = invalidateCertSchema.safeParse(rawData);
   if (!parsed.success) return { success: false, error: 'Invalid input' };
 
   const { listingId, reason } = parsed.data;
+
+  if (!ability.can('manage', sub('AuthenticationRequest', { listingId }))) {
+    return { success: false, error: 'Admin access required' };
+  }
 
   const revokedReasons = ['ADMIN_REVOKED', 'FRAUD_DETECTED'] as const;
   const newStatus = (revokedReasons as readonly string[]).includes(reason)

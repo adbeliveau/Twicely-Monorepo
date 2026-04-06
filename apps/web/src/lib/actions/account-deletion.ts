@@ -22,8 +22,8 @@ interface DeletionBlocker {
 async function getBlockersForUser(userId: string): Promise<DeletionBlocker[]> {
   const blockers: DeletionBlocker[] = [];
 
-  // Check for open orders as seller
-  const openSellerOrders = await db
+  // Existence check only — no need to fetch all rows
+  const [hasOpenSellerOrder] = await db
     .select({ id: order.id })
     .from(order)
     .where(
@@ -31,10 +31,10 @@ async function getBlockersForUser(userId: string): Promise<DeletionBlocker[]> {
         eq(order.sellerId, userId),
         inArray(order.status, ['CREATED', 'PAID', 'SHIPPED']),
       ),
-    );
+    )
+    .limit(1);
 
-  // Check for open orders as buyer
-  const openBuyerOrders = await db
+  const [hasOpenBuyerOrder] = await db
     .select({ id: order.id })
     .from(order)
     .where(
@@ -42,14 +42,15 @@ async function getBlockersForUser(userId: string): Promise<DeletionBlocker[]> {
         eq(order.buyerId, userId),
         inArray(order.status, ['CREATED', 'PAID', 'SHIPPED']),
       ),
-    );
+    )
+    .limit(1);
 
-  const totalOpen = openSellerOrders.length + openBuyerOrders.length;
-  if (totalOpen > 0) {
+  const hasOpen = hasOpenSellerOrder || hasOpenBuyerOrder;
+  if (hasOpen) {
     blockers.push({
       type: 'OPEN_ORDERS',
-      count: totalOpen,
-      message: `You have ${totalOpen} order(s) that must be completed before closing your account.`,
+      count: 1, // Existence check — exact count not needed for blocking
+      message: 'You have open order(s) that must be completed before closing your account.',
     });
   }
 

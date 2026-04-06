@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { authorize, sub } from '@twicely/casl';
 import { markOrderShipped, cancelOrder as cancelOrderLogic, markOrderDelivered, type Carrier } from '@twicely/commerce/shipping';
 import { shipOrderSchema, cancelOrderSchema, confirmDeliverySchema } from '@/lib/validations/order-actions';
@@ -45,7 +46,12 @@ export async function shipOrder(
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
-  return await markOrderShipped(orderId, userId, parsed.data.carrier as Carrier, parsed.data.trackingNumber);
+  const result = await markOrderShipped(orderId, userId, parsed.data.carrier as Carrier, parsed.data.trackingNumber);
+  if (result.success) {
+    revalidatePath('/my/orders');
+    revalidatePath('/my/selling/orders');
+  }
+  return result;
 }
 
 /**
@@ -71,7 +77,12 @@ export async function cancelOrderAction(
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
-  return await cancelOrderLogic(orderId, userId, parsed.data.reason);
+  const result = await cancelOrderLogic(orderId, userId, parsed.data.reason);
+  if (result.success) {
+    revalidatePath('/my/orders');
+    revalidatePath('/my/selling/orders');
+  }
+  return result;
 }
 
 /**
@@ -92,5 +103,10 @@ export async function confirmDelivery(orderId: string): Promise<ConfirmDeliveryR
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
-  return await markOrderDelivered(orderId, session.userId);
+  const result = await markOrderDelivered(orderId, session.userId);
+  if (result.success) {
+    revalidatePath('/my/orders');
+    revalidatePath('/my/selling/orders');
+  }
+  return result;
 }

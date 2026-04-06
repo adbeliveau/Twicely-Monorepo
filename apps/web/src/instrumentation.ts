@@ -22,7 +22,11 @@ export async function register(): Promise<void> {
     }
     const missingRecommended = recommended.filter((v) => !process.env[v]);
     if (missingRecommended.length > 0) {
-      console.warn(`[startup] Missing recommended env vars (some features may not work): ${missingRecommended.join(', ')}`);
+      // Use dynamic import — logger is safe to import after env validation for critical vars
+      const { logger } = await import('@twicely/logger');
+      logger.warn('[startup] Missing recommended env vars (some features may not work)', {
+        missing: missingRecommended,
+      });
     }
 
     // A5: Validate JWT HMAC secret length (>= 32 chars for HS256 security)

@@ -131,22 +131,33 @@ export async function startEnhancedVerification(
     return { success: false, error: 'Failed to start verification. Please try again.' };
   }
 
-  // Record in DB
-  const inserted = await db
-    .insert(identityVerification)
-    .values({
-      userId,
-      level: 'ENHANCED',
-      status: 'PENDING',
-      stripeSessionId: stripeResult.sessionId,
-      triggeredBy,
-      lastAttemptAt: new Date(),
-      expiresAt,
-    })
-    .returning();
+  // Record in DB — wrap in try/catch to log orphaned Stripe session on failure
+  let record;
+  try {
+    const inserted = await db
+      .insert(identityVerification)
+      .values({
+        userId,
+        level: 'ENHANCED',
+        status: 'PENDING',
+        stripeSessionId: stripeResult.sessionId,
+        triggeredBy,
+        lastAttemptAt: new Date(),
+        expiresAt,
+      })
+      .returning();
 
-  const record = inserted[0];
-  if (!record) {
+    record = inserted[0];
+    if (!record) {
+      logger.error('DB insert returned no rows — orphaned Stripe Identity session', {
+        userId, stripeSessionId: stripeResult.sessionId,
+      });
+      return { success: false, error: 'Failed to create verification record.' };
+    }
+  } catch (err) {
+    logger.error('DB insert failed — orphaned Stripe Identity session requires manual cleanup', {
+      userId, stripeSessionId: stripeResult.sessionId, error: String(err),
+    });
     return { success: false, error: 'Failed to create verification record.' };
   }
 

@@ -21,7 +21,7 @@ export interface Parcel {
 export interface ShippingRate {
   carrier: string;
   service: string;
-  amount: number;
+  amountCents: number;
   currency: string;
   estimatedDays: number | null;
   objectId: string;
@@ -89,13 +89,13 @@ export async function getShippingRates(
       .map((rate: ShippoRate) => ({
         carrier: rate.provider || 'Unknown',
         service: rate.servicelevel?.name || rate.servicelevel?.token || 'Unknown',
-        amount: parseFloat(rate.amount || '0'),
+        amountCents: Math.round(parseFloat(rate.amount || '0') * 100),
         currency: rate.currency || 'USD',
         estimatedDays: rate.estimatedDays || null,
         objectId: rate.objectId || '',
       }))
-      .filter((rate: ShippingRate) => rate.objectId && rate.amount > 0)
-      .sort((a: ShippingRate, b: ShippingRate) => a.amount - b.amount);
+      .filter((rate: ShippingRate) => rate.objectId && rate.amountCents > 0)
+      .sort((a: ShippingRate, b: ShippingRate) => a.amountCents - b.amountCents);
 
     return {
       success: true,

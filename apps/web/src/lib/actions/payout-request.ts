@@ -7,7 +7,8 @@
 
 import { db } from '@twicely/db';
 import { sellerProfile, payout as payoutTable, auditEvent } from '@twicely/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, gt } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
 import { stripe } from '@twicely/stripe/server';
@@ -168,6 +169,21 @@ export async function requestPayoutAction(
     stripeMethod = 'instant';
   }
 
+  // ── DB-level safety net: re-check right before Stripe call (SEC-007b) ──
+  // Narrows TOCTOU window between the cooldown check above and the Stripe call below.
+  const [recentDuplicate] = await db
+    .select({ id: payoutTable.id })
+    .from(payoutTable)
+    .where(and(
+      eq(payoutTable.userId, userId),
+      eq(payoutTable.isOnDemand, true),
+      gt(payoutTable.initiatedAt, new Date(Date.now() - cooldownHours * 60 * 60 * 1000)),
+    ))
+    .limit(1);
+  if (recentDuplicate) {
+    return { success: false, error: `You can only request one payout every ${cooldownHours} hours. Please try again later.` };
+  }
+
   // ── Stripe payout (net of instant fee — Decision #89) ───────────────
   const netPayoutCents = parsed.data.amountCents - feeCents;
   let stripePayoutId: string;
@@ -239,6 +255,8 @@ export async function requestPayoutAction(
   } catch (err) {
     logger.warn('[requestPayout] Audit insert failed', { userId, payoutId: stripePayoutId, error: String(err) });
   }
+
+  revalidatePath('/my/selling/payouts');
 
   return { success: true, payoutId: stripePayoutId, amountCents: netPayoutCents, feeCents };
   } finally {

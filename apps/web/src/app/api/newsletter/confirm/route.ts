@@ -44,6 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         confirmedAt: newsletterSubscriber.confirmedAt,
         unsubscribedAt: newsletterSubscriber.unsubscribedAt,
         welcomeSentAt: newsletterSubscriber.welcomeSentAt,
+        createdAt: newsletterSubscriber.createdAt,
       })
       .from(newsletterSubscriber)
       .where(eq(newsletterSubscriber.unsubscribeToken, token))
@@ -51,6 +52,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!row || row.unsubscribedAt !== null) {
       return NextResponse.redirect(new URL('/?subscribed=error', request.url));
+    }
+
+    // Reject expired confirmation tokens (7-day window)
+    const CONFIRM_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+    if (!row.confirmedAt && row.createdAt.getTime() + CONFIRM_EXPIRY_MS < Date.now()) {
+      return NextResponse.redirect(new URL('/?subscribed=expired', request.url));
     }
 
     const wasAlreadyConfirmed = row.confirmedAt !== null;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@twicely/db';
 import { notification } from '@twicely/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { authorize } from '@twicely/casl';
+import { authorize, sub } from '@twicely/casl';
 
 /**
  * GET /api/user/notifications?limit=10
@@ -15,6 +15,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const result = await authorize();
     session = result.session;
     if (!session) throw new Error('No session');
+    if (!result.ability.can('read', sub('Notification', { userId: session.userId }))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -9,9 +9,34 @@ const mockDb = { select: mockDbSelect, update: mockDbUpdate, insert: mockDbInser
 const mockStaffAuthorize = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
+vi.mock('@twicely/db/schema', () => ({
+  authenticationRequest: { id: 'id', listingId: 'listing_id', sellerId: 'seller_id', status: 'status', tier: 'tier', totalFeeCents: 'total_fee_cents', certificateNumber: 'certificate_number' },
+  listing: { id: 'id', authenticationStatus: 'authentication_status', authenticationRequestId: 'authentication_request_id', enforcementState: 'enforcement_state' },
+  auditEvent: { id: 'id' },
+}));
+vi.mock('drizzle-orm', () => ({
+  eq: vi.fn((a, b) => ({ type: 'eq', a, b })),
+  and: vi.fn((...args: unknown[]) => ({ type: 'and', args })),
+  inArray: vi.fn((col, vals) => ({ type: 'inArray', col, vals })),
+}));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@twicely/casl/staff-authorize', () => ({
   staffAuthorize: (...args: unknown[]) => mockStaffAuthorize(...args),
+}));
+vi.mock('@twicely/casl', () => ({
+  sub: (type: string, conditions: Record<string, unknown>) => ({ ...conditions, __caslSubjectType__: type }),
+}));
+vi.mock('@/lib/authentication/cost-split', () => ({
+  calculateAuthCostSplit: vi.fn((initiator: string, result: string, totalFeeCents: number) => {
+    if (result === 'COUNTERFEIT') return { totalFeeCents, buyerShareCents: 0, sellerShareCents: totalFeeCents };
+    if (result === 'INCONCLUSIVE') return { totalFeeCents, buyerShareCents: 0, sellerShareCents: 0 };
+    if (initiator === 'SELLER') return { totalFeeCents, buyerShareCents: 0, sellerShareCents: totalFeeCents };
+    const buyerShare = Math.floor(totalFeeCents / 2);
+    return { totalFeeCents, buyerShareCents: buyerShare, sellerShareCents: totalFeeCents - buyerShare };
+  }),
+}));
+vi.mock('@/lib/authentication/constants', () => ({
+  AUTH_STATUS_AUTHENTICATED: ['EXPERT_AUTHENTICATED', 'AI_AUTHENTICATED'],
 }));
 
 // ─── Chainable mock helpers ─────────────────────────────────────────────────
@@ -301,6 +326,15 @@ describe('completeAuthentication — AI tier', () => {
 
   it('rejects staff without manage ability', async () => {
     mockStaffAuthorize.mockResolvedValue(makeRestrictedStaffSession());
+    mockDbSelect.mockReturnValueOnce(chainSelect([{
+      id: REQ_AI_1,
+      listingId: 'clst9xxxxxxxxxxxxxxxxxxx',
+      sellerId: 'cusersellerxxxxxxxxxxxxxxxx',
+      initiator: 'SELLER',
+      tier: 'AI',
+      status: 'AI_PENDING',
+      totalFeeCents: 1999,
+    }]));
     const { completeAuthentication } = await import('../authentication-complete');
     const result = await completeAuthentication({
       requestId: REQ_AI_1,

@@ -225,10 +225,9 @@ export async function saveGeneralSettings(data: Record<string, unknown>) {
     detailsJson: { keys: Object.keys(parsed.data) },
   });
 
-  // Propagate maintenance mode to process.env (same-instance) + Valkey (cross-instance)
+  // Propagate maintenance mode to Valkey (cross-instance)
   if ('general.maintenanceMode' in parsed.data) {
     const isEnabled = parsed.data['general.maintenanceMode'] === true;
-    process.env.MAINTENANCE_MODE = isEnabled ? '1' : '';
     try {
       const valkey = getValkeyClient();
       if (isEnabled) {

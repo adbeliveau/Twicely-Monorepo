@@ -53,8 +53,13 @@ vi.mock('@twicely/db', () => ({
 }));
 
 function makeSelectChain(result: unknown[]) {
-  const chain = { from: vi.fn(), where: vi.fn().mockResolvedValue(result) };
+  const chain = {
+    from: vi.fn(),
+    where: vi.fn(),
+    limit: vi.fn().mockResolvedValue(result),
+  };
   chain.from.mockReturnValue(chain);
+  chain.where.mockReturnValue(chain);
   return chain;
 }
 
@@ -103,7 +108,7 @@ describe('getAccountDeletionBlockers', () => {
   it('returns OPEN_ORDERS blocker when seller has open orders', async () => {
     mockAuthorize.mockResolvedValue(makeSession());
     mockDbSelect
-      .mockReturnValueOnce(makeSelectChain([{ id: 'order-1' }, { id: 'order-2' }]))
+      .mockReturnValueOnce(makeSelectChain([{ id: 'order-1' }]))
       .mockReturnValueOnce(makeSelectChain([]));
 
     const { getAccountDeletionBlockers } = await import('../account-deletion');
@@ -112,7 +117,7 @@ describe('getAccountDeletionBlockers', () => {
     expect(blockers).toHaveLength(1);
     const b0 = blockers[0]!;
     expect(b0.type).toBe('OPEN_ORDERS');
-    expect(b0.count).toBe(2);
+    expect(b0.count).toBe(1);
   });
 
   it('returns OPEN_ORDERS blocker when buyer has open orders', async () => {
@@ -134,13 +139,13 @@ describe('getAccountDeletionBlockers', () => {
     mockAuthorize.mockResolvedValue(makeSession());
     mockDbSelect
       .mockReturnValueOnce(makeSelectChain([{ id: 'order-1' }]))
-      .mockReturnValueOnce(makeSelectChain([{ id: 'order-2' }, { id: 'order-3' }]));
+      .mockReturnValueOnce(makeSelectChain([{ id: 'order-2' }]));
 
     const { getAccountDeletionBlockers } = await import('../account-deletion');
     const blockers = await getAccountDeletionBlockers();
 
     expect(blockers).toHaveLength(1);
-    expect(blockers[0]!.count).toBe(3);
+    expect(blockers[0]!.count).toBe(1);
   });
 });
 

@@ -455,6 +455,9 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.browsingHistory.maxItems', value: 50, type: 'number' as const, category: 'discovery', description: 'Max browsing history items per user (FIFO)' },
   { key: 'admin.customRoles.maxCount', value: 20, type: 'number' as const, category: 'admin', description: 'Max number of active custom staff roles' },
   { key: 'privacy.dataExportRateLimitHours', value: 24, type: 'number' as const, category: 'privacy', description: 'Minimum hours between user data export requests' },
+  { key: 'privacy.dataExport.expiryDays', value: 7, type: 'number' as const, category: 'privacy', description: 'Days before expired data export files are purged' },
+  { key: 'privacy.dataExport.downloadUrlTtlHours', value: 24, type: 'number' as const, category: 'privacy', description: 'Pre-signed download URL TTL in hours' },
+  { key: 'rateLimit.staffLoginIpMaxAttempts', value: 20, type: 'number' as const, category: 'security', description: 'Max failed staff login attempts per IP before lockout' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // TRUST — AI Authentication (G10.2)

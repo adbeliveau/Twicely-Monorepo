@@ -17,8 +17,8 @@ import { logger } from '@twicely/logger';
 import { upsertPlatformSetting } from '@twicely/jobs/cleanup-helpers';
 import { sql } from 'drizzle-orm';
 
-// Data export files expire after 7 days (hard-coded per spec)
-const EXPORT_EXPIRY_DAYS = 7;
+// Data export file expiry — read from platform_settings, fallback 7 days
+let _exportExpiryDays: number | null = null;
 
 interface PurgeResult {
   category: string;
@@ -66,7 +66,10 @@ async function purgeTableGracefully(
  * Purge expired data export requests and delete their R2 files.
  */
 async function purgeExpiredDataExports(): Promise<number> {
-  const cutoff = new Date(Date.now() - EXPORT_EXPIRY_DAYS * 86400000);
+  if (_exportExpiryDays === null) {
+    _exportExpiryDays = await getPlatformSetting<number>('privacy.dataExport.expiryDays', 7);
+  }
+  const cutoff = new Date(Date.now() - _exportExpiryDays * 86400000);
 
   const expiredExports = await db
     .select({ id: dataExportRequest.id, downloadUrl: dataExportRequest.downloadUrl })
@@ -111,19 +114,19 @@ export async function runDataPurge(): Promise<void> {
   const now = new Date();
 
   const searchLogDays = await getPlatformSetting<number>(
-    'retention.searchLogDays',
+    'privacy.retention.searchLogDays',
     90
   );
   const webhookLogDays = await getPlatformSetting<number>(
-    'retention.webhookLogDays',
+    'privacy.retention.webhookLogDays',
     90
   );
   const analyticsEventDays = await getPlatformSetting<number>(
-    'retention.analyticsEventDays',
+    'privacy.retention.analyticsEventDays',
     365
   );
   const notificationLogDays = await getPlatformSetting<number>(
-    'retention.notificationLogDays',
+    'privacy.retention.notificationLogDays',
     180
   );
 
