@@ -29,3 +29,10 @@ coverage/
 
 # Claude
 .claude/worktrees/
+.claude/settings.local.json
+
+# Certificates
+*.pem
+
+# Uploads (dev-only, production uses R2)
+apps/web/public/uploads/

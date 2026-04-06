@@ -14,11 +14,13 @@ export function generateOrderNumber(): string {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
 
-  // Generate 5 random uppercase alphanumeric characters
+  // Generate 5 random uppercase alphanumeric characters (CSPRNG)
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = new Uint8Array(5);
+  crypto.getRandomValues(bytes);
   let random = '';
   for (let i = 0; i < 5; i++) {
-    random += chars.charAt(Math.floor(Math.random() * chars.length));
+    random += chars.charAt(bytes[i]! % chars.length);
   }
 
   return `TWC-${year}${month}${day}-${random}`;

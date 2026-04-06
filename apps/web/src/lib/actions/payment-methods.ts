@@ -121,8 +121,7 @@ export async function listPaymentMethods(): Promise<{
 
     return { success: true, paymentMethods, defaultPaymentMethodId: defaultPmId };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load payment methods';
-    return { success: false, paymentMethods: [], defaultPaymentMethodId: null, error: message };
+    return { success: false, paymentMethods: [], defaultPaymentMethodId: null, error: 'Failed to load payment methods' };
   }
 }
 
@@ -153,8 +152,7 @@ export async function createSetupIntent(): Promise<{
 
     return { success: true, clientSecret: setupIntent.client_secret ?? undefined };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create setup intent';
-    return { success: false, error: message };
+    return { success: false, error: 'Failed to create setup intent' };
   }
 }
 
@@ -204,8 +202,7 @@ export async function removePaymentMethod(paymentMethodId: string): Promise<{
     revalidatePath('/my/settings/payments');
     return { success: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to remove payment method';
-    return { success: false, error: message };
+    return { success: false, error: 'Failed to remove payment method' };
   }
 }
 
@@ -257,7 +254,6 @@ export async function setDefaultPaymentMethod(paymentMethodId: string): Promise<
     revalidatePath('/my/settings/payments');
     return { success: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to set default payment method';
-    return { success: false, error: message };
+    return { success: false, error: 'Failed to set default payment method' };
   }
 }

@@ -108,6 +108,6 @@ describe('POST /api/payments/setup-intent', () => {
 
     const body = await res.json() as { success: boolean; error: string };
     expect(body.success).toBe(false);
-    expect(body.error).toMatch(/Stripe API error/);
+    expect(body.error).toBe('Failed to create setup intent');
   });
 });

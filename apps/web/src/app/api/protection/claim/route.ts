@@ -8,7 +8,7 @@ const claimSchema = z.object({
   orderId: z.string().min(1),
   reason: z.enum(['INAD', 'DAMAGED', 'WRONG_ITEM', 'INR', 'COUNTERFEIT']),
   description: z.string().min(1),
-  photos: z.array(z.string().url()).optional(),
+  photos: z.array(z.string().url()).max(10).optional(),
 }).strict();
 
 export async function POST(request: Request) {

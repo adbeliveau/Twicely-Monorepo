@@ -55,7 +55,7 @@ async function loadCustomRolePermissions(
 const ALLOWED_ORIGINS = new Set([
   'https://hub.twicely.co',
   'http://hub.twicely.local',
-  'http://localhost:3000',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
 ]);
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   response.cookies.set('twicely.impersonation_token', impersonationToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: 900,
     path: '/',
     domain: COOKIE_DOMAIN,

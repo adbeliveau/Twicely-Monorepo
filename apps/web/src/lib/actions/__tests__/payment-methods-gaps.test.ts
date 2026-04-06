@@ -254,7 +254,7 @@ describe('createSetupIntent — Stripe error', () => {
     const result = await createSetupIntent();
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/Stripe rate limit/);
+    expect(result.error).toBe('Failed to create setup intent');
     expect(result.clientSecret).toBeUndefined();
   });
 });
@@ -362,7 +362,7 @@ describe('removePaymentMethod — Stripe detach error', () => {
     const result = await removePaymentMethod('pm_detach_err');
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/Card already removed/);
+    expect(result.error).toBe('Failed to remove payment method');
   });
 });
 
@@ -468,6 +468,6 @@ describe('setDefaultPaymentMethod — Stripe update error', () => {
     const result = await setDefaultPaymentMethod('pm_update_err');
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/Customer update failed/);
+    expect(result.error).toBe('Failed to set default payment method');
   });
 });

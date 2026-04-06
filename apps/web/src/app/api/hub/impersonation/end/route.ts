@@ -71,7 +71,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   response.cookies.set('twicely.impersonation_token', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: 0,
     path: '/',
     domain: COOKIE_DOMAIN,

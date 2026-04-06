@@ -128,8 +128,7 @@ export async function fetchShippingRates(
 
     return result;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch shipping rates';
-    return { success: false, error: errorMessage };
+    return { success: false, error: 'Failed to fetch shipping rates' };
   }
 }
 
@@ -218,7 +217,6 @@ export async function purchaseShippingLabel(
       redirectUrl: `/my/selling/orders/${orderId}`,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to purchase shipping label';
-    return { success: false, error: errorMessage };
+    return { success: false, error: 'Failed to purchase shipping label' };
   }
 }

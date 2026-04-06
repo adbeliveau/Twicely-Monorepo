@@ -228,7 +228,7 @@ describe('triggerAffiliatePayoutManually — internal error handling', () => {
     const result = await triggerAffiliatePayoutManually();
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('DB connection lost');
+    expect(result.error).toBe('Payout job failed');
   });
 
   it('returns success: false when executeAffiliatePayouts throws', async () => {
@@ -238,7 +238,7 @@ describe('triggerAffiliatePayoutManually — internal error handling', () => {
     const result = await triggerAffiliatePayoutManually();
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('Stripe unavailable');
+    expect(result.error).toBe('Payout job failed');
   });
 
   it('returns generic error message when thrown value is not an Error instance', async () => {

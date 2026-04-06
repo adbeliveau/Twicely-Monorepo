@@ -139,6 +139,6 @@ describe('rebuildSearchIndexAction', () => {
 
     const result = await rebuildSearchIndexAction('listings');
 
-    expect(result).toMatchObject({ error: 'DB error' });
+    expect(result).toMatchObject({ error: 'Search index rebuild failed' });
   });
 });

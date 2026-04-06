@@ -62,7 +62,7 @@ export async function triggerAffiliatePayoutManually(): Promise<TriggerAffiliate
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Payout job failed',
+      error: 'Payout job failed',
     };
   }
 }

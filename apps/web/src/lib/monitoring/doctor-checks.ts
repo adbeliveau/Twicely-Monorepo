@@ -35,7 +35,7 @@ async function checkDbConnection(): Promise<HealthCheckResult> {
     return makeResult('db.connection', 'Database', 'HEALTHY', Date.now() - start, null);
   } catch (error) {
     return makeResult('db.connection', 'Database', 'UNHEALTHY', Date.now() - start,
-      error instanceof Error ? error.message : 'Unknown error');
+      'Database connection failed');
   }
 }
 
@@ -46,7 +46,7 @@ async function checkDbPool(): Promise<HealthCheckResult> {
     return makeResult('db.pool', 'Database', 'HEALTHY', Date.now() - start, null);
   } catch (error) {
     return makeResult('db.pool', 'Database', 'UNHEALTHY', Date.now() - start,
-      error instanceof Error ? error.message : 'Unknown error');
+      'Database pool check failed');
   }
 }
 
@@ -64,7 +64,7 @@ async function checkAppEnv(): Promise<HealthCheckResult> {
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length > 0) {
     return makeResult('app.env', 'App', 'UNHEALTHY', Date.now() - start,
-      `Missing env vars: ${missing.join(', ')}`);
+      `${missing.length} required env var(s) missing`);
   }
   return makeResult('app.env', 'App', 'HEALTHY', Date.now() - start, null);
 }
@@ -96,7 +96,7 @@ async function checkAppSettings(): Promise<HealthCheckResult> {
       `${total} settings`);
   } catch (error) {
     return makeResult('app.settings', 'App', 'UNHEALTHY', Date.now() - start,
-      error instanceof Error ? error.message : 'Unknown error');
+      'Platform settings check failed');
   }
 }
 
@@ -111,7 +111,7 @@ async function checkValkeyPing(): Promise<HealthCheckResult> {
     return makeResult('valkey.ping', 'Valkey', 'DEGRADED', Date.now() - start, `Unexpected: ${pong}`);
   } catch (error) {
     return makeResult('valkey.ping', 'Valkey', 'UNHEALTHY', Date.now() - start,
-      error instanceof Error ? error.message : 'Connection failed');
+      'Connection failed');
   }
 }
 
@@ -127,7 +127,7 @@ async function checkTypesenseHealth(): Promise<HealthCheckResult> {
       resp.ok ? null : `HTTP ${resp.status}`);
   } catch (error) {
     return makeResult('typesense.health', 'Typesense', 'UNHEALTHY', Date.now() - start,
-      error instanceof Error ? error.message : 'Connection failed');
+      'Connection failed');
   }
 }
 
@@ -142,7 +142,7 @@ async function checkCentrifugoHealth(): Promise<HealthCheckResult> {
     return makeResult('centrifugo.health', 'Centrifugo', 'HEALTHY', Date.now() - start, null);
   } catch (error) {
     return makeResult('centrifugo.health', 'Centrifugo', 'UNHEALTHY', Date.now() - start,
-      error instanceof Error ? error.message : 'Connection failed');
+      'Connection failed');
   }
 }
 

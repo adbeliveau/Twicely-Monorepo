@@ -124,7 +124,7 @@ export async function saveTaxInfoAction(
     logger.error('[saveTaxInfoAction] Failed to save tax info', { error });
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to save tax information',
+      error: 'Failed to save tax information',
     };
   }
 }

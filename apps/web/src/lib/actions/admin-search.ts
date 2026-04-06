@@ -51,7 +51,6 @@ export async function rebuildSearchIndexAction(
 
     return { success: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { error: message };
+    return { error: 'Search index rebuild failed' };
   }
 }

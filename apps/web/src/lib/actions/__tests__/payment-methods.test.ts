@@ -157,7 +157,7 @@ describe('listPaymentMethods', () => {
     const result = await listPaymentMethods();
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/Stripe error/);
+    expect(result.error).toBe('Failed to load payment methods');
   });
 });
 
