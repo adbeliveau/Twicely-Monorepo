@@ -6,11 +6,32 @@
 
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // Validate required environment variables at startup
-    const required = ['DATABASE_URL', 'BETTER_AUTH_SECRET', 'ENCRYPTION_KEY', 'PROVIDER_ENCRYPTION_KEY'];
-    const missing = required.filter((v) => !process.env[v]);
-    if (missing.length > 0) {
-      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    // Validate required environment variables at startup (A10 + A5)
+    const critical = [
+      'DATABASE_URL', 'BETTER_AUTH_SECRET', 'ENCRYPTION_KEY', 'PROVIDER_ENCRYPTION_KEY',
+      'CRON_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET',
+    ];
+    const recommended = [
+      'RESEND_API_KEY', 'TYPESENSE_API_KEY',
+      'S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY',
+      'CENTRIFUGO_API_KEY', 'CENTRIFUGO_TOKEN_HMAC_SECRET', 'VALKEY_URL',
+    ];
+    const missingCritical = critical.filter((v) => !process.env[v]);
+    if (missingCritical.length > 0) {
+      throw new Error(`Missing required environment variables: ${missingCritical.join(', ')}`);
+    }
+    const missingRecommended = recommended.filter((v) => !process.env[v]);
+    if (missingRecommended.length > 0) {
+      console.warn(`[startup] Missing recommended env vars (some features may not work): ${missingRecommended.join(', ')}`);
+    }
+
+    // A5: Validate JWT HMAC secret length (>= 32 chars for HS256 security)
+    const hmacSecrets = ['CENTRIFUGO_TOKEN_HMAC_SECRET', 'EXTENSION_JWT_SECRET'] as const;
+    for (const key of hmacSecrets) {
+      const val = process.env[key];
+      if (val && val.length < 32) {
+        throw new Error(`${key} must be at least 32 characters for HS256 security`);
+      }
     }
 
     // Load provider keys from DB (encrypted) into process.env — BEFORE any provider client import

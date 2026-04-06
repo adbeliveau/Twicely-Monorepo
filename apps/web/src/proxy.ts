@@ -151,6 +151,7 @@ function buildCsp(nonce: string): string {
   return [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' js.stripe.com`,
+    // A2: 'unsafe-inline' required — React style props, Next.js internals, and Tailwind all inject inline styles
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: *.twicely.com cdn.twicely.com *.stripe.com`,
     `font-src 'self' data:`,

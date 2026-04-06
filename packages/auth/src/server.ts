@@ -126,7 +126,7 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes
+      maxAge: 60, // A3: 60 seconds (reduced from 5 min for faster ban propagation)
     },
     expiresIn: 60 * 60 * 24, // SEC-036: 24 hours (was 7 days)
     updateAge: 60 * 60, // SEC-036: 1-hour sliding window for active users

@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { hashSync } from 'bcryptjs';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { user, account, sellerProfile, businessInfo } from '../schema';
 
@@ -30,12 +30,8 @@ const ACCOUNT_IDS = {
   seller3: 'seed-acct-seller3',
 };
 
-// Pre-generate a deterministic hash for demo password (for idempotency, we use a fixed salt)
 function hashDemoPassword(): string {
-  // Fixed salt for reproducibility across seed runs
-  const fixedSalt = Buffer.from('476b6aa85662638ff0a546cecfa44780', 'hex');
-  const hash = crypto.scryptSync('DemoPass123!', fixedSalt, 64);
-  return `${fixedSalt.toString('hex')}:${hash.toString('hex')}`;
+  return hashSync('DemoPass123!', 12);
 }
 
 export async function seedUsers(db: PostgresJsDatabase): Promise<void> {

@@ -91,7 +91,8 @@ export async function joinAffiliateProgram(input: unknown): Promise<JoinAffiliat
       commissionDurationMonths,
     });
   } catch (err: unknown) {
-    if (err instanceof Error && err.message.includes('unique')) {
+    // PG unique_violation error code — more reliable than string matching
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: string }).code === '23505') {
       return { success: false, error: 'This referral code is already taken' };
     }
     throw err;

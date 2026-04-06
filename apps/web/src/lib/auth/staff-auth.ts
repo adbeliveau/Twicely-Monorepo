@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import { eq } from 'drizzle-orm';
 import { compare } from 'bcryptjs';
-import { createId } from '@paralleldrive/cuid2';
+import { randomBytes } from 'crypto';
 import { db } from '@twicely/db';
 import { staffUser, staffUserRole, staffSession } from '@/lib/db/schema/staff';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
@@ -108,7 +108,7 @@ export async function loginStaff(
   // Deduplicate
   const roles = [...new Set(activeRoles)];
 
-  const token = createId();
+  const token = randomBytes(32).toString('hex');
   const now = new Date();
   const absoluteHours = await getPlatformSetting<number>(
     'general.staffSessionAbsoluteHours',

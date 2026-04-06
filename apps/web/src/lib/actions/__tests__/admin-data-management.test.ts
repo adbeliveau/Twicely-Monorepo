@@ -9,7 +9,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockDbUpdate = vi.fn();
 const mockDbInsert = vi.fn();
-const mockDb = { update: mockDbUpdate, insert: mockDbInsert };
+const mockDbDelete = vi.fn();
+const mockDb = { update: mockDbUpdate, insert: mockDbInsert, delete: mockDbDelete };
 const mockStaffAuthorize = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
@@ -21,9 +22,11 @@ vi.mock('@twicely/db/schema', () => ({
   listing: { id: 'id', status: 'status', updatedAt: 'updated_at' },
   user: { id: 'id', isBanned: 'is_banned', bannedAt: 'banned_at', bannedReason: 'banned_reason', updatedAt: 'updated_at' },
   auditEvent: {},
+  session: { userId: 'user_id' },
 }));
 vi.mock('drizzle-orm', () => ({
   inArray: (_a: unknown, _b: unknown) => ({ type: 'inArray' }),
+  eq: vi.fn((_col: unknown, _val: unknown) => ({ type: 'eq' })),
 }));
 vi.mock('@/lib/validations/data-management', () => ({
   bulkListingUpdateSchema: {
@@ -180,6 +183,7 @@ describe('bulkBanUsersAction', () => {
     mockStaffAuthorize.mockResolvedValue(makeSession());
     mockDbUpdate.mockReturnValue(chainUpdate());
     mockDbInsert.mockReturnValue(chainInsert());
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
 
     const { bulkBanUsersAction } = await import('../admin-data-management');
     const result = await bulkBanUsersAction({ userIds: ['u1', 'u2'], reason: 'Spam' });
@@ -192,6 +196,7 @@ describe('bulkBanUsersAction', () => {
     mockStaffAuthorize.mockResolvedValue(makeSession());
     mockDbUpdate.mockReturnValue(chainUpdate());
     mockDbInsert.mockReturnValue(chainInsert());
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
 
     const { bulkBanUsersAction } = await import('../admin-data-management');
     const result = await bulkBanUsersAction({ userIds: ['staff-1', 'u2'], reason: 'Spam' });
@@ -235,6 +240,7 @@ describe('bulkBanUsersAction', () => {
     mockStaffAuthorize.mockResolvedValue(makeSession());
     mockDbUpdate.mockReturnValue(chainUpdate());
     mockDbInsert.mockReturnValue(chainInsert());
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
 
     const { bulkBanUsersAction } = await import('../admin-data-management');
     await bulkBanUsersAction({ userIds: ['u1', 'u2'], reason: 'Policy violation' });

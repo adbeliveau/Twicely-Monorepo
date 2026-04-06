@@ -7,8 +7,8 @@
  */
 
 import { db } from '@twicely/db';
-import { listing, user, auditEvent } from '@twicely/db/schema';
-import { inArray } from 'drizzle-orm';
+import { listing, user, auditEvent, session as sessionTable } from '@twicely/db/schema';
+import { inArray, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import {
@@ -74,6 +74,11 @@ export async function bulkBanUsersAction(input: unknown): Promise<ActionResult> 
     .where(
       inArray(user.id, targetIds)
     );
+
+  // A3: Revoke all active sessions so banned users are logged out immediately
+  for (const uid of targetIds) {
+    await db.delete(sessionTable).where(eq(sessionTable.userId, uid));
+  }
 
   await db.insert(auditEvent).values({
     actorType: 'STAFF',

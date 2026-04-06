@@ -6,7 +6,7 @@
  */
 
 import { db } from '@twicely/db';
-import { user, sellerProfile, auditEvent } from '@twicely/db/schema';
+import { user, sellerProfile, auditEvent, session as sessionTable } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
@@ -29,6 +29,9 @@ export async function suspendUserAction(input: unknown) {
   const { userId, reason } = parsed.data;
 
   await db.update(user).set({ isBanned: true }).where(eq(user.id, userId));
+
+  // A3: Revoke all active sessions so banned user is logged out immediately
+  await db.delete(sessionTable).where(eq(sessionTable.userId, userId));
 
   await db.insert(auditEvent).values({
     actorType: 'STAFF',

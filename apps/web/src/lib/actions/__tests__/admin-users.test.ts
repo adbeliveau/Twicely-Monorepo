@@ -9,8 +9,9 @@ vi.mock('@twicely/casl/staff-authorize', () => ({
 
 const mockDbUpdate = vi.fn();
 const mockDbInsert = vi.fn();
+const mockDbDelete = vi.fn();
 vi.mock('@twicely/db', () => ({
-  db: { update: mockDbUpdate, insert: mockDbInsert },
+  db: { update: mockDbUpdate, insert: mockDbInsert, delete: mockDbDelete },
 }));
 
 vi.mock('drizzle-orm', () => ({
@@ -21,6 +22,7 @@ vi.mock('@twicely/db/schema', () => ({
   user: { id: 'id', isBanned: 'is_banned' },
   sellerProfile: { id: 'id', userId: 'user_id', status: 'status' },
   auditEvent: { id: 'id', action: 'action' },
+  session: { userId: 'user_id' },
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -109,12 +111,14 @@ describe('suspendUserAction', () => {
     mockAllowed('update', 'User');
     mockDbUpdate.mockReturnValue(makeUpdateChain());
     mockDbInsert.mockReturnValue(makeInsertChain());
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
 
     const { suspendUserAction } = await import('../admin-users');
     const result = await suspendUserAction({ userId: 'user-a', reason: 'Policy violation' });
 
     expect(result).toEqual({ success: true });
     expect(mockDbUpdate).toHaveBeenCalledTimes(1);
+    expect(mockDbDelete).toHaveBeenCalledTimes(1);
     expect(mockDbInsert).toHaveBeenCalledTimes(1);
 
     const insertValues = mockDbInsert.mock.results[0]!.value.values.mock.calls[0]![0];

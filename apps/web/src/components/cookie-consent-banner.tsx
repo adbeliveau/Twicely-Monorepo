@@ -58,6 +58,7 @@ function writeConsentCookie(state: ConsentState): void {
   const expires = new Date();
   expires.setDate(expires.getDate() + CONSENT_EXPIRY_DAYS);
   const encoded = encodeURIComponent(JSON.stringify(state));
+  // A7: httpOnly intentionally omitted — client JS reads consent state to conditionally load analytics
   document.cookie = `${CONSENT_COOKIE}=${encoded}; expires=${expires.toUTCString()}; path=/; SameSite=Lax; Secure`;
 }
 
