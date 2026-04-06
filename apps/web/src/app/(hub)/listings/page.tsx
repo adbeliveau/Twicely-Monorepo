@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
-import { db } from '@twicely/db';
-import { listing } from '@twicely/db/schema';
-import { count, eq } from 'drizzle-orm';
+import { getBulkListingSummary, getBulkListings } from '@/lib/queries/admin-data-bulk';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { BulkListingPanel } from '@/components/admin/bulk-listing-panel';
+import { Card, CardContent, CardHeader, CardTitle } from '@twicely/ui/card';
 
 export const metadata: Metadata = {
   title: 'Listings Admin | Twicely Hub',
@@ -15,40 +16,57 @@ export default async function ListingsAdminPage() {
     return <p className="text-red-600">Access denied</p>;
   }
 
-  const [totalResult, activeResult, flaggedResult] = await Promise.all([
-    db.select({ count: count() }).from(listing),
-    db.select({ count: count() }).from(listing)
-      .where(eq(listing.status, 'ACTIVE')),
-    db.select({ count: count() }).from(listing)
-      .where(eq(listing.status, 'REMOVED')),
+  const [summary, listingData] = await Promise.all([
+    getBulkListingSummary(),
+    getBulkListings({ page: 1, pageSize: 50 }),
   ]);
-
-  const total = totalResult[0]?.count ?? 0;
-  const active = activeResult[0]?.count ?? 0;
-  const removed = flaggedResult[0]?.count ?? 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Listings Admin</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Browse all listings, search, and perform bulk actions.
-        </p>
+      <AdminPageHeader
+        title="Listings Admin"
+        description="Browse all listings, search, and perform bulk actions."
+      />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Listings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.totalListings}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.activeListings}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Draft</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.draftListings}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Removed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.removedListings}</p>
+          </CardContent>
+        </Card>
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-gray-500">Total Listings</p>
-          <p className="text-2xl font-bold">{total}</p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-gray-500">Active</p>
-          <p className="text-2xl font-bold">{active}</p>
-        </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-gray-500">Removed</p>
-          <p className="text-2xl font-bold">{removed}</p>
-        </div>
-      </div>
+
+      <BulkListingPanel
+        initialListings={listingData.listings}
+        initialTotal={listingData.total}
+        summary={summary}
+      />
     </div>
   );
 }

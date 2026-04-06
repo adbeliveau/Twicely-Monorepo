@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cdn.twicely.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
   },
 };
