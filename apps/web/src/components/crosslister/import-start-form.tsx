@@ -8,17 +8,19 @@
 import Link from 'next/link';
 import { Button } from '@twicely/ui/button';
 import { startImport } from '@/lib/actions/crosslister-import';
-import { useTransition } from 'react';
+import { useTransition, useEffect, useRef, useCallback } from 'react';
 import { Download } from 'lucide-react';
 import type { CrosslisterAccount } from '@twicely/crosslister/db-types';
 
 interface ImportStartFormProps {
   accounts: CrosslisterAccount[];
   onBatchStarted: (batchId: string) => void;
+  initialAccountId?: string | null;
 }
 
-export function ImportStartForm({ accounts, onBatchStarted }: ImportStartFormProps) {
+export function ImportStartForm({ accounts, onBatchStarted, initialAccountId }: ImportStartFormProps) {
   const [isPending, startTransition] = useTransition();
+  const autoStarted = useRef(false);
 
   const eligibleAccounts = accounts.filter(
     (a) => a.status === 'ACTIVE' && a.firstImportCompletedAt === null,
@@ -38,14 +40,24 @@ export function ImportStartForm({ accounts, onBatchStarted }: ImportStartFormPro
     );
   }
 
-  const handleImport = (accountId: string) => {
+  const handleImport = useCallback((accountId: string) => {
     startTransition(async () => {
       const result = await startImport({ accountId });
       if (result.success && result.data?.batchId) {
         onBatchStarted(result.data.batchId);
       }
     });
-  };
+  }, [onBatchStarted]);
+
+  // Auto-start import when navigated from dashboard with ?accountId=
+  useEffect(() => {
+    if (autoStarted.current || !initialAccountId) return;
+    const target = eligibleAccounts.find((a) => a.id === initialAccountId);
+    if (target) {
+      autoStarted.current = true;
+      handleImport(target.id);
+    }
+  }, [initialAccountId, eligibleAccounts, handleImport]);
 
   return (
     <div className="space-y-4">

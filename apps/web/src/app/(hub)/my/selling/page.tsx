@@ -12,7 +12,7 @@ import { AwaitingShipmentAlert } from '@/components/seller/awaiting-shipment-ale
 import { TrialBanner, TrialStatus } from '@/components/subscriptions';
 import { Button } from '@twicely/ui/button';
 import { Card, CardContent } from '@twicely/ui/card';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, Store } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +48,54 @@ export default async function SellingOverviewPage() {
         <h1 className="text-2xl font-bold">Selling Overview</h1>
       </div>
 
+      {/* New Seller Onboarding CTAs (no listings yet) */}
+      {stats.activeListings === 0 && stats.draftListings === 0 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Plus className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">List your first item</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Create a listing and start reaching buyers. Free to list — you only pay when you sell.
+                  </p>
+                </div>
+                <Button asChild size="lg">
+                  <Link href="/my/selling/listings/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Listing
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <Store className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">Set up your storefront</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Create a branded store page, add your logo, and customize your seller profile.
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/my/selling/onboarding?flow=business">
+                    Set up storefront
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Trial Status (if in trial) */}
       {activeTrial && (
         <TrialStatus
@@ -62,7 +110,7 @@ export default async function SellingOverviewPage() {
         <TrialBanner
           userId={session.user.id}
           productType="STORE"
-          subscribeUrl="/pricing"
+          subscribeUrl="/my/selling/subscription"
         />
       )}
 

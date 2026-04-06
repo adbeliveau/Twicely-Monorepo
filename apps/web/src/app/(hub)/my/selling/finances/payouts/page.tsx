@@ -121,7 +121,7 @@ export default async function PayoutSettingsPage() {
             <p><strong>POWER:</strong> Daily auto ($1/payout fee)</p>
             <p><strong>ENTERPRISE:</strong> All options + free daily</p>
             <Button asChild variant="outline" className="mt-4">
-              <Link href="/pricing">View Plans</Link>
+              <Link href="/my/selling/subscription">View Plans</Link>
             </Button>
           </CardContent>
         </Card>
