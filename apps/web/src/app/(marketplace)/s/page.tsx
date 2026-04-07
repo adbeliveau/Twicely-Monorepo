@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { searchListings } from '@twicely/search/listings';
 import { getCategoryTree } from '@/lib/queries/categories';
 import { getCategoryBySlug } from '@/lib/queries/categories';
@@ -91,18 +91,24 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const deals = params.sort === 'deals';
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="tw-surface tw-fullwidth min-h-screen">
       <div className="mx-auto max-w-[1584px] px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-            {deals
-              ? 'Deals & Discounts'
-              : params.q
-                ? `Search results for "${params.q}"`
-                : 'All Listings'}
+          <div className="tw-eyebrow">
+            <span className="tw-eyebrow-dot" />
+            {deals ? 'Deals' : params.q ? 'Search' : 'Browse'}
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--tw-black)]">
+            {deals ? (
+              <>Deals &amp; <em className="not-italic text-[var(--mg)]">Discounts</em></>
+            ) : params.q ? (
+              <>Results for <em className="not-italic text-[var(--mg)]">&ldquo;{params.q}&rdquo;</em></>
+            ) : (
+              <>All <em className="not-italic text-[var(--mg)]">Listings</em></>
+            )}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-[var(--tw-muted)] font-bold">
             {results.totalCount.toLocaleString()} results found
           </p>
         </div>
@@ -113,8 +119,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Filters Sidebar (Desktop) */}
           <aside className="hidden lg:col-span-1 lg:block">
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="tw-card-shell">
+              <h2 className="mb-4 text-lg font-extrabold text-[var(--tw-black)]">
                 Filters
               </h2>
               <SearchFilters categories={filterCategories} />
@@ -125,7 +131,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <div className="flex items-center justify-between lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-lg border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300">
+                <Button variant="outline" size="sm" className="rounded-full border-[var(--tw-border)] text-[var(--tw-black)] font-extrabold">
                   <SlidersHorizontal className="mr-2 h-4 w-4" />
                   Filters
                 </Button>
@@ -173,20 +179,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   )}
                 </>
               ) : (
-                <div className="rounded-lg bg-white p-12 text-center shadow-sm dark:bg-gray-800">
-                  <svg
-                    className="mx-auto mb-4 h-16 w-16 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
+                <div className="tw-empty-card">
+                  <Search className="mx-auto mb-4 size-16 text-[var(--tw-muted-lt)]" strokeWidth={1.5} />
                   <EmptyState
                     title={
                       params.q

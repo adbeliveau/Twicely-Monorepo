@@ -76,7 +76,7 @@ export function ContactCaseForm({
           value={type}
           onChange={(e) => setType(e.target.value as CaseTypeValue)}
           disabled={isPending}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50"
         >
           {CASE_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -102,7 +102,7 @@ export function ContactCaseForm({
             onChange={(e) => setOrderId(e.target.value)}
             placeholder="TWC-000000"
             disabled={isPending}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50"
           />
         </div>
       )}
@@ -124,7 +124,7 @@ export function ContactCaseForm({
           maxLength={200}
           disabled={isPending}
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50"
         />
         <p className="mt-1 text-xs text-gray-400">{subject.length}/200</p>
       </div>
@@ -146,7 +146,7 @@ export function ContactCaseForm({
           maxLength={5000}
           disabled={isPending}
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 resize-y"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 resize-y"
         />
         <p className="mt-1 text-xs text-gray-400">{description.length}/5000</p>
       </div>
@@ -160,7 +160,7 @@ export function ContactCaseForm({
       <button
         type="submit"
         disabled={isPending || subject.length < 10 || description.length < 50}
-        className="w-full rounded-md bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-full bg-brand-500 px-4 py-3 text-sm font-extrabold text-white shadow-[0_8px_24px_rgba(233,30,203,0.25)] transition-all hover:bg-brand-600 hover:shadow-[0_12px_28px_rgba(233,30,203,0.35)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
       >
         {isPending ? 'Submitting…' : 'Submit Case'}
       </button>

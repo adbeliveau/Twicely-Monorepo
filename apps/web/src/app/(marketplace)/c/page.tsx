@@ -22,12 +22,18 @@ export default async function CategoriesIndexPage() {
   const categories = await getHomepageCategories();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Categories' }]} />
 
       <div>
-        <h1 className="text-2xl font-bold md:text-3xl">All Categories</h1>
-        <p className="mt-2 text-muted-foreground">
+        <div className="tw-eyebrow">
+          <span className="tw-eyebrow-dot" />
+          Shop by category
+        </div>
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--tw-black)]">
+          All <em className="not-italic text-[var(--mg)]">categories</em>
+        </h1>
+        <p className="mt-2 text-[17px] text-[var(--tw-muted)]">
           Browse {categories.length} categories on Twicely
         </p>
       </div>

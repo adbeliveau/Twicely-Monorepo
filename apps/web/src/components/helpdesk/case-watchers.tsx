@@ -19,7 +19,7 @@ function WatcherAvatar({ name }: { name: string }) {
     .toUpperCase()
     .slice(0, 2);
   return (
-    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold bg-blue-500/20 text-blue-400 flex-shrink-0">
+    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold bg-brand-500/20 text-brand-400 flex-shrink-0">
       {initials}
     </div>
   );
@@ -63,7 +63,7 @@ export function CaseWatchers({ caseId, watchers, currentStaffUserId }: CaseWatch
             "text-xs px-2 py-0.5 rounded border transition-colors",
             isWatching
               ? "border-slate-600 text-slate-400 hover:border-red-500 hover:text-red-400"
-              : "border-blue-500/50 text-blue-400 hover:bg-blue-500/10",
+              : "border-brand-500/50 text-brand-400 hover:bg-brand-500/10",
             isPending && "opacity-50 cursor-not-allowed"
           )}
         >

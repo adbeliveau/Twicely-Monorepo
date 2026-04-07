@@ -72,7 +72,8 @@ export default async function HelpArticlePage({ params }: Props) {
 
         {/* Article */}
         <article>
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">{article.title}</h1>
+          <div className="tw-section-label">Article</div>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-3">{article.title}</h1>
           <p className="text-xs text-gray-400 mb-8">
             Last updated {formatDate(article.updatedAt)}
           </p>
@@ -82,14 +83,14 @@ export default async function HelpArticlePage({ params }: Props) {
 
         {/* Related articles */}
         {article.relatedArticles.length > 0 && (
-          <section className="mt-10 border-t border-gray-200 pt-8">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">Related articles</h2>
+          <section className="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8">
+            <h2 className="text-sm font-extrabold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-4">Related articles</h2>
             <ul className="space-y-2">
               {article.relatedArticles.map((rel) => (
                 <li key={rel.id}>
                   <Link
                     href={`/h/${categorySlug}/${rel.slug}`}
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-sm font-bold text-brand-500 hover:underline dark:text-brand-400"
                   >
                     {rel.title}
                   </Link>
@@ -100,22 +101,22 @@ export default async function HelpArticlePage({ params }: Props) {
         )}
 
         {/* Feedback */}
-        <div className="mt-10 border-t border-gray-200 pt-8">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <div className="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8">
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
             Was this article helpful?
           </h2>
           <ArticleFeedbackForm articleId={article.id} />
         </div>
 
         {/* CTA */}
-        <div className="mt-8 rounded-lg bg-gray-50 border border-gray-200 p-5 flex items-center justify-between">
+        <div className="mt-8 rounded-2xl bg-brand-50 border border-brand-100 p-6 flex items-center justify-between dark:bg-brand-900/20 dark:border-brand-900/40">
           <div className="flex items-center gap-3">
-            <MessageCircle className="h-5 w-5 text-gray-400" />
-            <p className="text-sm text-gray-600">Still need help?</p>
+            <MessageCircle className="h-5 w-5 text-brand-500 dark:text-brand-400" strokeWidth={1.75} />
+            <p className="text-sm text-gray-700 dark:text-gray-300">Still need help?</p>
           </div>
           <Link
             href="/h/contact"
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="text-sm font-extrabold text-brand-500 hover:underline dark:text-brand-400"
           >
             Contact Support
           </Link>

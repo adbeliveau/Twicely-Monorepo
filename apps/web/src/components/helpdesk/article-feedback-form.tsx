@@ -86,13 +86,13 @@ export function ArticleFeedbackForm({ articleId }: ArticleFeedbackFormProps) {
             rows={2}
             maxLength={500}
             disabled={isPending}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 resize-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-md bg-gray-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+            className="rounded-full bg-brand-500 px-5 py-2 text-sm font-extrabold text-white shadow-[0_4px_12px_rgba(233,30,203,0.25)] transition-all hover:bg-brand-600 disabled:opacity-50"
           >
             {isPending ? 'Submitting…' : 'Submit Feedback'}
           </button>

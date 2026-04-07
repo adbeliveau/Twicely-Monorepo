@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { db } from '@twicely/db';
 import { platformSetting, staffUser } from '@twicely/db/schema';
 import { HelpdeskSettingsForm } from './settings-form';
@@ -10,7 +10,7 @@ import { like, eq } from 'drizzle-orm';
 export const metadata: Metadata = { title: 'Settings | Twicely Hub' };
 
 export default async function HelpdeskSettingsPage() {
-  const { ability, session } = await staffAuthorize();
+  const { ability, session } = await staffAuthorizeOrRedirect();
   if (!ability.can('manage', 'HelpdeskEmailConfig')) {
     return <p className="p-6 text-sm text-red-600">Access denied. HELPDESK_MANAGER role required.</p>;
   }

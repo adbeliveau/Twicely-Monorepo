@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { db } from '@twicely/db';
 import { helpdeskSlaPolicy } from '@twicely/db/schema';
 import { SlaPolicyTable } from './sla-policy-table';
@@ -8,7 +8,7 @@ import { Timer } from 'lucide-react';
 export const metadata: Metadata = { title: 'SLA Policies | Twicely Hub' };
 
 export default async function HelpdeskSlaPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can('manage', 'HelpdeskSlaPolicy')) {
     return <p className="p-6 text-sm text-red-600">Access denied. HELPDESK_MANAGER role required.</p>;
   }

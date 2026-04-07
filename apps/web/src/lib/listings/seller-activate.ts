@@ -17,7 +17,16 @@ export async function ensureSellerProfile(userId: string): Promise<void> {
     .limit(1);
 
   if (existing.length > 0) {
-    return; // Already has seller profile
+    // Ensure status is ACTIVE and user.isSeller is true (fix incomplete activations)
+    await db
+      .update(sellerProfile)
+      .set({ status: 'ACTIVE' })
+      .where(eq(sellerProfile.userId, userId));
+    await db
+      .update(user)
+      .set({ isSeller: true })
+      .where(eq(user.id, userId));
+    return;
   }
 
   // Create seller profile and update user.isSeller in a transaction
@@ -30,6 +39,8 @@ export async function ensureSellerProfile(userId: string): Promise<void> {
     // Create seller profile with FREE lister tier teaser
     await tx.insert(sellerProfile).values({
       userId,
+      status: 'ACTIVE',
+      sellerType: 'PERSONAL',
       listerTier: 'FREE',
       listerFreeExpiresAt,
     });

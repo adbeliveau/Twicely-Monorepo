@@ -54,11 +54,15 @@ function LoginForm() {
   return (
     <>
       <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome to Twicely
+        <div className="tw-eyebrow mx-auto">
+          <span className="tw-eyebrow-dot" />
+          Welcome back
+        </div>
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--tw-black)]">
+          Sign in to <em className="not-italic text-[var(--mg)]">Twicely</em>
         </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Sign in to your account to continue
+        <p className="mt-2 text-sm text-[var(--tw-muted)]">
+          Buy. Sell. Repeat.
         </p>
       </div>
 
@@ -67,24 +71,24 @@ function LoginForm() {
           id="login-error"
           role="alert"
           aria-live="assertive"
-          className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+          className="mb-6 rounded-[var(--tw-r-md)] border-[1.5px] border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800"
         >
           {error}
         </div>
       )}
 
-      <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
+      <div className="tw-card-shell">
         <form
           onSubmit={handleSubmit}
           aria-describedby={error ? 'login-error' : undefined}
         >
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                className="mb-2 block text-sm font-extrabold text-[var(--tw-black)]"
               >
-                Email <span className="text-red-500">*</span>
+                Email <span className="text-[var(--mg)]">*</span>
               </label>
               <input
                 id="email"
@@ -94,16 +98,16 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-visible:border-blue-700 disabled:opacity-50"
+                className="h-11 w-full rounded-full border-[1.5px] border-[var(--tw-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--tw-black)] placeholder:text-[var(--tw-muted-lt)] focus-visible:border-[var(--mg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)] disabled:opacity-50"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                className="mb-2 block text-sm font-extrabold text-[var(--tw-black)]"
               >
-                Password <span className="text-red-500">*</span>
+                Password <span className="text-[var(--mg)]">*</span>
               </label>
               <div className="relative">
                 <input
@@ -115,12 +119,12 @@ function LoginForm() {
                   required
                   minLength={10}
                   disabled={isLoading}
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-12 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-visible:border-blue-700 disabled:opacity-50"
+                  className="h-11 w-full rounded-full border-[1.5px] border-[var(--tw-border)] bg-white px-5 py-2.5 pr-12 text-sm font-medium text-[var(--tw-black)] placeholder:text-[var(--tw-muted-lt)] focus-visible:border-[var(--mg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)] disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 z-30 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                  className="absolute right-4 top-1/2 z-30 -translate-y-1/2 text-[var(--tw-muted)] hover:text-[var(--tw-black)]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -133,21 +137,21 @@ function LoginForm() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label htmlFor="rememberMe" className="flex items-center gap-3 cursor-pointer">
+              <label htmlFor="rememberMe" className="flex items-center gap-2 cursor-pointer">
                 <input
                   id="rememberMe"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900"
+                  className="h-4 w-4 rounded border-[var(--tw-border)] accent-[var(--mg)] focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)]"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-400">
+                <span className="text-sm font-bold text-[var(--tw-muted)]">
                   Keep me logged in
                 </span>
               </label>
               <Link
                 href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                className="text-sm font-extrabold text-[var(--mg)] hover:underline"
               >
                 Forgot password?
               </Link>
@@ -156,7 +160,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="h-11 w-full rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="tw-btn-mg w-full disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -164,11 +168,11 @@ function LoginForm() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm font-bold text-[var(--tw-muted)]">
             Don&apos;t have an account?{' '}
             <Link
               href="/auth/signup"
-              className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              className="font-extrabold text-[var(--mg)] hover:underline"
             >
               Sign Up
             </Link>
@@ -176,13 +180,13 @@ function LoginForm() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+      <p className="mt-6 text-center text-xs text-[var(--tw-muted-lt)]">
         By signing in, you agree to our{' '}
-        <Link href="/p/terms" className="underline hover:text-gray-700 dark:hover:text-gray-300">
+        <Link href="/p/terms" className="font-bold underline hover:text-[var(--tw-muted)]">
           Terms of Service
         </Link>{' '}
         and{' '}
-        <Link href="/p/privacy" className="underline hover:text-gray-700 dark:hover:text-gray-300">
+        <Link href="/p/privacy" className="font-bold underline hover:text-[var(--tw-muted)]">
           Privacy Policy
         </Link>
       </p>
@@ -193,7 +197,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800 text-center">
+      <div className="tw-card-shell text-center text-sm font-bold text-[var(--tw-muted)]">
         Loading...
       </div>
     }>

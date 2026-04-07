@@ -103,7 +103,7 @@ function RequesterSection({ name, email, stats }: {
       <div className="hd-context-header"><span>👤</span><span>Requester</span></div>
       <div className="hd-context-body">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium bg-blue-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium bg-brand-500 text-white">
             {initial}
           </div>
           <div className="min-w-0">
@@ -145,7 +145,7 @@ function LinkedOrderSection({ order }: { order: { id: string; orderNumber: strin
         <span className="font-medium block font-mono text-sm" style={{ color: "rgb(var(--hd-text-primary))" }}>{order.orderNumber}</span>
         <span className="hd-status-new mt-1 inline-block" style={{ textTransform: "none", fontWeight: 500 }}>{statusLabel}</span>
         <p className="mt-2 font-semibold text-xl" style={{ color: "rgb(var(--hd-text-primary))" }}>${(order.totalCents / 100).toFixed(2)}</p>
-        <a href={`/tx/orders/${order.id}`} className="mt-3 flex items-center gap-1 font-medium text-xs text-blue-500 hover:opacity-70 hd-transition">
+        <a href={`/tx/orders/${order.id}`} className="mt-3 flex items-center gap-1 font-medium text-xs text-brand-500 hover:opacity-70 hd-transition">
           View Order <span>↗</span>
         </a>
       </div>

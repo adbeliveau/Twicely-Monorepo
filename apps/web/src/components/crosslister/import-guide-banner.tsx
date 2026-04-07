@@ -5,7 +5,7 @@
  * Source: G1-C install prompt §File 3
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@twicely/ui/button';
 import { X } from 'lucide-react';
@@ -21,11 +21,15 @@ export function ImportGuideBanner({
   connectedChannels,
   hasCompletedImport,
 }: ImportGuideBannerProps) {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(DISMISS_KEY) === 'true';
-  });
-  const [mounted] = useState(() => typeof window !== 'undefined');
+  const [dismissed, setDismissed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (localStorage.getItem(DISMISS_KEY) === 'true') {
+      setDismissed(true);
+    }
+  }, []);
 
   if (!mounted) return null;
   if (hasCompletedImport) return null;

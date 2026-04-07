@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Shield, Clock } from 'lucide-react';
+import { MapPin, Shield, Clock, Star } from 'lucide-react';
 import { Badge } from '@twicely/ui/badge';
 import { Button } from '@twicely/ui/button';
 import { Card, CardContent } from '@twicely/ui/card';
@@ -81,8 +81,9 @@ export function MeetupLocationPicker({
                         {TYPE_LABELS[loc.type] ?? loc.type}
                       </Badge>
                       {loc.rating !== null && loc.rating !== undefined && (
-                        <span className="text-xs text-muted-foreground">
-                          ★ {loc.rating.toFixed(1)}
+                        <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                          <Star className="size-3 fill-amber-500 text-amber-500" strokeWidth={0} />
+                          {loc.rating.toFixed(1)}
                         </span>
                       )}
                       {loc.meetupCount > 0 && (

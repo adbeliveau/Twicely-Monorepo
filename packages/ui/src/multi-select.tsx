@@ -21,7 +21,7 @@ interface MultiSelectProps {
 }
 
 /**
- * Multi-select dropdown — adapted from TailAdmin Pro.
+ * Multi-select dropdown component.
  * Shows selected items as chips with remove buttons.
  * Supports keyboard navigation (arrows, enter, escape).
  */

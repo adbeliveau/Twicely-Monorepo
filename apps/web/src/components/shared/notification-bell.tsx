@@ -43,7 +43,7 @@ export function NotificationBell({ notifications, unreadCount }: NotificationBel
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild suppressHydrationWarning>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" aria-hidden="true" />
           {unreadCount > 0 && (

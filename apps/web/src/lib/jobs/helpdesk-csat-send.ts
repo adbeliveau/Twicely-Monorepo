@@ -36,7 +36,10 @@ createWorker<HelpdeskCsatSendData>(QUEUE_NAME, async (_job) => {
   const csatEnabled = await getPlatformSetting<boolean>('helpdesk.csat.enabled', true);
   if (!csatEnabled) return;
 
-  const surveyDelayMinutes = await getPlatformSetting<number>('helpdesk.csat.surveyDelayMinutes', 30);
+  const [surveyDelayMinutes, csatBatchSize] = await Promise.all([
+    getPlatformSetting<number>('helpdesk.csat.surveyDelayMinutes', 30),
+    getPlatformSetting<number>('helpdesk.csat.batchSize', 50),
+  ]);
   const now = new Date();
   const delayCutoff = new Date(now.getTime() - surveyDelayMinutes * 60 * 1000);
 
@@ -50,7 +53,7 @@ createWorker<HelpdeskCsatSendData>(QUEUE_NAME, async (_job) => {
         lt(helpdeskCase.resolvedAt, delayCutoff)
       )
     )
-    .limit(50);
+    .limit(csatBatchSize);
 
   for (const c of candidates) {
     // Check if CSAT already exists for this case
@@ -79,9 +82,10 @@ createWorker<HelpdeskCsatSendData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskCsatSend(): Promise<void> {
+  const cronPattern = await getPlatformSetting<string>('helpdesk.cron.csatSend.pattern', '*/5 * * * *');
   await queue.add(
     'csat-send',
     { triggeredAt: new Date().toISOString() },
-    { jobId: 'helpdesk-csat-send', repeat: { pattern: '*/5 * * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'helpdesk-csat-send', repeat: { pattern: cronPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 }

@@ -32,9 +32,10 @@ const queue = createQueue<HelpdeskAutoCloseData>(QUEUE_NAME, {
 });
 
 createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
-  const [pendingDays, resolvedDays] = await Promise.all([
+  const [pendingDays, resolvedDays, batchSize] = await Promise.all([
     getPlatformSetting<number>('helpdesk.autoClose.pendingUserDays', 14),
     getPlatformSetting<number>('helpdesk.autoClose.resolvedDays', 7),
+    getPlatformSetting<number>('helpdesk.autoClose.batchSize', 100),
   ]);
 
   const now = new Date();
@@ -51,7 +52,7 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
         lt(helpdeskCase.lastActivityAt, pendingCutoff)
       )
     )
-    .limit(100);
+    .limit(batchSize);
 
   if (stalePending.length > 0) {
     const ids = stalePending.map((c) => c.id);
@@ -89,7 +90,7 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
         lt(helpdeskCase.lastActivityAt, resolvedCutoff)
       )
     )
-    .limit(100);
+    .limit(batchSize);
 
   if (staleResolved.length > 0) {
     const ids = staleResolved.map((c) => c.id);
@@ -119,9 +120,10 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskAutoClose(): Promise<void> {
+  const cronPattern = await getPlatformSetting<string>('helpdesk.cron.autoClose.pattern', '*/15 * * * *');
   await queue.add(
     'auto-close',
     { triggeredAt: new Date().toISOString() },
-    { jobId: 'helpdesk-auto-close', repeat: { pattern: '*/15 * * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'helpdesk-auto-close', repeat: { pattern: cronPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 }

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { BookmarkPlus } from 'lucide-react';
 
 export const metadata: Metadata = { title: 'Saved Views | Twicely Hub' };
 
 export default async function HelpdeskViewsPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can('read', 'HelpdeskCase')) {
     return <p className="p-6 text-sm text-red-600">Access denied</p>;
   }
@@ -16,7 +16,7 @@ export default async function HelpdeskViewsPage() {
         <h1 className="text-xl font-semibold text-gray-900">Saved Views</h1>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           <BookmarkPlus className="h-4 w-4" />
           New View

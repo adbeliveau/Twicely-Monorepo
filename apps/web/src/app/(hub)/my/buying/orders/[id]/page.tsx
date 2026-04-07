@@ -9,7 +9,7 @@ import { formatPrice, formatDate } from '@twicely/utils/format';
 import { OrderStatusBadge } from '@/components/pages/orders/order-status-badge';
 import { ShippingTracker } from '@/components/pages/orders/shipping-tracker';
 import { Button } from '@twicely/ui/button';
-import { Package, RotateCcw, Shield, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Package, RotateCcw, Shield, ShieldCheck, HelpCircle, MapPin } from 'lucide-react';
 import { BuyerReviewSection } from './_components/buyer-review-section';
 import { ShippingQuoteStatus } from '@/components/buyer/shipping-quote-status';
 import { getShippingQuoteByOrderId } from '@/lib/queries/shipping-quote';
@@ -113,7 +113,7 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
           ) : (
             <div className="rounded-lg border p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="text-lg">📍</span>
+                <MapPin className="size-5 text-brand-500" strokeWidth={2} />
                 <span className="font-medium">Local Pickup</span>
               </div>
               <p className="text-sm text-muted-foreground">

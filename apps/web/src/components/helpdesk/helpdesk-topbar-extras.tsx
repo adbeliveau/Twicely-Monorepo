@@ -107,14 +107,14 @@ export function TabBar({ tabs, className }: TabBarProps) {
         const sharedClassName = cn(
           "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
           tab.isActive
-            ? "text-blue-600 dark:text-blue-400 border-blue-500"
+            ? "text-brand-500 dark:text-brand-400 border-brand-500"
             : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
         );
         const content = (
           <>
             <span>{tab.label}</span>
             {tab.count !== undefined && (
-              <span className={cn("px-1.5 py-0.5 text-[10px] font-bold rounded-full", tab.isActive ? "bg-blue-500/20 text-blue-600 dark:text-blue-400" : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}>
+              <span className={cn("px-1.5 py-0.5 text-[10px] font-bold rounded-full", tab.isActive ? "bg-brand-500/20 text-brand-500 dark:text-brand-400" : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}>
                 {tab.count}
               </span>
             )}

@@ -108,7 +108,7 @@ export function MacroList({ macros }: MacroListProps) {
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
           >
             <Plus className="h-4 w-4" />
             Create First Macro
@@ -124,7 +124,7 @@ export function MacroList({ macros }: MacroListProps) {
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           <Plus className="h-4 w-4" />
           New Macro
@@ -171,7 +171,7 @@ export function MacroList({ macros }: MacroListProps) {
               type="button"
               onClick={handleCreate}
               disabled={isPending || !name.trim() || !bodyTemplate.trim()}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
             >
               {isPending ? "Creating..." : "Create Macro"}
             </button>
@@ -213,7 +213,7 @@ export function MacroList({ macros }: MacroListProps) {
                 <div className="flex gap-2">
                   <button type="button" onClick={handleUpdate}
                     disabled={isPending || !editName.trim() || !editBody.trim()}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+                    className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
                     {isPending ? "Saving..." : "Save Changes"}
                   </button>
                   <button type="button" onClick={() => setEditingId(null)}
@@ -231,7 +231,7 @@ export function MacroList({ macros }: MacroListProps) {
                       {macro.name}
                     </h3>
                     {macro.isShared ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-500">
                         <Eye className="h-3 w-3" /> Shared
                       </span>
                     ) : (
@@ -255,7 +255,7 @@ export function MacroList({ macros }: MacroListProps) {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button type="button" onClick={() => startEdit(macro)} disabled={isPending}
-                    className="p-1.5 rounded-md text-blue-500 hover:bg-blue-500/10 hd-transition disabled:opacity-50"
+                    className="p-1.5 rounded-md text-brand-500 hover:bg-brand-500/10 hd-transition disabled:opacity-50"
                     aria-label={`Edit macro ${macro.name}`}>
                     <Pencil className="h-4 w-4" />
                   </button>

@@ -7,6 +7,7 @@ import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { getAdminSellerList } from '@/lib/queries/admin-sellers';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { sellerProfile } from '@twicely/db/schema';
+import { Check } from 'lucide-react';
 
 type StoreTier = InferSelectModel<typeof sellerProfile>['storeTier'];
 type ListerTier = InferSelectModel<typeof sellerProfile>['listerTier'];
@@ -184,8 +185,8 @@ export default async function SellersPage({
                 <td className="px-3 py-3">{s.sellerScore}</td>
                 <td className="px-3 py-3"><StatusBadge status={s.status} /></td>
                 <td className="px-3 py-3">{s.availableCents > 0 ? fmt(s.availableCents) : '—'}</td>
-                <td className="px-3 py-3">{s.stripeOnboarded ? <span className="text-green-600">✓</span> : <span className="text-gray-300">—</span>}</td>
-                <td className="px-3 py-3">{s.verifiedAt ? <span className="text-green-600">✓</span> : <span className="text-yellow-500">Pending</span>}</td>
+                <td className="px-3 py-3">{s.stripeOnboarded ? <Check className="size-4 text-green-600" strokeWidth={2.5} /> : <span className="text-gray-300">—</span>}</td>
+                <td className="px-3 py-3">{s.verifiedAt ? <Check className="size-4 text-green-600" strokeWidth={2.5} /> : <span className="text-yellow-500">Pending</span>}</td>
                 <td className="px-3 py-3 text-gray-500 text-xs">{s.activatedAt?.toLocaleDateString() ?? '—'}</td>
               </tr>
             ))}

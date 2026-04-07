@@ -15,13 +15,14 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
-    return (localStorage.getItem("theme") as Theme) || "light";
-  });
-  const [isInitialized] = useState(
-    () => typeof window !== "undefined"
-  );
+  const [theme, setTheme] = useState<Theme>("light");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const stored = (localStorage.getItem("theme") as Theme) || "light";
+    setTheme(stored);
+    setIsInitialized(true);
+  }, []);
 
   useEffect(() => {
     if (isInitialized) {

@@ -57,14 +57,18 @@ export function BundleOfferModal({
       return;
     }
 
+    // Bundle offers require address + payment selectors which are not yet built
+    setError('Bundle offers are coming soon. You can make individual offers on each listing instead.');
+    return;
+
     setIsSubmitting(true);
 
     try {
       const result = await createBundleOfferAction({
         listingIds: selectedListings.map(l => l.id),
         offeredPriceCents: offerCents,
-        shippingAddressId: '', // TODO: Address selector
-        paymentMethodId: '', // TODO: Payment method selector
+        shippingAddressId: '',
+        paymentMethodId: '',
         message: message || undefined,
       });
 

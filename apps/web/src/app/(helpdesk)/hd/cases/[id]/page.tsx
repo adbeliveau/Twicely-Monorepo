@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { staffAuthorize } from "@/lib/casl/staff-authorize";
+import { staffAuthorizeOrRedirect } from "@/lib/casl/staff-authorize";
 import { getAgentCaseDetail, getAgentCaseQueue, getCaseWatchers } from "@/lib/queries/helpdesk-cases";
 import { getCaseContext } from "@/lib/queries/helpdesk-context";
 import { getAgentMacros } from "@/lib/queries/helpdesk-macros";
@@ -14,7 +14,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function AgentCaseDetailPage({ params }: Props) {
   const { id } = await params;
-  const { ability, session } = await staffAuthorize();
+  const { ability, session } = await staffAuthorizeOrRedirect();
 
   if (!ability.can("read", "HelpdeskCase")) {
     return <p className="p-6 text-sm text-red-600">Access denied</p>;

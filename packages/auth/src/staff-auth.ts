@@ -5,7 +5,6 @@ import { randomBytes } from 'crypto';
 import { db } from '@twicely/db';
 import { staffUser, staffUserRole, staffSession } from '@twicely/db/schema';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
-import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
 
 // Platform staff roles - mirrors platformRoleEnum in @twicely/db/schema/enums
@@ -37,53 +36,12 @@ export interface StaffSessionResult {
 /**
  * Authenticate a staff user with email + password.
  * Creates a staffSession row on success.
+ * Rate limiting is handled by the server action caller (staff-login.ts).
  */
-// H2 Security: Brute-force protection constants
-const STAFF_LOGIN_MAX_ATTEMPTS = 5;
-const STAFF_LOGIN_LOCKOUT_SECONDS = 900; // 15 minutes
-
-async function checkLoginRateLimit(email: string): Promise<{ allowed: boolean; attemptsLeft: number }> {
-  try {
-    const valkey = getValkeyClient();
-    const key = `staff-login-attempts:${email.toLowerCase()}`;
-    const attempts = await valkey.incr(key);
-    if (attempts === 1) {
-      await valkey.expire(key, STAFF_LOGIN_LOCKOUT_SECONDS);
-    }
-    return { allowed: attempts <= STAFF_LOGIN_MAX_ATTEMPTS, attemptsLeft: Math.max(0, STAFF_LOGIN_MAX_ATTEMPTS - attempts) };
-  } catch (err) {
-    // Valkey unavailable - fail closed so brute-force protection is not bypassed.
-    logger.error('[staff-auth] Valkey unavailable for rate limiting - denying login attempt', {
-      email,
-      error: String(err),
-    });
-    return { allowed: false, attemptsLeft: 0 };
-  }
-}
-
-async function clearLoginAttempts(email: string): Promise<void> {
-  try {
-    const valkey = getValkeyClient();
-    await valkey.del(`staff-login-attempts:${email.toLowerCase()}`);
-  } catch {
-    // Non-fatal
-  }
-}
-
 export async function loginStaff(
   email: string,
   password: string
 ): Promise<StaffSessionResult> {
-  // H2 Security: Check brute-force rate limit
-  const rateCheck = await checkLoginRateLimit(email);
-  if (!rateCheck.allowed) {
-    if (rateCheck.attemptsLeft === 0) {
-      throw new Error('Login temporarily unavailable. Please try again later.');
-    }
-    logger.warn('[staff-auth] Login locked out', { email, reason: 'too many attempts' });
-    throw new Error('Too many login attempts. Please try again in 15 minutes.');
-  }
-
   const [user] = await db
     .select()
     .from(staffUser)
@@ -103,9 +61,6 @@ export async function loginStaff(
     logger.info('[staff-auth] Failed login attempt', { email });
     throw new Error('Invalid email or password');
   }
-
-  // Successful login - clear rate limit counter
-  await clearLoginAttempts(email);
 
   // Load all roles for this staff user (filter revoked in application layer)
   const allRoleRows = await db

@@ -158,7 +158,7 @@ export function HubSidebar({ capabilities, unreadMessageCount = 0 }: HubSidebarP
       {!capabilities.isSeller && (
         <div className="p-4 border-t">
           <Button asChild className="w-full">
-            <Link href="/sell">Start Selling</Link>
+            <Link href="/api/seller/activate">Start Selling</Link>
           </Button>
         </div>
       )}
@@ -179,3 +179,4 @@ export function HubSidebar({ capabilities, unreadMessageCount = 0 }: HubSidebarP
     </aside>
   );
 }
+

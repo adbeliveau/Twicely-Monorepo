@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { getResolvedCases } from '@/lib/queries/helpdesk-cases';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { RetentionBadge } from '@/components/helpdesk/retention-badge';
@@ -25,7 +25,7 @@ function formatDate(date: Date | null): string {
 }
 
 export default async function ResolvedCasesPage({ searchParams }: Props) {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
 
   if (!ability.can('read', 'HelpdeskCase')) {
     return <p className="p-6 text-sm text-red-600">Access denied. Helpdesk role required.</p>;
@@ -42,7 +42,7 @@ export default async function ResolvedCasesPage({ searchParams }: Props) {
 
   const tabClass = (active: boolean) =>
     active
-      ? 'px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-500'
+      ? 'px-4 py-2 text-sm font-medium border-b-2 border-brand-500 text-brand-500'
       : 'px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200';
 
   return (
@@ -101,7 +101,7 @@ export default async function ResolvedCasesPage({ searchParams }: Props) {
                   <td className="px-4 py-3">
                     <Link
                       href={`/hd/cases/${c.id}`}
-                      className="font-mono text-xs text-blue-400 hover:underline"
+                      className="font-mono text-xs text-brand-400 hover:underline"
                     >
                       {c.caseNumber}
                     </Link>

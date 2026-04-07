@@ -63,11 +63,15 @@ export default function SignupForm() {
   return (
     <>
       <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-          Join Twicely
+        <div className="tw-eyebrow mx-auto">
+          <span className="tw-eyebrow-dot" />
+          Get started
+        </div>
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--tw-black)]">
+          Join <em className="not-italic text-[var(--mg)]">Twicely</em>
         </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Create your account and start buying or selling
+        <p className="mt-2 text-sm text-[var(--tw-muted)]">
+          Create your account and start buying or selling.
         </p>
       </div>
 
@@ -76,13 +80,13 @@ export default function SignupForm() {
           id="signup-error"
           role="alert"
           aria-live="assertive"
-          className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400"
+          className="mb-6 rounded-[var(--tw-r-md)] border-[1.5px] border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800"
         >
           {error}
         </div>
       )}
 
-      <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-gray-800">
+      <div className="tw-card-shell">
         <form
           onSubmit={handleSubmit}
           aria-describedby={error ? 'signup-error' : undefined}
@@ -91,9 +95,9 @@ export default function SignupForm() {
             <div>
               <label
                 htmlFor="name"
-                className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                className="mb-2 block text-sm font-extrabold text-[var(--tw-black)]"
               >
-                Display Name <span className="text-red-500">*</span>
+                Display Name <span className="text-[var(--mg)]">*</span>
               </label>
               <input
                 id="name"
@@ -103,19 +107,19 @@ export default function SignupForm() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-visible:border-blue-700 disabled:opacity-50"
+                className="h-11 w-full rounded-full border-[1.5px] border-[var(--tw-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--tw-black)] placeholder:text-[var(--tw-muted-lt)] focus-visible:border-[var(--mg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)] disabled:opacity-50"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                This is how your name will appear to other users
+              <p className="mt-1.5 text-xs text-[var(--tw-muted-lt)]">
+                This is how your name will appear to other users.
               </p>
             </div>
 
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                className="mb-2 block text-sm font-extrabold text-[var(--tw-black)]"
               >
-                Email <span className="text-red-500">*</span>
+                Email <span className="text-[var(--mg)]">*</span>
               </label>
               <input
                 id="email"
@@ -125,16 +129,16 @@ export default function SignupForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-visible:border-blue-700 disabled:opacity-50"
+                className="h-11 w-full rounded-full border-[1.5px] border-[var(--tw-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--tw-black)] placeholder:text-[var(--tw-muted-lt)] focus-visible:border-[var(--mg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)] disabled:opacity-50"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                className="mb-2 block text-sm font-extrabold text-[var(--tw-black)]"
               >
-                Password <span className="text-red-500">*</span>
+                Password <span className="text-[var(--mg)]">*</span>
               </label>
               <div className="relative">
                 <input
@@ -147,12 +151,12 @@ export default function SignupForm() {
                   minLength={10}
                   disabled={isLoading}
                   aria-describedby="password-hint"
-                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-12 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-visible:border-blue-700 disabled:opacity-50"
+                  className="h-11 w-full rounded-full border-[1.5px] border-[var(--tw-border)] bg-white px-5 py-2.5 pr-12 text-sm font-medium text-[var(--tw-black)] placeholder:text-[var(--tw-muted-lt)] focus-visible:border-[var(--mg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)] disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 z-30 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                  className="absolute right-4 top-1/2 z-30 -translate-y-1/2 text-[var(--tw-muted)] hover:text-[var(--tw-black)]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -162,17 +166,17 @@ export default function SignupForm() {
                   )}
                 </button>
               </div>
-              <p id="password-hint" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Must be at least 10 characters
+              <p id="password-hint" className="mt-1.5 text-xs text-[var(--tw-muted-lt)]">
+                Must be at least 10 characters.
               </p>
             </div>
 
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                className="mb-2 block text-sm font-extrabold text-[var(--tw-black)]"
               >
-                Confirm Password <span className="text-red-500">*</span>
+                Confirm Password <span className="text-[var(--mg)]">*</span>
               </label>
               <input
                 id="confirmPassword"
@@ -183,7 +187,7 @@ export default function SignupForm() {
                 required
                 minLength={10}
                 disabled={isLoading}
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus-visible:border-blue-700 disabled:opacity-50"
+                className="h-11 w-full rounded-full border-[1.5px] border-[var(--tw-border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--tw-black)] placeholder:text-[var(--tw-muted-lt)] focus-visible:border-[var(--mg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)] disabled:opacity-50"
               />
             </div>
 
@@ -195,13 +199,13 @@ export default function SignupForm() {
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                 required
                 disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900"
+                className="mt-0.5 h-4 w-4 rounded border-[var(--tw-border)] accent-[var(--mg)] focus-visible:ring-2 focus-visible:ring-[rgba(233,30,203,0.15)]"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-400">
+              <span className="text-sm font-bold text-[var(--tw-muted)]">
                 I agree to the{' '}
                 <Link
                   href="/p/terms"
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  className="font-extrabold text-[var(--mg)] hover:underline"
                   target="_blank"
                 >
                   Terms of Service
@@ -209,7 +213,7 @@ export default function SignupForm() {
                 and{' '}
                 <Link
                   href="/p/privacy"
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                  className="font-extrabold text-[var(--mg)] hover:underline"
                   target="_blank"
                 >
                   Privacy Policy
@@ -220,7 +224,7 @@ export default function SignupForm() {
             <button
               type="submit"
               disabled={isLoading || !agreedToTerms}
-              className="h-11 w-full rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="tw-btn-mg w-full disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
@@ -228,11 +232,11 @@ export default function SignupForm() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm font-bold text-[var(--tw-muted)]">
             Already have an account?{' '}
             <Link
               href="/auth/login"
-              className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              className="font-extrabold text-[var(--mg)] hover:underline"
             >
               Sign In
             </Link>

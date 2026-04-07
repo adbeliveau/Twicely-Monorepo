@@ -27,31 +27,31 @@ const BRACKET_LABELS: Record<number, string> = {
 
 export function TfBracketTable({ brackets }: TfBracketTableProps) {
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-hidden rounded-[var(--tw-r-xl)] border-[1.5px] border-[var(--tw-border)] bg-white shadow-[var(--tw-shadow-sm)]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="px-4 py-3 text-left font-semibold text-foreground">
+          <tr className="border-b-[1.5px] border-[var(--tw-border)] bg-[var(--tw-bg)]">
+            <th className="px-5 py-3.5 text-left text-[11px] font-extrabold uppercase tracking-wider text-[var(--tw-muted-lt)]">
               Monthly Twicely sales
             </th>
-            <th className="px-4 py-3 text-right font-semibold text-foreground">
+            <th className="px-5 py-3.5 text-right text-[11px] font-extrabold uppercase tracking-wider text-[var(--tw-muted-lt)]">
               Transaction fee rate
             </th>
           </tr>
         </thead>
         <tbody>
-          {brackets.map((bracket) => (
+          {brackets.map((bracket, i) => (
             <tr
               key={bracket.bracketNumber}
-              className="border-b last:border-0 hover:bg-muted/30"
+              className={i !== brackets.length - 1 ? 'border-b border-[var(--tw-border)]' : ''}
             >
-              <td className="px-4 py-3 text-muted-foreground">
+              <td className="px-5 py-3.5 font-bold text-[var(--tw-black)]">
                 {BRACKET_LABELS[bracket.bracketNumber] ??
                   (bracket.maxCents === null
                     ? `No limit`
                     : `Up to ${formatDollars(bracket.maxCents)}`)}
               </td>
-              <td className="px-4 py-3 text-right font-medium tabular-nums">
+              <td className="px-5 py-3.5 text-right font-black text-[var(--mg)] tabular-nums">
                 {formatRate(bracket.rateBps)}
               </td>
             </tr>

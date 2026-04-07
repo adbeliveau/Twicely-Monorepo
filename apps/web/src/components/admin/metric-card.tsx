@@ -23,7 +23,7 @@ const trendColors: Record<TrendDirection, string> = {
 };
 
 /**
- * Dashboard metric card — TailAdmin-inspired design.
+ * Dashboard metric card.
  * Icon in a rounded box, large value, and optional trend badge.
  *
  * Usage:

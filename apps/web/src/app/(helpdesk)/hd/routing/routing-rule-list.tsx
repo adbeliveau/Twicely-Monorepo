@@ -135,7 +135,7 @@ function RuleForm({
           <ConditionRow key={i} cond={c} index={i} onChange={updateCondition} onRemove={removeCondition} canRemove={conditions.length > 1} />
         ))}
         <button type="button" onClick={() => setConditions((p) => [...p, blankCondition()])}
-          className="text-xs text-blue-500 hover:underline">+ Add condition</button>
+          className="text-xs text-brand-500 hover:underline">+ Add condition</button>
       </div>
       <div className="space-y-2">
         <p className="text-xs font-medium" style={{ color: "rgb(var(--hd-text-secondary))" }}>Action</p>
@@ -158,7 +158,7 @@ function RuleForm({
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={() => onSave(name, conditions, action)} disabled={isPending || !name.trim()}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+          className="rounded bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
           {isPending ? "Saving..." : "Save"}
         </button>
         <button type="button" onClick={onCancel}
@@ -254,7 +254,7 @@ export function RoutingRuleList({ rules: initial }: RoutingRuleListProps) {
     <div className="space-y-4">
       <div className="flex justify-end">
         <button type="button" onClick={() => setShowCreate(!showCreate)}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600">
           <Plus className="h-4 w-4" /> New Rule
         </button>
       </div>
@@ -288,7 +288,7 @@ export function RoutingRuleList({ rules: initial }: RoutingRuleListProps) {
                   {rule.isActive ? "Active" : "Inactive"}
                 </button>
                 <button type="button" onClick={() => setEditingId(rule.id)} disabled={isPending}
-                  className="p-1 rounded hover:bg-blue-500/10 text-blue-500" aria-label="Edit rule">
+                  className="p-1 rounded hover:bg-brand-500/10 text-brand-500" aria-label="Edit rule">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button type="button" onClick={() => handleDelete(rule.id)} disabled={isPending}

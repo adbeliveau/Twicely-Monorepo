@@ -6,7 +6,7 @@ import { getOrderDetail } from '@/lib/queries/orders';
 import { formatDate } from '@twicely/utils/format';
 import { OrderStatusBadge } from '@/components/pages/orders/order-status-badge';
 import { ShippingTracker } from '@/components/pages/orders/shipping-tracker';
-import { ShieldCheck, HelpCircle } from 'lucide-react';
+import { ShieldCheck, HelpCircle, MapPin, AlertTriangle } from 'lucide-react';
 import { db } from '@twicely/db';
 import { review, reviewResponse, buyerReview } from '@twicely/db/schema';
 import { eq, and, or, isNull, lte, sql } from 'drizzle-orm';
@@ -200,7 +200,7 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
             ? <LocalMeetupCard transaction={localTransaction} role="SELLER" currentUserId={session.user.id} otherPartyName={buyerDisplayName} originalPriceCents={ord.itemSubtotalCents} maxDiscountPercent={maxAdjustmentPercent} counterpartyReliability={buyerReliability} />
             : <div className="rounded-lg border p-4 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">📍</span>
+                  <MapPin className="size-5 text-brand-500" strokeWidth={2} />
                   <span className="font-medium">Local Pickup</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -270,7 +270,9 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
               <p className="text-gray-600">Carrier: {ship.carrier ?? 'N/A'}</p>
               <p className="font-mono text-gray-900 mt-1">{ship.tracking}</p>
               {ord.isLateShipment && (
-                <p className="text-red-600 mt-2 text-xs">⚠️ Late shipment</p>
+                <p className="text-red-600 mt-2 text-xs flex items-center gap-1">
+                  <AlertTriangle className="size-3.5" strokeWidth={2} /> Late shipment
+                </p>
               )}
             </div>
           </div>

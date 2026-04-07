@@ -102,8 +102,10 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
     .from(platformSetting)
     .where(eq(platformSetting.key, 'commerce.stripe.processingFixedCents'))
     .limit(1);
-  const stripeRateBps = Number(rateSetting?.value) || 290; // 2.9% default
-  const stripeFixedCents = Number(fixedSetting?.value) || 30; // $0.30 default
+  const parsedRate = Number(rateSetting?.value);
+  const stripeRateBps = Number.isNaN(parsedRate) ? 290 : parsedRate; // 2.9% default
+  const parsedFixed = Number(fixedSetting?.value);
+  const stripeFixedCents = Number.isNaN(parsedFixed) ? 30 : parsedFixed; // $0.30 default
 
   const purchasedListingIds = await db.transaction(async (tx) => {
     // Idempotency: atomic conditional update — only transitions non-PAID → PAID.

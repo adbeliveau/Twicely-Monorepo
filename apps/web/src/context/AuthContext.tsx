@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { clientLogger } from "@/lib/client-logger";
 
@@ -37,47 +37,34 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    const storedUser = localStorage.getItem("user");
-    const storedSession = localStorage.getItem("session");
-    if (!storedUser) return null;
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
     try {
-      const parsedUser = JSON.parse(storedUser);
-      const parsedSession = storedSession ? JSON.parse(storedSession) : null;
-      if (parsedSession && new Date(parsedSession.expiresAt) <= new Date()) {
-        localStorage.removeItem("user");
-        localStorage.removeItem("session");
-        return null;
+      const storedUser = localStorage.getItem("user");
+      const storedSession = localStorage.getItem("session");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        const parsedSession = storedSession ? JSON.parse(storedSession) : null;
+        if (parsedSession && new Date(parsedSession.expiresAt) <= new Date()) {
+          localStorage.removeItem("user");
+          localStorage.removeItem("session");
+        } else if (parsedUser.role === "STAFF" && !parsedUser.permissions) {
+          localStorage.removeItem("user");
+          localStorage.removeItem("session");
+        } else {
+          setUser(parsedUser);
+          if (parsedSession) setSession(parsedSession);
+        }
       }
-      if (parsedUser.role === "STAFF" && !parsedUser.permissions) {
-        localStorage.removeItem("user");
-        localStorage.removeItem("session");
-        return null;
-      }
-      return parsedUser;
     } catch {
       localStorage.removeItem("user");
       localStorage.removeItem("session");
-      return null;
     }
-  });
-  const [session, setSession] = useState<Session | null>(() => {
-    if (typeof window === "undefined") return null;
-    const storedUser = localStorage.getItem("user");
-    const storedSession = localStorage.getItem("session");
-    if (!storedUser || !storedSession) return null;
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      const parsedSession = JSON.parse(storedSession);
-      if (new Date(parsedSession.expiresAt) <= new Date()) return null;
-      if (parsedUser.role === "STAFF" && !parsedUser.permissions) return null;
-      return parsedSession;
-    } catch {
-      return null;
-    }
-  });
-  const [loading] = useState(() => typeof window === "undefined");
+    setLoading(false);
+  }, []);
   const router = useRouter();
 
   const login = async (email: string, password: string, rememberMe?: boolean) => {

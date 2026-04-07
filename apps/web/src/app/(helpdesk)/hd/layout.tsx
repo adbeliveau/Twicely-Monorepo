@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { staffAuthorize } from "@/lib/casl/staff-authorize";
+import { staffAuthorizeOrRedirect } from "@/lib/casl/staff-authorize";
 import { getHelpdeskBadges } from "@/lib/queries/helpdesk-badges";
 import { getAgentOnlineStatus } from "@/lib/queries/helpdesk-agents";
 import { HelpdeskLayoutClient } from "./helpdesk-layout-client";
@@ -7,20 +6,7 @@ import { SkipNav } from "@/components/shared/skip-nav";
 import "./helpdesk-theme.css";
 
 export default async function HelpdeskLayout({ children }: { children: React.ReactNode }) {
-  let ability;
-  let session;
-
-  try {
-    const result = await staffAuthorize();
-    ability = result.ability;
-    session = result.session;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    if (msg.includes("authentication required") || msg.includes("expired or invalid")) {
-      redirect("/login");
-    }
-    redirect("/login");
-  }
+  const { ability, session } = await staffAuthorizeOrRedirect();
 
   if (!ability.can("read", "HelpdeskCase")) {
     return (

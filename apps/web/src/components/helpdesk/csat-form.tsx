@@ -93,7 +93,7 @@ export function CsatForm({ caseId }: CsatFormProps) {
           rows={2}
           maxLength={500}
           disabled={isPending}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 resize-none"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50 resize-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           aria-label="Optional comment"
         />
       )}

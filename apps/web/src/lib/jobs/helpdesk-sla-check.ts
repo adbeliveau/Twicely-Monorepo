@@ -38,7 +38,10 @@ const queue = createQueue<HelpdeskSlaCheckData>(QUEUE_NAME, {
 createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
   const now = new Date();
   const nowMs = now.getTime();
-  const slaWarningThreshold = await getPlatformSetting<number>('helpdesk.sla.warningThreshold', 0.75);
+  const [slaWarningThreshold, slaBatchSize] = await Promise.all([
+    getPlatformSetting<number>('helpdesk.sla.warningThreshold', 0.75),
+    getPlatformSetting<number>('helpdesk.slaCheck.batchSize', 500),
+  ]);
 
   const activeCases = await db
     .select({
@@ -61,7 +64,7 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
         isNotNull(helpdeskCase.slaResolutionDueAt)
       )
     )
-    .limit(500);
+    .limit(slaBatchSize);
 
   const slaPolicies = await db
     .select({ priority: helpdeskSlaPolicy.priority, escalateOnBreach: helpdeskSlaPolicy.escalateOnBreach })
@@ -154,9 +157,10 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskSlaCheck(): Promise<void> {
+  const cronPattern = await getPlatformSetting<string>('helpdesk.cron.slaCheck.pattern', '*/5 * * * *');
   await queue.add(
     'sla-check',
     { triggeredAt: new Date().toISOString() },
-    { jobId: 'helpdesk-sla-check', repeat: { pattern: '*/5 * * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'helpdesk-sla-check', repeat: { pattern: cronPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 }

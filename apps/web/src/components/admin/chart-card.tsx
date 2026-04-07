@@ -28,7 +28,7 @@ interface ChartCardProps {
 }
 
 /**
- * Card wrapper for charts — TailAdmin-inspired design.
+ * Card wrapper for charts.
  * Provides title bar with optional period tabs and a chart area.
  *
  * Usage:

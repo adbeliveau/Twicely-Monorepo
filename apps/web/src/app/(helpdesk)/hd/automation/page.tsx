@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { getAllAutomationRules } from '@/lib/queries/helpdesk-automation';
 import { AutomationRuleList } from './automation-rule-list';
 import { Zap } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Zap } from 'lucide-react';
 export const metadata: Metadata = { title: 'Automation Rules | Twicely Hub' };
 
 export default async function HelpdeskAutomationPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can('manage', 'HelpdeskAutomationRule')) {
     return <p className="p-6 text-sm text-red-600">Access denied. HELPDESK_MANAGER role required.</p>;
   }

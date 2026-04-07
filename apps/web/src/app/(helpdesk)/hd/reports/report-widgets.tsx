@@ -37,7 +37,7 @@ export function VolumeTimeseries({
             <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5">
               <div className="w-full flex gap-px items-end" style={{ height: "120px" }}>
                 <div
-                  className="flex-1 bg-blue-500 rounded-t"
+                  className="flex-1 bg-brand-500 rounded-t"
                   style={{ height: `${createdPct}%`, minHeight: d.created > 0 ? "2px" : "0" }}
                   title={`Created: ${d.created}`}
                 />
@@ -53,7 +53,7 @@ export function VolumeTimeseries({
         })}
       </div>
       <div className="flex items-center justify-center gap-4 mt-2">
-        <LegendDot color="bg-blue-500" label="Created" />
+        <LegendDot color="bg-brand-500" label="Created" />
         <LegendDot color="bg-emerald-500" label="Resolved" />
       </div>
     </div>
@@ -81,7 +81,7 @@ export function HorizontalBarList({
   colorClass?: string;
 }) {
   const maxVal = Math.max(...items.map((i) => i.value), 1);
-  const barColor = colorClass ?? "bg-blue-500";
+  const barColor = colorClass ?? "bg-brand-500";
 
   return (
     <div className="space-y-3">
@@ -189,7 +189,7 @@ export function DateRangeSelector({ currentPreset }: { currentPreset: string }) 
 
   return (
     <select
-      className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
       value={currentPreset}
       onChange={(e) => router.push(`/hd/reports?preset=${e.target.value}`)}
     >

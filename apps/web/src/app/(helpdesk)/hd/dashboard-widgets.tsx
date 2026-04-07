@@ -113,7 +113,7 @@ export function CaseVolumeChart({ data }: { data: { date: string; email: number;
           return (
             <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
               <div className="w-full flex flex-col justify-end rounded-md overflow-hidden" style={{ height: `${heightPct}%`, minHeight: total > 0 ? "4px" : 0 }}>
-                <div className="bg-blue-500" style={{ height: `${emailPct}%` }} title={`Email: ${d.email}`} />
+                <div className="bg-brand-500" style={{ height: `${emailPct}%` }} title={`Email: ${d.email}`} />
                 <div className="bg-emerald-500" style={{ height: `${webPct}%` }} title={`Web: ${d.web}`} />
                 <div className="bg-indigo-500" style={{ height: `${sysPct}%` }} title={`System: ${d.system}`} />
               </div>
@@ -123,7 +123,7 @@ export function CaseVolumeChart({ data }: { data: { date: string; email: number;
         })}
       </div>
       <div className="flex items-center justify-center gap-4 mt-3">
-        <LegendDot color="bg-blue-500" label="Email" />
+        <LegendDot color="bg-brand-500" label="Email" />
         <LegendDot color="bg-emerald-500" label="Web" />
         <LegendDot color="bg-indigo-500" label="System" />
       </div>
@@ -149,7 +149,7 @@ export function TeamWorkloadRow({ agent }: { agent: { name: string; initials: st
   const isNearCap = pct >= 80;
   return (
     <div className="flex items-center gap-3">
-      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold", isNearCap ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500")}>
+      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold", isNearCap ? "bg-red-500/20 text-red-500" : "bg-brand-500/20 text-brand-500")}>
         {agent.initials}
       </div>
       <div className="flex-1 min-w-0">
@@ -158,7 +158,7 @@ export function TeamWorkloadRow({ agent }: { agent: { name: string; initials: st
           <span className="text-xs" style={{ color: "rgb(var(--hd-text-muted))" }}>{agent.current} / {agent.max} cases</span>
         </div>
         <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgb(var(--hd-bg-card))" }}>
-          <div className={cn("h-full rounded-full transition-all", isNearCap ? "bg-red-500" : "bg-blue-500")} style={{ width: `${pct}%` }} />
+          <div className={cn("h-full rounded-full transition-all", isNearCap ? "bg-red-500" : "bg-brand-500")} style={{ width: `${pct}%` }} />
         </div>
       </div>
     </div>
@@ -217,13 +217,13 @@ export function ActivityRow({ activity }: { activity: { type: string; agent: str
   const getDescription = () => {
     switch (activity.type) {
       case "resolved":
-        return <><span className="font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{activity.agent}</span>{" resolved "}<span className="font-medium text-blue-500">{activity.caseNumber}</span></>;
+        return <><span className="font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{activity.agent}</span>{" resolved "}<span className="font-medium text-brand-500">{activity.caseNumber}</span></>;
       case "assigned":
-        return <><span className="font-medium text-blue-500">{activity.caseNumber}</span>{" assigned to "}<span className="font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{activity.agent}</span></>;
+        return <><span className="font-medium text-brand-500">{activity.caseNumber}</span>{" assigned to "}<span className="font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{activity.agent}</span></>;
       case "created":
-        return <>{"New case "}<span className="font-medium text-blue-500">{activity.caseNumber}</span>{" from "}<span style={{ color: "rgb(var(--hd-text-secondary))" }}>{activity.agent}</span></>;
+        return <>{"New case "}<span className="font-medium text-brand-500">{activity.caseNumber}</span>{" from "}<span style={{ color: "rgb(var(--hd-text-secondary))" }}>{activity.agent}</span></>;
       case "escalated":
-        return <><span className="font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{activity.agent}</span>{" escalated "}<span className="font-medium text-blue-500">{activity.caseNumber}</span>{activity.description && <span style={{ color: "rgb(var(--hd-text-muted))" }}> to {activity.description}</span>}</>;
+        return <><span className="font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{activity.agent}</span>{" escalated "}<span className="font-medium text-brand-500">{activity.caseNumber}</span>{activity.description && <span style={{ color: "rgb(var(--hd-text-muted))" }}> to {activity.description}</span>}</>;
       default:
         return activity.description;
     }

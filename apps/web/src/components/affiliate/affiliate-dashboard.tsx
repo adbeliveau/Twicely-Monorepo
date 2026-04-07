@@ -44,7 +44,8 @@ export function AffiliateDashboard({
   const [copied, setCopied] = useState(false);
 
   async function copyLink() {
-    await navigator.clipboard.writeText(`twicely.co/ref/${referralCode}`);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+    await navigator.clipboard.writeText(`${baseUrl}?ref=${referralCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -71,7 +72,7 @@ export function AffiliateDashboard({
         <CardContent>
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded-md border bg-muted px-3 py-2 text-sm">
-              twicely.co/ref/{referralCode}
+              twicely.co?ref={referralCode}
             </code>
             <Button variant="outline" size="sm" onClick={copyLink}>
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -131,7 +132,7 @@ export function AffiliateDashboard({
           <a href="/my/selling/affiliate/payouts">View Payouts</a>
         </Button>
         <Button variant="outline" asChild>
-          <a href="#promo-codes">Promo Codes</a>
+          <a href="/my/selling/promotions">Promo Codes</a>
         </Button>
       </div>
     </div>

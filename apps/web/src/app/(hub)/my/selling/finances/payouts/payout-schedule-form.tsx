@@ -94,7 +94,7 @@ export function PayoutScheduleForm({
         onValueChange={(v: string) => setSelectedInterval(v as PayoutInterval)}
         className="space-y-3"
       >
-        {(['daily', 'weekly', 'manual'] as PayoutInterval[]).map((interval) => {
+        {(['daily', 'weekly', 'monthly', 'manual'] as PayoutInterval[]).map((interval) => {
           const isAvailable = availableOptions.includes(interval);
           const { label, description } = INTERVAL_LABELS[interval];
 

@@ -82,9 +82,15 @@ export default async function SubcategoryPage({
 
       {/* Category Header */}
       <div>
-        <h1 className="text-2xl font-bold md:text-3xl">{subcategory.name}</h1>
+        <div className="tw-eyebrow">
+          <span className="tw-eyebrow-dot" />
+          Category
+        </div>
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--tw-black)]">
+          <em className="not-italic text-[var(--mg)]">{subcategory.name}</em>
+        </h1>
         {subcategory.description && (
-          <p className="mt-2 text-muted-foreground">{subcategory.description}</p>
+          <p className="mt-2 text-[17px] text-[var(--tw-muted)]">{subcategory.description}</p>
         )}
       </div>
 
@@ -95,7 +101,7 @@ export default async function SubcategoryPage({
 
       {/* Results Header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm font-bold text-[var(--tw-muted)]">
           {results.totalCount.toLocaleString()} listings
         </p>
         <SortSelect currentSort={filters.sort ?? 'newest'} />

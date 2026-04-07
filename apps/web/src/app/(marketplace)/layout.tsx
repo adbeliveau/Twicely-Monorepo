@@ -12,10 +12,9 @@ export default async function MarketplaceLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const consentRequired = await getPlatformSetting<boolean>(
-    'gdpr.cookieConsentRequired',
-    true
-  );
+  const consentRequired = process.env.NODE_ENV === 'development'
+    ? false
+    : await getPlatformSetting<boolean>('gdpr.cookieConsentRequired', true);
 
   let isAuthenticated = false;
   let isEuVisitor = true; // conservative default: assume EU
@@ -41,7 +40,7 @@ export default async function MarketplaceLayout({
     <div className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
       <SkipNav />
       <MarketplaceHeader />
-      <main id="main-content" tabIndex={-1} className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main id="main-content" tabIndex={-1} className="tw-page-shell flex-1 pb-16 md:pb-0">{children}</main>
       <MarketplaceFooter />
       <MobileBottomNav />
       <CookieConsentBanner

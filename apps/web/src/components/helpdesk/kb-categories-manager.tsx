@@ -80,7 +80,7 @@ export function KbCategoriesManager({ categories }: KbCategoriesManagerProps) {
         <button
           type="button"
           onClick={handleNew}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           <Plus className="h-4 w-4" />
           New Category
@@ -122,7 +122,7 @@ export function KbCategoriesManager({ categories }: KbCategoriesManagerProps) {
                 <button
                   type="button"
                   onClick={() => handleEdit(cat)}
-                  className="rounded p-1 text-gray-400 hover:text-blue-600"
+                  className="rounded p-1 text-gray-400 hover:text-brand-500"
                   aria-label={`Edit ${cat.name}`}
                 >
                   <Pencil className="h-4 w-4" />

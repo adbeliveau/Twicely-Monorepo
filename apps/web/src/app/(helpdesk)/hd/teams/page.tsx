@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { getAllTeamsWithMembers } from '@/lib/queries/helpdesk-teams';
 import { TeamList } from './team-list';
 import { Users } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Users } from 'lucide-react';
 export const metadata: Metadata = { title: 'Teams | Twicely Hub' };
 
 export default async function HelpdeskTeamsPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can('manage', 'HelpdeskTeam')) {
     return <p className="p-6 text-sm text-red-600">Access denied. HELPDESK_MANAGER role required.</p>;
   }

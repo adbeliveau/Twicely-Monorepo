@@ -99,7 +99,7 @@ export function MessageBubble({
   } : {};
 
   const avatarStyles: Record<MessageType, string> = {
-    INBOUND: "bg-blue-500/20 text-blue-500",
+    INBOUND: "bg-brand-500/20 text-brand-500",
     OUTBOUND: "bg-green-500/20 text-green-500",
     INTERNAL: "bg-amber-500/20 text-amber-500",
     SYSTEM: "text-slate-500",

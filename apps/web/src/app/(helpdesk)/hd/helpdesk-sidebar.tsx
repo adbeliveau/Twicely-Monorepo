@@ -105,7 +105,7 @@ export function HelpdeskSidebar({ agent, onToggleStatus, badges = {}, permission
   const badgeColors: Record<string, string> = {
     red: "bg-red-500/20 text-red-500",
     amber: "bg-amber-500/20 text-amber-500",
-    blue: "bg-blue-500/20 text-blue-500",
+    blue: "bg-brand-500/20 text-brand-500",
     green: "bg-green-500/20 text-green-500",
     neutral: "bg-slate-500/20 text-slate-500",
   };
@@ -129,7 +129,7 @@ export function HelpdeskSidebar({ agent, onToggleStatus, badges = {}, permission
       <div className="flex items-center gap-3 px-4 py-4 border-b" style={{ borderColor: "rgb(var(--hd-border))" }}>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm flex-shrink-0"
+          className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700 text-white font-bold text-sm flex-shrink-0"
         >
           T
         </button>

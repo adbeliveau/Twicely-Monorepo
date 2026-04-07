@@ -5,6 +5,7 @@
 
 @theme {
   --font-*: initial;
+  --font-sans: Nunito, sans-serif;
   --font-outfit: Outfit, sans-serif;
 
   --breakpoint-*: initial;
@@ -39,18 +40,18 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #faf5ff;
-  --color-brand-50: #f5f0ff;
-  --color-brand-100: #ede5ff;
-  --color-brand-200: #ddd0fe;
-  --color-brand-300: #c4a8fd;
-  --color-brand-400: #a67afb;
-  --color-brand-500: #7c3aed;
-  --color-brand-600: #6d28d9;
-  --color-brand-700: #5b21b6;
-  --color-brand-800: #4c1d95;
-  --color-brand-900: #3b1578;
-  --color-brand-950: #2e1065;
+  --color-brand-25: #fef5fd;
+  --color-brand-50: #fdf0fc;
+  --color-brand-100: #fbe0f9;
+  --color-brand-200: #f6bff2;
+  --color-brand-300: #f198e9;
+  --color-brand-400: #ec5fdc;
+  --color-brand-500: #E91ECB;
+  --color-brand-600: #C015AB;
+  --color-brand-700: #9A1189;
+  --color-brand-800: #7B0E6E;
+  --color-brand-900: #610B57;
+  --color-brand-950: #400740;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -186,7 +187,7 @@
   }
 
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal font-sans z-1 bg-gray-50;
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -1756,4 +1757,429 @@ pre[class*="language-"].line-numbers {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BRAND V2 — Marketplace shared primitives
+   ───────────────────────────────────────────────────────────
+   Reusable across all marketplace pages so non-landing surfaces
+   (search, category, pricing, auth, etc.) inherit the same
+   premium-retail aesthetic as the landing page without needing
+   the `.landing` scope. Mirrors landing.css primitives but lives
+   in the global layer so any page can adopt them.
+   See Decision #143 (Brand System v2 — Magenta + Nunito).
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --mg: #E91ECB;
+  --mg-dark: #C015AB;
+  --mg-pale: #FDF0FC;
+  --mg-mid: rgba(233, 30, 203, 0.12);
+  --tw-black: #141414;
+  --tw-bg: #F7F6F8;
+  --tw-bg-2: #F2F0F4;
+  --tw-border: #EBEBEB;
+  --tw-muted: #6B6571;
+  --tw-muted-lt: #A8A0AE;
+  --tw-green: #15803D;
+  --tw-green-bg: #EDFAF4;
+  --tw-r-xl: 28px;
+  --tw-r-lg: 20px;
+  --tw-r-md: 14px;
+  --tw-r-sm: 10px;
+  --tw-r-pill: 999px;
+  --tw-shadow: 0 16px 48px rgba(20, 20, 20, 0.07);
+  --tw-shadow-sm: 0 4px 16px rgba(20, 20, 20, 0.06);
+}
+
+/* ── Section labels & titles ── */
+.tw-section-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--mg);
+  margin-bottom: 10px;
+}
+.tw-section-title {
+  font-weight: 900;
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--tw-black);
+  margin-bottom: 14px;
+}
+.tw-section-title em {
+  color: var(--mg);
+  font-style: italic;
+}
+
+/* ── Eyebrow pill (announcement / status above titles) ── */
+.tw-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--mg-pale);
+  border: 1px solid rgba(233, 30, 203, 0.2);
+  border-radius: var(--tw-r-pill);
+  padding: 7px 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--mg);
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+.tw-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mg);
+}
+
+/* ── Buttons (pill-shaped, brand-aware) ── */
+.tw-btn-mg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--tw-r-pill);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: var(--mg);
+  color: #fff;
+  padding: 13px 26px;
+  box-shadow: 0 8px 24px rgba(233, 30, 203, 0.25);
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.tw-btn-mg:hover {
+  background: var(--mg-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(233, 30, 203, 0.35);
+}
+
+.tw-btn-blk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--tw-r-pill);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: var(--tw-black);
+  color: #fff;
+  padding: 13px 26px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.tw-btn-blk:hover {
+  background: #2a2a2a;
+  transform: translateY(-1px);
+}
+
+.tw-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--tw-r-pill);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  background: #fff;
+  color: var(--tw-black);
+  padding: 13px 26px;
+  border: 1.5px solid var(--tw-border);
+  transition: all 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.tw-btn-ghost:hover { border-color: var(--tw-black); }
+
+/* ── Card primitives ── */
+.tw-card {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-lg);
+  padding: 24px;
+  transition: all 0.2s;
+}
+.tw-card:hover {
+  border-color: rgba(233, 30, 203, 0.3);
+  box-shadow: var(--tw-shadow-sm);
+}
+
+.tw-card-shell {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-xl);
+  box-shadow: var(--tw-shadow);
+  padding: 28px;
+  overflow: hidden;
+}
+
+/* ── Page surface ── */
+.tw-surface {
+  background: var(--tw-bg);
+  min-height: 100%;
+}
+
+/* ── Page shell — wraps marketplace <main> so non-landing pages get a
+   consistent max-width container without each page having to add it.
+   Targets all direct <div> children (skipping JSON-LD <script> tags).
+   Pages opt out by adding `.landing` or `.tw-fullwidth` to their root div. ── */
+main.tw-page-shell > div:not(.landing):not(.tw-fullwidth) {
+  max-width: 1380px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 28px;
+  padding-right: 28px;
+  padding-top: 24px;
+  padding-bottom: 40px;
+  width: 100%;
+}
+@media (max-width: 640px) {
+  main.tw-page-shell > div:not(.landing):not(.tw-fullwidth) {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ── Badges (mirror landing badge tokens) ── */
+.tw-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: var(--tw-r-pill);
+  white-space: nowrap;
+}
+.tw-badge-mg { background: var(--mg); color: #fff; }
+.tw-badge-blk { background: var(--tw-black); color: #fff; }
+.tw-badge-red { background: #DC2626; color: #fff; }
+.tw-badge-green { background: var(--tw-green-bg); color: var(--tw-green); border: 1px solid rgba(21, 128, 61, 0.15); }
+.tw-badge-white { background: rgba(255, 255, 255, 0.92); color: var(--tw-black); }
+.tw-badge-pale { background: var(--mg-pale); color: var(--mg); border: 1px solid rgba(233, 30, 203, 0.2); }
+
+/* ── Small button variants ── */
+.tw-btn-sm-mg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--tw-r-pill);
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  border: none;
+  background: var(--mg);
+  color: #fff;
+  padding: 7px 14px;
+  box-shadow: 0 4px 14px rgba(233, 30, 203, 0.2);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.tw-btn-sm-mg:hover { background: var(--mg-dark); }
+
+.tw-btn-sm-gh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--tw-r-pill);
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+  background: #fff;
+  color: var(--tw-black);
+  padding: 8px 16px;
+  border: 1.5px solid var(--tw-border);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.tw-btn-sm-gh:hover { border-color: var(--tw-black); }
+
+/* ── Feature card (large composed cards) ── */
+.tw-feature-card {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-xl);
+  padding: 36px;
+  box-shadow: var(--tw-shadow-sm);
+}
+
+/* ── Category / nav tile (clickable square tile) ── */
+.tw-tile {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-lg);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+.tw-tile:hover {
+  border-color: var(--mg);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(233, 30, 203, 0.1);
+}
+.tw-tile-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--mg-pale);
+  border: 1px solid rgba(233, 30, 203, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg);
+  flex-shrink: 0;
+}
+
+/* ── Pricing card (mirror landing) ── */
+.tw-pricing-card {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-lg);
+  padding: 28px 24px;
+  transition: all 0.22s;
+  position: relative;
+  overflow: hidden;
+}
+.tw-pricing-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--tw-border);
+  transition: background 0.2s;
+}
+.tw-pricing-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--tw-shadow);
+  border-color: #ccc;
+}
+.tw-pricing-card:hover::before { background: var(--mg); }
+.tw-pricing-card.featured { border-color: rgba(233, 30, 203, 0.3); }
+.tw-pricing-card.featured::before { background: var(--mg); }
+.tw-pc-tag {
+  display: inline-flex;
+  background: var(--tw-bg);
+  border: 1px solid var(--tw-border);
+  border-radius: var(--tw-r-pill);
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--tw-muted);
+}
+.tw-pc-tag.mg {
+  background: var(--mg-pale);
+  border-color: rgba(233, 30, 203, 0.2);
+  color: var(--mg);
+}
+
+/* ── Hero shell + grid (mirror landing) ── */
+.tw-hero-shell {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-xl);
+  box-shadow: var(--tw-shadow);
+  padding: 28px;
+  overflow: hidden;
+}
+.tw-hero-copy {
+  border-radius: var(--tw-r-lg);
+  background: radial-gradient(circle at top right, rgba(233, 30, 203, 0.09), transparent 40%),
+              linear-gradient(160deg, #fff 0%, #fdfbff 100%);
+  border: 1.5px solid var(--tw-border);
+  padding: 44px 40px;
+}
+.tw-hero-h1 {
+  font-weight: 900;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--tw-black);
+  margin-bottom: 18px;
+}
+
+/* ── Trust grid (4-up cards in a bordered grid) ── */
+.tw-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--tw-border);
+  border: 1px solid var(--tw-border);
+  border-radius: var(--tw-r-lg);
+  overflow: hidden;
+}
+.tw-trust-cell {
+  background: #fff;
+  padding: 28px 24px;
+  transition: background 0.2s;
+}
+.tw-trust-cell:hover { background: var(--tw-bg); }
+.tw-trust-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--mg-pale);
+  border: 1px solid rgba(233, 30, 203, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg);
+  margin-bottom: 14px;
+}
+@media (max-width: 1024px) {
+  .tw-trust-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .tw-trust-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Empty / blank centered state card ── */
+.tw-empty-card {
+  background: #fff;
+  border: 1.5px solid var(--tw-border);
+  border-radius: var(--tw-r-xl);
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: var(--tw-shadow-sm);
+}
+
+/* ── Step indicator (numbered circles, 1/2/3) ── */
+.tw-step-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--mg-pale);
+  border: 1.5px solid rgba(233, 30, 203, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg);
+  font-weight: 900;
+  font-size: 15px;
+  flex-shrink: 0;
 }

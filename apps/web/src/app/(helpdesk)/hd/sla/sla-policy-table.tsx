@@ -27,7 +27,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   CRITICAL: "text-red-600",
   URGENT: "text-orange-600",
   HIGH: "text-amber-600",
-  NORMAL: "text-blue-600",
+  NORMAL: "text-brand-500",
   LOW: "text-gray-600",
 };
 

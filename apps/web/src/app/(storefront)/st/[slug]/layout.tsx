@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       description,
       images: data.seller.branding.logoUrl ? [data.seller.branding.logoUrl] : [],
       type: 'website',
-      url: `https://twicely.co/st/${slug}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co'}/st/${slug}`,
     },
   };
 }

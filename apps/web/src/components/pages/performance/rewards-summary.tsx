@@ -1,5 +1,6 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import type { PerformanceBand } from '@/lib/scoring/score-types';
 
 interface RewardsSummaryProps {
@@ -62,7 +63,7 @@ export function RewardsSummary({ currentBand }: RewardsSummaryProps) {
           </div>
           {currentRewards.map((r) => (
             <div key={r.label} className="flex items-start gap-2">
-              <span className="mt-0.5 text-green-500">✓</span>
+              <Check className="size-4 mt-0.5 text-green-600 shrink-0" strokeWidth={2.5} />
               <div>
                 <div className="text-sm font-medium">{r.label}</div>
                 <div className="text-xs text-muted-foreground">{r.description}</div>

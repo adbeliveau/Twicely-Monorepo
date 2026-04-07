@@ -375,6 +375,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'jobs.cron.health.pattern', value: '*/5 * * * *', type: 'string', category: 'jobs', description: 'Cron pattern for system health checks (default: every 5 minutes)' },
   { key: 'jobs.cron.vacation.pattern', value: '0 0 * * *', type: 'string', category: 'jobs', description: 'Cron pattern for ending expired vacation modes (default: midnight UTC)' },
   { key: 'jobs.cron.sellerScoreRecalc.pattern', value: '0 3 * * *', type: 'string', category: 'jobs', description: 'Cron pattern for seller score recalculation (default: 3 AM UTC)' },
+  { key: 'jobs.cron.accountingSync.pattern', value: '0 2 * * *', type: 'string', category: 'jobs', description: 'Cron pattern for accounting sync job (default: 2 AM UTC)' },
   { key: 'jobs.scheduler.tickIntervalMs', value: 5000, type: 'number', category: 'jobs', description: 'Crosslister scheduler tick interval in milliseconds (default: 5000). Restart required.' },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -496,4 +497,20 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'accounting.sync.defaultFrequency', value: 'DAILY', type: 'string' as const, category: 'accounting', description: 'Default sync frequency for new integrations' },
   { key: 'accounting.sync.maxRetries', value: 3, type: 'number' as const, category: 'accounting', description: 'Max retry attempts for failed sync operations' },
   { key: 'accounting.sync.batchSize', value: 50, type: 'number' as const, category: 'accounting', description: 'Number of records to sync per batch' },
+
+  // Helpdesk cron patterns
+  { key: 'helpdesk.cron.autoClose.pattern', value: '*/15 * * * *', type: 'string' as const, category: 'helpdesk', description: 'Cron pattern for helpdesk auto-close job (default: every 15 min)' },
+  { key: 'helpdesk.cron.slaCheck.pattern', value: '*/5 * * * *', type: 'string' as const, category: 'helpdesk', description: 'Cron pattern for helpdesk SLA check job (default: every 5 min)' },
+  { key: 'helpdesk.cron.csatSend.pattern', value: '*/5 * * * *', type: 'string' as const, category: 'helpdesk', description: 'Cron pattern for helpdesk CSAT send job (default: every 5 min)' },
+  { key: 'helpdesk.cron.retentionPurge.pattern', value: '0 4 * * *', type: 'string' as const, category: 'helpdesk', description: 'Cron pattern for helpdesk retention purge job (default: 4 AM UTC daily)' },
+
+  // Helpdesk batch sizes
+  { key: 'helpdesk.autoClose.batchSize', value: 100, type: 'number' as const, category: 'helpdesk', description: 'Max cases per auto-close run' },
+  { key: 'helpdesk.slaCheck.batchSize', value: 500, type: 'number' as const, category: 'helpdesk', description: 'Max active cases checked per SLA check run' },
+  { key: 'helpdesk.csat.batchSize', value: 50, type: 'number' as const, category: 'helpdesk', description: 'Max CSAT surveys sent per run' },
+  { key: 'helpdesk.retentionPurge.batchSize', value: 200, type: 'number' as const, category: 'helpdesk', description: 'Max cases purged per retention purge run' },
+
+  // Cleanup batch sizes
+  { key: 'cleanup.dataPurge.exportBatchSize', value: 500, type: 'number' as const, category: 'cleanup', description: 'Max expired data exports purged per run' },
+  { key: 'cleanup.auditArchive.batchSize', value: 10000, type: 'number' as const, category: 'cleanup', description: 'Max audit events archived per run' },
 ];

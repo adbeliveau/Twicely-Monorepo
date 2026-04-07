@@ -19,12 +19,14 @@ interface ImportPageClientProps {
   accounts: CrosslisterAccount[];
   activeBatchId: string | null;
   lastCompletedBatch: ImportBatch | null;
+  initialAccountId?: string | null;
 }
 
 export function ImportPageClient({
   accounts,
   activeBatchId,
   lastCompletedBatch,
+  initialAccountId,
 }: ImportPageClientProps) {
   const [batchId, setBatchId] = useState<string | null>(activeBatchId);
   const [completedBatch, setCompletedBatch] = useState<ImportBatch | null>(lastCompletedBatch);
@@ -56,7 +58,7 @@ export function ImportPageClient({
       </div>
 
       {pageState === 'idle' && (
-        <ImportStartForm accounts={accounts} onBatchStarted={handleBatchStarted} />
+        <ImportStartForm accounts={accounts} onBatchStarted={handleBatchStarted} initialAccountId={initialAccountId} />
       )}
 
       {pageState === 'in_progress' && batchId && (

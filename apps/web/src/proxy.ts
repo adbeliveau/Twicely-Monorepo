@@ -68,6 +68,7 @@ const PUBLIC_PREFIXES = [
 
 const AUTH_REQUIRED_PREFIXES = [
   '/my/',      // User hub
+  '/cart',     // Cart (registry: AUTH-gated)
   '/checkout/', // Checkout flow
   '/api/upload', // Upload API
   '/api/returns/', // Returns API

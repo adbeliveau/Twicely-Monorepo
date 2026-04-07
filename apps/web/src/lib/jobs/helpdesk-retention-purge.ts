@@ -16,7 +16,6 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
 
 const QUEUE_NAME = 'helpdesk-retention-purge';
-const MAX_PER_RUN = 200;
 
 export interface HelpdeskRetentionPurgeData {
   triggeredAt: string;
@@ -32,7 +31,10 @@ const queue = createQueue<HelpdeskRetentionPurgeData>(QUEUE_NAME, {
 });
 
 createWorker<HelpdeskRetentionPurgeData>(QUEUE_NAME, async (_job) => {
-  const retentionDays = await getPlatformSetting<number>('helpdesk.retentionDays', 365);
+  const [retentionDays, retentionBatchSize] = await Promise.all([
+    getPlatformSetting<number>('helpdesk.retentionDays', 365),
+    getPlatformSetting<number>('helpdesk.retentionPurge.batchSize', 200),
+  ]);
 
   if (retentionDays <= 0) {
     logger.warn('[retention-purge] retentionDays <= 0 — skipping purge run');
@@ -51,7 +53,7 @@ createWorker<HelpdeskRetentionPurgeData>(QUEUE_NAME, async (_job) => {
         lt(helpdeskCase.closedAt, cutoff)
       )
     )
-    .limit(MAX_PER_RUN);
+    .limit(retentionBatchSize);
 
   if (expiredCases.length === 0) {
     logger.info('[retention-purge] No cases to purge');
@@ -71,9 +73,10 @@ createWorker<HelpdeskRetentionPurgeData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskRetentionPurge(): Promise<void> {
+  const cronPattern = await getPlatformSetting<string>('helpdesk.cron.retentionPurge.pattern', '0 4 * * *');
   await queue.add(
     'retention-purge',
     { triggeredAt: new Date().toISOString() },
-    { jobId: 'helpdesk-retention-purge', repeat: { pattern: '0 4 * * *', tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'helpdesk-retention-purge', repeat: { pattern: cronPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 }

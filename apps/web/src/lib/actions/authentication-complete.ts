@@ -92,7 +92,8 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
 
   } else if (result === 'AUTHENTICATED') {
     const split = calculateAuthCostSplit(initiator, 'AUTHENTICATED', req.totalFeeCents);
-    const certUrl = `https://twicely.co/verify/${req.certificateNumber ?? ''}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://twicely.co';
+    const certUrl = `${baseUrl}/verify/${req.certificateNumber ?? ''}`;
     const newStatus = isAi ? 'AI_AUTHENTICATED' : 'EXPERT_AUTHENTICATED';
 
     await db.update(authenticationRequest).set({

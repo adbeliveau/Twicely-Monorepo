@@ -13,7 +13,7 @@
  * 3. Analytics — opt-in (usage tracking)
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@twicely/ui/button';
 import { Switch } from '@twicely/ui/switch';
 import { Label } from '@twicely/ui/label';
@@ -59,7 +59,9 @@ function writeConsentCookie(state: ConsentState): void {
   expires.setDate(expires.getDate() + CONSENT_EXPIRY_DAYS);
   const encoded = encodeURIComponent(JSON.stringify(state));
   // A7: httpOnly intentionally omitted — client JS reads consent state to conditionally load analytics
-  document.cookie = `${CONSENT_COOKIE}=${encoded}; expires=${expires.toUTCString()}; path=/; SameSite=Lax; Secure`;
+  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const secureSuffix = isLocalhost ? '' : '; Secure';
+  document.cookie = `${CONSENT_COOKIE}=${encoded}; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureSuffix}`;
 }
 
 export function CookieConsentBanner({
@@ -67,12 +69,15 @@ export function CookieConsentBanner({
   isEuVisitor = true,
   isAuthenticated = false,
 }: Props) {
-  const [visible, setVisible] = useState(() => {
-    if (!consentRequired) return false;
-    if (typeof document === 'undefined') return false;
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!consentRequired) return;
     const existing = readConsentCookie();
-    return !existing || existing.version !== CONSENT_VERSION;
-  });
+    if (!existing || existing.version !== CONSENT_VERSION) {
+      setVisible(true);
+    }
+  }, [consentRequired]);
   const [showDetails, setShowDetails] = useState(false);
   const [functional, setFunctional] = useState(false);
   const [analytics, setAnalytics] = useState(false);

@@ -54,7 +54,7 @@ function TeamForm({
       <div className="flex gap-2">
         <button type="button" onClick={() => onSave(name, description, maxCases, roundRobin)}
           disabled={isPending || !name.trim()}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+          className="rounded bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
           {isPending ? "Saving..." : "Save"}
         </button>
         <button type="button" onClick={onCancel}
@@ -181,7 +181,7 @@ export function TeamList({ teams: initial }: TeamListProps) {
     <div className="space-y-4">
       <div className="flex justify-end">
         <button type="button" onClick={() => setShowCreate(!showCreate)}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600">
           <Plus className="h-4 w-4" /> New Team
         </button>
       </div>
@@ -211,13 +211,13 @@ export function TeamList({ teams: initial }: TeamListProps) {
                   </button>
                   <span className="flex-1 font-medium text-sm" style={{ color: "rgb(var(--hd-text-primary))" }}>{team.name}</span>
                   {team.isDefault && (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500">Default</span>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-500">Default</span>
                   )}
                   <span className="text-xs" style={{ color: "rgb(var(--hd-text-muted))" }}>
                     {team.memberCount} member{team.memberCount !== 1 ? "s" : ""}
                   </span>
                   <button type="button" onClick={() => setEditingId(team.id)} disabled={isPending}
-                    className="p-1 rounded text-blue-500 hover:bg-blue-500/10" aria-label="Edit team">
+                    className="p-1 rounded text-brand-500 hover:bg-brand-500/10" aria-label="Edit team">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   {!team.isDefault && (
@@ -242,7 +242,7 @@ export function TeamList({ teams: initial }: TeamListProps) {
                         className="flex-1 rounded border px-2 py-1 text-xs"
                         style={{ borderColor: "rgb(var(--hd-border))", background: "rgb(var(--hd-bg-panel))", color: "rgb(var(--hd-text-primary))" }} />
                       <button type="button" onClick={() => handleAddMember(team.id)} disabled={isPending || !addMemberInput[team.id]?.trim()}
-                        className="rounded bg-blue-600 px-2 py-1 text-xs text-white disabled:opacity-50">Add</button>
+                        className="rounded bg-brand-500 px-2 py-1 text-xs text-white disabled:opacity-50">Add</button>
                     </div>
                   </div>
                 )}

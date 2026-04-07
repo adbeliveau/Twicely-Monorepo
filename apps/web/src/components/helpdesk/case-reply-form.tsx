@@ -39,7 +39,7 @@ export function CaseReplyForm({ caseId }: CaseReplyFormProps) {
         placeholder="Write your reply here…"
         rows={4}
         disabled={isPending}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 resize-y"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50 resize-y"
         aria-label="Reply body"
       />
       {error && (
@@ -52,7 +52,7 @@ export function CaseReplyForm({ caseId }: CaseReplyFormProps) {
         <button
           type="submit"
           disabled={isPending || !body.trim()}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Send className="h-4 w-4" />
           {isPending ? 'Sending…' : 'Send Reply'}

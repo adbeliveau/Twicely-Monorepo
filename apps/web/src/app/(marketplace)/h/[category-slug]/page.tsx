@@ -40,9 +40,12 @@ export default async function HelpCategoryPage({ params }: Props) {
         <span className="text-gray-700">{category.name}</span>
       </nav>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">{category.name}</h1>
+      <div className="tw-section-label">Help Center</div>
+      <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-2">
+        <em className="not-italic text-brand-500">{category.name}</em>
+      </h1>
       {category.description && (
-        <p className="text-gray-500 mb-8">{category.description}</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">{category.description}</p>
       )}
 
       {articles.length === 0 ? (
@@ -74,10 +77,10 @@ export default async function HelpCategoryPage({ params }: Props) {
         </div>
       )}
 
-      <div className="mt-10 rounded-lg bg-gray-50 border border-gray-200 p-5 text-center">
-        <p className="text-sm text-gray-600">
+      <div className="mt-10 rounded-2xl bg-brand-50 border border-brand-100 p-6 text-center dark:bg-brand-900/20 dark:border-brand-900/40">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
           Didn&apos;t find what you were looking for?{' '}
-          <Link href="/h/contact" className="text-blue-600 hover:underline">
+          <Link href="/h/contact" className="font-extrabold text-brand-500 hover:underline dark:text-brand-400">
             Contact Support
           </Link>
         </p>

@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import Image from 'next/image';
-import { Star, ShieldCheck } from 'lucide-react';
+import { Star, ShieldCheck, Megaphone } from 'lucide-react';
 import { toggleFollow } from '@/lib/actions/follow';
 import { Button } from '@twicely/ui/button';
 import { LocalMeetupStats } from '@/components/local/local-meetup-stats';
@@ -216,9 +216,9 @@ export function StorefrontHeader({
 
         {/* Announcement bar */}
         {seller.branding.announcement && (
-          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 text-sm text-amber-800">
-            <span className="mr-2">📢</span>
-            {seller.branding.announcement}
+          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 text-sm text-amber-800 flex items-start gap-2">
+            <Megaphone className="size-4 shrink-0 mt-0.5" strokeWidth={2} />
+            <span>{seller.branding.announcement}</span>
           </div>
         )}
 

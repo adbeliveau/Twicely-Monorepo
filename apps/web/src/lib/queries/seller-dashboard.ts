@@ -1,6 +1,6 @@
 import { db } from '@twicely/db';
 import { order, orderItem, listing, watchlistItem } from '@twicely/db/schema';
-import { eq, and, gte, count, sum, sql, desc } from 'drizzle-orm';
+import { eq, and, gte, lt, count, sum, sql, desc } from 'drizzle-orm';
 
 export interface SellerDashboardStats {
   revenue30d: number;
@@ -57,7 +57,7 @@ export async function getSellerDashboardStats(
         eq(order.sellerId, sellerId),
         eq(order.status, 'COMPLETED'),
         gte(order.completedAt, sixtyDaysAgo),
-        sql`${order.completedAt} < ${thirtyDaysAgo}`
+        lt(order.completedAt, thirtyDaysAgo)
       )
     );
 
@@ -84,7 +84,7 @@ export async function getSellerDashboardStats(
       and(
         eq(order.sellerId, sellerId),
         gte(order.createdAt, sixtyDaysAgo),
-        sql`${order.createdAt} < ${thirtyDaysAgo}`
+        lt(order.createdAt, thirtyDaysAgo)
       )
     );
 

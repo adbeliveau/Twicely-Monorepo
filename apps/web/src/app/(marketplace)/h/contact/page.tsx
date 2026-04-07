@@ -20,8 +20,11 @@ export default async function ContactSupportPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Contact Support</h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <div className="tw-section-label">Help Center</div>
+        <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white">
+          Contact <em className="not-italic text-brand-500">Support</em>
+        </h1>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Fill out the form below and we&apos;ll respond within one business day.
         </p>
       </div>

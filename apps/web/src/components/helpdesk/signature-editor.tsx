@@ -36,7 +36,7 @@ export function SignatureEditor({ initialSignature }: SignatureEditorProps) {
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="text-xs text-blue-600 font-medium hover:underline disabled:opacity-50"
+            className="text-xs text-brand-500 font-medium hover:underline disabled:opacity-50"
           >
             {isPending ? "Saving..." : "Save"}
           </button>
@@ -54,7 +54,7 @@ export function SignatureEditor({ initialSignature }: SignatureEditorProps) {
             rows={4}
             maxLength={2000}
             placeholder={"Best regards,\nYour Name\nTwicely Support Team"}
-            className="w-full resize-none rounded border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="w-full resize-none rounded border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500/30"
           />
           <p className="text-xs text-gray-400 mt-1">{signature.length}/2000 characters</p>
         </div>

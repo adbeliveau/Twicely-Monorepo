@@ -60,9 +60,9 @@ const STATUS_BADGE: Record<string, string> = {
 
 type ChannelEntry = { icon: React.ComponentType<{ className?: string }>; label: string; color: string };
 const CHANNEL_CONFIG: Record<string, ChannelEntry> = {
-  EMAIL: { icon: Mail, label: "Email", color: "text-blue-400" },
+  EMAIL: { icon: Mail, label: "Email", color: "text-brand-400" },
   WEB: { icon: Globe, label: "Web", color: "text-green-400" },
-  CHAT: { icon: MessageSquare, label: "Chat", color: "text-purple-400" },
+  CHAT: { icon: MessageSquare, label: "Chat", color: "text-fuchsia-400" },
   INTERNAL: { icon: MessageSquare, label: "Internal", color: "text-slate-400" },
   SYSTEM: { icon: MessageSquare, label: "System", color: "text-slate-400" },
 };
@@ -81,7 +81,7 @@ export function FilterSelect({ value, onChange, options }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+        className="appearance-none rounded-lg border py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 cursor-pointer"
         style={{
           background: "rgb(var(--hd-bg-panel))",
           borderColor: "rgb(var(--hd-border))",
@@ -136,7 +136,7 @@ export function CaseRow({ caseData: c, isSelected, onSelect, formatTimeAgo, getS
             {c.caseNumber}
           </span>
           {c.hasUnread && (
-            <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" aria-label="Unread messages" />
+            <span className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" aria-label="Unread messages" />
           )}
           <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase ${channelConfig.color}`} style={{ background: "rgb(var(--hd-bg-card))" }}>
             <ChannelIcon className="h-3 w-3" />

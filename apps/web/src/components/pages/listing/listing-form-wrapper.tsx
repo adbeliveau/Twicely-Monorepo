@@ -16,11 +16,13 @@ interface ListingFormWrapperProps {
 export function ListingFormWrapper({ mode, listingId, initialData, aiAutofillRemaining }: ListingFormWrapperProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(data: ListingFormData, status: 'ACTIVE' | 'DRAFT') {
     if (mode === 'edit' && !listingId) throw new Error('listingId is required in edit mode');
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
       const result =
@@ -32,20 +34,28 @@ export function ListingFormWrapper({ mode, listingId, initialData, aiAutofillRem
         router.push('/my/selling/listings');
         router.refresh();
       } else {
-        // TODO: Show error toast
+        setError(result.error ?? 'Something went wrong. Please try again.');
         setIsSubmitting(false);
       }
     } catch {
+      setError('An unexpected error occurred. Please try again.');
       setIsSubmitting(false);
     }
   }
 
   return (
-    <ListingForm
-      initialData={initialData}
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      aiAutofillRemaining={aiAutofillRemaining}
-    />
+    <div>
+      {error && (
+        <div className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+      <ListingForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        aiAutofillRemaining={aiAutofillRemaining}
+      />
+    </div>
   );
 }

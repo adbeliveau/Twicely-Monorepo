@@ -19,6 +19,7 @@ export function ShippingProfileCard({ profile, listingCount = 0, onEdit }: Shipp
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSettingDefault, setIsSettingDefault] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this shipping profile?')) {
@@ -26,27 +27,27 @@ export function ShippingProfileCard({ profile, listingCount = 0, onEdit }: Shipp
     }
 
     setIsDeleting(true);
+    setError(null);
     const result = await deleteShippingProfile(profile.id);
     setIsDeleting(false);
 
     if (result.success) {
       router.refresh();
     } else {
-      // TODO: Show error toast
-      alert(result.error || 'Failed to delete profile');
+      setError(result.error || 'Failed to delete profile');
     }
   };
 
   const handleSetDefault = async () => {
     setIsSettingDefault(true);
+    setError(null);
     const result = await setDefaultShippingProfile(profile.id);
     setIsSettingDefault(false);
 
     if (result.success) {
       router.refresh();
     } else {
-      // TODO: Show error toast
-      alert(result.error || 'Failed to set default profile');
+      setError(result.error || 'Failed to set default profile');
     }
   };
 
@@ -91,6 +92,9 @@ export function ShippingProfileCard({ profile, listingCount = 0, onEdit }: Shipp
         </div>
       </CardHeader>
       <CardContent>
+        {error && (
+          <p className="mb-3 text-sm text-destructive">{error}</p>
+        )}
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Handling Time:</span>

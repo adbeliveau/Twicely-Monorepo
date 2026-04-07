@@ -118,7 +118,7 @@ export function HelpdeskTopbar({
         {/* Search */}
         <form onSubmit={handleSearch}>
           <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md border focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 hd-transition min-w-[240px]"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md border focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500/20 hd-transition min-w-[240px]"
             style={{ background: "rgb(var(--hd-bg-card))", borderColor: "rgb(var(--hd-border))" }}
           >
             <Search className="w-4 h-4" style={{ color: "rgb(var(--hd-text-dim))" }} />
@@ -199,7 +199,7 @@ function NotificationsDropdown({
             {notifications.map((n) => (
               <div
                 key={n.id}
-                className={cn("p-2 rounded-md cursor-pointer", !n.read && "bg-blue-500/10")}
+                className={cn("p-2 rounded-md cursor-pointer", !n.read && "bg-brand-500/10")}
                 onClick={() => onNavigate(n.caseId)}
               >
                 <p className="text-sm font-medium" style={{ color: "rgb(var(--hd-text-primary))" }}>{n.title}</p>

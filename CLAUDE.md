@@ -21,7 +21,8 @@ Phases A–I complete. Monorepo conversion done. All features built. Audit-clean
 
 ```
 apps/web/        — Next.js marketplace (twicely.co + hub.twicely.co)
-apps/admin/      — TailAdmin Pro (admin hub UI, to be wired)
+apps/admin/      — Admin hub UI (to be wired)
+apps/registry/   — Feature Registry app (Vite + React SPA, Codespring-like dashboard)
 apps/extension/  — Chrome browser extension (placeholder)
 packages/        — 20 shared packages (db, auth, casl, commerce, crosslister, etc.)
 ```

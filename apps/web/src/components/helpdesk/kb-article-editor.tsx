@@ -37,7 +37,7 @@ const AUDIENCE_OPTIONS = [
   { value: 'AGENT_ONLY', label: 'Agents Only' },
 ] as const;
 
-const inputCls = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+const inputCls = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
 const labelCls = 'block text-sm font-medium text-gray-700 mb-1';
 
 export function KbArticleEditor({ categories, initialData }: KbArticleEditorProps) {
@@ -152,7 +152,7 @@ export function KbArticleEditor({ categories, initialData }: KbArticleEditorProp
         )}
         <div className="space-y-3">
           <div className="flex justify-end gap-3">
-            <button type="submit" disabled={isPending} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+            <button type="submit" disabled={isPending} className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
               {isPending ? 'Saving…' : 'Save Draft'}
             </button>
           </div>
@@ -177,14 +177,14 @@ export function KbArticleEditor({ categories, initialData }: KbArticleEditorProp
       <div className="space-y-4">
         <div>
           <label className={labelCls}>Category</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} disabled={isPending} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} disabled={isPending} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
             <option value="">Uncategorized</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div>
           <label className={labelCls}>Audience</label>
-          <select value={audience} onChange={(e) => setAudience(e.target.value)} disabled={isPending} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          <select value={audience} onChange={(e) => setAudience(e.target.value)} disabled={isPending} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
             {AUDIENCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>

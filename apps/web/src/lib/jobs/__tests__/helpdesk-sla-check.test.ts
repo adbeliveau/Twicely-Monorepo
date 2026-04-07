@@ -39,6 +39,16 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) =>
+    Promise.resolve(fallback)
+  ),
+}));
+
+vi.mock('@twicely/notifications/service', () => ({
+  notify: vi.fn(),
+}));
+
 import { enqueueHelpdeskSlaCheck } from '../helpdesk-sla-check';
 import { db } from '@twicely/db';
 

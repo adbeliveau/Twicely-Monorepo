@@ -18,7 +18,9 @@ export const metadata: Metadata = {
   robots: 'noindex',
 };
 
-export default async function ImportPage() {
+type Props = { searchParams: Promise<Record<string, string | undefined>> };
+
+export default async function ImportPage({ searchParams }: Props) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
@@ -30,6 +32,8 @@ export default async function ImportPage() {
   }
 
   const userId = session.user.id;
+  const params = await searchParams;
+  const initialAccountId = params['accountId'] ?? null;
 
   const [accounts, batches] = await Promise.all([
     getConnectedAccounts(userId),
@@ -50,6 +54,7 @@ export default async function ImportPage() {
       accounts={accounts}
       activeBatchId={activeBatch?.id ?? null}
       lastCompletedBatch={lastCompletedBatch}
+      initialAccountId={initialAccountId}
     />
   );
 }

@@ -105,9 +105,15 @@ export default async function CategoryPage({
       {/* Category Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">{category.name}</h1>
+          <div className="tw-eyebrow">
+            <span className="tw-eyebrow-dot" />
+            Category
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--tw-black)]">
+            <em className="not-italic text-[var(--mg)]">{category.name}</em>
+          </h1>
           {category.description && (
-            <p className="mt-2 text-muted-foreground">{category.description}</p>
+            <p className="mt-2 text-[17px] text-[var(--tw-muted)]">{category.description}</p>
           )}
         </div>
         <SetAlertButton
@@ -126,7 +132,7 @@ export default async function CategoryPage({
 
       {/* Results Header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm font-bold text-[var(--tw-muted)]">
           {results.totalCount.toLocaleString()} listings
         </p>
         <SortSelect currentSort={filters.sort ?? 'newest'} />

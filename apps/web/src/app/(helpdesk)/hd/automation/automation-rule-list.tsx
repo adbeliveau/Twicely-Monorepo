@@ -127,7 +127,7 @@ function RuleForm({
           </div>
         ))}
         <button type="button" onClick={() => setConditions((p) => [...p, blankCondition()])}
-          className="text-xs text-blue-500 hover:underline">+ Add condition</button>
+          className="text-xs text-brand-500 hover:underline">+ Add condition</button>
       </div>
       <div className="space-y-2">
         <p className="text-xs font-medium" style={{ color: "rgb(var(--hd-text-secondary))" }}>Actions (at least 1 required)</p>
@@ -149,12 +149,12 @@ function RuleForm({
           </div>
         ))}
         <button type="button" onClick={() => setActions((p) => [...p, blankAction()])}
-          className="text-xs text-blue-500 hover:underline">+ Add action</button>
+          className="text-xs text-brand-500 hover:underline">+ Add action</button>
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={() => onSave(name, trigger, conditions, actions)}
           disabled={isPending || !name.trim() || actions.length === 0}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+          className="rounded bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">
           {isPending ? "Saving..." : "Save"}
         </button>
         <button type="button" onClick={onCancel}
@@ -227,7 +227,7 @@ export function AutomationRuleList({ rules: initial }: AutomationRuleListProps) 
     <div className="space-y-4">
       <div className="flex justify-end">
         <button type="button" onClick={() => setShowCreate(!showCreate)}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          className="inline-flex items-center gap-2 rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600">
           <Plus className="h-4 w-4" /> New Rule
         </button>
       </div>
@@ -277,7 +277,7 @@ export function AutomationRuleList({ rules: initial }: AutomationRuleListProps) 
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 justify-end">
                           <button type="button" onClick={() => setEditingId(rule.id)} disabled={isPending}
-                            className="p-1 rounded text-blue-500 hover:bg-blue-500/10" aria-label="Edit rule">
+                            className="p-1 rounded text-brand-500 hover:bg-brand-500/10" aria-label="Edit rule">
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button type="button" onClick={() => handleDelete(rule.id)} disabled={isPending}

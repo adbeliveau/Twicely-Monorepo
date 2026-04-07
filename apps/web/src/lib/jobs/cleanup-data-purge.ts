@@ -71,6 +71,7 @@ async function purgeExpiredDataExports(): Promise<number> {
   }
   const cutoff = new Date(Date.now() - _exportExpiryDays * 86400000);
 
+  const exportBatchSize = await getPlatformSetting<number>('cleanup.dataPurge.exportBatchSize', 500);
   const expiredExports = await db
     .select({ id: dataExportRequest.id, downloadUrl: dataExportRequest.downloadUrl })
     .from(dataExportRequest)
@@ -80,7 +81,7 @@ async function purgeExpiredDataExports(): Promise<number> {
         lt(dataExportRequest.createdAt, cutoff)
       )
     )
-    .limit(500);
+    .limit(exportBatchSize);
 
   if (expiredExports.length === 0) return 0;
 

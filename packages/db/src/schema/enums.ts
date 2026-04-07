@@ -84,7 +84,7 @@ export const returnReasonBucketEnum = pgEnum('return_reason_bucket', [
 export const disputeStatusEnum = pgEnum('dispute_status', [
   'OPEN', 'UNDER_REVIEW', 'RESOLVED_BUYER', 'RESOLVED_SELLER', 'RESOLVED_PARTIAL', 'APPEALED', 'APPEAL_RESOLVED', 'CLOSED'
 ]);
-export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'COUNTERFEIT', 'REMORSE']);
+export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'COUNTERFEIT', 'REMORSE', 'WRONG_ITEM']);
 
 // §1.7 Reviews
 export const reviewStatusEnum = pgEnum('review_status', ['PENDING', 'APPROVED', 'FLAGGED', 'REMOVED']);

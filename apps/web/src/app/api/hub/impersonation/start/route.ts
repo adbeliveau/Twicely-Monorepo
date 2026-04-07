@@ -16,9 +16,10 @@ import {
 } from '@twicely/auth/impersonation';
 
 const HUB_BASE_URL =
-  process.env.NODE_ENV === 'production'
+  process.env.HUB_BASE_URL ??
+  (process.env.NODE_ENV === 'production'
     ? 'https://hub.twicely.co'
-    : 'http://hub.twicely.local';
+    : 'http://hub.twicely.local');
 
 const COOKIE_DOMAIN =
   process.env.NODE_ENV === 'production' ? '.twicely.co' : '.twicely.local';

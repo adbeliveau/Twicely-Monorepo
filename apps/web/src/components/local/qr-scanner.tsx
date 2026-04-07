@@ -8,6 +8,7 @@ import { confirmReceiptAction } from '@/lib/actions/local-transaction';
 interface QrScannerProps {
   localTransactionId: string;
   onSuccess?: () => void;
+  onSwitchToManual?: () => void;
 }
 
 /**
@@ -15,7 +16,7 @@ interface QrScannerProps {
  * Scans the seller's Ed25519 token QR code.
  * On successful scan: calls confirmReceiptAction with the sellerToken.
  */
-export function QrScanner({ localTransactionId, onSuccess }: QrScannerProps) {
+export function QrScanner({ localTransactionId, onSuccess, onSwitchToManual }: QrScannerProps) {
   const scannerDivId = 'qr-scanner-region';
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,9 +98,9 @@ export function QrScanner({ localTransactionId, onSuccess }: QrScannerProps) {
           Camera access was denied. Please allow camera access in your browser settings.
         </p>
         <p className="text-sm text-muted-foreground">
-          <a href="#manual-entry" className="underline">
+          <button type="button" onClick={onSwitchToManual} className="underline">
             {"Can't scan? Enter the code manually"}
-          </a>
+          </button>
         </p>
       </div>
     );

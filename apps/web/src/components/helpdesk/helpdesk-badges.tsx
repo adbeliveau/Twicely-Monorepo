@@ -30,7 +30,7 @@ const priorityConfig: Record<Priority, { label: string; className: string; icon?
   },
   LOW: {
     label: "Low",
-    className: "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30",
+    className: "bg-brand-500/20 text-brand-500 dark:text-brand-400 border-brand-500/30",
   },
 };
 
@@ -76,7 +76,7 @@ const statusConfig: Record<CaseStatus, { label: string; className: string; icon?
   NEW: {
     label: "New",
     icon: "✨",
-    className: "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30",
+    className: "bg-brand-500/20 text-brand-500 dark:text-brand-400 border-brand-500/30",
   },
   OPEN: {
     label: "Open",
@@ -155,7 +155,7 @@ const typeConfig: Record<CaseType, { label: string; className: string; icon: str
   SUPPORT: {
     label: "Support",
     icon: "💬",
-    className: "bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30",
+    className: "bg-brand-500/20 text-brand-500 dark:text-brand-400 border-brand-500/30",
   },
   DISPUTE: {
     label: "Dispute",
@@ -175,7 +175,7 @@ const typeConfig: Record<CaseType, { label: string; className: string; icon: str
   MODERATION: {
     label: "Moderation",
     icon: "🛡️",
-    className: "bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30",
+    className: "bg-brand-500/20 text-brand-500 dark:text-brand-400 border-brand-500/30",
   },
   ACCOUNT: {
     label: "Account",

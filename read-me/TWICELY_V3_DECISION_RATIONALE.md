@@ -5399,3 +5399,97 @@ What the platform handles invisibly:
 - Update 8+ canonical docs to reflect new system
 - Update platform_settings: remove `buyer.quality.*` threshold keys
 - Update seed data: remove `buyerQualityTier: 'GREEN'` from user seeds
+
+---
+
+## 143. Brand System v2 — Magenta + Nunito
+
+**Date:** 2026-04-06
+**Status:** ACTIVE
+**Builds in:** Post-launch polish (no phase)
+
+### The Problem
+
+The original brand was Purple `#7c3aed` + Outfit display / Open Sans body. After live testing the marketplace landing page felt generic — the purple read as "another SaaS dashboard" and the type system did not differentiate retail from B2B tooling. We need a visual identity that signals "premium consumer resale marketplace" not "developer dashboard."
+
+### The Decision
+
+**Adopt Magenta `#E91ECB` as the single brand color and Nunito as the primary body + display font across the entire web app.**
+
+The brand color is exposed to the app three ways so that every surface stays in lockstep:
+
+1. `--color-brand-{25..950}` Tailwind v4 palette in `apps/web/src/app/globals.css` (12 stops, magenta-tinted neutrals)
+2. `--mg` CSS variable on the `.landing` scope for the landing-only premium-retail aesthetic
+3. `text-brand-500` / `bg-brand-500` Tailwind utilities for component-level use
+
+Nunito replaces Open Sans as `--font-sans` in `apps/web/src/app/layout.tsx` via `next/font/google`. Outfit is retained as `--font-display` for marketing headings only.
+
+**Rationale:**
+1. **Magenta is rare in B2B SaaS.** Stripe, Linear, Vercel, Notion, GitHub all default to blue/purple/indigo. Magenta gives Twicely instant visual differentiation in screenshots, social posts, and store pages.
+2. **Nunito carries warmth.** Geometric humanist sans-serif with rounded terminals. Reads as "consumer marketplace" not "engineering tool." Open Sans was neutral to a fault.
+3. **Single source of truth.** All brand color usage flows through `--color-brand-*` (global) and `--mg` (landing scope). Zero hardcoded `#E91ECB` in component files. Dark mode handled by the same CSS variable system.
+4. **Backwards compatible at the utility level.** Existing `text-brand-500`, `bg-brand-600`, `border-brand-200` Tailwind classes across the codebase automatically pick up the new palette without per-component edits.
+5. **Wordmark establishes vertical lockup.** The `Logo` component is `T<W>ICELY` where the W is `text-brand-500`, with a `BUY · SELL · REPEAT` tagline below. The wordmark replaces the previous text-only "Twicely" treatment in headers and footers.
+
+### Implementation
+
+- `apps/web/src/app/globals.css` — replace `--color-brand-*` palette (12 stops) from purple to magenta scale
+- `apps/web/src/app/layout.tsx` — swap `Open_Sans` → `Nunito` from `next/font/google`, retain Outfit as display
+- `apps/web/src/components/shared/logo.tsx` — new wordmark with `T<W>ICELY` and `BUY · SELL · REPEAT` tagline, centered via `flex flex-col items-center`
+- `apps/web/src/app/(marketplace)/landing.css` — landing-scoped styles using `--mg: #E91ECB` variable for premium retail aesthetic
+- All Tailwind `text-brand-500`, `bg-brand-*`, `border-brand-*` utilities across the codebase pick up the new palette automatically — no per-component edits required
+
+### Non-Goals
+
+- This decision does NOT change brand voice, tone, or copy. Only visual identity.
+- This decision does NOT introduce new brand color stops or utilities. The 12-stop scale is unchanged.
+- This decision does NOT touch the admin app (`apps/admin`) which uses TailAdmin Pro and has its own brand system.
+
+---
+
+## 144. Heart Button Auth Intent — Reuse `?action=watch` Pattern
+
+**Date:** 2026-04-06
+**Status:** ACTIVE
+**Builds in:** Post-launch polish (no phase)
+
+### The Problem
+
+Anonymous users on the landing page see heart icons on trending product cards. Clicking the heart should add the listing to their watchlist. But the user is not logged in — what happens when they click?
+
+Two failure modes to avoid:
+1. **Silent no-op.** Click does nothing → user thinks the site is broken.
+2. **Lost intent.** Click redirects to login → user logs in → ends up on dashboard → forgets which item they wanted to save.
+
+### The Decision
+
+**Reuse the existing `?action=watch` post-login intent pattern that listing detail pages already use.**
+
+When an anonymous user clicks a heart on the landing page:
+1. The button's onClick calls `e.preventDefault()` + `e.stopPropagation()` so the parent `<Link>` to `/i/{slug}` does not navigate
+2. It pushes `/auth/login?callbackUrl=/i/{slug}?action=watch`
+3. After successful login, Better Auth redirects to the `callbackUrl` (validated to be a relative path)
+4. The listing detail page reads `searchParams.action === 'watch'` and passes `autoWatch={true}` to `<WatchButton>`
+5. `WatchButton`'s `useEffect` fires `toggleWatchlistAction` once on mount when `autoWatch && isLoggedIn && !initialWatching`, then strips the query param via `router.replace(/i/{slug}, { scroll: false })`
+
+Logged-in users skip steps 1-4 and call `toggleWatchlistAction` directly with optimistic UI (heart fills red).
+
+**Rationale:**
+1. **The pattern already exists.** `WatchButton` was built with `autoWatch` for exactly this case on listing detail pages. Adding a second pattern would fragment the auth-intent surface.
+2. **The destination is meaningful.** Redirecting to `/i/{slug}` (not `/`) means the user lands on the item they wanted to save. They see the watchlist confirmation in context.
+3. **No new server state.** Intent lives entirely in the URL, not in cookies or session storage. Refreshing the login page or sharing the link still preserves intent.
+4. **One-time fire.** `autoWatchFiredRef` prevents double-toggle on Strict Mode remount. The query param strip prevents re-firing on browser back/forward.
+5. **Works for any auth-gated action.** The same pattern can be extended to `?action=offer`, `?action=message`, `?action=buy` without architectural changes.
+
+### Implementation
+
+- `apps/web/src/components/pages/landing/landing-heart-button.tsx` — new client component, calls `toggleWatchlistAction` directly when logged in, otherwise pushes login URL with `callbackUrl`
+- `apps/web/src/components/pages/landing/landing-trending.tsx` — accept `isLoggedIn` prop, pass to `<LandingHeartButton>`
+- `apps/web/src/app/(marketplace)/page.tsx` — fetch session via `auth.api.getSession({ headers: await headers() })` in the page-level `Promise.all`, pass `isLoggedIn` to `<LandingTrending>`
+- No changes to `WatchButton` — the existing `autoWatch` flow handles the post-login fire
+- No changes to `/auth/login` — `callbackUrl` query param is already validated (must start with `/`, must not start with `//`)
+
+### Non-Goals
+
+- This decision does NOT add a new "favorites" or "wishlist" entity. Watchlist is the canonical save-for-later mechanism per Schema v2.1.0.
+- This decision does NOT cache the watching state on landing cards. Anonymous users always see an empty heart; logged-in users see optimistic local state. A full SSR `isWatching` query per card was rejected as too much DB load for the homepage.

@@ -34,6 +34,9 @@ export async function requireMfaForCriticalAction(
 
   if (!actor) return null;
 
+  // Dev bypass: skip MFA enforcement in development
+  if (process.env.NODE_ENV !== 'production' && process.env.SKIP_MFA === '1') return null;
+
   // SEC-031: Check active roles — ADMIN/SUPER_ADMIN always require MFA
   const activeRoles = await db
     .select({ role: staffUserRole.role })

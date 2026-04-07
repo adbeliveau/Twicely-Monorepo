@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Tag } from 'lucide-react';
 import { buildCategoryUrl } from '@twicely/utils/format';
 import { pluralize } from '@twicely/utils/format';
 
@@ -18,10 +19,13 @@ export function CategoryCard({
   return (
     <Link
       href={buildCategoryUrl(slug, parentSlug)}
-      className="flex flex-col items-center justify-center rounded-lg border bg-card p-4 text-center transition-colors hover:bg-accent"
+      className="tw-tile"
     >
-      <h3 className="font-medium">{name}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <div className="tw-tile-icon">
+        <Tag className="size-5" strokeWidth={2} />
+      </div>
+      <h3 className="text-sm font-extrabold text-[var(--tw-black)]">{name}</h3>
+      <p className="text-xs text-[var(--tw-muted-lt)]">
         {pluralize(listingCount, 'listing')}
       </p>
     </Link>

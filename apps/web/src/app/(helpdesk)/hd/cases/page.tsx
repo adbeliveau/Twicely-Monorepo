@@ -143,7 +143,7 @@ export default function CasesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by case # or subject..."
-              className="w-full rounded-lg border py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="w-full rounded-lg border py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50"
               style={{ background: "rgb(var(--hd-bg-panel))", borderColor: "rgb(var(--hd-border))", color: "rgb(var(--hd-text-primary))" }}
             />
           </div>
@@ -163,7 +163,7 @@ export default function CasesPage() {
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="flex items-center gap-3">
-              <RefreshCw className="h-5 w-5 animate-spin text-blue-500" />
+              <RefreshCw className="h-5 w-5 animate-spin text-brand-500" />
               <span style={{ color: "rgb(var(--hd-text-muted))" }}>Loading cases...</span>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@twicely/ui/avatar';
 import { formatDate } from '@twicely/utils/format';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Star } from 'lucide-react';
 import { LocalMeetupStats } from '@/components/local/local-meetup-stats';
 import type { SellerLocalMetrics } from '@/lib/queries/local-metrics';
 
@@ -56,12 +56,17 @@ export function SellerCard({ seller, trustBadge, localMetrics, fulfillmentType }
           {/* Rating */}
           <div className="mt-1 text-sm text-muted-foreground">
             {seller.averageRating !== null ? (
-              <span>
-                {'★'.repeat(Math.round(seller.averageRating))}
-                {'☆'.repeat(5 - Math.round(seller.averageRating))}
-                <span className="ml-1">
-                  ({seller.totalReviews} reviews)
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-flex" aria-label={`${seller.averageRating} out of 5 stars`}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`size-3.5 ${i < Math.round(seller.averageRating!) ? 'fill-amber-500 text-amber-500' : 'fill-none text-amber-300'}`}
+                      strokeWidth={1.5}
+                    />
+                  ))}
                 </span>
+                <span className="ml-1">({seller.totalReviews} reviews)</span>
               </span>
             ) : (
               <span>No reviews yet</span>

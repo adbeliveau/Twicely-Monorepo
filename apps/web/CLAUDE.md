@@ -331,8 +331,8 @@ A store is a presentation layer. A business is tax metadata. Neither owns anythi
 BASELINE_TESTS=9232
 BASELINE_FILES=731
 BASELINE_TS_ERRORS=0
-LAST_COMMIT=I17-admin-sidebar-final-update
-LAST_UPDATED=2026-03-20 (I17 Admin Sidebar Final Update — Updated admin-nav.ts with all new route groups: Analytics (2 children), Users (4 children), Finance (+3), Moderation (+4), Trust & Safety (new, 4 children), Promotions (new), Categories (2 children). Added 5 icons to sidebar. 26 new tests. PHASE I COMPLETE — ALL PRE-LAUNCH PHASES A-I COMPLETE)
+LAST_COMMIT=Seller-activation-and-registry-app
+LAST_UPDATED=2026-04-06 (Feature Registry app (apps/registry/) created: Vite + React SPA with Dashboard, Feature Board, Canvas (React Flow), Code Map, Search, Tasks views. MCP server with 7 Claude Code integration tools. Feature manifest system with 221 features, 190 routes, 310 tables. Seller activation route GET /api/seller/activate added. Fixes: ensureSellerProfile now sets status=ACTIVE + sellerType=PERSONAL, seller-dashboard.ts uses Drizzle lt() instead of raw sql, notification-bell.tsx suppressHydrationWarning added. Hub sidebar "Start Selling" links to /api/seller/activate. Seller dashboard CTAs for 0 listings.)
 ```
 
 **Status:** ALL PRE-LAUNCH PHASES COMPLETE (A-I: 197/199 done, 98.99%). Phase H fully complete (13/13 done). Phase I fully complete (17/17 done) — I17 updated admin-nav.ts with all route groups (Analytics, Trust & Safety, Promotions, Finance, Moderation, Users, Categories). 26 new tests (9206→9232). Only post-launch items remain (PL.1 Live selling, PL.2 Best-in-Window offer mode).

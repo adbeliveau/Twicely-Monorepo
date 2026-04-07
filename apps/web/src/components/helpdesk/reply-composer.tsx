@@ -142,7 +142,7 @@ export function ReplyComposer({
             type="button"
             onClick={() => setMode("reply")}
             className={cn("px-4 py-2 text-sm font-medium hd-transition flex items-center gap-2 border-r",
-              mode === "reply" ? "bg-blue-500/10 text-blue-500" : ""
+              mode === "reply" ? "bg-brand-500/10 text-brand-500" : ""
             )}
             style={mode !== "reply" ? { background: "rgb(var(--hd-bg-card))", color: "rgb(var(--hd-text-muted))", borderColor: "rgb(var(--hd-border))" } : { borderColor: "rgba(59,130,246,0.3)" }}
           >
@@ -256,7 +256,7 @@ export function ReplyComposer({
           disabled={!body.trim() || isSubmitting}
           className={cn(
             "px-4 py-2 text-sm font-semibold rounded-lg hd-transition flex items-center gap-2",
-            mode === "reply" ? "bg-blue-500 hover:bg-blue-600 text-white disabled:bg-blue-500/50" : "bg-amber-500 hover:bg-amber-600 text-white disabled:bg-amber-500/50",
+            mode === "reply" ? "bg-brand-500 hover:bg-brand-500 text-white disabled:bg-brand-500/50" : "bg-amber-500 hover:bg-amber-600 text-white disabled:bg-amber-500/50",
             "disabled:cursor-not-allowed"
           )}
         >

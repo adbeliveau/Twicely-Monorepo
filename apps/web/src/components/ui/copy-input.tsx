@@ -13,7 +13,7 @@ interface CopyInputProps {
 }
 
 /**
- * Input with a copy-to-clipboard button — adapted from TailAdmin Pro.
+ * Input with a copy-to-clipboard button.
  * Shows "Copied!" feedback for 2 seconds after copying.
  */
 export function CopyInput({

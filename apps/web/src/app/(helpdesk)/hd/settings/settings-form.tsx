@@ -101,11 +101,11 @@ export function HelpdeskSettingsForm({ settings: initial }: SettingsFormProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">Business Hours</h2>
           {editSection !== "bh" ? (
             <button type="button" onClick={() => setEditSection("bh")}
-              className="text-xs text-blue-500 hover:underline">Edit</button>
+              className="text-xs text-brand-500 hover:underline">Edit</button>
           ) : (
             <div className="flex gap-2">
               <button type="button" onClick={handleSaveBusinessHours} disabled={isPending}
-                className="text-xs text-blue-600 font-medium hover:underline disabled:opacity-50">
+                className="text-xs text-brand-500 font-medium hover:underline disabled:opacity-50">
                 {isPending ? "Saving..." : "Save"}
               </button>
               <button type="button" onClick={() => setEditSection(null)}
@@ -152,11 +152,11 @@ export function HelpdeskSettingsForm({ settings: initial }: SettingsFormProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">Auto-Close</h2>
           {editSection !== "ac" ? (
             <button type="button" onClick={() => setEditSection("ac")}
-              className="text-xs text-blue-500 hover:underline">Edit</button>
+              className="text-xs text-brand-500 hover:underline">Edit</button>
           ) : (
             <div className="flex gap-2">
               <button type="button" onClick={handleSaveAutoClose} disabled={isPending}
-                className="text-xs text-blue-600 font-medium hover:underline disabled:opacity-50">
+                className="text-xs text-brand-500 font-medium hover:underline disabled:opacity-50">
                 {isPending ? "Saving..." : "Save"}
               </button>
               <button type="button" onClick={() => setEditSection(null)}
@@ -210,11 +210,11 @@ export function HelpdeskSettingsForm({ settings: initial }: SettingsFormProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">CSAT & Routing</h2>
           {editSection !== "csat" ? (
             <button type="button" onClick={() => setEditSection("csat")}
-              className="text-xs text-blue-500 hover:underline">Edit</button>
+              className="text-xs text-brand-500 hover:underline">Edit</button>
           ) : (
             <div className="flex gap-2">
               <button type="button" onClick={handleSaveCsat} disabled={isPending}
-                className="text-xs text-blue-600 font-medium hover:underline disabled:opacity-50">
+                className="text-xs text-brand-500 font-medium hover:underline disabled:opacity-50">
                 {isPending ? "Saving..." : "Save"}
               </button>
               <button type="button" onClick={() => setEditSection(null)}

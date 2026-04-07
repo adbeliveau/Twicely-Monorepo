@@ -1,7 +1,7 @@
 'use client';
 
 import DOMPurify from 'dompurify';
-import { Shield, Truck, Calendar } from 'lucide-react';
+import { Shield, Truck, Calendar, Star } from 'lucide-react';
 import { SocialLinks } from './social-links';
 import type { StorefrontSeller, StorefrontStats } from '@/lib/queries/storefront';
 
@@ -80,7 +80,12 @@ export function StoreAbout({ seller, stats }: StoreAboutProps) {
           <div>
             <p className="text-gray-500">Rating</p>
             <p className="font-medium text-gray-900">
-              {stats.averageRating ? `★ ${stats.averageRating.toFixed(1)} (${stats.totalReviews})` : 'No reviews yet'}
+              {stats.averageRating ? (
+                <span className="inline-flex items-center gap-1">
+                  <Star className="size-3.5 fill-current text-amber-500" strokeWidth={0} />
+                  {stats.averageRating.toFixed(1)} ({stats.totalReviews})
+                </span>
+              ) : 'No reviews yet'}
             </p>
           </div>
           <div>

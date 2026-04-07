@@ -20,12 +20,12 @@ const STATUS_OPTIONS = [
 type StatusValue = (typeof STATUS_OPTIONS)[number]['value'];
 
 const STATUS_COLORS: Record<string, string> = {
-  NEW: 'bg-blue-100 text-blue-800',
+  NEW: 'bg-brand-100 text-brand-700',
   OPEN: 'bg-green-100 text-green-800',
   PENDING_USER: 'bg-amber-100 text-amber-800',
   PENDING_INTERNAL: 'bg-green-100 text-green-800',
   ON_HOLD: 'bg-gray-100 text-gray-700',
-  ESCALATED: 'bg-purple-100 text-purple-800',
+  ESCALATED: 'bg-orange-100 text-orange-800',
   RESOLVED: 'bg-slate-100 text-slate-700',
   CLOSED: 'bg-gray-100 text-gray-500',
 };
@@ -68,7 +68,7 @@ export function CaseStatusControl({ caseId, currentStatus }: CaseStatusControlPr
         value={status}
         onChange={(e) => handleChange(e.target.value)}
         disabled={isPending}
-        className="w-full rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+        className="w-full rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
         aria-label="Case status"
       >
         {status === 'NEW' && (

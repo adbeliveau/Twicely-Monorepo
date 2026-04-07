@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import type { PlatformRole } from '@twicely/casl/types';
 import {
   getHelpdeskReportMetrics,
@@ -60,7 +60,7 @@ export default async function HelpdeskReportsPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const { ability, session } = await staffAuthorize();
+  const { ability, session } = await staffAuthorizeOrRedirect();
   if (!ability.can('read', 'HelpdeskCase')) {
     return <p className="p-6 text-sm text-red-600">Access denied.</p>;
   }
@@ -124,7 +124,7 @@ export default async function HelpdeskReportsPage({
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-base font-semibold text-gray-800 mb-4">Cases by Type</h2>
-          <HorizontalBarList items={typeItems} colorClass="bg-blue-500" />
+          <HorizontalBarList items={typeItems} colorClass="bg-brand-500" />
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-base font-semibold text-gray-800 mb-4">Cases by Channel</h2>

@@ -122,7 +122,7 @@ async function getInterestMatchedListings(
       db
         .select({
           tagSlug: userInterest.tagSlug,
-          totalWeight: sql<number>`sum(${userInterest.weight}::numeric)`,
+          totalWeight: sql<number>`sum(${userInterest.weight}::numeric)`.as('total_weight'),
         })
         .from(userInterest)
         .where(

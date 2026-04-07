@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { getAllRoutingRulesWithTeams } from '@/lib/queries/helpdesk-routing';
 import { RoutingRuleList } from './routing-rule-list';
 import { GitBranch } from 'lucide-react';
@@ -7,7 +7,7 @@ import { GitBranch } from 'lucide-react';
 export const metadata: Metadata = { title: 'Routing Rules | Twicely Hub' };
 
 export default async function HelpdeskRoutingPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can('manage', 'HelpdeskRoutingRule')) {
     return <p className="p-6 text-sm text-red-600">Access denied. HELPDESK_MANAGER role required.</p>;
   }

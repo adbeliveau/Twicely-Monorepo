@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
 import { getAllMacros } from '@/lib/queries/helpdesk-macros';
 import { MacroList } from './macro-list';
 
 export const metadata: Metadata = { title: 'Macros | Twicely Hub' };
 
 export default async function HelpdeskMacrosPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can('manage', 'HelpdeskMacro')) {
     return <p className="p-6 text-sm text-red-600">Access denied. HELPDESK_LEAD role required.</p>;
   }

@@ -130,7 +130,7 @@ export function KbCategoryForm({
               minLength={2}
               maxLength={100}
               disabled={isPending}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               placeholder="Category name"
             />
           </div>
@@ -146,7 +146,7 @@ export function KbCategoryForm({
               minLength={2}
               maxLength={100}
               disabled={isPending}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               placeholder="category-slug"
             />
           </div>
@@ -161,7 +161,7 @@ export function KbCategoryForm({
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
               disabled={isPending}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               placeholder="Optional description"
             />
           </div>
@@ -175,7 +175,7 @@ export function KbCategoryForm({
                 onChange={(e) => setIcon(e.target.value)}
                 maxLength={50}
                 disabled={isPending}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 placeholder="📦 or emoji"
               />
             </div>
@@ -190,7 +190,7 @@ export function KbCategoryForm({
                 onChange={(e) => setSortOrder(parseInt(e.target.value, 10))}
                 min={0}
                 disabled={isPending}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export function KbCategoryForm({
               value={parentId}
               onChange={(e) => setParentId(e.target.value)}
               disabled={isPending}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
             >
               <option value="">None (top-level)</option>
               {parentOptions.map((c) => (
@@ -243,7 +243,7 @@ export function KbCategoryForm({
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50"
             >
               {isPending ? 'Saving…' : isEditing ? 'Update' : 'Create'}
             </button>

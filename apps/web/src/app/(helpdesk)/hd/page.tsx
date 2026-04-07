@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { staffAuthorize } from "@/lib/casl/staff-authorize";
+import { staffAuthorizeOrRedirect } from "@/lib/casl/staff-authorize";
 import { StatCard, CaseVolumeChart, SlaRing, TeamWorkloadRow } from "./dashboard-widgets";
 import {
   getHelpdeskDashboardStats,
@@ -16,7 +16,7 @@ import { LiveActivityFeed } from "@/components/helpdesk/live-activity-feed";
 export const metadata: Metadata = { title: "Helpdesk Dashboard | Twicely Hub" };
 
 export default async function HelpdeskDashboardPage() {
-  const { ability } = await staffAuthorize();
+  const { ability } = await staffAuthorizeOrRedirect();
   if (!ability.can("read", "HelpdeskCase")) {
     return <p className="p-6 text-sm text-red-600">Access denied</p>;
   }

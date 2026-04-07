@@ -62,6 +62,64 @@ export async function getRecentListings(limit: number = 12): Promise<ListingCard
 }
 
 /**
+ * Get recently sold listings (listing status = SOLD).
+ * Queries listings table directly — these have real images and seller data.
+ */
+export async function getRecentlySoldListings(limit: number = 12): Promise<ListingCardData[]> {
+  const rows = await db
+    .select({
+      id: listing.id,
+      slug: listing.slug,
+      title: listing.title,
+      priceCents: listing.priceCents,
+      originalPriceCents: listing.originalPriceCents,
+      condition: listing.condition,
+      brand: listing.brand,
+      freeShipping: listing.freeShipping,
+      shippingCents: listing.shippingCents,
+      primaryImageUrl: listingImage.url,
+      primaryImageAlt: listingImage.altText,
+      sellerName: user.name,
+      sellerUsername: user.username,
+      sellerAvatarUrl: user.avatarUrl,
+      sellerAverageRating: sellerPerformance.averageRating,
+      sellerTotalReviews: sellerPerformance.totalReviews,
+      sellerShowStars: sellerPerformance.showStars,
+    })
+    .from(listing)
+    .leftJoin(user, eq(listing.ownerUserId, user.id))
+    .leftJoin(sellerProfile, eq(listing.ownerUserId, sellerProfile.userId))
+    .leftJoin(sellerPerformance, eq(sellerProfile.id, sellerPerformance.sellerProfileId))
+    .leftJoin(
+      listingImage,
+      and(eq(listingImage.listingId, listing.id), eq(listingImage.isPrimary, true))
+    )
+    .where(eq(listing.status, 'SOLD'))
+    .orderBy(sql`RANDOM()`)
+    .limit(limit);
+
+  return rows.map((row) => ({
+    id: row.id,
+    slug: row.slug ?? row.id,
+    title: row.title ?? '',
+    priceCents: row.priceCents ?? 0,
+    originalPriceCents: row.originalPriceCents,
+    condition: row.condition ?? 'GOOD',
+    brand: row.brand,
+    freeShipping: row.freeShipping,
+    shippingCents: row.shippingCents ?? 0,
+    primaryImageUrl: row.primaryImageUrl,
+    primaryImageAlt: row.primaryImageAlt,
+    sellerName: row.sellerName ?? 'Unknown Seller',
+    sellerUsername: row.sellerUsername ?? '',
+    sellerAvatarUrl: row.sellerAvatarUrl,
+    sellerAverageRating: row.sellerAverageRating,
+    sellerTotalReviews: row.sellerTotalReviews ?? 0,
+    sellerShowStars: row.sellerShowStars ?? false,
+  }));
+}
+
+/**
  * Get top-level categories for homepage with listing counts.
  */
 export async function getHomepageCategories(): Promise<
