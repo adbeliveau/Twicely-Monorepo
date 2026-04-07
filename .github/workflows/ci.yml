@@ -65,6 +65,6 @@ jobs:
         continue-on-error: false
 
       - name: Build
-        run: npx turbo build --filter=@twicely/web --filter=@twicely/admin
+        run: npx turbo build --filter=@twicely/web
         env:
           NEXT_TELEMETRY_DISABLED: 1
