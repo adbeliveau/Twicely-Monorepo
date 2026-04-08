@@ -20,6 +20,7 @@ import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { generateTokenPair } from './local-token';
+import { canTransition } from './local-state-machine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,24 @@ export async function initiatePriceAdjustment(
   const now = new Date();
 
   try {
+    // Fetch current status and validate the transition before writing
+    const [tx] = await db
+      .select({ id: localTransaction.id, status: localTransaction.status })
+      .from(localTransaction)
+      .where(eq(localTransaction.id, localTransactionId))
+      .limit(1);
+
+    if (!tx) {
+      return { success: false, error: 'Transaction not found' };
+    }
+
+    if (!canTransition(tx.status, 'ADJUSTMENT_PENDING')) {
+      return {
+        success: false,
+        error: `Cannot transition from ${tx.status} to ADJUSTMENT_PENDING`,
+      };
+    }
+
     const [updated] = await db
       .update(localTransaction)
       .set({
@@ -168,6 +187,13 @@ export async function acceptPriceAdjustment(
 
   if (!tx) {
     return { success: false, error: 'Transaction not found' };
+  }
+
+  if (!canTransition(tx.status, 'BOTH_CHECKED_IN')) {
+    return {
+      success: false,
+      error: `Cannot transition from ${tx.status} to BOTH_CHECKED_IN`,
+    };
   }
 
   const tokenExpiryHours = await getPlatformSetting<number>('commerce.local.tokenExpiryHours', 48);
@@ -240,6 +266,24 @@ export async function declinePriceAdjustment(
   const now = new Date();
 
   try {
+    // Fetch current status and validate the transition before writing
+    const [tx] = await db
+      .select({ id: localTransaction.id, status: localTransaction.status })
+      .from(localTransaction)
+      .where(eq(localTransaction.id, localTransactionId))
+      .limit(1);
+
+    if (!tx) {
+      return { success: false, error: 'Transaction not found' };
+    }
+
+    if (!canTransition(tx.status, 'BOTH_CHECKED_IN')) {
+      return {
+        success: false,
+        error: `Cannot transition from ${tx.status} to BOTH_CHECKED_IN`,
+      };
+    }
+
     const [updated] = await db
       .update(localTransaction)
       .set({

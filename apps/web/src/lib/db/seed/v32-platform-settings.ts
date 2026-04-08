@@ -135,6 +135,11 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   { key: 'crosslister.images.batchSize', value: 200, type: 'number', category: 'crosslister', description: 'Max listings processed per retention pass (per stage)' },
   { key: 'jobs.cron.listingImageRetention.pattern', value: '30 4 * * *', type: 'string', category: 'crosslister', description: 'Cron pattern for the listing image retention job (default: daily at 04:30 UTC)' },
 
+  // ── SOLD listing Typesense purge (Decision #71 — 90-day index window) ───
+  { key: 'search.soldPurge.retentionDays', value: 90, type: 'number', category: 'search', description: 'Days after soldAt before a SOLD listing is purged from the Typesense index (Decision #71)' },
+  { key: 'search.soldPurge.batchSize', value: 500, type: 'number', category: 'search', description: 'Max SOLD listing documents deleted from Typesense per purge pass' },
+  { key: 'jobs.cron.listingSoldPurge.pattern', value: '0 3 * * *', type: 'string', category: 'search', description: 'Cron pattern for the SOLD listing Typesense purge job (default: daily at 03:00 UTC)' },
+
   // ── Polling intervals (Decision Rationale #96) ──────────────────────────
   { key: 'crosslister.polling.hot.intervalMs', value: 90000, type: 'number', category: 'crosslister', description: 'HOT polling interval in ms (90 seconds)' },
   { key: 'crosslister.polling.warm.intervalMs', value: 600000, type: 'number', category: 'crosslister', description: 'WARM polling interval in ms (10 minutes)' },

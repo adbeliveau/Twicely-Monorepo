@@ -63,6 +63,7 @@ function makeTransaction(overrides: Record<string, unknown> = {}) {
     id: 'lt-1',
     buyerId: 'buyer-1',
     sellerId: 'seller-1',
+    status: 'ADJUSTMENT_PENDING', // valid source for accept/decline transitions
     scheduledAt: new Date(Date.now() + 3600_000),
     adjustedPriceCents: 7000,
     ...overrides,
@@ -169,6 +170,8 @@ describe('initiatePriceAdjustment', () => {
   });
 
   it('updates adjustedPriceCents, reason, initiatedAt and sets ADJUSTMENT_PENDING', async () => {
+    // SELECT returns tx with BOTH_CHECKED_IN status (valid source)
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([{ id: 'lt-1', status: 'BOTH_CHECKED_IN' }]) as never);
     vi.mocked(db.update).mockReturnValue(makeUpdateChain([{ id: 'lt-1' }]) as never);
 
     const result = await initiatePriceAdjustment('lt-1', 7000, 'Flaw found on the seam');
@@ -182,13 +185,33 @@ describe('initiatePriceAdjustment', () => {
     expect(setArgs.adjustmentInitiatedAt).toBeInstanceOf(Date);
   });
 
-  it('returns error when transaction not found', async () => {
-    vi.mocked(db.update).mockReturnValue(makeUpdateChain([]) as never);
+  it('returns error when transaction not found (SELECT returns empty)', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as never);
 
     const result = await initiatePriceAdjustment('lt-missing', 7000, 'reason');
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Transaction not found');
+  });
+
+  it('rejects initiate when status is SCHEDULED (invalid transition)', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([{ id: 'lt-1', status: 'SCHEDULED' }]) as never);
+
+    const result = await initiatePriceAdjustment('lt-1', 7000, 'reason');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot transition from SCHEDULED to ADJUSTMENT_PENDING/);
+    expect(vi.mocked(db.update)).not.toHaveBeenCalled();
+  });
+
+  it('rejects initiate when status is ADJUSTMENT_PENDING (already pending)', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([{ id: 'lt-1', status: 'ADJUSTMENT_PENDING' }]) as never);
+
+    const result = await initiatePriceAdjustment('lt-1', 7000, 'reason');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot transition from ADJUSTMENT_PENDING to ADJUSTMENT_PENDING/);
+    expect(vi.mocked(db.update)).not.toHaveBeenCalled();
   });
 });
 
@@ -292,6 +315,30 @@ describe('acceptPriceAdjustment', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe('Transaction not found');
   });
+
+  it('rejects accept when status is COMPLETED (terminal — no transitions allowed)', async () => {
+    vi.mocked(db.select).mockReturnValue(
+      makeSelectChain([makeTransaction({ status: 'COMPLETED' })]) as never,
+    );
+
+    const result = await acceptPriceAdjustment('lt-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot transition from COMPLETED to BOTH_CHECKED_IN/);
+    expect(vi.mocked(db.update)).not.toHaveBeenCalled();
+  });
+
+  it('rejects accept when status is CANCELED (terminal — no transitions allowed)', async () => {
+    vi.mocked(db.select).mockReturnValue(
+      makeSelectChain([makeTransaction({ status: 'CANCELED' })]) as never,
+    );
+
+    const result = await acceptPriceAdjustment('lt-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot transition from CANCELED to BOTH_CHECKED_IN/);
+    expect(vi.mocked(db.update)).not.toHaveBeenCalled();
+  });
 });
 
 
@@ -301,6 +348,7 @@ describe('declinePriceAdjustment', () => {
   });
 
   it('sets declinedAt timestamp', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([makeTransaction()]) as never);
     vi.mocked(db.update).mockReturnValue(makeUpdateChain([{ id: 'lt-1' }]) as never);
 
     await declinePriceAdjustment('lt-1');
@@ -311,6 +359,7 @@ describe('declinePriceAdjustment', () => {
   });
 
   it('clears adjustedPriceCents to null', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([makeTransaction()]) as never);
     vi.mocked(db.update).mockReturnValue(makeUpdateChain([{ id: 'lt-1' }]) as never);
 
     await declinePriceAdjustment('lt-1');
@@ -321,6 +370,7 @@ describe('declinePriceAdjustment', () => {
   });
 
   it('returns status BOTH_CHECKED_IN', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([makeTransaction()]) as never);
     vi.mocked(db.update).mockReturnValue(makeUpdateChain([{ id: 'lt-1' }]) as never);
 
     await declinePriceAdjustment('lt-1');
@@ -330,12 +380,36 @@ describe('declinePriceAdjustment', () => {
     expect(setArgs.status).toBe('BOTH_CHECKED_IN');
   });
 
-  it('returns error when transaction not found', async () => {
-    vi.mocked(db.update).mockReturnValue(makeUpdateChain([]) as never);
+  it('returns error when transaction not found (SELECT returns empty)', async () => {
+    vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as never);
 
     const result = await declinePriceAdjustment('lt-missing');
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Transaction not found');
+  });
+
+  it('rejects decline when status is COMPLETED (terminal — no transitions allowed)', async () => {
+    vi.mocked(db.select).mockReturnValue(
+      makeSelectChain([makeTransaction({ status: 'COMPLETED' })]) as never,
+    );
+
+    const result = await declinePriceAdjustment('lt-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot transition from COMPLETED to BOTH_CHECKED_IN/);
+    expect(vi.mocked(db.update)).not.toHaveBeenCalled();
+  });
+
+  it('rejects decline when status is CANCELED (terminal — no transitions allowed)', async () => {
+    vi.mocked(db.select).mockReturnValue(
+      makeSelectChain([makeTransaction({ status: 'CANCELED' })]) as never,
+    );
+
+    const result = await declinePriceAdjustment('lt-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot transition from CANCELED to BOTH_CHECKED_IN/);
+    expect(vi.mocked(db.update)).not.toHaveBeenCalled();
   });
 });

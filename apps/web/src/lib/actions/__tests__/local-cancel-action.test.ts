@@ -83,7 +83,7 @@ const mockRevalidatePath = vi.mocked(revalidatePath);
 describe('cancelLocalTransactionAction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCancelService.mockResolvedValue(undefined);
+    mockCancelService.mockResolvedValue({});
   });
 
   it('returns Unauthorized when not authenticated', async () => {

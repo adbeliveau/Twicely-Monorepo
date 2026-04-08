@@ -145,7 +145,7 @@ describe('cancelLocalTransaction — service core', () => {
     setupSelects({ paymentIntentId: 'pi_fail' });
     await expect(
       cancelLocalTransaction({ transaction: makeTx() as never, cancelingParty: 'BUYER', cancelingUserId: BUYER_ID }),
-    ).resolves.toBeUndefined();
+    ).resolves.not.toThrow();
     expect(vi.mocked(logger.error)).toHaveBeenCalled();
   });
 
@@ -172,7 +172,7 @@ describe('cancelLocalTransaction — service core', () => {
     vi.mocked(localAutoCancelQueue.getJob).mockRejectedValueOnce(new Error('Queue error'));
     await expect(
       cancelLocalTransaction({ transaction: makeTx() as never, cancelingParty: 'BUYER', cancelingUserId: BUYER_ID }),
-    ).resolves.toBeUndefined();
+    ).resolves.not.toThrow();
     expect(vi.mocked(logger.warn)).toHaveBeenCalled();
   });
 
@@ -206,5 +206,27 @@ describe('cancelLocalTransaction — service core', () => {
     await expect(
       cancelLocalTransaction({ transaction: makeTx() as never, cancelingParty: 'BUYER', cancelingUserId: BUYER_ID }),
     ).rejects.toThrow();
+  });
+
+  it('rejects cancel when transaction is already COMPLETED (invalid transition)', async () => {
+    setupSelects();
+    const result = await cancelLocalTransaction({
+      transaction: makeTx({ status: 'COMPLETED' }) as never,
+      cancelingParty: 'BUYER',
+      cancelingUserId: BUYER_ID,
+    });
+    expect(result?.error).toMatch(/Cannot transition from COMPLETED to CANCELED/);
+    expect(mockDbUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects cancel when transaction is already CANCELED (terminal state)', async () => {
+    setupSelects();
+    const result = await cancelLocalTransaction({
+      transaction: makeTx({ status: 'CANCELED' }) as never,
+      cancelingParty: 'SELLER',
+      cancelingUserId: SELLER_ID,
+    });
+    expect(result?.error).toMatch(/Cannot transition from CANCELED to CANCELED/);
+    expect(mockDbUpdate).not.toHaveBeenCalled();
   });
 });

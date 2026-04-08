@@ -14,6 +14,7 @@ import { logger } from '@twicely/logger';
 import { generateTokenPair } from './local-token';
 import { reserveListingForLocalTransaction } from './local-reserve';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
+import { canTransition } from './local-state-machine';
 
 // Re-export token validation from split module
 export {
@@ -165,7 +166,13 @@ export async function createLocalTransaction(
 }
 
 /**
- * Confirm a local transaction (buyer received item).
+ * Confirm receipt of a local transaction (buyer received item).
+ *
+ * Transitions: BOTH_CHECKED_IN → RECEIPT_CONFIRMED
+ * (The subsequent RECEIPT_CONFIRMED → COMPLETED transition is applied by the
+ * escrow-release / payout completion path once funds are disbursed.)
+ *
+ * Idempotent: if already RECEIPT_CONFIRMED, returns success without re-updating.
  *
  * @param transactionId - The local transaction ID
  * @param mode - How the confirmation was done
@@ -177,10 +184,32 @@ export async function confirmLocalTransaction(
   const now = new Date();
 
   try {
+    const [tx] = await db
+      .select({ id: localTransaction.id, status: localTransaction.status })
+      .from(localTransaction)
+      .where(eq(localTransaction.id, transactionId))
+      .limit(1);
+
+    if (!tx) {
+      return { success: false, error: 'Transaction not found' };
+    }
+
+    // Idempotency: already confirmed is a no-op success
+    if (tx.status === 'RECEIPT_CONFIRMED') {
+      return { success: true };
+    }
+
+    if (!canTransition(tx.status, 'RECEIPT_CONFIRMED')) {
+      return {
+        success: false,
+        error: `Cannot transition from ${tx.status} to RECEIPT_CONFIRMED`,
+      };
+    }
+
     const [updated] = await db
       .update(localTransaction)
       .set({
-        status: 'COMPLETED',
+        status: 'RECEIPT_CONFIRMED',
         confirmationMode: mode,
         confirmedAt: now,
         offlineConfirmedAt: (mode === 'QR_DUAL_OFFLINE' || mode === 'CODE_DUAL_OFFLINE') ? now : undefined,
@@ -205,6 +234,12 @@ export async function confirmLocalTransaction(
 
 /**
  * Record check-in for a party (buyer or seller).
+ *
+ * Transitions (all gated by canTransition):
+ *   SCHEDULED → SELLER_CHECKED_IN  (seller checks in first)
+ *   SCHEDULED → BUYER_CHECKED_IN   (buyer checks in first)
+ *   SELLER_CHECKED_IN → BOTH_CHECKED_IN  (buyer arrives second)
+ *   BUYER_CHECKED_IN  → BOTH_CHECKED_IN  (seller arrives second)
  */
 export async function recordCheckIn(
   transactionId: string,
@@ -222,6 +257,25 @@ export async function recordCheckIn(
     return { success: false, bothCheckedIn: false, error: 'Transaction not found' };
   }
 
+  const sellerCheckedIn = party === 'SELLER' ? true : transaction.sellerCheckedIn;
+  const buyerCheckedIn = party === 'BUYER' ? true : transaction.buyerCheckedIn;
+  const bothCheckedIn = sellerCheckedIn && buyerCheckedIn;
+
+  // Determine the target status and validate the transition
+  const targetStatus = bothCheckedIn
+    ? 'BOTH_CHECKED_IN'
+    : party === 'SELLER'
+      ? 'SELLER_CHECKED_IN'
+      : 'BUYER_CHECKED_IN';
+
+  if (!canTransition(transaction.status, targetStatus)) {
+    return {
+      success: false,
+      bothCheckedIn: false,
+      error: `Cannot transition from ${transaction.status} to ${targetStatus}`,
+    };
+  }
+
   const updates = party === 'BUYER'
     ? { buyerCheckedIn: true, buyerCheckedInAt: now, updatedAt: now }
     : { sellerCheckedIn: true, sellerCheckedInAt: now, updatedAt: now };
@@ -231,26 +285,10 @@ export async function recordCheckIn(
     .set(updates)
     .where(eq(localTransaction.id, transactionId));
 
-  const sellerCheckedIn = party === 'SELLER' ? true : transaction.sellerCheckedIn;
-  const buyerCheckedIn = party === 'BUYER' ? true : transaction.buyerCheckedIn;
-  const bothCheckedIn = sellerCheckedIn && buyerCheckedIn;
-
-  if (bothCheckedIn) {
-    await db
-      .update(localTransaction)
-      .set({ status: 'BOTH_CHECKED_IN', updatedAt: now })
-      .where(eq(localTransaction.id, transactionId));
-  } else if (party === 'SELLER') {
-    await db
-      .update(localTransaction)
-      .set({ status: 'SELLER_CHECKED_IN', updatedAt: now })
-      .where(eq(localTransaction.id, transactionId));
-  } else {
-    await db
-      .update(localTransaction)
-      .set({ status: 'BUYER_CHECKED_IN', updatedAt: now })
-      .where(eq(localTransaction.id, transactionId));
-  }
+  await db
+    .update(localTransaction)
+    .set({ status: targetStatus, updatedAt: now })
+    .where(eq(localTransaction.id, transactionId));
 
   return { success: true, bothCheckedIn };
 }
