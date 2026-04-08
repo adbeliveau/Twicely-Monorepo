@@ -2,7 +2,7 @@
 
 import { db } from '@twicely/db';
 import { order, orderItem, listing, ledgerEntry, orderPayment, cart, promotionUsage, promotion, platformSetting } from '@twicely/db/schema';
-import { eq, and, ne, sql } from 'drizzle-orm';
+import { eq, and, ne, sql, inArray } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { stripe } from '@twicely/stripe/server';
 import { declineAllPendingOffersForListing } from '@twicely/commerce/offer-transitions';
@@ -134,6 +134,22 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
       })
       .from(orderItem)
       .where(eq(orderItem.orderId, ord.id));
+
+    // Decision #12 (Checkout Integrity: SELECT FOR UPDATE):
+    // Lock every listing row this order touches BEFORE the inventory decrement.
+    // Without this, two concurrent finalize calls (e.g. duplicate Stripe webhook
+    // callbacks for the same listing across different orders) could both
+    // succeed against a single-quantity listing, causing double-fulfillment.
+    // The .for('update') causes PostgreSQL to acquire row-level write locks
+    // that serialize concurrent finalizes touching the same listing.
+    const listingIds = items.map((it) => it.listingId);
+    if (listingIds.length > 0) {
+      await tx
+        .select({ id: listing.id })
+        .from(listing)
+        .where(inArray(listing.id, listingIds))
+        .for('update');
+    }
 
     // Decrement inventory and update listing status
     for (const item of items) {

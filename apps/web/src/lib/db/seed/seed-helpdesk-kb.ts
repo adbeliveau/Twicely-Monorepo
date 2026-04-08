@@ -3,7 +3,7 @@
  * Idempotent via onConflictDoNothing.
  */
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { kbArticle } from '../schema';
+import { kbArticle } from '@twicely/db/schema';
 import { HELPDESK_SEED_IDS } from './seed-helpdesk';
 import {
   HOW_TO_BUY_BODY, SHIPPING_BODY, RETURNS_BODY, REFUND_BODY,

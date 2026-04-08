@@ -72,7 +72,7 @@ describe('pseudonymizeOrders', () => {
   });
 
   it('updates buyer and seller IDs in orders', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.update).mockReturnValue(makeUpdateChain() as unknown as ReturnType<typeof db.update>);
 
     const { pseudonymizeOrders } = await import('../pseudonymize');
@@ -89,7 +89,7 @@ describe('pseudonymizeLedgerEntries', () => {
   });
 
   it('uses raw SQL to bypass application-level immutability', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.execute).mockResolvedValue({ count: 5, rows: [] } as unknown as Awaited<ReturnType<typeof db.execute>>);
 
     const { pseudonymizeLedgerEntries } = await import('../pseudonymize');
@@ -106,7 +106,7 @@ describe('pseudonymizePayouts', () => {
   });
 
   it('updates userId on payout records', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.update).mockReturnValue(makeUpdateChain() as unknown as ReturnType<typeof db.update>);
 
     const { pseudonymizePayouts } = await import('../pseudonymize');
@@ -122,7 +122,7 @@ describe('pseudonymizeMessages', () => {
   });
 
   it('updates senderUserId on message records', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.update).mockReturnValue(makeUpdateChain() as unknown as ReturnType<typeof db.update>);
 
     const { pseudonymizeMessages } = await import('../pseudonymize');
@@ -131,7 +131,7 @@ describe('pseudonymizeMessages', () => {
   });
 
   it('returns affected row count', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.update).mockReturnValue(makeUpdateChain() as unknown as ReturnType<typeof db.update>);
 
     const { pseudonymizeMessages } = await import('../pseudonymize');
@@ -147,7 +147,7 @@ describe('pseudonymizeAuditEvents', () => {
   });
 
   it('uses raw SQL to bypass INSERT-only application constraint', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.execute).mockResolvedValue({
       count: 12,
       rows: [],
@@ -167,7 +167,7 @@ describe('pseudonymizeAffiliateRecords', () => {
   });
 
   it('updates userId on affiliate table', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.update).mockReturnValue(makeUpdateChain() as unknown as ReturnType<typeof db.update>);
 
     const { pseudonymizeAffiliateRecords } = await import('../pseudonymize');
@@ -176,7 +176,7 @@ describe('pseudonymizeAffiliateRecords', () => {
   });
 
   it('returns 0 when user had no affiliate records', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const chain = { set: vi.fn(), where: vi.fn().mockResolvedValue({ count: 0 }) };
     chain.set.mockReturnValue(chain);
     vi.mocked(db.update).mockReturnValue(chain as unknown as ReturnType<typeof db.update>);

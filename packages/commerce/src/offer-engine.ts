@@ -46,9 +46,14 @@ export async function acceptOffer(offerId: string, actorId: string, paymentMetho
 
   let stripePaymentIntentId: string;
 
-  // Lock listing and verify availability, capture payment
+  // Lock listing + offer row and verify availability, capture payment
   try {
     stripePaymentIntentId = await db.transaction(async (tx) => {
+      // Lock the offer row to prevent double-accept race condition
+      const [lockedOffer] = await tx.select({ status: listingOffer.status })
+        .from(listingOffer).where(eq(listingOffer.id, offerId)).for('update');
+      if (!lockedOffer || lockedOffer.status !== 'PENDING') throw new Error('Offer is no longer pending');
+
       const [lst] = await tx.select({
         id: listing.id, status: listing.status, availableQuantity: listing.availableQuantity, quantity: listing.quantity,
       }).from(listing).where(eq(listing.id, offerData.listingId)).for('update');

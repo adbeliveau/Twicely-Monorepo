@@ -318,7 +318,7 @@ describe('authenticateSessionAccount', () => {
     mockAuthorize.mockResolvedValue(sellerSession());
 
     // Override connector mock to return failure
-    const { getConnector } = await import('@/lib/crosslister/connector-registry');
+    const { getConnector } = await import('@twicely/crosslister/connector-registry');
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValueOnce({
       authenticate: vi.fn().mockResolvedValue({ success: false, error: 'Invalid credentials' }),
     });

@@ -133,7 +133,7 @@ describe('Price History Recording in listings-update', () => {
     // The actual recording happens in updateListing action
     // We verify the listingPriceHistory import is used
 
-    const { listingPriceHistory } = await import('@/lib/db/schema');
+    const { listingPriceHistory } = await import('@twicely/db/schema');
     expect(listingPriceHistory).toBeDefined();
   });
 

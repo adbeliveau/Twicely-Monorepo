@@ -32,7 +32,7 @@
 19. **Checkout uses its OWN route group `(checkout)`** with a minimal layout. NOT `(marketplace)`. The checkout page must NOT have the marketplace header/footer/nav.
 20. **Checkout is a 3-STEP flow** (Address → Shipping → Payment). NOT a single scrollable page. Step indicator at top with back buttons.
 21. **After order creation, DECREASE listing.availableQuantity.** If it hits 0, set listing.status = 'SOLD' and listing.soldAt = now(). This is mandatory — without it, the same item can be purchased multiple times.
-22. **Order number format is TWC-YYYYMMDD-XXXX** (prefix TWC, 4 random alphanumeric uppercase). NOT TW-, NOT 5 chars.
+22. **Order number format is TWC-YYMMDD-XXXXX** (prefix TWC, 2-digit year + month + day, 5 random alphanumeric uppercase). Superseded by B3.2 v2 prompt rule 28 — the earlier "YYYYMMDD-XXXX" (4-char) wording is retired. Example: `TWC-260218-A7K2B`.
 23. **FVF default rates** from the spec are: Electronics 9%, Apparel 10%, Home 10%, Collectibles 11.5%, default 10%. NOT 12/13/13/15. And you MUST apply store tier discount from sellerProfile.storeTier.
 24. **Address components must be REUSABLE** — create separate `address-form.tsx` and `address-selector.tsx` components, not a 400-line monolith page.
 
@@ -373,12 +373,12 @@ Server-side logic for creating orders from a cart. Includes FVF calculation from
 |---|------|------|---------|
 | 1 | `src/lib/commerce/create-order.ts` | Server Logic | createOrdersFromCart — splits cart into per-seller orders |
 | 2 | `src/lib/commerce/fees.ts` | Utility | calculateFVF — fee_schedule lookup + store tier discount |
-| 3 | `src/lib/commerce/order-number.ts` | Utility | generateOrderNumber — TWC-YYYYMMDD-XXXX format |
+| 3 | `src/lib/commerce/order-number.ts` | Utility | generateOrderNumber — TWC-YYMMDD-XXXXX format (2-digit year, 5 random chars) |
 
 ### Specifications
 
 **Order Number Generator (`order-number.ts`):**
-- Format: `TWC-{YYYYMMDD}-{4 random alphanumeric uppercase}`
+- Format: `TWC-{YYMMDD}-{5 random alphanumeric uppercase}` (2-digit year, 5 random chars — regex `/^TWC-\d{6}-[A-Z0-9]{5}$/`)
 - Example: `TWC-20260216-A7B3`
 - Check uniqueness against order table, retry if collision (max 5 retries)
 - **NOT `TW-`. NOT 5 chars. Exactly `TWC-` prefix, exactly 4 random chars.**
@@ -416,7 +416,7 @@ Logic:
 3. Fetch shipping address by ID (verify ownership)
 4. Group cart items by sellerId
 5. For each seller group, in a database **transaction**:
-   a. Generate order number (TWC-YYYYMMDD-XXXX)
+   a. Generate order number (TWC-YYMMDD-XXXXX)
    b. Shipping: all items freeShipping=true -> 0, else flat 599 cents
    c. itemSubtotalCents = sum of (unitPriceCents * quantity)
    d. taxCents = 0, discountCents = 0

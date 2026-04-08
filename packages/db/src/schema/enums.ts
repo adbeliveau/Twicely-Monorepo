@@ -84,7 +84,9 @@ export const returnReasonBucketEnum = pgEnum('return_reason_bucket', [
 export const disputeStatusEnum = pgEnum('dispute_status', [
   'OPEN', 'UNDER_REVIEW', 'RESOLVED_BUYER', 'RESOLVED_SELLER', 'RESOLVED_PARTIAL', 'APPEALED', 'APPEAL_RESOLVED', 'CLOSED'
 ]);
-export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'COUNTERFEIT', 'REMORSE', 'WRONG_ITEM']);
+// claim_type matches migration 0000 + canonical Schema Spec §1.6. WRONG_ITEM is a
+// return_reason only; in buyer-protection.ts it maps → INAD for claim type storage.
+export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'COUNTERFEIT', 'REMORSE']);
 
 // §1.7 Reviews
 export const reviewStatusEnum = pgEnum('review_status', ['PENDING', 'APPROVED', 'FLAGGED', 'REMOVED']);
@@ -113,7 +115,9 @@ export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
   'BUYER_REFERRAL_CREDIT_ISSUED', 'BUYER_REFERRAL_CREDIT_REDEEMED',
   'AFFILIATE_COMMISSION_PAYOUT',
   'CROSSLISTER_SALE_REVENUE', 'CROSSLISTER_PLATFORM_FEE',
-  'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT'
+  'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT',
+  'LOCAL_CASH_SALE_REVENUE',  // §8/A16 Cash local sale — INFORMATIONAL ONLY, no sellerBalance update
+  'BOOST_CREDIT_ISSUED'  // §5.4 Seller Score Canonical — monthly performance reward credit
 ]);
 export const ledgerEntryStatusEnum = pgEnum('ledger_entry_status', ['PENDING', 'POSTED', 'REVERSED']);
 export const payoutStatusEnum = pgEnum('payout_status', ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'REVERSED']);

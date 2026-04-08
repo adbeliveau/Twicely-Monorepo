@@ -5,7 +5,7 @@ export function Logo({ size = 'default' }: { size?: 'default' | 'sm' }) {
   const tagClass = size === 'sm' ? 'text-[8px]' : 'text-[9px]';
 
   return (
-    <Link href="/" className="inline-flex flex-col items-center">
+    <Link href="/" className="inline-flex flex-col items-center" aria-label="Twicely home">
       <span className={`${textClass} font-black tracking-[0.05em] leading-none text-foreground`}>
         T<span className="text-brand-500">W</span>ICELY
       </span>

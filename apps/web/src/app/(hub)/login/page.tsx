@@ -32,9 +32,16 @@ export default async function HubLoginPage({
         <div className="mx-auto max-w-[1380px] px-7 h-16 flex items-center justify-between">
           <Link
             href="/"
-            className="text-xl font-black tracking-tight text-[var(--tw-black)]"
+            className="inline-flex items-baseline gap-2.5 leading-none"
+            aria-label="Twicely Hub"
           >
-            Twicely<span className="text-[var(--mg)]">.</span>
+            <span className="text-[26px] font-black tracking-[0.04em] text-[var(--tw-black)]">
+              T<span className="text-[var(--mg)]">W</span>ICELY
+            </span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-[var(--tw-border)] bg-[var(--tw-bg)] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--tw-muted)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--mg)]" />
+              Staff Hub
+            </span>
           </Link>
           <Link
             href="https://twicely.co"

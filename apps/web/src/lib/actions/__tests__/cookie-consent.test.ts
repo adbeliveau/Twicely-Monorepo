@@ -60,7 +60,7 @@ describe('updateCookieConsent', () => {
   });
 
   it('returns Unauthorized when no session', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     vi.mocked(authorize).mockResolvedValue({ session: null, ability: null } as unknown as Awaited<ReturnType<typeof authorize>>);
 
     const { updateCookieConsent } = await import('../cookie-consent');
@@ -71,7 +71,7 @@ describe('updateCookieConsent', () => {
   });
 
   it('rejects invalid input', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-1' },
       ability: { can: vi.fn().mockReturnValue(true) },
@@ -86,9 +86,9 @@ describe('updateCookieConsent', () => {
   });
 
   it('returns success without saving when consentRequired is false', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-2' },
@@ -104,9 +104,9 @@ describe('updateCookieConsent', () => {
   });
 
   it('saves consent to cookieConsentJson field', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-3' },
@@ -125,9 +125,9 @@ describe('updateCookieConsent', () => {
   });
 
   it('creates LOW severity audit event on consent change', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-4' },
@@ -156,7 +156,7 @@ describe('getCookieConsent', () => {
   });
 
   it('returns null when not authenticated', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     vi.mocked(authorize).mockResolvedValue({ session: null, ability: null } as unknown as Awaited<ReturnType<typeof authorize>>);
 
     const { getCookieConsent } = await import('../cookie-consent');
@@ -166,8 +166,8 @@ describe('getCookieConsent', () => {
   });
 
   it('returns null when user has no stored consent', async () => {
-    const { authorize } = await import('@/lib/casl');
-    const { db } = await import('@/lib/db');
+    const { authorize } = await import('@twicely/casl');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-5' },
@@ -184,8 +184,8 @@ describe('getCookieConsent', () => {
   });
 
   it('returns parsed consent when stored', async () => {
-    const { authorize } = await import('@/lib/casl');
-    const { db } = await import('@/lib/db');
+    const { authorize } = await import('@twicely/casl');
+    const { db } = await import('@twicely/db');
 
     vi.mocked(authorize).mockResolvedValue({
       session: { userId: 'user-6' },

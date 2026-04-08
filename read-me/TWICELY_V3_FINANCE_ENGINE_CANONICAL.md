@@ -123,11 +123,17 @@ export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
   'SHIPPING_LABEL_REFUND',         // Unused label refunded
 
   // === SUBSCRIPTIONS ===
-  'STORE_SUBSCRIPTION_CHARGE',     // StoreTier monthly/annual charge
-  'LISTER_SUBSCRIPTION_CHARGE',    // ListerTier monthly/annual charge
-  'AUTOMATION_ADDON_CHARGE',       // Automation add-on charge
-  'BUNDLE_SUBSCRIPTION_CHARGE',    // Bundle (Store + Lister) charge
+  // KNOWN DEVIATION: earlier spec drafts listed 4 distinct subscription charge types
+  // (STORE_SUBSCRIPTION_CHARGE, LISTER_SUBSCRIPTION_CHARGE, AUTOMATION_ADDON_CHARGE,
+  // BUNDLE_SUBSCRIPTION_CHARGE). The shipped enum consolidates these into
+  // SUBSCRIPTION_CHARGE + SUBSCRIPTION_CREDIT. Subscription source (Store / Lister /
+  // Bundle / Automation) MUST be tracked via metadataJson.subscriptionAxis at posting
+  // time. FINANCE_SUBSCRIPTION_CHARGE remains a separate type for Finance PRO because
+  // its billing cadence and refund rules differ (FC v3.0 §2).
+  'SUBSCRIPTION_CHARGE',           // Store / Lister / Bundle / Automation subscription charge
+  'SUBSCRIPTION_CREDIT',           // Credit issued against a subscription charge
   'SUBSCRIPTION_REFUND',           // Prorated subscription refund on downgrade
+  'FINANCE_SUBSCRIPTION_CHARGE',   // Finance PRO subscription charge (separate cadence/rules)
 
   // === OVERAGES ===
   'OVERAGE_PACK_PURCHASE',         // +500 publishes, AI credits, BG removals, or actions

@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { buyerProtectionClaim } from '../schema';
+import { buyerProtectionClaim } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { SEED_IDS } from './seed-system';
 

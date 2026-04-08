@@ -7,7 +7,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { REFERRAL_COOKIE_NAME } from '@/lib/affiliate/referral-cookie';
 import { checkSelfReferralByIp } from '@/lib/affiliate/fraud-detection';
 import { escalateAffiliate } from '@/lib/affiliate/fraud-escalation';
-import { getClientIp } from '@/lib/utils/get-client-ip';
+import { getClientIp } from '@twicely/utils/get-client-ip';
 
 export async function GET(
   request: NextRequest,

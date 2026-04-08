@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   KnowledgeBaseSection,
-  TagsSection,
   PreviousCasesSection,
   AssignmentSection,
   KeyboardShortcutsSection,
 } from "./context-panel-cards";
+import { QuickActionsFooter } from "./quick-actions-toolbar";
 
 // =============================================================================
 // TYPES
@@ -34,13 +34,40 @@ interface ContextPanelProps {
   data: CaseContextData | null;
   isLoading?: boolean;
   className?: string;
+  // Quick Actions footer props — V2 pattern puts actions at bottom of context panel
+  caseId?: string;
+  caseNumber?: string;
+  currentStatus?: string;
+  currentAgentId?: string | null;
+  currentStaffUserId?: string;
+  onResolve?: () => void;
+  onEscalate?: () => void;
+  onAssignToMe?: () => void;
 }
 
 // =============================================================================
-// CONTEXT PANEL — V2-style right panel
+// CONTEXT PANEL — V2-style: cards + sticky action footer
+// =============================================================================
+// Sections (top to bottom):
+//   Requester → Order → SLA → Knowledge Base → Previous Cases → Assignment → Shortcuts
+//   + sticky Quick Actions footer (V2 pattern)
+// Removed from panel (now owned by workspace header):
+//   - Tags → workspace header `CaseTagEditor`
 // =============================================================================
 
-export function ContextPanel({ data, isLoading = false, className }: ContextPanelProps) {
+export function ContextPanel({
+  data,
+  isLoading = false,
+  className,
+  caseId,
+  caseNumber,
+  currentStatus,
+  currentAgentId,
+  currentStaffUserId,
+  onResolve,
+  onEscalate,
+  onAssignToMe,
+}: ContextPanelProps) {
   if (isLoading) {
     return (
       <div className={cn("hd-workspace-right", className)}>
@@ -64,27 +91,45 @@ export function ContextPanel({ data, isLoading = false, className }: ContextPane
     );
   }
 
+  const showFooter = !!(caseId && caseNumber && currentStatus !== undefined && currentStaffUserId !== undefined);
+
   return (
-    <div className={cn("hd-workspace-right overflow-y-auto hd-scrollbar", className)}>
-      <RequesterSection name={data.requesterName} email={data.requesterEmail} stats={data.requesterStats} />
-      {data.order && <LinkedOrderSection order={data.order} />}
-      <SlaSection
-        firstResponseDue={data.slaFirstResponseDueAt}
-        resolutionDue={data.slaResolutionDueAt}
-        firstResponseAt={data.firstResponseAt}
-        resolvedAt={data.resolvedAt}
-      />
-      <KnowledgeBaseSection />
-      {data.tags.length > 0 && <TagsSection tags={data.tags} />}
-      {data.previousCases && data.previousCases.length > 0 && (
-        <PreviousCasesSection cases={data.previousCases} />
+    <div className={cn("hd-workspace-right", className)} style={{ display: "flex", flexDirection: "column" }}>
+      {/* Scrollable cards area */}
+      <div className="flex-1 overflow-y-auto hd-scrollbar">
+        <RequesterSection name={data.requesterName} email={data.requesterEmail} stats={data.requesterStats} />
+        {data.order && <LinkedOrderSection order={data.order} />}
+        <SlaSection
+          firstResponseDue={data.slaFirstResponseDueAt}
+          resolutionDue={data.slaResolutionDueAt}
+          firstResponseAt={data.firstResponseAt}
+          resolvedAt={data.resolvedAt}
+        />
+        <KnowledgeBaseSection />
+        {data.previousCases && data.previousCases.length > 0 && (
+          <PreviousCasesSection cases={data.previousCases} />
+        )}
+        <AssignmentSection
+          agentName={data.assignedAgentName}
+          teamName={data.assignedTeamName}
+          hasAgent={!!data.assignedAgentId}
+        />
+        <KeyboardShortcutsSection />
+      </div>
+
+      {/* Sticky Quick Actions footer — V2 pattern */}
+      {showFooter && (
+        <QuickActionsFooter
+          caseId={caseId!}
+          caseNumber={caseNumber!}
+          currentStatus={currentStatus!}
+          currentAgentId={currentAgentId ?? null}
+          currentStaffUserId={currentStaffUserId!}
+          onResolve={onResolve}
+          onEscalate={onEscalate}
+          onAssignToMe={onAssignToMe}
+        />
       )}
-      <AssignmentSection
-        agentName={data.assignedAgentName}
-        teamName={data.assignedTeamName}
-        hasAgent={!!data.assignedAgentId}
-      />
-      <KeyboardShortcutsSection />
     </div>
   );
 }
@@ -154,7 +199,7 @@ function LinkedOrderSection({ order }: { order: { id: string; orderNumber: strin
 }
 
 // =============================================================================
-// SLA SECTION
+// SLA SECTION — live-updating countdown for both First Response and Resolution
 // =============================================================================
 
 function SlaSection({ firstResponseDue, resolutionDue, firstResponseAt, resolvedAt }: {
@@ -180,9 +225,7 @@ function SlaSection({ firstResponseDue, resolutionDue, firstResponseAt, resolved
           {resolvedAt ? (
             <span className="flex items-center gap-1 text-xs text-green-500 font-medium">✅ Resolved</span>
           ) : resolutionDue ? (
-            <span className="text-xs" style={{ color: "rgb(var(--hd-text-secondary))" }}>
-              {new Date(resolutionDue).toLocaleDateString()}
-            </span>
+            <SlaCountdown due={resolutionDue} />
           ) : (
             <span className="text-xs" style={{ color: "rgb(var(--hd-text-dim))" }}>—</span>
           )}
@@ -192,8 +235,15 @@ function SlaSection({ firstResponseDue, resolutionDue, firstResponseAt, resolved
   );
 }
 
+// Live-updating SLA countdown — ticks every second (V2 parity).
 function SlaCountdown({ due }: { due: Date }) {
-  const [now] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const dueMs = new Date(due).getTime();
   const diffMs = dueMs - now;
   const isBreached = diffMs < 0;

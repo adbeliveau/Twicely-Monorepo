@@ -1,6 +1,6 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
-import { listing, listingImage } from '../schema';
+import { listing, listingImage } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { SEED_IDS } from './seed-system';
 

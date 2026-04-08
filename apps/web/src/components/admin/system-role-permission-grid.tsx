@@ -7,7 +7,7 @@
 import {
   PERMISSION_MODULES,
   type PermissionModule,
-} from '@/lib/casl/permission-registry';
+} from '@twicely/casl/permission-registry';
 
 interface Props {
   /** The permission pairs this role grants */

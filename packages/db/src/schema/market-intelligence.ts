@@ -7,7 +7,8 @@ import { listing } from './listings';
 export const marketPricePoint = pgTable('market_price_point', {
   id:                text('id').primaryKey().$defaultFn(() => createId()),
   source:            text('source').notNull(),             // 'TWICELY_NATIVE' | 'EBAY_SELLER' | 'EBAY_PUBLIC' | 'POSHMARK_SELLER' | 'MERCARI_SELLER'
-  categoryId:        text('category_id').notNull().references(() => category.id),
+  // restrict: market data is historical — must survive category changes
+  categoryId:        text('category_id').notNull().references(() => category.id, { onDelete: 'restrict' }),
   brand:             text('brand'),
   conditionBucket:   text('condition_bucket'),              // 'NEW' | 'LIKE_NEW' | 'GOOD' | 'ACCEPTABLE'
   priceCents:        integer('price_cents').notNull(),
@@ -26,7 +27,8 @@ export const marketPricePoint = pgTable('market_price_point', {
 // §20.7 marketCategorySummary
 export const marketCategorySummary = pgTable('market_category_summary', {
   id:                text('id').primaryKey().$defaultFn(() => createId()),
-  categoryId:        text('category_id').notNull().references(() => category.id),
+  // restrict: market summary data is historical — must survive category changes
+  categoryId:        text('category_id').notNull().references(() => category.id, { onDelete: 'restrict' }),
   brand:             text('brand'),                          // null = all brands in category
   conditionBucket:   text('condition_bucket'),                // null = all conditions
   periodType:        text('period_type').notNull(),           // 'DAILY' | 'WEEKLY' | 'MONTHLY'
@@ -107,7 +109,8 @@ export const marketListingIntelligence = pgTable('market_listing_intelligence', 
 // §20.9 marketOfferIntelligence
 export const marketOfferIntelligence = pgTable('market_offer_intelligence', {
   id:                      text('id').primaryKey().$defaultFn(() => createId()),
-  categoryId:              text('category_id').notNull().references(() => category.id),
+  // restrict: offer intelligence data is historical — must survive category changes
+  categoryId:              text('category_id').notNull().references(() => category.id, { onDelete: 'restrict' }),
   conditionBucket:         text('condition_bucket'),
   priceBucketCents:        integer('price_bucket_cents'),     // rounded to nearest $10
 

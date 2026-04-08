@@ -49,8 +49,8 @@ describe('cron-jobs', () => {
     const { registerCronJobs } = await import('../cron-jobs');
     await registerCronJobs();
 
-    // 6 platform cron jobs + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6)
-    expect(mockQueueAdd).toHaveBeenCalledTimes(13);
+    // 8 platform cron jobs (incl. listing image retention Decision #111 + listing sold purge Decision #71) + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6) + 1 helpdesk auto-close + 1 helpdesk SLA check + 1 helpdesk CSAT send + 1 monthly boost credit (Seller Score §5.4) + 1 crosslister auth health check
+    expect(mockQueueAdd).toHaveBeenCalledTimes(20);
   });
 
   it('registers orders cron at every hour', async () => {
@@ -64,7 +64,7 @@ describe('cron-jobs', () => {
     expect(ordersCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-orders',
-        repeat: { pattern: '0 * * * *' },
+        repeat: { pattern: '0 * * * *', tz: 'UTC' },
       }),
     );
   });
@@ -80,7 +80,7 @@ describe('cron-jobs', () => {
     expect(returnsCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-returns',
-        repeat: { pattern: '10 * * * *' },
+        repeat: { pattern: '10 * * * *', tz: 'UTC' },
       }),
     );
   });
@@ -96,7 +96,7 @@ describe('cron-jobs', () => {
     expect(shippingCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-shipping',
-        repeat: { pattern: '20 * * * *' },
+        repeat: { pattern: '20 * * * *', tz: 'UTC' },
       }),
     );
   });
@@ -112,7 +112,7 @@ describe('cron-jobs', () => {
     expect(healthCall![2]).toEqual(
       expect.objectContaining({
         jobId: 'cron-health',
-        repeat: { pattern: '*/5 * * * *' },
+        repeat: { pattern: '*/5 * * * *', tz: 'UTC' },
       }),
     );
   });

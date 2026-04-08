@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { authorize } from '@twicely/casl';
+import { syncAccountStatus } from '@twicely/stripe/connect';
 import { getSellerProfile } from '@/lib/queries/seller';
 import { getBusinessInfo } from '@/lib/queries/business-info';
 import { OnboardingWizard } from './onboarding-wizard';
@@ -25,19 +26,35 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
 
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
 
-  const [profile, bizInfo] = await Promise.all([
+  const [initialProfile, bizInfo] = await Promise.all([
     getSellerProfile(userId),
     getBusinessInfo(userId),
   ]);
+
+  // Sync Stripe Connect status → DB before computing initialStep.
+  // Without this, a seller who finished Stripe hosted onboarding and returned
+  // before the account.updated webhook fires would still see the "Not Started"
+  // state. syncAccountStatus is idempotent and safe to call on every load.
+  let profile = initialProfile;
+  if (profile?.stripeAccountId && !(profile.stripeOnboarded && profile.payoutsEnabled)) {
+    try {
+      await syncAccountStatus(profile.stripeAccountId);
+      profile = await getSellerProfile(userId);
+    } catch {
+      // Non-fatal: fall back to cached DB values if Stripe is unreachable.
+    }
+  }
 
   const params = await searchParams;
   const flowParam = params.flow;
   const flow: 'activate' | 'business' =
     flowParam === 'business' ? 'business' : 'activate';
 
-  // Determine current wizard step from existing data
+  // Determine current wizard step from existing data.
+  // "Stripe done" requires BOTH details submitted AND payouts enabled — a
+  // half-onboarded account still needs attention, so we should land on step 2.
   const hasBusinessInfo = !!bizInfo;
-  const hasStripe = !!(profile?.stripeOnboarded);
+  const hasStripe = !!(profile?.stripeOnboarded && profile?.payoutsEnabled);
   const hasStoreName = !!(profile?.storeName && profile?.storeSlug);
 
   let initialStep: 1 | 2 | 3 | 4;

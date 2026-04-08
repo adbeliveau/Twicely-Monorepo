@@ -22,7 +22,7 @@ vi.mock('@twicely/db/schema', () => ({
 }));
 
 const mockGetInfraConfig = vi.fn();
-vi.mock('@/lib/config/infra-config', () => ({
+vi.mock('@twicely/config/infra-config', () => ({
   getInfraConfig: (...args: unknown[]) => mockGetInfraConfig(...args),
 }));
 

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Lock } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CaseDetail, CaseListItem } from "@/lib/queries/helpdesk-cases";
 import type { MacroItem } from "@/lib/queries/helpdesk-macros";
@@ -16,13 +16,14 @@ import { ReplyComposer } from "@/components/helpdesk/reply-composer";
 import { ContextPanel } from "@/components/helpdesk/context-panel";
 import type { CaseContextData } from "@/components/helpdesk/context-panel";
 import { CaseQueuePanel } from "./case-queue-panel";
-import { QuickActionsToolbar } from "@/components/helpdesk/quick-actions-toolbar";
 import { CasePropertyDropdowns } from "@/components/helpdesk/case-property-dropdowns";
+import { CaseTagEditor } from "@/components/helpdesk/case-tag-editor";
 import { ShortcutHelpOverlay } from "@/components/helpdesk/shortcut-help-overlay";
-import { addAgentReply, updateCaseStatus, updateCasePriority } from "@/lib/actions/helpdesk-agent-cases";
+import { addAgentReply, updateCaseStatus, assignCase } from "@/lib/actions/helpdesk-agent-cases";
+import { updateCasePriority } from "@/lib/actions/helpdesk-agent-cases-meta";
 import type { MacroContext } from "@/lib/helpdesk/macro-substitution";
 import { useHelpdeskHotkeys } from "@/lib/helpdesk/use-helpdesk-hotkeys";
-import { CaseWatchers } from "@/components/helpdesk/case-watchers";
+import { WatchToggleButton } from "@/components/helpdesk/case-watchers";
 import type { CaseWatcherItem } from "@/lib/queries/helpdesk-cases";
 import { AiSuggestionCard } from "@/components/helpdesk/ai-suggestion-card";
 
@@ -96,17 +97,35 @@ export function CaseWorkspace({
     if (next) router.push(`/hd/cases/${next.id}`);
   }, [currentIdx, caseQueue, router]);
 
+  // V2 behavior: after resolving, auto-advance to the next case in the queue.
+  // If no next case, fall back to the case list page. Keeps agents in flow.
   const handleResolve = useCallback(async () => {
     if (isClosed || caseDetail.status === "RESOLVED") return;
-    await updateCaseStatus({ caseId: caseDetail.id, status: "RESOLVED" });
-    router.refresh();
-  }, [isClosed, caseDetail.id, caseDetail.status, router]);
+    const result = await updateCaseStatus({ caseId: caseDetail.id, status: "RESOLVED" });
+    if (!result.success) return;
+    const next = currentIdx >= 0 && currentIdx < caseQueue.length - 1 ? caseQueue[currentIdx + 1] : undefined;
+    if (next) {
+      router.push(`/hd/cases/${next.id}`);
+    } else {
+      router.push("/hd/cases");
+    }
+  }, [isClosed, caseDetail.id, caseDetail.status, currentIdx, caseQueue, router]);
 
   const handleEscalate = useCallback(async () => {
     if (isClosed) return;
     await updateCaseStatus({ caseId: caseDetail.id, status: "ESCALATED" });
     router.refresh();
   }, [isClosed, caseDetail.id, router]);
+
+  const handleAssignToMe = useCallback(async () => {
+    if (isClosed || caseDetail.assignedAgentId === agentStaffUserId) return;
+    await assignCase({
+      caseId: caseDetail.id,
+      assignedAgentId: agentStaffUserId,
+      assignedTeamId: null,
+    });
+    router.refresh();
+  }, [isClosed, caseDetail.id, caseDetail.assignedAgentId, agentStaffUserId, router]);
 
   const handleSetPriority = useCallback(async (priority: string) => {
     if (isClosed) return;
@@ -180,18 +199,43 @@ export function CaseWorkspace({
 
   return (
     <div className="hd-workspace">
-      <CaseQueuePanel cases={caseQueue} selectedCaseId={caseDetail.id} />
+      <CaseQueuePanel
+        cases={caseQueue}
+        selectedCaseId={caseDetail.id}
+        watchers={watchers}
+      />
 
       <div className="hd-workspace-center">
-        {/* Header */}
+        {/* Header — V2 pattern: back button, case#, subject, SLA, inline properties, tags, watchers */}
         <div className="border-b px-6 py-3 flex-shrink-0 flex flex-col gap-2" style={{ background: "rgb(var(--hd-bg-panel))", borderColor: "rgb(var(--hd-border))" }}>
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs" style={{ color: "rgb(var(--hd-text-dim))" }}>{caseDetail.caseNumber}</span>
-                <ChannelBadge channel={caseDetail.channel as Channel} />
+          {/* Back button + case number + channel + subject + SLA */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex items-start gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/hd/cases")}
+                className="flex-shrink-0 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium hd-transition hover:opacity-70"
+                style={{ color: "rgb(var(--hd-text-muted))" }}
+                title="Back to cases"
+                aria-label="Back to cases"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back</span>
+              </button>
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-xs" style={{ color: "rgb(var(--hd-text-dim))" }}>{caseDetail.caseNumber}</span>
+                  <ChannelBadge channel={caseDetail.channel as Channel} />
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <h1 className="text-base font-semibold truncate" style={{ color: "rgb(var(--hd-text-primary))" }}>{caseDetail.subject}</h1>
+                  <WatchToggleButton
+                    caseId={caseDetail.id}
+                    watchers={watchers}
+                    currentStaffUserId={agentStaffUserId}
+                  />
+                </div>
               </div>
-              <h1 className="text-base font-semibold truncate mt-0.5" style={{ color: "rgb(var(--hd-text-primary))" }}>{caseDetail.subject}</h1>
             </div>
             {caseDetail.slaFirstResponseDueAt && !caseDetail.firstResponseAt && (
               <SlaTimer dueAt={caseDetail.slaFirstResponseDueAt} isMet={false} label="Response" size="sm" />
@@ -202,17 +246,12 @@ export function CaseWorkspace({
             currentAgentId={caseDetail.assignedAgentId} currentTeamId={caseDetail.assignedTeamId}
             agents={agentsAndTeams.agents} teams={agentsAndTeams.teams} isClosed={isClosed}
           />
-          <CaseWatchers
+          <CaseTagEditor
             caseId={caseDetail.id}
-            watchers={watchers}
-            currentStaffUserId={agentStaffUserId}
+            tags={caseDetail.tags}
+            isClosed={isClosed}
           />
         </div>
-
-        <QuickActionsToolbar
-          caseId={caseDetail.id} caseNumber={caseDetail.caseNumber} currentStatus={caseDetail.status}
-          currentAgentId={caseDetail.assignedAgentId} currentStaffUserId={agentStaffUserId}
-        />
 
         {/* Timeline */}
         <Timeline className="flex-1">
@@ -274,7 +313,17 @@ export function CaseWorkspace({
         )}
       </div>
 
-      <ContextPanel data={contextData} />
+      <ContextPanel
+        data={contextData}
+        caseId={caseDetail.id}
+        caseNumber={caseDetail.caseNumber}
+        currentStatus={caseDetail.status}
+        currentAgentId={caseDetail.assignedAgentId}
+        currentStaffUserId={agentStaffUserId}
+        onResolve={() => void handleResolve()}
+        onEscalate={() => void handleEscalate()}
+        onAssignToMe={() => void handleAssignToMe()}
+      />
       <ShortcutHelpOverlay isVisible={showShortcutHelp} onClose={() => setShowShortcutHelp(false)} />
     </div>
   );

@@ -143,27 +143,27 @@ describe('getPublishAllowance (rollover-aware)', () => {
     expect(result.rolloverBalance).toBe(0);
   });
 
-  it('returns monthlyLimit: 25 for FREE tier from platform settings', async () => {
-    setupDb('FREE', '25', []);
+  it('returns monthlyLimit: 5 for FREE tier from platform settings (Decision #105)', async () => {
+    setupDb('FREE', '5', []);
 
     const { getPublishAllowance } = await import('../publish-meter');
     const result = await getPublishAllowance('user-test-102');
 
-    expect(result.monthlyLimit).toBe(25);
+    expect(result.monthlyLimit).toBe(5);
     expect(result.tier).toBe('FREE');
   });
 
-  it('uses fallback limit of 25 for FREE tier when setting missing', async () => {
+  it('uses fallback limit of 5 for FREE tier when setting missing (Decision #105)', async () => {
     setupDb('FREE', null, []);
 
     const { getPublishAllowance } = await import('../publish-meter');
     const result = await getPublishAllowance('user-test-103');
 
-    expect(result.monthlyLimit).toBe(25);
+    expect(result.monthlyLimit).toBe(5);
   });
 
   it('returns rolloverBalance: 0 for FREE tier', async () => {
-    setupDb('FREE', '25', [monthlyBucket({ isCurrentMonth: true })]);
+    setupDb('FREE', '5', [monthlyBucket({ isCurrentMonth: true })]);
 
     const { getPublishAllowance } = await import('../publish-meter');
     const result = await getPublishAllowance('user-test-104');

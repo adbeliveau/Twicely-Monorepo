@@ -110,7 +110,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const localTxMatch = /^private-local-tx\.(.+)$/.exec(channel);
   if (localTxMatch) {
     const transactionId = localTxMatch[1]!;
-    const { localTransaction } = await import('@/lib/db/schema');
+    const { localTransaction } = await import('@twicely/db/schema');
     const [tx] = await db
       .select({ buyerId: localTransaction.buyerId, sellerId: localTransaction.sellerId })
       .from(localTransaction)

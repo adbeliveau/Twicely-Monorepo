@@ -3,7 +3,7 @@
  * Extracted from seed-helpdesk-cases.ts to keep files under 300 lines.
  */
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { caseMessage, caseEvent, helpdeskMacro, caseCsat } from '../schema';
+import { caseMessage, caseEvent, helpdeskMacro, caseCsat } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 
 const STAFF_AGENT_ID = 'seed-staff-agent-001';

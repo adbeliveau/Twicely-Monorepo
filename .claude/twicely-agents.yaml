@@ -1,0 +1,309 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# TWICELY DOMAIN AGENT REGISTRY (routing table only)
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# Single source of truth for the 19 domains and their handoffs. This file is
+# a ROUTING TABLE only — it tells slash commands which agents exist and which
+# canonicals each domain reads.
+#
+# Per-domain DATA (code paths, schema tables, tests, business rules, banned
+# terms, decisions) lives in the agent files at .claude/agents/twicely-*.md.
+# DO NOT duplicate that data here. The agent files are the source of truth.
+#
+# Each domain has THREE agents derived from this entry:
+#   - twicely-<id>          (expert,  opus,   answers questions)
+#   - twicely-<id>-audit    (auditor, sonnet, verifies compliance)
+#   - twicely-<id>-fix      (fixer,   sonnet, applies canonical-correct fixes)
+#
+# Layers:
+#   - mk     = Marketplace (twicely.co — buyer/seller experience)
+#   - hub    = Hub (hub.twicely.co — seller hub + operator console)
+#   - engine = Cross-cutting platform (no UI surface of its own)
+#
+# Slash commands that read this file:
+#   /twicely-ask <id> <question>     → dispatches expert
+#   /twicely-audit <id>              → dispatches auditor
+#   /twicely-fix <id> <issue>        → dispatches fixer
+#   /twicely-{ask,audit,fix} all     → fans out to every domain in this file
+# ──────────────────────────────────────────────────────────────────────────────
+
+version: 2
+updated: 2026-04-07
+canonical_root: read-me/
+
+# Cross-cutting reference docs every agent may read on demand
+shared_canonicals:
+  schema:           read-me/TWICELY_V3_SCHEMA_v2_1_0.md
+  decisions:        read-me/TWICELY_V3_DECISION_RATIONALE.md
+  page_registry:    read-me/TWICELY_V3_PAGE_REGISTRY.md
+  build_tracker:    read-me/TWICELY_V3_BUILD_SEQUENCE_TRACKER.md
+  feature_lockin:   read-me/TWICELY_V3_FEATURE_LOCKIN_ALL_DOMAINS.md
+  testing_standards: read-me/TWICELY_V3_TESTING_STANDARDS.md
+  user_model:       read-me/TWICELY_V3_USER_MODEL.md
+
+# ──────────────────────────────────────────────────────────────────────────────
+# DOMAINS
+# ──────────────────────────────────────────────────────────────────────────────
+domains:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # LAYER 1 — MARKETPLACE (twicely.co)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - id: mk-browse
+    layer: mk
+    title: Marketplace Browse, Search & PDP
+    summary: Listings discovery — PLP, PDP, search, categories, filters.
+    canonicals:
+      - read-me/Build-docs/TWICELY_V3_SLICE_B1_BROWSE_SEARCH.md
+      - read-me/TWICELY_V3_PERSONALIZATION_CANONICAL.md
+    handoffs:
+      personalization_logic: mk-personalization
+      cart_or_checkout: mk-checkout
+      schema: engine-schema
+      auth: engine-security
+
+  - id: mk-checkout
+    layer: mk
+    title: Marketplace Cart & Checkout
+    summary: Cart, checkout flow, order placement (buyer-side).
+    canonicals:
+      - read-me/Build-docs/TWICELY_V3_SLICE_B3_CART_CHECKOUT.md
+      - read-me/Build-docs/TWICELY_V3_SLICE_B3_2_CHECKOUT_FLOW_PROMPT_v2.md
+    handoffs:
+      fee_math: engine-finance
+      tier_gates: hub-subscriptions
+      returns_disputes: mk-buyer-protection
+      schema: engine-schema
+
+  - id: mk-listings
+    layer: mk
+    title: Listing Creation & Management
+    summary: Create, edit, manage a listing (seller-side flow on marketplace).
+    canonicals:
+      - read-me/Build-docs/TWICELY_V3_SLICE_B2_LISTING_CREATION.md
+    handoffs:
+      crosslister_sync: engine-crosslister
+      tier_gates: hub-subscriptions
+      schema: engine-schema
+
+  - id: mk-buyer-protection
+    layer: mk
+    title: Buyer Protection — Returns, Claims, Disputes
+    summary: Buyer-facing returns, claim filing, dispute resolution.
+    canonicals:
+      - read-me/TWICELY_V3_BUYER_PROTECTION_CANONICAL.md
+    handoffs:
+      refund_math: engine-finance
+      schema: engine-schema
+
+  - id: mk-personalization
+    layer: mk
+    title: Personalization & Homepage Feed
+    summary: Homepage feed, recommendations, trending, personalization scoring.
+    canonicals:
+      - read-me/TWICELY_V3_PERSONALIZATION_CANONICAL.md
+    handoffs:
+      browse_surface: mk-browse
+      seller_score: hub-seller-score
+      schema: engine-schema
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # LAYER 2 — HUB (hub.twicely.co)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - id: hub-shell
+    layer: hub
+    title: Unified Hub Shell, Navigation & Enforcement
+    summary: Hub chrome, navigation, enforcement rules, actor switching.
+    canonicals:
+      - read-me/TWICELY_V3_UNIFIED_HUB_CANONICAL.md
+      - read-me/TWICELY_V3_CANONICAL_HUB_ENFORCEMENT.md
+    handoffs:
+      auth_actors: engine-security
+      schema: engine-schema
+
+  - id: hub-finance
+    layer: hub
+    title: Seller Financial Center
+    summary: Seller bookkeeping at /my/selling/finances/* — auto-populated P&L, expenses, mileage, tax prep, accounting sync (FREE/PRO).
+    canonicals:
+      - read-me/TWICELY_V3_FINANCIAL_CENTER_CANONICAL_v3_0.md
+    related:
+      - read-me/TWICELY_V3_FINANCE_ENGINE_CANONICAL.md
+      - read-me/TWICELY_V3_PRICING_PAYMENTS_PAYOUT_CANONICAL_v3_2.md
+    handoffs:
+      operator_payout_integrity: engine-finance
+      operator_company_pnl: hub-company-finance
+      pricing_math_contracts: engine-finance
+      tier_gate_logic: hub-subscriptions
+      authorization: engine-security
+      schema_authority: engine-schema
+
+  - id: hub-company-finance
+    layer: hub
+    title: Twicely Inc. Company Finances (Operator Only)
+    summary: Operator-only company-level P&L, TF accruals. FUTURE SURFACE — canonical exists, code not yet implemented at hub/company/*.
+    canonicals:
+      - read-me/TWICELY_V3_COMPANY_FINANCES_CANONICAL_v1_0.md
+    handoffs:
+      seller_finance: hub-finance
+      math: engine-finance
+      schema: engine-schema
+
+  - id: hub-subscriptions
+    layer: hub
+    title: Subscriptions, Tiers, Bundles, Trials, Affiliate
+    summary: Store/Lister tier UI, automation add-on, boosting, bundles, trials, affiliate dashboards.
+    canonicals:
+      - read-me/TWICELY_V3_AFFILIATE_AND_TRIALS_CANONICAL.md
+      - read-me/TWICELY_V3_PRICING_PAYMENTS_PAYOUT_CANONICAL_v3_2.md
+    handoffs:
+      payment_webhooks: engine-finance
+      schema: engine-schema
+
+  - id: hub-crosslister
+    layer: hub
+    title: Crosslister UI (Seller-Configurable)
+    summary: Seller-facing crosslister config, schedule UI, import UI, rollover credits view.
+    canonicals:
+      - read-me/TWICELY_V3_LISTER_CANONICAL.md
+    handoffs:
+      scheduler_engine: engine-crosslister
+      subscriptions: hub-subscriptions
+      schema: engine-schema
+
+  - id: hub-helpdesk
+    layer: hub
+    title: Helpdesk — Tickets & KB
+    summary: Support ticket system, knowledge base, agent views, routing, SLA, macros, automation, CSAT.
+    canonicals:
+      - read-me/TWICELY_V3_HELPDESK_CANONICAL.md
+    handoffs:
+      auth: engine-security
+      schema: engine-schema
+
+  - id: hub-seller-score
+    layer: hub
+    title: Seller Score & Performance Bands
+    summary: Performance band dashboard + scoring math (UI and engine tightly coupled).
+    canonicals:
+      - read-me/TWICELY_V3_SELLER_SCORE_CANONICAL.md
+    handoffs:
+      reward_gating: hub-subscriptions
+      personalization_consumer: mk-personalization
+      schema: engine-schema
+
+  - id: hub-platform-settings
+    layer: hub
+    title: Platform Settings (Operator Only)
+    summary: Operator-only platform_settings admin — feature flags, fee config, IRS rate, etc.
+    canonicals:
+      - read-me/TWICELY_V3_PLATFORM_SETTINGS_CANONICAL.md
+    handoffs:
+      semantic_meaning: "<the relevant domain>"
+      auth: engine-security
+      schema: engine-schema
+
+  - id: hub-local
+    layer: hub
+    title: Local Sales — Seller UI
+    summary: Seller-facing local sale flow — in-person sale logging, cash receipts, mark-as-sold-locally, local order timeline. UI only.
+    canonicals:
+      - read-me/TWICELY_V3_LOCAL_CANONICAL.md
+      - read-me/TWICELY_V3_LOCAL_CANONICAL_ADDENDUM_v1_1.md
+    handoffs:
+      flat_fee_math: engine-local
+      cash_sale_logging: engine-local
+      seller_finance_display: hub-finance
+      auth: engine-security
+      schema: engine-schema
+
+  - id: hub-messaging
+    layer: hub
+    title: Messaging — Conversations, Typing, Keyword Moderation
+    summary: Buyer ↔ seller conversations, typing indicators, read receipts, attachments, keyword moderation, flagged messages. Owns (hub)/my/messages/*, (hub)/mod/messages, (hub)/admin-messages, (hub)/cfg/messaging/keywords, all messaging actions/API routes, and realtime messaging channels. Separate from hub-helpdesk case messaging.
+    canonicals:
+      - read-me/TWICELY_V3_FEATURE_LOCKIN_ALL_DOMAINS.md
+      - read-me/TWICELY_V3_ACTORS_SECURITY_CANONICAL.md
+    handoffs:
+      helpdesk_case_messaging: hub-helpdesk
+      notification_templates: "(notifications package — shared infrastructure)"
+      realtime_layer: "(realtime package — shared infrastructure)"
+      local_auto_messages: engine-local
+      auth: engine-security
+      schema: engine-schema
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # LAYER 3 — ENGINE (cross-cutting, no UI)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - id: engine-finance
+    layer: engine
+    title: Finance Engine — Pricing, TF, Fees, Payouts, Stripe
+    summary: Pricing math, TF brackets, fee math, payout calculation, payout integrity (operator surface), Stripe webhooks.
+    canonicals:
+      - read-me/TWICELY_V3_FINANCE_ENGINE_CANONICAL.md
+      - read-me/TWICELY_V3_PRICING_PAYMENTS_PAYOUT_CANONICAL_v3_2.md
+    handoffs:
+      ui_seller: hub-finance
+      ui_company: hub-company-finance
+      schema: engine-schema
+
+  - id: engine-crosslister
+    layer: engine
+    title: Crosslister Engine — Scheduler, Connectors, Imports
+    summary: Scheduler, polling, platform connectors, imports, dedupe, sale detection, queue workers.
+    canonicals:
+      - read-me/TWICELY_V3_LISTER_CANONICAL.md
+    handoffs:
+      ui: hub-crosslister
+      schema: engine-schema
+
+  - id: engine-security
+    layer: engine
+    title: Auth, CASL, Actors, Delegation
+    summary: Better Auth, CASL abilities, 6 actor types, delegation, RBAC, impersonation.
+    canonicals:
+      - read-me/TWICELY_V3_ACTORS_SECURITY_CANONICAL.md
+    handoffs:
+      hub_shell_ui: hub-shell
+      schema: engine-schema
+
+  - id: engine-schema
+    layer: engine
+    title: Schema Authority
+    summary: Drizzle schema, migrations, enums. Final arbiter on all schema conflicts across domains.
+    canonicals:
+      - read-me/TWICELY_V3_SCHEMA_v2_1_0.md
+    handoffs: {}    # bottom of the stack
+
+  - id: engine-local
+    layer: engine
+    title: Local Sales Engine — Bracket TF, Cash Ledger
+    summary: The math and event side of local sales. Bracket TF (per addendum §A0, supersedes Decision #42 flat-fee), cash sale ledger emission, local order state machine, fraud detection.
+    canonicals:
+      - read-me/TWICELY_V3_LOCAL_CANONICAL.md
+      - read-me/TWICELY_V3_LOCAL_CANONICAL_ADDENDUM_v1_1.md
+    handoffs:
+      seller_ui: hub-local
+      operator_finance: engine-finance
+      seller_finance_logging: hub-finance
+      schema: engine-schema
+
+# ──────────────────────────────────────────────────────────────────────────────
+# GLOBAL DEFAULTS
+# ──────────────────────────────────────────────────────────────────────────────
+defaults:
+  expert:
+    model: opus
+    color_by_layer:
+      mk: blue
+      hub: green
+      engine: orange
+  auditor:
+    model: sonnet
+    color: yellow
+  fixer:
+    model: sonnet
+    color: orange

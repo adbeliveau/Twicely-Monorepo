@@ -36,9 +36,10 @@ export const promotion = pgTable('promotion', {
 // §15.2 promotionUsage
 export const promotionUsage = pgTable('promotion_usage', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  promotionId:         text('promotion_id').notNull().references(() => promotion.id),
-  orderId:             text('order_id').notNull().references(() => order.id),
-  buyerId:             text('buyer_id').notNull().references(() => user.id),
+  // restrict: promotion usage is a revenue record — must survive promotion/order/user deletion
+  promotionId:         text('promotion_id').notNull().references(() => promotion.id, { onDelete: 'restrict' }),
+  orderId:             text('order_id').notNull().references(() => order.id, { onDelete: 'restrict' }),
+  buyerId:             text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   discountCents:       integer('discount_cents').notNull(),
   createdAt:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({

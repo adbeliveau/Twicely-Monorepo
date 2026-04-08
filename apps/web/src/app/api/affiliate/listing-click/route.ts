@@ -9,7 +9,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { LISTING_REF_COOKIE_NAME } from '@/lib/affiliate/referral-cookie';
 import { checkSelfReferralByIp } from '@/lib/affiliate/fraud-detection';
 import { escalateAffiliate } from '@/lib/affiliate/fraud-escalation';
-import { getClientIp } from '@/lib/utils/get-client-ip';
+import { getClientIp } from '@twicely/utils/get-client-ip';
 
 const listingClickSchema = z.object({
   referralCode: z.string().min(1).max(50),

@@ -10,7 +10,7 @@ import { db } from '@twicely/db';
 import { browsingHistory } from '@twicely/db/schema';
 import { sql } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
-import { getClientIp } from '@/lib/utils/get-client-ip';
+import { getClientIp } from '@twicely/utils/get-client-ip';
 
 const TRENDING_LIMIT = 8;
 const WINDOW_DAYS = 7;

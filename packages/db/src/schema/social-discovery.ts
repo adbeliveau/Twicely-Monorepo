@@ -12,7 +12,8 @@ export const listingQuestion = pgTable('listing_question', {
   questionText:    text('question_text').notNull(),         // 500 char max (enforced in app)
   answerText:      text('answer_text'),                     // 1000 char max (nullable until answered)
   answeredAt:      timestamp('answered_at', { withTimezone: true }),
-  answeredBy:      text('answered_by').references(() => user.id), // seller or staff delegate
+  // set null: question keeps its answer text even if the answering user is deleted
+  answeredBy:      text('answered_by').references(() => user.id, { onDelete: 'set null' }), // seller or staff delegate
   isPinned:        boolean('is_pinned').notNull().default(false), // seller can pin up to 3
   isHidden:        boolean('is_hidden').notNull().default(false), // moderation or seller-hidden
   createdAt:       timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -30,7 +31,8 @@ export const curatedCollection = pgTable('curated_collection', {
   slug:            text('slug').notNull().unique(),
   description:     text('description'),
   coverImageUrl:   text('cover_image_url'),
-  curatedBy:       text('curated_by').notNull().references(() => user.id), // staff user
+  // restrict: curated collection maintains editorial attribution — block deletion of curating staff
+  curatedBy:       text('curated_by').notNull().references(() => user.id, { onDelete: 'restrict' }), // staff user
   isPublished:     boolean('is_published').notNull().default(false),
   startDate:       timestamp('start_date', { withTimezone: true }),        // seasonal/themed
   endDate:         timestamp('end_date', { withTimezone: true }),
@@ -48,7 +50,8 @@ export const curatedCollectionItem = pgTable('curated_collection_item', {
   collectionId:    text('collection_id').notNull().references(() => curatedCollection.id, { onDelete: 'cascade' }),
   listingId:       text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
   sortOrder:       integer('sort_order').notNull().default(0),
-  addedBy:         text('added_by').notNull().references(() => user.id),
+  // restrict: collection items maintain editorial attribution — block deletion of adding staff
+  addedBy:         text('added_by').notNull().references(() => user.id, { onDelete: 'restrict' }),
   createdAt:       timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   collectionIdx:   index('cci_collection').on(table.collectionId, table.sortOrder),

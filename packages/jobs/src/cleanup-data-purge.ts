@@ -23,6 +23,12 @@ interface PurgeResult {
   skipped?: string;
 }
 
+// SEC-027: Allowlist of tables that can be purged
+const ALLOWED_PURGE_TABLES = new Set([
+  'search_log', 'webhook_log', 'analytics_event', 'notification_log',
+]);
+const ALLOWED_PURGE_COLUMNS = new Set(['created_at']);
+
 /**
  * Attempt to purge a table by raw SQL. Gracefully skips if table doesn't exist.
  */
@@ -31,6 +37,9 @@ async function purgeTableGracefully(
   columnName: string,
   cutoff: Date
 ): Promise<PurgeResult> {
+  if (!ALLOWED_PURGE_TABLES.has(tableName) || !ALLOWED_PURGE_COLUMNS.has(columnName)) {
+    throw new Error(`Purge not allowed for table=${tableName}, column=${columnName}`);
+  }
   try {
     const result = await db.execute(
       sql`DELETE FROM ${sql.identifier(tableName)}
@@ -55,11 +64,12 @@ async function purgeTableGracefully(
  */
 async function purgeExpiredDataExports(): Promise<number> {
   const exportExpiryDays = await getPlatformSetting<number>(
-    'retention.exportExpiryDays',
+    'privacy.dataExport.expiryDays',
     7
   );
   const cutoff = new Date(Date.now() - exportExpiryDays * 86400000);
 
+  const exportBatchSize = await getPlatformSetting<number>('cleanup.dataPurge.exportBatchSize', 500);
   const expiredExports = await db
     .select({ id: dataExportRequest.id, downloadUrl: dataExportRequest.downloadUrl })
     .from(dataExportRequest)
@@ -69,7 +79,7 @@ async function purgeExpiredDataExports(): Promise<number> {
         lt(dataExportRequest.createdAt, cutoff)
       )
     )
-    .limit(500);
+    .limit(exportBatchSize);
 
   if (expiredExports.length === 0) return 0;
 
@@ -103,19 +113,19 @@ export async function runDataPurge(): Promise<void> {
   const now = new Date();
 
   const searchLogDays = await getPlatformSetting<number>(
-    'retention.searchLogDays',
+    'privacy.retention.searchLogDays',
     90
   );
   const webhookLogDays = await getPlatformSetting<number>(
-    'retention.webhookLogDays',
+    'privacy.retention.webhookLogDays',
     90
   );
   const analyticsEventDays = await getPlatformSetting<number>(
-    'retention.analyticsEventDays',
+    'privacy.retention.analyticsEventDays',
     365
   );
   const notificationLogDays = await getPlatformSetting<number>(
-    'retention.notificationLogDays',
+    'privacy.retention.notificationLogDays',
     180
   );
 

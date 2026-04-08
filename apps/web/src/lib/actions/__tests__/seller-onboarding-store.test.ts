@@ -29,12 +29,14 @@ import { updateStoreNameAction } from '../seller-onboarding';
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { getSellerProfile } from '@/lib/queries/seller';
+import { getBusinessInfo } from '@/lib/queries/business-info';
 
 const mockAuthorize = vi.mocked(authorize);
 const mockSelect = vi.mocked(db.select);
 const mockInsert = vi.mocked(db.insert);
 const mockUpdate = vi.mocked(db.update);
 const mockGetSellerProfile = vi.mocked(getSellerProfile);
+const mockGetBusinessInfo = vi.mocked(getBusinessInfo);
 
 const validInput = { storeName: 'My Vintage Shop', storeSlug: 'my-vintage-shop' };
 
@@ -44,6 +46,15 @@ function makeAbility(allowed = true) {
 
 function makeBusinessProfile(overrides: Record<string, unknown> = {}) {
   return { id: 'sp-test-1', userId: 'user-test-123', sellerType: 'BUSINESS', storeSlug: null, ...overrides };
+}
+
+function mockBizInfoPresent() {
+  mockGetBusinessInfo.mockResolvedValue({
+    id: 'biz-test-1',
+    userId: 'user-test-123',
+    businessName: 'Acme LLC',
+    businessType: 'LLC',
+  } as never);
 }
 
 function mockNoConflict() {
@@ -136,19 +147,23 @@ describe('updateStoreNameAction — business rules and happy path', () => {
       ability: makeAbility() as never,
     });
     mockGetSellerProfile.mockResolvedValue(null);
+    mockGetBusinessInfo.mockResolvedValue(null);
     expect(await updateStoreNameAction(validInput)).toEqual({
       success: false, error: 'Seller profile not found',
     });
   });
 
-  it('returns error if sellerType is PERSONAL', async () => {
+  it('returns error if business info is missing', async () => {
     mockAuthorize.mockResolvedValue({
       session: { userId: 'user-test-123', delegationId: null } as never,
       ability: makeAbility() as never,
     });
-    mockGetSellerProfile.mockResolvedValue(makeBusinessProfile({ sellerType: 'PERSONAL' }) as never);
+    mockGetSellerProfile.mockResolvedValue(
+      makeBusinessProfile({ sellerType: 'PERSONAL' }) as never
+    );
+    mockGetBusinessInfo.mockResolvedValue(null);
     expect(await updateStoreNameAction(validInput)).toEqual({
-      success: false, error: 'Business account required to set a store name',
+      success: false, error: 'Business info required before setting a store name',
     });
   });
 
@@ -158,6 +173,7 @@ describe('updateStoreNameAction — business rules and happy path', () => {
       ability: makeAbility() as never,
     });
     mockGetSellerProfile.mockResolvedValue(makeBusinessProfile() as never);
+    mockBizInfoPresent();
     mockSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([{ id: 'sp-other-99' }]) }),
@@ -174,6 +190,7 @@ describe('updateStoreNameAction — business rules and happy path', () => {
       ability: makeAbility() as never,
     });
     mockGetSellerProfile.mockResolvedValue(makeBusinessProfile({ storeSlug: 'my-vintage-shop' }) as never);
+    mockBizInfoPresent();
     mockUpdate.mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
     } as never);
@@ -191,6 +208,7 @@ describe('updateStoreNameAction — business rules and happy path', () => {
       ability: makeAbility() as never,
     });
     mockGetSellerProfile.mockResolvedValue(makeBusinessProfile() as never);
+    mockBizInfoPresent();
     mockNoConflict();
     mockUpdate.mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
@@ -207,6 +225,7 @@ describe('updateStoreNameAction — business rules and happy path', () => {
       ability: makeAbility() as never,
     });
     mockGetSellerProfile.mockResolvedValue(makeBusinessProfile() as never);
+    mockBizInfoPresent();
     mockNoConflict();
     mockUpdate.mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
@@ -220,5 +239,53 @@ describe('updateStoreNameAction — business rules and happy path', () => {
     expect(arg.action).toBe('STORE_NAME_SET');
     expect(arg.actorType).toBe('USER');
     expect(arg.subject).toBe('SellerProfile');
+  });
+
+  it('flips sellerType to BUSINESS when seller is still PERSONAL', async () => {
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'user-test-123', delegationId: null } as never,
+      ability: makeAbility() as never,
+    });
+    mockGetSellerProfile.mockResolvedValue(
+      makeBusinessProfile({ sellerType: 'PERSONAL' }) as never
+    );
+    mockBizInfoPresent();
+    mockNoConflict();
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
+    mockUpdate.mockReturnValue({ set: mockSet } as never);
+    const mockValues = vi.fn().mockResolvedValue(undefined);
+    mockInsert.mockReturnValue({ values: mockValues } as never);
+
+    const result = await updateStoreNameAction(validInput);
+
+    expect(result).toEqual({ success: true });
+    // sellerType flip is part of the update set payload
+    const setArg = mockSet.mock.calls[0]![0];
+    expect(setArg.sellerType).toBe('BUSINESS');
+    // BUSINESS_UPGRADED audit event emitted alongside STORE_NAME_SET
+    const auditActions = mockValues.mock.calls.map((c) => c[0].action);
+    expect(auditActions).toContain('STORE_NAME_SET');
+    expect(auditActions).toContain('BUSINESS_UPGRADED');
+  });
+
+  it('does NOT re-flip sellerType when seller is already BUSINESS', async () => {
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'user-test-123', delegationId: null } as never,
+      ability: makeAbility() as never,
+    });
+    mockGetSellerProfile.mockResolvedValue(makeBusinessProfile() as never);
+    mockBizInfoPresent();
+    mockNoConflict();
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
+    mockUpdate.mockReturnValue({ set: mockSet } as never);
+    const mockValues = vi.fn().mockResolvedValue(undefined);
+    mockInsert.mockReturnValue({ values: mockValues } as never);
+
+    await updateStoreNameAction(validInput);
+
+    const setArg = mockSet.mock.calls[0]![0];
+    expect(setArg.sellerType).toBeUndefined();
+    const auditActions = mockValues.mock.calls.map((c) => c[0].action);
+    expect(auditActions).not.toContain('BUSINESS_UPGRADED');
   });
 });

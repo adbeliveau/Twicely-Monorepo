@@ -270,7 +270,7 @@ export async function checkPayoutTaxGateAction(): Promise<PayoutTaxGateResult> {
   const status = await checkThresholdStatus(userId);
 
   if (status.needsTaxInfo) {
-    void import('@/lib/notifications/service').then(({ notify: n }) =>
+    void import('@twicely/notifications/service').then(({ notify: n }) =>
       n(userId, 'tax.info_required_payout_blocked', {
         thresholdFormatted: `$${(status.thresholdCents / 100).toFixed(2)}`,
       })

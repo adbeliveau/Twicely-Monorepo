@@ -18,21 +18,38 @@ import { canDispatch as cbCanDispatch, getCBSettings } from './circuit-breaker';
 import { effectiveQuota, loadTierWeights } from './tier-weight';
 import { listerPublishQueue } from './lister-queue';
 import { automationQueue } from './automation-queue';
+import { loadCrosslisterQueueSettings } from '../services/queue-settings-loader';
 import type { ExternalChannel } from '../types';
 import type { ListerTier } from '@twicely/db/types';
 
-const TICK_INTERVAL_MS = 5_000;
-const BATCH_PULL_SIZE = 50;
+// Defaults used only if loadCrosslisterQueueSettings() fails on startup.
+// In normal operation these are read from platform_settings.
+const FALLBACK_TICK_INTERVAL_MS = 5_000;
 
 let schedulerInterval: ReturnType<typeof setInterval> | null = null;
 let lastTickAt: Date | null = null;
 let lastTickDurationMs: number | null = null;
 
-/** Start the scheduler loop. Idempotent — no-op if already running. */
-export function startSchedulerLoop(): void {
+/**
+ * Start the scheduler loop. Idempotent — no-op if already running.
+ * Reads `crosslister.scheduler.tickIntervalMs` from platform_settings on
+ * startup. To change the tick interval, update the setting and restart the
+ * worker.
+ */
+export async function startSchedulerLoop(): Promise<void> {
   if (schedulerInterval) return;
-  schedulerInterval = setInterval(() => { void runTick(); }, TICK_INTERVAL_MS);
-  logger.info('[schedulerLoop] Started', { intervalMs: TICK_INTERVAL_MS });
+  let tickIntervalMs = FALLBACK_TICK_INTERVAL_MS;
+  try {
+    const settings = await loadCrosslisterQueueSettings();
+    tickIntervalMs = settings.schedulerTickIntervalMs;
+  } catch (err) {
+    logger.warn('[schedulerLoop] Failed to load tick interval from settings, using fallback', {
+      fallback: FALLBACK_TICK_INTERVAL_MS,
+      error: String(err),
+    });
+  }
+  schedulerInterval = setInterval(() => { void runTick(); }, tickIntervalMs);
+  logger.info('[schedulerLoop] Started', { intervalMs: tickIntervalMs });
 }
 
 /** Stop the scheduler loop (graceful shutdown). */
@@ -73,10 +90,11 @@ export async function runTick(): Promise<void> {
   try {
     const now = new Date();
 
-    // Load settings for this tick
-    const [baseQuota, cbSettings] = await Promise.all([
+    // Load settings for this tick (cached 5 min in queue-settings-loader)
+    const [baseQuota, cbSettings, queueSettings] = await Promise.all([
       getMaxJobsPerSellerPerMinute(),
       getCBSettings(),
+      loadCrosslisterQueueSettings(),
     ]);
     await loadTierWeights();
 
@@ -101,7 +119,7 @@ export async function runTick(): Promise<void> {
         ),
       )
       .orderBy(asc(crossJob.priority), asc(crossJob.scheduledFor))
-      .limit(BATCH_PULL_SIZE);
+      .limit(queueSettings.schedulerBatchPullSize);
 
     for (const job of pendingJobs) {
       const payload = job.payload as Record<string, unknown>;

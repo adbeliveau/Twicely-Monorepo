@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { stripeEventLog } from '../schema';
+import { stripeEventLog } from '@twicely/db/schema';
 
 // Hardcoded IDs for idempotency
 const STRIPE_EVENT_LOG_IDS = {

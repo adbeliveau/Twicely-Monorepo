@@ -33,7 +33,7 @@ export const browsingHistory = pgTable('browsing_history', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
   userId:              text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   listingId:           text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
-  categoryId:          text('category_id').references(() => category.id),
+  categoryId:          text('category_id').references(() => category.id, { onDelete: 'set null' }),
   sellerId:            text('seller_id'),
   viewCount:           integer('view_count').notNull().default(1),
   totalDurationSec:    integer('total_duration_sec').notNull().default(0),

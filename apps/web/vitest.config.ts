@@ -47,6 +47,10 @@ export default defineConfig({
       //
       // INFRASTRUCTURE (packages — tests mock these, never import as CUT)
       '@twicely/db/schema': path.resolve(__dirname, '../../packages/db/src/schema'),
+      // @twicely/db/queries intentionally points at apps/web/src/lib/queries (not
+      // packages/db/src/queries). 182 existing tests mock '@/lib/queries/platform-settings'
+      // and this alias makes @twicely/db/queries/platform-settings resolve to the same
+      // file so the mocks apply to both import paths. The two files are kept in sync.
       '@twicely/db/queries': path.resolve(__dirname, './src/lib/queries'),
       '@twicely/db/cache': path.resolve(__dirname, '../../packages/db/src/cache'),
       '@twicely/db/encryption': path.resolve(__dirname, '../../packages/db/src/encryption'),
@@ -54,6 +58,9 @@ export default defineConfig({
       '@twicely/db': path.resolve(__dirname, '../../packages/db/src'),
       '@twicely/casl': path.resolve(__dirname, '../../packages/casl/src'),
       '@twicely/auth': path.resolve(__dirname, '../../packages/auth/src'),
+      // auth mirror trimmed to only contain Next.js-specific files (actions.ts,
+      // extension-auth.ts) that can't live in the pure package. Those stay
+      // importable via @/lib/auth/... (no alias needed).
       '@twicely/logger': path.resolve(__dirname, '../../packages/logger/src'),
 
       // CODE-UNDER-TEST (app-local — internal imports use @/lib/* paths
@@ -61,23 +68,21 @@ export default defineConfig({
       '@twicely/search/typesense-client': path.resolve(__dirname, '../../packages/search/src/typesense-client'),
       '@twicely/search/typesense-index': path.resolve(__dirname, '../../packages/search/src/typesense-index'),
       '@twicely/search/typesense-schema': path.resolve(__dirname, '../../packages/search/src/typesense-schema'),
-      '@twicely/search': path.resolve(__dirname, './src/lib/search'),
-      '@twicely/jobs/shutdown-registry': path.resolve(__dirname, './src/lib/jobs/shutdown-registry'),
-      '@twicely/jobs': path.resolve(__dirname, './src/lib/jobs'),
-      '@twicely/finance/expense-categories': path.resolve(__dirname, './src/lib/finance/expense-categories'),
-      '@twicely/finance': path.resolve(__dirname, './src/lib/finance'),
-      '@twicely/commerce': path.resolve(__dirname, './src/lib/commerce'),
-      '@twicely/stripe': path.resolve(__dirname, './src/lib/stripe'),
-      '@twicely/notifications': path.resolve(__dirname, './src/lib/notifications'),
-      '@twicely/crosslister': path.resolve(__dirname, './src/lib/crosslister'),
-      '@twicely/subscriptions': path.resolve(__dirname, './src/lib/subscriptions'),
-      '@twicely/scoring': path.resolve(__dirname, './src/lib/scoring'),
-      '@twicely/email': path.resolve(__dirname, './src/lib/email'),
-      '@twicely/utils': path.resolve(__dirname, './src/lib/utils'),
-      '@twicely/config': path.resolve(__dirname, './src/lib/config'),
-      '@twicely/realtime': path.resolve(__dirname, './src/lib/realtime'),
-      '@twicely/storage': path.resolve(__dirname, './src/lib/storage'),
-      '@twicely/shipping': path.resolve(__dirname, './src/lib/shipping'),
+      '@twicely/search': path.resolve(__dirname, '../../packages/search/src'),
+      '@twicely/jobs': path.resolve(__dirname, '../../packages/jobs/src'),
+      '@twicely/finance/expense-categories': path.resolve(__dirname, '../../packages/finance/src/expense-categories'),
+      '@twicely/finance': path.resolve(__dirname, '../../packages/finance/src'),
+      '@twicely/commerce': path.resolve(__dirname, '../../packages/commerce/src'),
+      '@twicely/stripe': path.resolve(__dirname, '../../packages/stripe/src'),
+      '@twicely/notifications': path.resolve(__dirname, '../../packages/notifications/src'),
+      '@twicely/crosslister': path.resolve(__dirname, '../../packages/crosslister/src'),
+      '@twicely/subscriptions': path.resolve(__dirname, '../../packages/subscriptions/src'),
+      '@twicely/scoring': path.resolve(__dirname, '../../packages/scoring/src'),
+      '@twicely/email': path.resolve(__dirname, '../../packages/email/src'),
+      '@twicely/utils': path.resolve(__dirname, '../../packages/utils/src'),
+      '@twicely/config': path.resolve(__dirname, '../../packages/config/src'),
+      '@twicely/realtime': path.resolve(__dirname, '../../packages/realtime/src'),
+      '@twicely/storage': path.resolve(__dirname, '../../packages/storage/src'),
       '@twicely/ui': path.resolve(__dirname, './src/components/ui'),
     },
   },

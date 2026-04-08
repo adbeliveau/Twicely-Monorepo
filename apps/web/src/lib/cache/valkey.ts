@@ -10,7 +10,7 @@
 
 import Redis from 'ioredis';
 import { logger } from '@twicely/logger';
-import { getInfraConfig } from '@/lib/config/infra-config';
+import { getInfraConfig } from '@twicely/config/infra-config';
 
 let _client: Redis | null = null;
 

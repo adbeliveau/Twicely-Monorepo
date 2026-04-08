@@ -23,7 +23,8 @@ export const kbCategory = pgTable('kb_category', {
 // §13.15 kbArticle
 export const kbArticle = pgTable('kb_article', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  categoryId:          text('category_id').references(() => kbCategory.id),
+  // set null: kb article survives category deletion (article remains, just uncategorized)
+  categoryId:          text('category_id').references(() => kbCategory.id, { onDelete: 'set null' }),
   slug:                text('slug').notNull().unique(),
   title:               text('title').notNull(),
   excerpt:             text('excerpt'),
@@ -78,7 +79,8 @@ export const kbArticleRelation = pgTable('kb_article_relation', {
 export const kbCaseArticleLink = pgTable('kb_case_article_link', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
   caseId:              text('case_id').notNull().references(() => helpdeskCase.id, { onDelete: 'cascade' }),
-  articleId:           text('article_id').notNull().references(() => kbArticle.id),
+  // cascade: when article is deleted, remove the case-article links
+  articleId:           text('article_id').notNull().references(() => kbArticle.id, { onDelete: 'cascade' }),
   linkedByStaffId:     text('linked_by_staff_id').notNull(),
   sentToCustomer:      boolean('sent_to_customer').notNull().default(false),
   createdAt:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { db } from '@twicely/db';
 import { helpdeskSlaPolicy } from '@twicely/db/schema';
 import { SlaPolicyTable } from './sla-policy-table';

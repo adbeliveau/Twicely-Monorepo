@@ -28,6 +28,7 @@ import { localMeetupReminderQueue } from '@twicely/jobs/local-meetup-reminder';
 import { notify } from '@twicely/notifications/service';
 import { stripe } from '@twicely/stripe/server';
 import { logger } from '@twicely/logger';
+import { canTransition } from './local-state-machine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,9 +116,14 @@ async function cleanupBullMQJobs(transactionId: string): Promise<void> {
 
 export async function cancelLocalTransaction(
   params: CancelLocalTransactionParams,
-): Promise<void> {
+): Promise<{ error?: string }> {
   const { transaction: tx, cancelingParty, cancelingUserId, reason } = params;
   const now = new Date();
+
+  // 0. State machine guard — validate the transition before any DB writes
+  if (!canTransition(tx.status, 'CANCELED')) {
+    return { error: `Cannot transition from ${tx.status} to CANCELED` };
+  }
 
   // 1. Determine reliability mark based on time until meetup
   const { eventType, marks } = await determineCancelEventType(
@@ -209,4 +215,6 @@ export async function cancelLocalTransaction(
     eventType,
     marks,
   });
+
+  return {};
 }

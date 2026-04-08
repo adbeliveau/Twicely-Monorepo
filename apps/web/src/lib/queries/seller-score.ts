@@ -7,8 +7,8 @@ import { db } from '@twicely/db';
 import { sellerProfile, sellerScoreSnapshot, sellerPerformance } from '@twicely/db/schema';
 import { eq, and, gte, desc } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import type { PerformanceBand, TrendState } from '@/lib/scoring/score-types';
-import { calculateTrend } from '@/lib/scoring/calculate-seller-score';
+import type { PerformanceBand, TrendState } from '@twicely/scoring/score-types';
+import { calculateTrend } from '@twicely/scoring/calculate-seller-score';
 
 export interface SellerScoreData {
   sellerScore: number;

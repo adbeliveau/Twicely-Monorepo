@@ -25,7 +25,7 @@ export const priceAlert = pgTable('price_alert', {
 export const categoryAlert = pgTable('category_alert', {
   id:              text('id').primaryKey().$defaultFn(() => createId()),
   userId:          text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  categoryId:      text('category_id').notNull().references(() => category.id),
+  categoryId:      text('category_id').notNull().references(() => category.id, { onDelete: 'cascade' }),
   filtersJson:     jsonb('filters_json').notNull().default('{}'),
   isActive:        boolean('is_active').notNull().default(true),
   lastTriggeredAt: timestamp('last_triggered_at', { withTimezone: true }),

@@ -53,8 +53,10 @@ async function processExpiredQuotes(): Promise<void> {
       )
     );
 
+  const defaultPenaltyPercent = await getPlatformSetting<number>('commerce.shippingQuote.penaltyDiscountPercent', 25);
+
   for (const quote of expired) {
-    const penaltyDiscountPercent = quote.penaltyDiscountPercent ?? await getPlatformSetting<number>('commerce.shipping.penaltyDiscountPercent', 25);
+    const penaltyDiscountPercent = quote.penaltyDiscountPercent ?? defaultPenaltyPercent;
 
     const resolution = resolveQuoteFinalPrice({
       maxShippingCents: quote.maxShippingCents,

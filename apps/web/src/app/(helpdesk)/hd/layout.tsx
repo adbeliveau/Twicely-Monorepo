@@ -1,4 +1,4 @@
-import { staffAuthorizeOrRedirect } from "@/lib/casl/staff-authorize";
+import { staffAuthorizeOrRedirect } from "@twicely/casl/staff-authorize";
 import { getHelpdeskBadges } from "@/lib/queries/helpdesk-badges";
 import { getAgentOnlineStatus } from "@/lib/queries/helpdesk-agents";
 import { HelpdeskLayoutClient } from "./helpdesk-layout-client";

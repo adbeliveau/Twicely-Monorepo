@@ -121,6 +121,21 @@ export default function CorpSidebar() {
     const hasChildren = item.children && item.children.length > 0;
     const isSubmenuOpen = openSubmenu === item.key;
 
+    if (item.disabled) {
+      return (
+        <span
+          key={item.key}
+          aria-disabled="true"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 dark:text-gray-600 opacity-50 cursor-not-allowed ${
+            isChild ? "py-2" : ""
+          }`}
+        >
+          {!isChild && <Icon className="w-5 h-5 flex-shrink-0" />}
+          {(isExpanded || isHovered || isMobileOpen) && <span>{item.label}</span>}
+        </span>
+      );
+    }
+
     if (hasChildren) {
       const parentActive = isParentActive(item);
       return (

@@ -106,10 +106,12 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
     }
   }
 
-  const [shippingQuote, localTransaction, maxAdjustmentPercent, buyerReliability] = await Promise.all([
+  const [shippingQuote, localTransaction, maxAdjustmentPercent, cancelLateHours, cancelSamedayHours, buyerReliability] = await Promise.all([
     getShippingQuoteByOrderId(orderId, session.user.id),
     ord.isLocalPickup ? getLocalTransactionByOrderId(orderId) : Promise.resolve(null),
     getPlatformSetting<number>('commerce.local.maxAdjustmentPercent', 33),
+    getPlatformSetting<number>('commerce.local.cancelLateHours', 24),
+    getPlatformSetting<number>('commerce.local.cancelSamedayHours', 2),
     ord.isLocalPickup ? getReliabilityDisplay(ord.buyerId) : Promise.resolve(null),
   ]);
 
@@ -197,7 +199,7 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
 
         {ord.isLocalPickup && ( /* G2.3: Local Pickup */
           localTransaction
-            ? <LocalMeetupCard transaction={localTransaction} role="SELLER" currentUserId={session.user.id} otherPartyName={buyerDisplayName} originalPriceCents={ord.itemSubtotalCents} maxDiscountPercent={maxAdjustmentPercent} counterpartyReliability={buyerReliability} />
+            ? <LocalMeetupCard transaction={localTransaction} role="SELLER" currentUserId={session.user.id} otherPartyName={buyerDisplayName} originalPriceCents={ord.itemSubtotalCents} maxDiscountPercent={maxAdjustmentPercent} cancelLateHours={cancelLateHours} cancelSamedayHours={cancelSamedayHours} counterpartyReliability={buyerReliability} />
             : <div className="rounded-lg border p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <MapPin className="size-5 text-brand-500" strokeWidth={2} />

@@ -9,7 +9,7 @@ config({ path: '.env.local' });
 import { hash } from 'bcryptjs';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { staffUser, staffUserRole } from '../schema';
+import { staffUser, staffUserRole } from '@twicely/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 
 const DATABASE_URL = process.env.DATABASE_URL;

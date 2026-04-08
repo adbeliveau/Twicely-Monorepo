@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./*": "./src/*.ts",
     "./automation/*": "./src/automation/*.ts",
+    "./connectors": "./src/connectors/index.ts",
     "./connectors/*": "./src/connectors/*.ts",
     "./handlers/*": "./src/handlers/*.ts",
     "./polling/*": "./src/polling/*.ts",

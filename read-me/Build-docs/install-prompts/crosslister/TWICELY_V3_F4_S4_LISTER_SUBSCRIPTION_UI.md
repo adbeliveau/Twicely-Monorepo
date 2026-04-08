@@ -98,14 +98,14 @@ interface ListerSubscriptionCardProps {
 **State A: NONE tier**
 - Gray border
 - Headline: "Start Crosslisting"
-- Body: "Import your listings for free from any platform. Get 25 publishes/month with the free plan."
+- Body: "Import your listings for free from any platform. Get 5 publishes as a 6-month teaser on the free plan (Decision #105)."
 - CTA: "Import Your Listings" → link to `/my/selling/crosslist/import` (or wherever import wizard lives)
 - No subscribe buttons (NONE → FREE happens via import, not subscription)
 
 **State B: FREE tier**
 - Gray border with subtle accent
 - Tier badge: "Free"
-- Publish meter: progress bar showing `{used} / 25 publishes`
+- Publish meter: progress bar showing `{used} / 5 publishes` (Decision #105 — 5 total for the 6-month window, not 25/month)
 - No rollover display (FREE has no rollover)
 - Upgrade CTA cards for LITE and PRO (reuse the tier card pattern from subscription-card.tsx)
 - Feature comparison: what you get with LITE vs PRO

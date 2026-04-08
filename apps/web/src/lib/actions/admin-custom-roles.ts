@@ -11,7 +11,7 @@ import { customRole, auditEvent } from '@twicely/db/schema';
 import { eq, count } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { revalidatePath } from 'next/cache';
-import { validatePermissions } from '@/lib/casl/permission-registry';
+import { validatePermissions } from '@twicely/casl/permission-registry';
 import {
   createCustomRoleSchema,
   updateCustomRoleSchema,

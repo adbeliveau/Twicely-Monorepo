@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { db } from '@twicely/db';
 import { listing, listingImage, user, category, sellerProfile, sellerPerformance } from '@twicely/db/schema';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
@@ -64,7 +65,23 @@ export async function getRecentListings(limit: number = 12): Promise<ListingCard
 /**
  * Get recently sold listings (listing status = SOLD).
  * Queries listings table directly — these have real images and seller data.
+ *
+ * Performance: avoid `ORDER BY RANDOM()` on the full SOLD table (full sort).
+ * Pull the most recent N sold listings (uses idx_listings_status_created_at),
+ * then shuffle in JS and slice to `limit`. The pool of 100 keeps the strip
+ * fresh while letting Postgres serve the query with an index-only scan.
  */
+const SOLD_POOL_SIZE = 100;
+
+function shuffleAndSlice<T>(items: T[], n: number): T[] {
+  const arr = items.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+  }
+  return arr.slice(0, n);
+}
+
 export async function getRecentlySoldListings(limit: number = 12): Promise<ListingCardData[]> {
   const rows = await db
     .select({
@@ -95,10 +112,12 @@ export async function getRecentlySoldListings(limit: number = 12): Promise<Listi
       and(eq(listingImage.listingId, listing.id), eq(listingImage.isPrimary, true))
     )
     .where(eq(listing.status, 'SOLD'))
-    .orderBy(sql`RANDOM()`)
-    .limit(limit);
+    .orderBy(desc(listing.createdAt))
+    .limit(SOLD_POOL_SIZE);
 
-  return rows.map((row) => ({
+  const picked = shuffleAndSlice(rows, limit);
+
+  return picked.map((row) => ({
     id: row.id,
     slug: row.slug ?? row.id,
     title: row.title ?? '',
@@ -121,8 +140,11 @@ export async function getRecentlySoldListings(limit: number = 12): Promise<Listi
 
 /**
  * Get top-level categories for homepage with listing counts.
+ *
+ * Wrapped in unstable_cache below — see export at end of file. Categories
+ * and counts change slowly, so a 10-minute TTL is fine on the homepage.
  */
-export async function getHomepageCategories(): Promise<
+async function fetchHomepageCategories(): Promise<
   Array<{ id: string; name: string; slug: string; listingCount: number }>
 > {
   // Run all 3 independent queries in parallel
@@ -182,3 +204,9 @@ export async function getHomepageCategories(): Promise<
     };
   });
 }
+
+export const getHomepageCategories = unstable_cache(
+  fetchHomepageCategories,
+  ['homepage-categories'],
+  { revalidate: 600, tags: ['homepage-categories'] },
+);

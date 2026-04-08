@@ -70,3 +70,11 @@ export function createOfferExpiryWorker(expireOffer: OfferExpirer) {
     }
   );
 }
+
+// ─── Auto-instantiated worker ────────────────────────────────────────────────
+// Lazy-initialized after commerce loads to avoid circular dep.
+
+void (async () => {
+  const { expireOffer } = await import('@twicely/commerce/offer-engine');
+  createOfferExpiryWorker(expireOffer);
+})();

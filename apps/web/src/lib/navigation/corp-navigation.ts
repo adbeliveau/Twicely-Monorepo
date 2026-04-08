@@ -15,6 +15,7 @@ export type CorpNavItem = {
   label: string;
   href: string;
   icon: string;
+  disabled?: boolean;
   children?: CorpNavItem[];
 };
 
@@ -30,6 +31,7 @@ function toCorpNavItem(item: AdminNavItem): CorpNavItem {
     label: item.label,
     href: item.href,
     icon: item.icon,
+    disabled: item.disabled,
     children: item.children?.map(toCorpNavItem),
   };
 }
@@ -85,6 +87,8 @@ export const CORP_NAV_SECTIONS: CorpNavSection[] = [
       'feature-flags',
       'errors',
       'operations',
+      'admin-messages',
+      'search-admin',
       'system-health',
       'audit-log',
     ]),
@@ -95,7 +99,6 @@ export const CORP_NAV_SECTIONS: CorpNavSection[] = [
     items: pick([
       'settings',
       'roles',
-      'staff',
       'crosslister',
       'providers',
       'localization',

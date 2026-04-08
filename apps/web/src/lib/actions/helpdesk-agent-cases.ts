@@ -9,10 +9,7 @@ import {
   agentReplySchema,
   updateCaseStatusSchema,
   assignCaseSchema,
-  updateCasePrioritySchema,
-  updateCaseTagsSchema,
 } from '@/lib/validations/helpdesk';
-import { calculateSlaDue } from '@/lib/helpdesk/sla';
 import { notifyCaseWatchers } from '@/lib/helpdesk/notify-watchers';
 import { notify } from '@twicely/notifications/service';
 
@@ -258,78 +255,5 @@ export async function assignCase(formData: unknown): Promise<ActionResult> {
   return { success: true };
 }
 
-/** Agent changes case priority */
-export async function updateCasePriority(formData: unknown): Promise<ActionResult> {
-  const { session, ability } = await staffAuthorize();
-  if (!ability.can('manage', 'HelpdeskCase')) {
-    return { success: false, error: 'Access denied' };
-  }
-
-  const parsed = updateCasePrioritySchema.safeParse(formData);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
-
-  const { caseId, priority } = parsed.data;
-  const now = new Date();
-
-  const existingCase = await db
-    .select({ id: helpdeskCase.id, priority: helpdeskCase.priority, createdAt: helpdeskCase.createdAt })
-    .from(helpdeskCase)
-    .where(eq(helpdeskCase.id, caseId))
-    .limit(1);
-
-  const priorityCase = existingCase[0];
-  if (!priorityCase) return { success: false, error: 'Not found' };
-  const oldPriority = priorityCase.priority;
-
-  const slaDates = await calculateSlaDue(priority, priorityCase.createdAt);
-
-  await db.update(helpdeskCase)
-    .set({
-      priority,
-      slaFirstResponseDueAt: slaDates.firstResponseDue,
-      slaResolutionDueAt: slaDates.resolutionDue,
-      updatedAt: now,
-      lastActivityAt: now,
-    })
-    .where(eq(helpdeskCase.id, caseId));
-
-  await db.insert(caseEvent).values({
-    caseId,
-    eventType: 'priority_changed',
-    actorType: 'agent',
-    actorId: session.staffUserId,
-    dataJson: { oldPriority, newPriority: priority },
-  });
-
-  revalidatePath(`/hd/cases/${caseId}`);
-  return { success: true };
-}
-
-/** Agent updates case tags */
-export async function updateCaseTags(formData: unknown): Promise<ActionResult> {
-  const { session, ability } = await staffAuthorize();
-  if (!ability.can('manage', 'HelpdeskCase')) {
-    return { success: false, error: 'Access denied' };
-  }
-
-  const parsed = updateCaseTagsSchema.safeParse(formData);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
-
-  const { caseId, tags } = parsed.data;
-  const now = new Date();
-
-  await db.update(helpdeskCase)
-    .set({ tags, updatedAt: now, lastActivityAt: now })
-    .where(eq(helpdeskCase.id, caseId));
-
-  await db.insert(caseEvent).values({
-    caseId,
-    eventType: 'tags_changed',
-    actorType: 'agent',
-    actorId: session.staffUserId,
-    dataJson: { tags },
-  });
-
-  revalidatePath(`/hd/cases/${caseId}`);
-  return { success: true };
-}
+// NOTE: updateCasePriority and updateCaseTags live in './helpdesk-agent-cases-meta'
+// — import them from there directly. Re-exports are not allowed in "use server" files.

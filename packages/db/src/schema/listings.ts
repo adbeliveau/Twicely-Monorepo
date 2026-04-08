@@ -13,7 +13,7 @@ export const listing = pgTable('listing', {
   status:                listingStatusEnum('status').notNull().default('DRAFT'),
   title:                 text('title'),
   description:           text('description'),
-  categoryId:            text('category_id').references(() => category.id),
+  categoryId:            text('category_id').references(() => category.id, { onDelete: 'set null' }),
   storefrontCategoryId:  text('storefront_category_id').references(() => storefrontCustomCategory.id, { onDelete: 'set null' }),
   condition:             listingConditionEnum('condition'),
   brand:                 text('brand'),
@@ -124,7 +124,8 @@ export const listingImage = pgTable('listing_image', {
 export const listingOffer = pgTable('listing_offer', {
   id:                text('id').primaryKey().$defaultFn(() => createId()),
   listingId:         text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
-  buyerId:           text('buyer_id').notNull().references(() => user.id),
+  // restrict: offer is a commercial record — must survive user account deletion for audit
+  buyerId:           text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:          text('seller_id').notNull(),  // userId, not sellerProfileId
   offerCents:        integer('offer_cents').notNull(),
   currency:          text('currency').notNull().default('USD'),
@@ -226,7 +227,7 @@ export const shippingProfile = pgTable('shipping_profile', {
 export const offerBundleItem = pgTable('offer_bundle_item', {
   id:          text('id').primaryKey().$defaultFn(() => createId()),
   offerId:     text('offer_id').notNull().references(() => listingOffer.id, { onDelete: 'cascade' }),
-  listingId:   text('listing_id').notNull().references(() => listing.id),
+  listingId:   text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   offerIdx:    index('obi_offer').on(table.offerId),

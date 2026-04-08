@@ -3,9 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Module Mocks (hoisted) ───────────────────────────────────────────────────
 
 const mockGetFollowedSellerNewListings = vi.fn();
+const mockGetTrendingListings = vi.fn().mockResolvedValue([]);
 const mockGetPlatformSetting = vi.fn().mockResolvedValue(20);
 vi.mock('@/lib/queries/follow', () => ({
   getFollowedSellerNewListings: mockGetFollowedSellerNewListings,
+}));
+vi.mock('@/lib/queries/explore-trending', () => ({
+  getTrendingListings: (...args: unknown[]) => mockGetTrendingListings(...args),
 }));
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: (...args: unknown[]) => mockGetPlatformSetting(...args),
@@ -24,7 +28,12 @@ vi.mock('drizzle-orm', async (importOriginal) => {
     notInArray: vi.fn((_c: unknown, ids: unknown) => `notInArray:${JSON.stringify(ids)}`),
     isNotNull: vi.fn(() => 'isNotNull'),
     gt: vi.fn(() => 'gt'),
-    sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn() }),
+    // sql template tag must produce a chainable expression — getInterestMatchedListings
+    // calls sql`...`.as('totalWeight') so the returned object needs an .as() method.
+    sql: Object.assign(
+      vi.fn(() => ({ as: vi.fn().mockReturnValue('sql-expr-aliased') })),
+      { raw: vi.fn() },
+    ),
     count: vi.fn(() => 'count-agg'),
   };
 });
@@ -141,6 +150,7 @@ describe('getForYouFeed', () => {
     vi.clearAllMocks();
     vi.resetModules();
     mockGetPlatformSetting.mockResolvedValue(20);
+    mockGetTrendingListings.mockResolvedValue([]);
   });
 
   it('returns empty feed for user with no follows and no interests', async () => {
@@ -251,8 +261,9 @@ describe('getForYouFeed', () => {
     expect(lastCallIds).toContain('matched-1');
   });
 
-  it('db.$with is called twice (for matched and boosted CTEs)', async () => {
-    setupDbMocks([], [], 0);
+  it('db.$with is called twice (for matched and boosted CTEs) when user has interests', async () => {
+    // count=2 → hasInterests=true → normal path runs both CTEs
+    setupDbMocks([], [], 2);
     mockGetFollowedSellerNewListings.mockResolvedValue([]);
     const { getForYouFeed } = await import('../feed');
     await getForYouFeed('user-1');
@@ -295,5 +306,64 @@ describe('getForYouFeed', () => {
     // followed listing must NOT appear in matchedListings (de-duped via notInArray)
     const matchedIds = result.matchedListings.map((l) => l.id);
     expect(matchedIds).not.toContain('social-1');
+  });
+
+  // ── Cold-start fallback (Canonical §4: skip behavior = trending feed) ─────────
+
+  it('cold-start: trendingFallback populated from getTrendingListings when hasInterests=false', async () => {
+    const trendingItem = makeListing('trending-1');
+    mockGetTrendingListings.mockResolvedValue([trendingItem]);
+    setupDbMocks([], [], 0); // count=0 → hasInterests=false
+    mockGetFollowedSellerNewListings.mockResolvedValue([]);
+    const { getForYouFeed } = await import('../feed');
+    const result = await getForYouFeed('user-1');
+    expect(result.hasInterests).toBe(false);
+    expect(result.trendingFallback).toHaveLength(1);
+    expect(result.trendingFallback[0]?.id).toBe('trending-1');
+  });
+
+  it('cold-start: matchedListings and boostedListings are empty when hasInterests=false', async () => {
+    setupDbMocks([], [], 0);
+    mockGetFollowedSellerNewListings.mockResolvedValue([]);
+    const { getForYouFeed } = await import('../feed');
+    const result = await getForYouFeed('user-1');
+    expect(result.matchedListings).toHaveLength(0);
+    expect(result.boostedListings).toHaveLength(0);
+  });
+
+  it('cold-start: getTrendingListings called with limit from platform_settings', async () => {
+    mockGetPlatformSetting.mockResolvedValue(24);
+    setupDbMocks([], [], 0);
+    mockGetFollowedSellerNewListings.mockResolvedValue([]);
+    const { getForYouFeed } = await import('../feed');
+    await getForYouFeed('user-1');
+    expect(mockGetTrendingListings).toHaveBeenCalledWith(24);
+  });
+
+  it('cold-start: getTrendingListings NOT called when user has interests', async () => {
+    setupDbMocks([], [], 3); // count=3 → hasInterests=true
+    mockGetFollowedSellerNewListings.mockResolvedValue([]);
+    const { getForYouFeed } = await import('../feed');
+    await getForYouFeed('user-1');
+    expect(mockGetTrendingListings).not.toHaveBeenCalled();
+  });
+
+  it('normal path: trendingFallback is empty array when hasInterests=true', async () => {
+    setupDbMocks([], [], 3);
+    mockGetFollowedSellerNewListings.mockResolvedValue([]);
+    const { getForYouFeed } = await import('../feed');
+    const result = await getForYouFeed('user-1');
+    expect(result.trendingFallback).toEqual([]);
+  });
+
+  it('cold-start: followedListings still returned even without interests', async () => {
+    const followedListing = makeListing('followed-cold');
+    mockGetTrendingListings.mockResolvedValue([]);
+    setupDbMocks([], [], 0);
+    mockGetFollowedSellerNewListings.mockResolvedValue([followedListing]);
+    const { getForYouFeed } = await import('../feed');
+    const result = await getForYouFeed('user-1');
+    expect(result.followedListings).toHaveLength(1);
+    expect(result.followedListings[0]?.id).toBe('followed-cold');
   });
 });

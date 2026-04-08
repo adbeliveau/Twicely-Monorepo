@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { db } from '@twicely/db';
 import { platformSetting, staffUser } from '@twicely/db/schema';
 import { HelpdeskSettingsForm } from './settings-form';

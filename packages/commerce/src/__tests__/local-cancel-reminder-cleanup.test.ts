@@ -146,7 +146,7 @@ describe('cleanupBullMQJobs — reminder job cleanup', () => {
         cancelingParty: 'BUYER',
         cancelingUserId: BUYER_ID,
       }),
-    ).resolves.toBeUndefined();
+    ).resolves.not.toThrow();
     expect(logger.warn).not.toHaveBeenCalledWith(
       '[local-cancel] Could not remove BullMQ job',
       expect.objectContaining({ jobId: `local-reminder-24hr-${TX_ID}` }),

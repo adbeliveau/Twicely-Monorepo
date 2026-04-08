@@ -15,6 +15,10 @@ vi.mock('@twicely/db/schema', () => ({
     status: 'status',
     archivedAt: 'archived_at',
     updatedAt: 'updated_at',
+    endedAt: 'ended_at',
+  },
+  listingImage: {
+    listingId: 'listing_id',
   },
 }));
 
@@ -32,6 +36,18 @@ vi.mock('@twicely/db', () => ({
     update: mockDbUpdate,
     delete: mockDbDelete,
   },
+}));
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}));
+
+vi.mock('@twicely/search/typesense-index', () => ({
+  deleteListingDocument: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@twicely/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -66,6 +82,10 @@ function makeAbility(canUpdate = true, canDelete = true) {
 }
 
 // ─── deleteListing ────────────────────────────────────────────────────────────
+// Tests target the wired file at apps/web/src/lib/actions/listings-delete.ts (plural).
+// The singular listing-delete.ts file was deleted as part of the dual-file consolidation
+// (see /twicely-fix mk-listings 2026-04-07). The plural file is the source of truth for
+// delete and includes the SOLD guard per Decision #109 (Mercari model).
 
 describe('deleteListing', () => {
   beforeEach(() => {
@@ -77,61 +97,67 @@ describe('deleteListing', () => {
     mockAuthorize.mockResolvedValue({ ability: makeAbility(), session: { userId: 'user-1' } });
     mockDbSelect.mockReturnValue(makeSelectChain([]));
 
-    const { deleteListing } = await import('../listing-delete');
-    const result = await deleteListing('missing-id');
+    const { deleteListing } = await import('../listings-delete');
+    const result = await deleteListing('z123456789012345678901234');  // valid cuid2 length
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Not found');
+    expect(result.error).toBe('Listing not found');
   });
 
-  it('blocks deletion of SOLD listings with informative message', async () => {
+  it('blocks deletion of SOLD listings with informative message (Decision #109)', async () => {
     mockAuthorize.mockResolvedValue({ ability: makeAbility(), session: { userId: 'user-1' } });
     mockDbSelect.mockReturnValue(makeSelectChain([
       { id: 'lst-1', ownerUserId: 'user-1', status: 'SOLD' },
     ]));
 
-    const { deleteListing } = await import('../listing-delete');
-    const result = await deleteListing('lst-1');
+    const { deleteListing } = await import('../listings-delete');
+    const result = await deleteListing('z123456789012345678901234');
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('Sold listings are kept on record');
   });
 
-  it('deletes a DRAFT listing successfully', async () => {
+  it('hard-deletes a DRAFT listing (also deletes images)', async () => {
     mockAuthorize.mockResolvedValue({ ability: makeAbility(), session: { userId: 'user-1' } });
     mockDbSelect.mockReturnValue(makeSelectChain([
       { id: 'lst-1', ownerUserId: 'user-1', status: 'DRAFT' },
     ]));
     mockDbDelete.mockReturnValue(makeDeleteChain());
 
-    const { deleteListing } = await import('../listing-delete');
-    const result = await deleteListing('lst-1');
+    const { deleteListing } = await import('../listings-delete');
+    const result = await deleteListing('z123456789012345678901234');
 
     expect(result.success).toBe(true);
-    expect(mockDbDelete).toHaveBeenCalled();
+    // Plural file deletes images + listing → 2 delete calls
+    expect(mockDbDelete).toHaveBeenCalledTimes(2);
   });
 
-  it('deletes an ENDED listing successfully', async () => {
+  it('soft-deletes an ENDED listing by setting status=ENDED', async () => {
     mockAuthorize.mockResolvedValue({ ability: makeAbility(), session: { userId: 'user-1' } });
     mockDbSelect.mockReturnValue(makeSelectChain([
       { id: 'lst-1', ownerUserId: 'user-1', status: 'ENDED' },
     ]));
-    mockDbDelete.mockReturnValue(makeDeleteChain());
+    const updateChain = makeUpdateChain();
+    mockDbUpdate.mockReturnValue(updateChain);
 
-    const { deleteListing } = await import('../listing-delete');
-    const result = await deleteListing('lst-1');
+    const { deleteListing } = await import('../listings-delete');
+    const result = await deleteListing('z123456789012345678901234');
 
     expect(result.success).toBe(true);
+    // Plural file does soft delete (UPDATE) for non-DRAFT, non-SOLD
+    expect(mockDbUpdate).toHaveBeenCalled();
   });
 
-  it('returns Forbidden when ability.cannot(delete) is true', async () => {
-    mockAuthorize.mockResolvedValue({ ability: makeAbility(true, false), session: { userId: 'user-1' } });
-    mockDbSelect.mockReturnValue(makeSelectChain([
-      { id: 'lst-1', ownerUserId: 'other-user', status: 'DRAFT' },
-    ]));
+  it('returns Forbidden when ability denies delete', async () => {
+    // Plural uses ability.can() not cannot() — make .can() return false for delete
+    const denyAbility = {
+      can: vi.fn().mockReturnValue(false),
+      cannot: vi.fn().mockReturnValue(true),
+    };
+    mockAuthorize.mockResolvedValue({ ability: denyAbility, session: { userId: 'user-1' } });
 
-    const { deleteListing } = await import('../listing-delete');
-    const result = await deleteListing('lst-1');
+    const { deleteListing } = await import('../listings-delete');
+    const result = await deleteListing('z123456789012345678901234');
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Forbidden');

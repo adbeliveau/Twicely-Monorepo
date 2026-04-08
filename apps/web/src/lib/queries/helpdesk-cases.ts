@@ -15,6 +15,9 @@ export interface CaseListItem {
   type: string;
   updatedAt: Date;
   lastActivityAt: Date;
+  slaFirstResponseDueAt?: Date | null;
+  firstResponseAt?: Date | null;
+  slaFirstResponseBreached?: boolean;
 }
 
 export interface CaseDetail {
@@ -219,6 +222,9 @@ export async function getAgentCaseQueue(
       type: helpdeskCase.type,
       updatedAt: helpdeskCase.updatedAt,
       lastActivityAt: helpdeskCase.lastActivityAt,
+      slaFirstResponseDueAt: helpdeskCase.slaFirstResponseDueAt,
+      firstResponseAt: helpdeskCase.firstResponseAt,
+      slaFirstResponseBreached: helpdeskCase.slaFirstResponseBreached,
     })
     .from(helpdeskCase)
     .where(where)

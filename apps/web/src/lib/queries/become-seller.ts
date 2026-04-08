@@ -7,6 +7,7 @@
 import { db } from '@twicely/db';
 import { user, sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
+import { getTfBrackets } from '@twicely/commerce/tf-calculator';
 import { getPlatformSettingsByPrefix } from '@/lib/queries/platform-settings';
 
 export interface TfBracket {
@@ -51,7 +52,7 @@ export async function getBecomeSelllerPricing(): Promise<BecomeSelllerPricingDat
     feesInsertionMap,
     freeListingsMap,
     automationMap,
-    tfMap,
+    canonicalBrackets,
   ] = await Promise.all([
     getPlatformSettingsByPrefix('store.pricing.'),
     getPlatformSettingsByPrefix('crosslister.pricing.'),
@@ -59,7 +60,7 @@ export async function getBecomeSelllerPricing(): Promise<BecomeSelllerPricingDat
     getPlatformSettingsByPrefix('fees.insertion.'),
     getPlatformSettingsByPrefix('fees.freeListings.'),
     getPlatformSettingsByPrefix('automation.pricing.'),
-    getPlatformSettingsByPrefix('commerce.tf.'),
+    getTfBrackets(),
   ]);
 
   const storeTiers: StoreTierCard[] = [
@@ -114,21 +115,15 @@ export async function getBecomeSelllerPricing(): Promise<BecomeSelllerPricingDat
     },
   ];
 
-  const tfBrackets: TfBracket[] = Array.from({ length: 8 }, (_, i) => {
-    const n = i + 1;
-    const maxRaw = tfMap.get(`commerce.tf.bracket${n}.maxCents`);
-    const maxCents =
-      typeof maxRaw === 'number' && maxRaw === -1
-        ? null
-        : typeof maxRaw === 'number'
-          ? maxRaw
-          : null;
-    return {
-      bracketNumber: n,
-      maxCents,
-      rateBps: num(tfMap, `commerce.tf.bracket${n}.rate`, 1000),
-    };
-  });
+  // Use canonical brackets from @twicely/commerce — single source of truth.
+  // getTfBrackets() reads from platform_settings (commerce.tf.bracket*) and falls back
+  // to DEFAULT_TF_BRACKETS (tiered 10% → 8%) if the table is empty. Never returns
+  // a flat 10% across all brackets.
+  const tfBrackets: TfBracket[] = canonicalBrackets.map((bracket, i) => ({
+    bracketNumber: i + 1,
+    maxCents: bracket.maxCents,
+    rateBps: bracket.rateBps,
+  }));
 
   const automationMonthlyCents = num(automationMap, 'automation.pricing.monthlyCents', 1299);
 

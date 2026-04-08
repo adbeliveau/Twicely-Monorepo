@@ -552,11 +552,13 @@ Seller selects listings + target platforms
 
 ### 7.3 Publish Limits by ListerTier
 
-| Tier | Publishes/Month | Rollover |
-|------|----------------|----------|
-| Lister Free | 25 | None |
-| Lister Lite | 200 | 60 days, max 600 |
-| Lister Pro | 2,000 | 60 days, max 6,000 |
+| Tier | Publishes | Rollover |
+|------|-----------|----------|
+| Lister Free | 5 total / 6 months (teaser) | None (one-time allowance) |
+| Lister Lite | 200/month | 60 days, max 600 |
+| Lister Pro | 2,000/month | 60 days, max 6,000 |
+
+> **Decision #105 (LOCKED):** Lister Free is a **6-month time-limited teaser** with 5 total publishes — NOT a recurring monthly allowance. New sellers receive 5 credits on activation; the FREE tier auto-downgrades to NONE after `listerFreeExpiresAt` (activation + 180 days). Existing FREE accounts without an expiry timestamp are grandfathered. The earlier "25/month" wording is retired.
 
 Rollover max stockpile: 3× monthly plan allotment. Rollover expires FIFO. On downgrade: excess rollover forfeited to new tier's max.
 
@@ -1100,7 +1102,7 @@ The Automation add-on ($9.99/month) is a single subscription that covers ALL con
 
 ### 17.3 Gate Rule
 
-Automation requires Crosslister Lite or above. You cannot add Automation with Lister Free — it makes no sense to automate when you can only do 25 publishes/month.
+Automation requires Crosslister Lite or above. You cannot add Automation with Lister Free — it makes no sense to automate when you can only do 5 publishes / 6 months. **(Updated 2026-04-07: Decision #105 supersedes the original "25 publishes/month" wording — FREE is a 5-publish, 6-month teaser, not an ongoing monthly allowance.)**
 
 ---
 
@@ -1468,7 +1470,7 @@ These must all pass before lister is considered complete:
 | 12 | Tier C session isolation | Seller A's session cannot access Seller B's data |
 | 13 | Automation respects Poshmark modes | Mode 2: action batch requires approval before execution |
 | 14 | Circuit breaker triggers on failures | 3 consecutive failures → connector paused for seller |
-| 15 | Publish respects ListerTier limit | Lister Free seller with 25 publishes used → 26th publish blocked |
+| 15 | Publish respects ListerTier limit | Lister Free seller with 5 publishes used in 6-month window → 6th publish blocked (per Decision #105) |
 | 16 | Import progress real-time | Import of 500 items → Centrifugo events update UI every batch |
 | 17 | Per-platform overrides work | Title override on eBay projection → eBay listing uses override, others use canonical |
 

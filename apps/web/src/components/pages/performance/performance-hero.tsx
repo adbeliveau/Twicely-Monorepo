@@ -1,6 +1,6 @@
 'use client';
 
-import type { PerformanceBand, TrendState } from '@/lib/scoring/score-types';
+import type { PerformanceBand, TrendState } from '@twicely/scoring/score-types';
 
 interface PerformanceHeroProps {
   score: number;

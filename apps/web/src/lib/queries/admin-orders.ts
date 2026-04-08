@@ -6,7 +6,7 @@
 import { db } from '@twicely/db';
 import { order, user, ledgerEntry, orderItem, orderPayment, dispute } from '@twicely/db/schema';
 import { eq, or, ilike, count, desc, sql, and, gte, lte, inArray, isNotNull } from 'drizzle-orm';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 
 interface OrderListItem {
   id: string;

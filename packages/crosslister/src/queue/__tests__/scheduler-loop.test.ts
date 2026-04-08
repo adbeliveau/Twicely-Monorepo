@@ -70,6 +70,30 @@ vi.mock('../lister-queue', () => ({
   },
 }));
 
+vi.mock('../../services/queue-settings-loader', () => ({
+  loadCrosslisterQueueSettings: vi.fn().mockResolvedValue({
+    schedulerTickIntervalMs: 5000,
+    schedulerBatchPullSize: 50,
+    pollingBatchSize: 100,
+    webhookPrimaryChannels: ['EBAY', 'ETSY'],
+    pollingTickIntervalMs: 60000,
+    priorityPoll: 700,
+    priorityCreate: 300,
+    prioritySync: 500,
+    priorityDelist: 100,
+    maxAttemptsPoll: 2,
+    maxAttemptsPublish: 3,
+    maxAttemptsSync: 3,
+    backoffPollMs: 60000,
+    backoffPublishMs: 30000,
+    backoffSyncMs: 60000,
+    removeOnCompleteCount: 1000,
+    removeOnFailCount: 5000,
+    workerConcurrency: 10,
+  }),
+  resetCrosslisterQueueSettingsCache: vi.fn(),
+}));
+
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
@@ -80,23 +104,23 @@ describe('scheduler-loop', () => {
     vi.clearAllMocks();
   });
 
-  it('startSchedulerLoop starts the interval', () => {
+  it('startSchedulerLoop starts the interval', async () => {
     expect(isSchedulerRunning()).toBe(false);
-    startSchedulerLoop();
+    await startSchedulerLoop();
     expect(isSchedulerRunning()).toBe(true);
     stopSchedulerLoop();
   });
 
-  it('stopSchedulerLoop clears the interval', () => {
-    startSchedulerLoop();
+  it('stopSchedulerLoop clears the interval', async () => {
+    await startSchedulerLoop();
     expect(isSchedulerRunning()).toBe(true);
     stopSchedulerLoop();
     expect(isSchedulerRunning()).toBe(false);
   });
 
-  it('startSchedulerLoop is idempotent', () => {
-    startSchedulerLoop();
-    startSchedulerLoop(); // should not create second interval
+  it('startSchedulerLoop is idempotent', async () => {
+    await startSchedulerLoop();
+    await startSchedulerLoop(); // should not create second interval
     expect(isSchedulerRunning()).toBe(true);
     stopSchedulerLoop();
     expect(isSchedulerRunning()).toBe(false);
@@ -281,8 +305,8 @@ describe('scheduler-loop', () => {
     expect(typeof health.lastTickAt === 'string' || health.lastTickAt === null).toBe(true);
   });
 
-  it('getSchedulerHealth shows running after start', () => {
-    startSchedulerLoop();
+  it('getSchedulerHealth shows running after start', async () => {
+    await startSchedulerLoop();
     const health = getSchedulerHealth();
     expect(health.running).toBe(true);
     stopSchedulerLoop();

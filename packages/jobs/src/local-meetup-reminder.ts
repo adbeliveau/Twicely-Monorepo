@@ -13,6 +13,7 @@ import { db } from '@twicely/db';
 import { localTransaction, orderItem, listing, safeMeetupLocation } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
 
 const QUEUE_NAME = 'local-meetup-reminder';
@@ -55,7 +56,10 @@ export async function enqueueLocalMeetupReminders(
 ): Promise<void> {
   const scheduledAt = new Date(data.scheduledAtIso);
 
-  const delay24hr = calculateReminderDelay(scheduledAt, 24);
+  const reminder24hrOffset = await getPlatformSetting<number>('commerce.local.meetupReminder24HrOffset', 24);
+  const reminder1hrOffset = await getPlatformSetting<number>('commerce.local.meetupReminder1HrOffset', 1);
+
+  const delay24hr = calculateReminderDelay(scheduledAt, reminder24hrOffset);
   if (delay24hr !== null) {
     await localMeetupReminderQueue.add(
       'reminder',
@@ -77,7 +81,7 @@ export async function enqueueLocalMeetupReminders(
     });
   }
 
-  const delay1hr = calculateReminderDelay(scheduledAt, 1);
+  const delay1hr = calculateReminderDelay(scheduledAt, reminder1hrOffset);
   if (delay1hr !== null) {
     await localMeetupReminderQueue.add(
       'reminder',

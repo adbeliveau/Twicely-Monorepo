@@ -40,6 +40,8 @@ export interface PnlReportData {
   totalPlatformFeesCents: number;
 
   crosslisterRevenueCents: number;
+  /** Cash local sale revenue — INFORMATIONAL, no platform fee (§A16) */
+  cashLocalRevenueCents: number;
   shippingCostsCents: number;
 
   netAfterFeesCents: number;
@@ -104,21 +106,29 @@ export async function getPnlReportData(
 
   // Off-platform (crosslister) revenue — INFORMATIONAL, does not flow through Twicely payments
   const [xRevRow] = await db
-    .select({
-      total: sql<number>`coalesce(sum(${ledgerEntry.amountCents}), 0)::int`,
-    })
+    .select({ total: sql<number>`coalesce(sum(${ledgerEntry.amountCents}), 0)::int` })
     .from(ledgerEntry)
-    .where(
-      and(
-        eq(ledgerEntry.userId, userId),
-        gte(ledgerEntry.createdAt, periodStart),
-        lte(ledgerEntry.createdAt, periodEnd),
-        eq(ledgerEntry.type, 'CROSSLISTER_SALE_REVENUE'),
-      ),
-    );
+    .where(and(
+      eq(ledgerEntry.userId, userId),
+      gte(ledgerEntry.createdAt, periodStart),
+      lte(ledgerEntry.createdAt, periodEnd),
+      eq(ledgerEntry.type, 'CROSSLISTER_SALE_REVENUE'),
+    ));
+
+  // Cash local sale revenue — INFORMATIONAL per §A16; $0 platform fee
+  const [cashRevRow] = await db
+    .select({ total: sql<number>`coalesce(sum(${ledgerEntry.amountCents}), 0)::int` })
+    .from(ledgerEntry)
+    .where(and(
+      eq(ledgerEntry.userId, userId),
+      gte(ledgerEntry.createdAt, periodStart),
+      lte(ledgerEntry.createdAt, periodEnd),
+      eq(ledgerEntry.type, 'LOCAL_CASH_SALE_REVENUE'),
+    ));
 
   const crosslisterRevenueCents = xRevRow?.total ?? 0;
-  const grossRevenueCents = twicelyCentsFromOrders + crosslisterRevenueCents;
+  const cashLocalRevenueCents = cashRevRow?.total ?? 0;
+  const grossRevenueCents = twicelyCentsFromOrders + crosslisterRevenueCents + cashLocalRevenueCents;
 
   const feeRows = await db
     .select({
@@ -281,6 +291,7 @@ export async function getPnlReportData(
     crosslisterFeesCents,
     totalPlatformFeesCents,
     crosslisterRevenueCents,
+    cashLocalRevenueCents,
     shippingCostsCents,
     netAfterFeesCents,
     operatingExpensesCents,

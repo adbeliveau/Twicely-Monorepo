@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { BookmarkPlus } from 'lucide-react';
 
 export const metadata: Metadata = { title: 'Saved Views | Twicely Hub' };

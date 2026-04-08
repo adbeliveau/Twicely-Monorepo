@@ -45,11 +45,15 @@ describe('canTransition — cancellation paths', () => {
     expect(canTransition('NO_SHOW', 'CANCELED')).toBe(false);
   });
 
-  it('ADJUSTMENT_PENDING cannot transition to CANCELED', () => {
-    expect(canTransition('ADJUSTMENT_PENDING', 'CANCELED')).toBe(false);
+  it('ADJUSTMENT_PENDING can transition to CANCELED (fraud system path per §A12)', () => {
+    // Added in R8 fix: fraud detection (§A12) must be able to cancel from any active status.
+    // User-initiated cancel from ADJUSTMENT_PENDING is blocked at the action layer.
+    expect(canTransition('ADJUSTMENT_PENDING', 'CANCELED')).toBe(true);
   });
 
-  it('RECEIPT_CONFIRMED cannot transition to CANCELED', () => {
-    expect(canTransition('RECEIPT_CONFIRMED', 'CANCELED')).toBe(false);
+  it('RECEIPT_CONFIRMED can transition to CANCELED (fraud system path per §A12)', () => {
+    // Added in R8 fix: fraud detection (§A12) must be able to cancel from any active status.
+    // Normal user path is RECEIPT_CONFIRMED → DISPUTED → CANCELED (admin resolution).
+    expect(canTransition('RECEIPT_CONFIRMED', 'CANCELED')).toBe(true);
   });
 });

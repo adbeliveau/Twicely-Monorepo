@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateCaseStatus, updateCasePriority, assignCase } from "@/lib/actions/helpdesk-agent-cases";
+import { updateCaseStatus, assignCase } from "@/lib/actions/helpdesk-agent-cases";
+import { updateCasePriority } from "@/lib/actions/helpdesk-agent-cases-meta";
 import type { HelpdeskAgent, HelpdeskTeamItem } from "@/lib/queries/helpdesk-agents";
 
 // =============================================================================

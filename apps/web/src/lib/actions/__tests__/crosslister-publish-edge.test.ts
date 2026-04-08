@@ -25,7 +25,8 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@twicely/crosslister/services/publish-meter', () => ({
   canPublish: vi.fn().mockResolvedValue(true),
   getPublishAllowance: vi.fn().mockResolvedValue({
-    tier: 'FREE', monthlyLimit: 25, usedThisMonth: 0, remaining: 25, rolloverBalance: 0,
+    // Decision #105: FREE tier = 5 publishes / 6 months (not 25/month)
+    tier: 'FREE', monthlyLimit: 5, usedThisMonth: 0, remaining: 5, rolloverBalance: 0,
   }),
 }));
 vi.mock('@twicely/crosslister/services/publish-service', () => ({
@@ -84,7 +85,7 @@ describe('delistFromChannel — Forbidden', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns Forbidden when ability.can(delete) returns false', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -100,7 +101,7 @@ describe('delistFromChannel — no externalId', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns error when projection has no externalId', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -120,7 +121,7 @@ describe('delistFromChannel — enqueue success (F3.1)', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('enqueues DELIST job and returns success', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let callNum = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockReturnThis(),
@@ -158,7 +159,7 @@ describe('delistFromChannel — account not found', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns error when account does not exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let callNum = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockReturnThis(),
@@ -188,7 +189,7 @@ describe('delistFromChannel — projection not ACTIVE (F3.1)', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns error when projection is already DELISTING', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -210,7 +211,7 @@ describe('updateProjectionOverrides — Forbidden', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns Forbidden when ability.can(update) returns false', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -226,7 +227,7 @@ describe('updateProjectionOverrides — Not found', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns Not found when projection does not exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -245,7 +246,7 @@ describe('getPublishAllowanceAction — Forbidden', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns Forbidden when ability.can(read) returns false', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },

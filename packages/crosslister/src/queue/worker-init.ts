@@ -12,8 +12,8 @@ import { automationWorker } from './automation-worker';
 import { startSchedulerLoop, stopSchedulerLoop } from './scheduler-loop';
 import { runPollSchedulerTick } from '../polling/poll-scheduler';
 import { runAutomationTick } from '../automation/automation-scheduler';
+import { loadCrosslisterQueueSettings } from '../services/queue-settings-loader';
 import { logger } from '@twicely/logger';
-import { AUTOMATION_TICK_INTERVAL_MS } from '../automation/constants';
 import { registerShippingQuoteDeadlineJob } from '@twicely/jobs/shipping-quote-deadline';
 import { registerExpireFreeListerJob } from '@twicely/jobs/expire-free-lister-tier';
 import { registerCronJobs } from '@twicely/jobs/cron-jobs';
@@ -21,7 +21,12 @@ import { registerShutdown } from '@twicely/jobs/shutdown-registry';
 
 let initialized = false;
 
-export function initListerWorker(): void {
+// Fallback intervals if loadCrosslisterQueueSettings fails on startup.
+// Normally read from platform_settings.
+const FALLBACK_POLLING_TICK_MS = 60_000;
+const FALLBACK_AUTOMATION_TICK_MS = 3_600_000; // 1 hour
+
+export async function initListerWorker(): Promise<void> {
   if (initialized) return;
   initialized = true;
 
@@ -46,24 +51,43 @@ export function initListerWorker(): void {
   void registerExpireFreeListerJob();
   void registerCronJobs();
 
+  // Load tick intervals from settings (cached). To change at runtime,
+  // update the corresponding platform_setting and restart the worker.
+  let pollingTickMs = FALLBACK_POLLING_TICK_MS;
+  let automationTickMs = FALLBACK_AUTOMATION_TICK_MS;
+  try {
+    const settings = await loadCrosslisterQueueSettings();
+    pollingTickMs = settings.pollingTickIntervalMs;
+    automationTickMs = settings.automationTickIntervalMs;
+  } catch (err) {
+    logger.warn('[listerWorker] Failed to load tick intervals from settings, using fallbacks', {
+      fallbackPolling: FALLBACK_POLLING_TICK_MS,
+      fallbackAutomation: FALLBACK_AUTOMATION_TICK_MS,
+      error: String(err),
+    });
+  }
+
   // Start the scheduler dispatch loop (gates: rate limit, fairness, circuit breaker)
-  startSchedulerLoop();
+  await startSchedulerLoop();
 
   // Start the poll scheduler tick (adaptive polling engine — §13)
-  const pollSchedulerInterval = setInterval(() => { void runPollSchedulerTick(); }, 60_000);
+  // Tick interval: crosslister.polling.tickIntervalMs (default 60000)
+  const pollSchedulerInterval = setInterval(() => { void runPollSchedulerTick(); }, pollingTickMs);
 
   // Start the automation scheduler tick (hourly — runs appropriate engines by UTC hour)
-  const automationInterval = setInterval(() => { void runAutomationTick(); }, AUTOMATION_TICK_INTERVAL_MS);
+  // Tick interval: crosslister.automation.tickIntervalMs (default 3600000)
+  const automationInterval = setInterval(() => { void runAutomationTick(); }, automationTickMs);
 
   // Register non-worker cleanup with centralized shutdown registry.
-  // BullMQ workers (lister, automation, cron, etc.) are auto-registered
-  // by createWorker() in @twicely/jobs/queue — only intervals and the
-  // scheduler loop need explicit registration here.
   registerShutdown(() => {
     clearInterval(pollSchedulerInterval);
     clearInterval(automationInterval);
     stopSchedulerLoop();
   });
 
-  logger.info('[listerWorker] Initialized: publish(10) + automation(5) + scheduler + poll + cron(4) + deadline + expiry');
+  logger.info('[listerWorker] Initialized', {
+    pollingTickMs,
+    automationTickMs,
+    note: 'publish(10) + automation(5) + scheduler + poll + cron(4) + deadline + expiry',
+  });
 }

@@ -13,7 +13,7 @@ import { crosslisterAccount, platformSetting } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { disconnectAccountSchema } from '@/lib/validations/crosslister';
-import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
+import '@twicely/crosslister/connectors'; // Ensure all connectors are registered
 import { EbayConnector } from '@twicely/crosslister/connectors/ebay-connector';
 import { getConnector } from '@twicely/crosslister/connector-registry';
 import { logger } from '@twicely/logger';

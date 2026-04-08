@@ -31,6 +31,45 @@ vi.mock('../../queue/circuit-breaker', () => ({
   canDispatch: vi.fn().mockReturnValue(true),
 }));
 
+const { mockQueueAdd } = vi.hoisted(() => ({
+  mockQueueAdd: vi.fn().mockResolvedValue({ id: 'job-1' }),
+}));
+vi.mock('../../queue/polling-queue', () => ({
+  listerPollingQueue: { add: mockQueueAdd },
+}));
+
+vi.mock('../../queue/constants', () => ({
+  PRIORITY_POLL: 700,
+  MAX_ATTEMPTS_POLL: 2,
+  BACKOFF_POLL: { type: 'exponential', delay: 60_000 },
+  REMOVE_ON_COMPLETE: { count: 1000 },
+  REMOVE_ON_FAIL: { count: 5000 },
+}));
+
+vi.mock('../../services/queue-settings-loader', () => ({
+  loadCrosslisterQueueSettings: vi.fn().mockResolvedValue({
+    schedulerTickIntervalMs: 5000,
+    schedulerBatchPullSize: 50,
+    pollingBatchSize: 100,
+    webhookPrimaryChannels: ['EBAY', 'ETSY'],
+    pollingTickIntervalMs: 60000,
+    priorityPoll: 700,
+    priorityCreate: 300,
+    prioritySync: 500,
+    priorityDelist: 100,
+    maxAttemptsPoll: 2,
+    maxAttemptsPublish: 3,
+    maxAttemptsSync: 3,
+    backoffPollMs: 60000,
+    backoffPublishMs: 30000,
+    backoffSyncMs: 60000,
+    removeOnCompleteCount: 1000,
+    removeOnFailCount: 5000,
+    workerConcurrency: 10,
+  }),
+  resetCrosslisterQueueSettingsCache: vi.fn(),
+}));
+
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
@@ -88,6 +127,33 @@ describe('poll-scheduler', () => {
     expect(recordPoll).toHaveBeenCalledWith('seller-1');
     const health = getPollSchedulerHealth();
     expect(health.jobsEnqueuedLastTick).toBe(1);
+  });
+
+  it('actually calls listerPollingQueue.add with the right job data (regression for stub)', async () => {
+    vi.mocked(canDispatch).mockReturnValue(true);
+    vi.mocked(canPoll).mockResolvedValue(true);
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeProjectionsChain([ACTIVE_PROJ]) as never)
+      .mockReturnValueOnce(makeSellerProfileChain([{ listerTier: 'FREE' }]) as never);
+
+    await runPollSchedulerTick();
+
+    expect(mockQueueAdd).toHaveBeenCalledTimes(1);
+    const [jobName, jobData, jobOpts] = mockQueueAdd.mock.calls[0]!;
+    expect(jobName).toBe('poll');
+    expect(jobData).toMatchObject({
+      projectionId: 'proj-1',
+      channel: 'POSHMARK',
+      sellerId: 'seller-1',
+      listingId: 'listing-1',
+      pollTier: 'COLD',
+    });
+    expect(jobData.scheduledAt).toBeDefined();
+    expect(jobOpts).toMatchObject({
+      priority: 700,
+      attempts: 2,
+    });
+    expect(jobOpts.jobId).toMatch(/^poll-proj-1-/);
   });
 
   it('skips projections when circuit breaker is OPEN', async () => {

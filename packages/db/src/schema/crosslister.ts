@@ -46,7 +46,7 @@ export const crosslisterAccount = pgTable('crosslister_account', {
 export const channelProjection = pgTable('channel_projection', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
   listingId:           text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
-  accountId:           text('account_id').notNull().references(() => crosslisterAccount.id),
+  accountId:           text('account_id').notNull().references(() => crosslisterAccount.id, { onDelete: 'cascade' }),
   channel:             channelEnum('channel').notNull(),
   sellerId:            text('seller_id').notNull(),
 
@@ -92,9 +92,9 @@ export const channelProjection = pgTable('channel_projection', {
 // §12.3 crossJob
 export const crossJob = pgTable('cross_job', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  sellerId:            text('seller_id').notNull().references(() => user.id),
-  projectionId:        text('projection_id').references(() => channelProjection.id),
-  accountId:           text('account_id').references(() => crosslisterAccount.id),
+  sellerId:            text('seller_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  projectionId:        text('projection_id').references(() => channelProjection.id, { onDelete: 'set null' }),
+  accountId:           text('account_id').references(() => crosslisterAccount.id, { onDelete: 'set null' }),
 
   jobType:             publishJobTypeEnum('job_type').notNull(),
   priority:            integer('priority').notNull().default(500),
@@ -124,8 +124,8 @@ export const crossJob = pgTable('cross_job', {
 // §12.4 importBatch
 export const importBatch = pgTable('import_batch', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  sellerId:            text('seller_id').notNull().references(() => user.id),
-  accountId:           text('account_id').notNull().references(() => crosslisterAccount.id),
+  sellerId:            text('seller_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  accountId:           text('account_id').notNull().references(() => crosslisterAccount.id, { onDelete: 'cascade' }),
   channel:             channelEnum('channel').notNull(),
   status:              importBatchStatusEnum('status').notNull().default('CREATED'),
 
@@ -155,7 +155,7 @@ export const importRecord = pgTable('import_record', {
   externalId:          text('external_id').notNull(),
   channel:             channelEnum('channel').notNull(),
   status:              text('status').notNull().default('pending'),
-  listingId:           text('listing_id').references(() => listing.id),
+  listingId:           text('listing_id').references(() => listing.id, { onDelete: 'set null' }),
   rawDataJson:         jsonb('raw_data_json').notNull().default(sql`'{}'`),
   normalizedDataJson:  jsonb('normalized_data_json'),
   errorMessage:        text('error_message'),
@@ -187,7 +187,7 @@ export const dedupeFingerprint = pgTable('dedupe_fingerprint', {
 export const channelCategoryMapping = pgTable('channel_category_mapping', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
   channel:             channelEnum('channel').notNull(),
-  twicelyCategoryId:   text('twicely_category_id').notNull().references(() => category.id),
+  twicelyCategoryId:   text('twicely_category_id').notNull().references(() => category.id, { onDelete: 'restrict' }),
   externalCategoryId:  text('external_category_id').notNull(),
   externalCategoryName: text('external_category_name').notNull(),
   confidence:          real('confidence').notNull().default(1.0),

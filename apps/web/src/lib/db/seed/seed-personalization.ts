@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { interestTag, userInterest } from '../schema';
+import { interestTag, userInterest } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 
 // Hardcoded IDs for idempotency

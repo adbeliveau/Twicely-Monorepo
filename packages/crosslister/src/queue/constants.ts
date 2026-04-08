@@ -11,6 +11,21 @@ export const LISTER_PUBLISH_QUEUE = 'lister-publish';
 /** Queue name for automation jobs (auto-relist, price drop, offer-to-likers, Posh sharing). */
 export const LISTER_AUTOMATION_QUEUE = 'lister-automation';
 
+/** Queue name for polling jobs (sale detection via platform API polling). */
+export const LISTER_POLLING_QUEUE = 'lister-polling';
+
+/** Priority for POLL jobs (lowest priority — periodic background work). */
+export const PRIORITY_POLL = 700;
+
+/** Maximum retry attempts for POLL jobs. */
+export const MAX_ATTEMPTS_POLL = 2;
+
+/** Backoff config for POLL jobs: 60s, 300s. */
+export const BACKOFF_POLL = {
+  type: 'exponential' as const,
+  delay: 60_000,
+};
+
 /** Priority for CREATE/PUBLISH jobs (crosslist a new listing). */
 export const PRIORITY_CREATE = 300;
 

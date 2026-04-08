@@ -9,7 +9,7 @@ import {
   sellerBalance, address, storefront,
 } from '@twicely/db/schema';
 import { eq, or, ilike, count, desc, sql, and, asc } from 'drizzle-orm';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -234,6 +234,15 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
   ...HELPDESK_TEMPLATES,
   ...AUTHENTICATION_TEMPLATES,
   ...ACCOUNTING_TEMPLATES,
+  'seller.boostCredit.issued': {
+    key: 'seller.boostCredit.issued',
+    name: 'Boost Credit Issued',
+    category: 'performance',
+    priority: 'NORMAL',
+    defaultChannels: ['IN_APP'],
+    subjectTemplate: 'You earned {{amountFormatted}} in boost credit!',
+    bodyTemplate: 'You earned {{amountFormatted}} in boost credit for {{periodMonthFormatted}} as a {{bandLabel}}. Credits are applied automatically before your paid boost budget and expire at month-end.',
+  },
   'seller.payout.paid': {
     key: 'seller.payout.paid',
     name: 'Payout Sent to Bank',

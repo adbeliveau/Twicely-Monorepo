@@ -2,23 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Check } from 'lucide-react';
 import type { ListingCardData } from '@/types/listings';
-import type { LandingStats } from '@/lib/queries/landing-stats';
-
-function formatStat(n: number): string {
-  if (n >= 1_000_000_000) {
-    const v = n / 1_000_000_000;
-    return v >= 100 ? `${Math.round(v)}B` : `${v.toFixed(v >= 10 ? 0 : 1).replace(/\.0$/, '')}B`;
-  }
-  if (n >= 1_000_000) {
-    const v = n / 1_000_000;
-    return v >= 100 ? `${Math.round(v)}M` : `${v.toFixed(v >= 10 ? 0 : 1).replace(/\.0$/, '')}M`;
-  }
-  if (n >= 1_000) {
-    const v = n / 1_000;
-    return v >= 100 ? `${Math.round(v)}K` : `${v.toFixed(v >= 10 ? 0 : 1).replace(/\.0$/, '')}K`;
-  }
-  return n.toString();
-}
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -30,10 +13,9 @@ function formatCondition(condition: string): string {
 
 interface Props {
   listings: ListingCardData[];
-  stats: LandingStats;
 }
 
-export function LandingHero({ listings, stats }: Props) {
+export function LandingHero({ listings }: Props) {
   const heroCards = listings.slice(0, 4);
 
   return (
@@ -104,26 +86,6 @@ export function LandingHero({ listings, stats }: Props) {
                   </div>
                 </Link>
               ))}
-
-              {/* Stats row */}
-              <div className="hero-stat-row">
-                <div className="hero-stat">
-                  <div className="hero-stat-num text-[var(--mg)]">{formatStat(stats.totalSold)}</div>
-                  <div className="text-[11px] font-semibold text-[var(--l-muted-lt)] mt-0.5">Items sold</div>
-                </div>
-                <div className="hero-stat">
-                  <div className="hero-stat-num">200+</div>
-                  <div className="text-[11px] font-semibold text-[var(--l-muted-lt)] mt-0.5">AI features</div>
-                </div>
-                <div className="hero-stat">
-                  <div className="hero-stat-num text-[var(--mg)]">{formatStat(stats.totalBuyers)}</div>
-                  <div className="text-[11px] font-semibold text-[var(--l-muted-lt)] mt-0.5">Members</div>
-                </div>
-                <div className="hero-stat">
-                  <div className="hero-stat-num">$0</div>
-                  <div className="text-[11px] font-semibold text-[var(--l-muted-lt)] mt-0.5">To start selling</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

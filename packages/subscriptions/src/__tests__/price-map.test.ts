@@ -1,4 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock platform_settings — getPricing/formatTierPrice/getAnnualSavingsPercent
+// are now async (they read settings). We return supplied fallbacks so tests
+// validate behavior against the seed defaults without a DB connection.
+vi.mock('@twicely/db/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn(async <T>(_key: string, fallback: T): Promise<T> => fallback),
+}));
+
 import {
   STORE_PRICING,
   LISTER_PRICING,
@@ -10,7 +18,12 @@ import {
   resolveStripePriceId,
   formatTierPrice,
   getAnnualSavingsPercent,
+  resetSubscriptionPricingCache,
 } from '../price-map';
+
+beforeEach(() => {
+  resetSubscriptionPricingCache();
+});
 
 describe('D3-S1: Price Map', () => {
   describe('STORE_PRICING', () => {
@@ -110,29 +123,37 @@ describe('D3-S1: Price Map', () => {
   });
 
   describe('getPricing', () => {
-    it('returns STORE_PRICING.PRO for (store, PRO)', () => {
-      expect(getPricing('store', 'PRO')).toBe(STORE_PRICING['PRO']);
+    // After 2026-04-07 refactor: getPricing returns a NEW object (Stripe IDs
+    // from constants merged with cents from settings). It's no longer the same
+    // object reference as STORE_PRICING['PRO'], so we compare by value.
+    it('returns store PRO pricing', async () => {
+      const result = await getPricing('store', 'PRO');
+      expect(result).toEqual(STORE_PRICING['PRO']);
     });
 
-    it('returns LISTER_PRICING.LITE for (lister, LITE)', () => {
-      expect(getPricing('lister', 'LITE')).toBe(LISTER_PRICING['LITE']);
+    it('returns lister LITE pricing', async () => {
+      const result = await getPricing('lister', 'LITE');
+      expect(result).toEqual(LISTER_PRICING['LITE']);
     });
 
-    it('returns FINANCE_PRICING.PRO for (finance, PRO)', () => {
-      expect(getPricing('finance', 'PRO')).toBe(FINANCE_PRICING['PRO']);
+    it('returns finance PRO pricing', async () => {
+      const result = await getPricing('finance', 'PRO');
+      expect(result).toEqual(FINANCE_PRICING['PRO']);
     });
 
-    it('returns AUTOMATION_PRICING for (automation, any)', () => {
-      expect(getPricing('automation', 'DEFAULT')).toBe(AUTOMATION_PRICING);
+    it('returns automation pricing', async () => {
+      const result = await getPricing('automation', 'DEFAULT');
+      expect(result).toEqual(AUTOMATION_PRICING);
     });
 
-    it('returns BUNDLE_PRICING.POWER for (bundle, POWER)', () => {
-      expect(getPricing('bundle', 'POWER')).toBe(BUNDLE_PRICING['POWER']);
+    it('returns bundle POWER pricing', async () => {
+      const result = await getPricing('bundle', 'POWER');
+      expect(result).toEqual(BUNDLE_PRICING['POWER']);
     });
 
-    it('returns null for unknown tier', () => {
-      expect(getPricing('store', 'NONE')).toBeNull();
-      expect(getPricing('store', 'ENTERPRISE')).toBeNull();
+    it('returns null for unknown tier', async () => {
+      expect(await getPricing('store', 'NONE')).toBeNull();
+      expect(await getPricing('store', 'ENTERPRISE')).toBeNull();
     });
   });
 
@@ -205,32 +226,32 @@ describe('D3-S1: Price Map', () => {
   });
 
   describe('formatTierPrice', () => {
-    it('formats monthly price correctly', () => {
-      expect(formatTierPrice('store', 'PRO', 'monthly')).toBe('$39.99/mo');
+    it('formats monthly price correctly', async () => {
+      expect(await formatTierPrice('store', 'PRO', 'monthly')).toBe('$39.99/mo');
     });
 
-    it('formats annual price correctly', () => {
-      expect(formatTierPrice('store', 'PRO', 'annual')).toBe('$29.99/mo');
+    it('formats annual price correctly', async () => {
+      expect(await formatTierPrice('store', 'PRO', 'annual')).toBe('$29.99/mo');
     });
 
-    it('returns $0.00/mo for unknown tier', () => {
-      expect(formatTierPrice('store', 'NONE', 'monthly')).toBe('$0.00/mo');
+    it('returns $0.00/mo for unknown tier', async () => {
+      expect(await formatTierPrice('store', 'NONE', 'monthly')).toBe('$0.00/mo');
     });
   });
 
   describe('getAnnualSavingsPercent', () => {
-    it('returns 25% savings for Store PRO', () => {
+    it('returns 25% savings for Store PRO', async () => {
       // (3999 - 2999) / 3999 = 25%
-      expect(getAnnualSavingsPercent('store', 'PRO')).toBe(25);
+      expect(await getAnnualSavingsPercent('store', 'PRO')).toBe(25);
     });
 
-    it('returns 42% savings for Store STARTER', () => {
+    it('returns 42% savings for Store STARTER', async () => {
       // (1200 - 699) / 1200 = 41.75% rounds to 42%
-      expect(getAnnualSavingsPercent('store', 'STARTER')).toBe(42);
+      expect(await getAnnualSavingsPercent('store', 'STARTER')).toBe(42);
     });
 
-    it('returns 0 for unknown tier', () => {
-      expect(getAnnualSavingsPercent('store', 'NONE')).toBe(0);
+    it('returns 0 for unknown tier', async () => {
+      expect(await getAnnualSavingsPercent('store', 'NONE')).toBe(0);
     });
   });
 });

@@ -12,7 +12,7 @@ import { cookies } from 'next/headers';
 import { db } from '@twicely/db';
 import { crosslisterAccount } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
-import '@/lib/crosslister/connectors'; // Ensure all connectors are registered
+import '@twicely/crosslister/connectors'; // Ensure all connectors are registered
 import { WhatnotConnector } from '@twicely/crosslister/connectors/whatnot-connector';
 import { encryptToken } from '@twicely/crosslister/token-crypto';
 import { logger } from '@twicely/logger';

@@ -24,35 +24,49 @@ This document covers:
 
 ## 1. Storage Architecture
 
+> **IMPLEMENTATION NOTE (added 2026-04-07, owner-confirmed):** Sections §1.2 and
+> §1.6 originally specified **effective-dated versioning** with `version`,
+> `isActive`, and `effectiveAt` columns + a "never update in place, always
+> create new rows" rule. The shipped implementation uses a **simpler in-place
+> update + separate `platformSettingHistory` table** model. This was an
+> accepted simplification: history is preserved in the audit table, and the
+> effective-dated versioning was deemed over-engineered for the current
+> operational needs (no scheduled-future settings, no rollback-by-reactivation
+> use case in production). The schema sections below describe the SHIPPED model.
+> If effective-dated versioning is needed in the future, it can be added in
+> a v2 schema iteration. **The simpler model is the canonical state as of
+> 2026-04-07.**
+
 ### 1.1 Design Principles
 
 1. **Database-first, env-fallback.** Every setting is read from the database. If not found, fall back to `process.env`. If neither exists, use the hardcoded default from this document.
-2. **Effective-dated versioning.** Settings changes create new rows with `effectiveAt` timestamps. The active value is the most recent row where `effectiveAt <= now()` and `isActive = true`. No retroactive edits — past orders used the settings that were active when they were created.
+2. **History via audit table.** Settings are mutated in place. Every edit writes a row to `platformSettingHistory` (and `auditEvent`) capturing the old value, new value, editor, and timestamp. **NOT effective-dated row versioning.**
 3. **Category + key addressing.** Settings are addressed as `category.key` (e.g., `commerce.cart.expiryHours`). Flat dot-notation. No nesting in the key itself.
-4. **Audit everything.** Every settings change creates an `AuditEvent` with the old value, new value, and the staff member who changed it.
+4. **Audit everything.** Every settings change creates an `AuditEvent` AND a `platformSettingHistory` row. Two-layer audit.
 5. **Secrets are separate.** API keys, tokens, and credentials go in `EnvironmentSecret` with AES-256-GCM encryption. They never appear in `PlatformSetting`.
 
 ### 1.2 Drizzle Schema: `platformSetting`
 
 ```typescript
+// SHIPPED SCHEMA (2026-04-08) — differs from earlier spec drafts; see DEVIATION NOTE below
 export const platformSetting = pgTable('platform_setting', {
-  id:          text('id').primaryKey().$defaultFn(() => createId()),
-  category:    text('category').notNull(),         // 'fees', 'commerce', 'trust', etc.
-  key:         text('key').notNull(),               // 'cart.expiryHours', 'tf.electronics'
-  valueJson:   jsonb('value_json').notNull(),       // The setting value (any JSON-serializable type)
-  valueType:   text('value_type').notNull(),        // 'number' | 'boolean' | 'string' | 'enum' | 'cents' | 'bps' | 'array'
-  version:     integer('version').notNull().default(1),
-  isActive:    boolean('is_active').notNull().default(true),
-  effectiveAt: timestamp('effective_at', { withTimezone: true }).notNull().defaultNow(),
-  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedBy:   text('updated_by'),                  // StaffUser ID
+  id:                 text('id').primaryKey().$defaultFn(() => createId()),
+  category:           text('category').notNull(),               // 'fees', 'commerce', 'trust', etc.
+  key:                text('key').notNull().unique(),            // 'cart.expiryHours', 'tf.electronics'
+  value:              jsonb('value').notNull(),                  // The setting value (any JSON-serializable type)
+  type:               text('type').notNull(),                    // 'number' | 'boolean' | 'string' | 'enum' | 'cents' | 'bps' | 'array'
+  description:        text('description'),                       // Human-readable purpose
+  isSecret:           boolean('is_secret').notNull().default(false), // Values masked in admin UI
+  updatedByStaffId:   text('updated_by_staff_id'),                // StaffUser ID of last editor
+  createdAt:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  categoryKeyIdx: uniqueIndex('ps_cat_key_eff').on(table.category, table.key, table.effectiveAt),
-  categoryActiveIdx: index('ps_cat_active').on(table.category, table.isActive),
-  effectiveIdx: index('ps_effective').on(table.effectiveAt),
+  keyIdx:      uniqueIndex('ps_key').on(table.key),
+  categoryIdx: index('ps_category').on(table.category),
 }));
 ```
+
+> **DEVIATION NOTE:** Earlier spec drafts referenced `valueJson`, `valueType`, `version`, `isActive`, `effectiveAt`, `updatedBy`. The shipped schema consolidates these to `value`, `type`, `updatedByStaffId` and adds `description` + `isSecret`. Versioning is handled via a separate `platform_setting_history` table written on every update. The `updatedBy` column was renamed to `updatedByStaffId` for clarity (it references `staffUser.id`, not `user.id`).
 
 ### 1.3 Drizzle Schema: `environmentSecret`
 
@@ -110,33 +124,23 @@ export function maskSecret(value: string): string {
 }
 ```
 
-### 1.5 Settings Access Pattern
+### 1.5 Settings Access Pattern (SHIPPED)
 
 ```typescript
-// lib/settings.ts
-export async function getSetting<T>(
-  category: string,
+// packages/db/src/queries/platform-settings.ts
+export async function getPlatformSetting<T>(
   key: string,
   defaultValue: T
 ): Promise<T> {
-  // 1. Check database (most recent active row where effectiveAt <= now)
-  const row = await db.query.platformSetting.findFirst({
-    where: and(
-      eq(platformSetting.category, category),
-      eq(platformSetting.key, key),
-      eq(platformSetting.isActive, true),
-      lte(platformSetting.effectiveAt, new Date()),
-    ),
-    orderBy: desc(platformSetting.effectiveAt),
-  });
-  if (row) return row.valueJson as T;
+  // 1. Check database (single row per key — no versioning/effective-dating)
+  const [row] = await db
+    .select({ value: platformSetting.value })
+    .from(platformSetting)
+    .where(eq(platformSetting.key, key))
+    .limit(1);
+  if (row) return row.value as T;
 
-  // 2. Check env (for backwards compat / initial setup)
-  const envKey = `TWICELY_${category.toUpperCase()}_${key.toUpperCase().replace(/\./g, '_')}`;
-  const envVal = process.env[envKey];
-  if (envVal !== undefined) return JSON.parse(envVal) as T;
-
-  // 3. Return hardcoded default
+  // 2. Fallback (DB unreachable or setting not seeded)
   return defaultValue;
 }
 
@@ -150,12 +154,18 @@ export async function getSecret(key: string): Promise<string | null> {
 }
 ```
 
-### 1.6 Settings Update Rules
+### 1.6 Settings Update Rules (SHIPPED MODEL — owner-confirmed 2026-04-07)
 
-1. **Never update in place.** Create a new row with incremented `version` and `effectiveAt = now()`. Mark old row `isActive = false`.
-2. **Scheduled changes.** Set `effectiveAt` to a future date. The `getSetting()` function automatically picks it up when the time arrives.
-3. **Rollback.** Re-activate a previous version by setting its `isActive = true` and deactivating the current one.
-4. **Audit.** Every change creates `AuditEvent { category: 'SETTING_CHANGE', severity: 'HIGH', metadata: { category, key, oldValue, newValue } }`.
+1. **In-place update + history table.** The `platformSetting` row is updated in place. Before the update, the prior value is captured in a `platformSettingHistory` row with `oldValue`, `newValue`, `changedAt`, `changedByStaffId`. **The original spec called for "never update in place, always create new versioned row" — the simpler in-place + history model was adopted as a deliberate simplification.**
+2. **Scheduled changes.** ~~Set `effectiveAt` to a future date.~~ **NOT IMPLEMENTED.** The shipped model does not support scheduled-future settings. If needed, implement via a BullMQ delayed job that performs the in-place update at the scheduled time.
+3. **Rollback.** ~~Re-activate a previous version.~~ Read the previous value from `platformSettingHistory` and apply it via a normal update (which itself creates a new history row). One-click revert UI reads the prior `oldValue` and POSTs it.
+4. **Audit.** Every change creates BOTH a `platformSettingHistory` row AND an `AuditEvent { category: 'SETTING_CHANGE', severity: 'HIGH', metadata: { category, key, oldValue, newValue } }`. Two-layer audit.
+
+> **Why the change?** During implementation review, the team determined that
+> effective-dated versioning was over-engineered for current operational needs.
+> No use case required scheduled-future settings or rollback-by-row-reactivation.
+> The audit trail in `platformSettingHistory` provides full historical visibility.
+> Reverting an effective-dated implementation later, if needed, is non-breaking.
 
 ### 1.7 "Migrate from .env" Feature
 
@@ -165,7 +175,7 @@ On first admin setup, the Environment tab shows a "Migrate from .env" button. Th
 
 ## 2. Setting Value Types
 
-Every setting has an explicit `valueType` that drives the admin UI input component:
+Every setting has an explicit `type` (formerly `valueType`) that drives the admin UI input component:
 
 | Type | Storage | UI Component | Example |
 |------|---------|-------------|---------|
@@ -189,15 +199,17 @@ Every setting has an explicit `valueType` that drives the admin UI input compone
 On first application boot (or database migration), a seed script inserts every setting from this document with its default value. The seed is idempotent — it only inserts settings that don't already exist.
 
 ```typescript
-// db/seed/settings.ts
+// packages/db/src/seed/v32-platform-settings.ts (shipped shape)
 const SETTINGS_SEED: Array<{
   category: string;
   key: string;
-  valueJson: unknown;
-  valueType: string;
+  value: unknown;
+  type: string;
+  description?: string;
+  isSecret?: boolean;
 }> = [
-  { category: 'commerce', key: 'cart.expiryHours', valueJson: 72, valueType: 'number' },
-  { category: 'commerce', key: 'cart.maxItems', valueJson: 100, valueType: 'number' },
+  { category: 'commerce', key: 'cart.expiryHours', value: 72, type: 'number', description: 'Hours before a cart expires and releases reservations' },
+  { category: 'commerce', key: 'cart.maxItems', value: 100, type: 'number' },
   // ... every setting from §7–§16
 ];
 ```
@@ -868,7 +880,7 @@ TF uses progressive volume brackets (like income tax). Calendar month reset. NOT
 | `automation.pricing.annualCents` | cents | 999 | Automation annual/mo |
 | `automation.actionsPerMonth` | number | 2000 | Automation actions included/month |
 | `automation.overagePackSize` | number | 1000 | Actions per overage pack |
-| `fees.automation.overagePackCents` | cents | 900 | Overage pack price |
+| `automation.overagePackCents` | cents | 900 | Overage pack price (seed uses `automation.*` prefix — consistent with `automation.overagePackSize` above; canonical previously listed as `fees.automation.*` which was a typo) |
 
 ### 7.8 Boosting
 
@@ -1078,7 +1090,7 @@ Per Pricing Canonical v3.2 §5.2. All orders, all tiers, no exceptions.
 | `trust.standards.topRatedMaxLateShipRate` | percent | 1.0 | Max late ship rate for TOP_RATED |
 | `trust.standards.topRatedMinOrdersYear` | number | 100 | Min annual orders for TOP_RATED |
 | `trust.standards.belowStandardVisibilityReduction` | percent | 50.0 | Search visibility penalty |
-| `trust.standards.belowStandardFvfSurcharge` | percent | 5.0 | Additional TF penalty |
+| `trust.standards.belowStandardTfSurcharge` | bps | 500 | Additional TF penalty in basis points = 5.0% (renamed from `belowStandardFvfSurcharge` per Decision #75 — FvF → TF terminology) |
 | `trust.standards.restrictedMaxListings` | number | 10 | Max listings for restricted sellers |
 | `trust.standards.defectExpiryDays` | number | 365 | Days before defects expire |
 

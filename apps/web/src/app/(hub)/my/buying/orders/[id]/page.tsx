@@ -49,9 +49,11 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
   const shippingQuote = await getShippingQuoteByOrderId(orderId, session.user.id);
 
   // Fetch local transaction and counterparty reliability for local pickup orders
-  const [localTransaction, maxAdjustmentPercent, sellerReliability] = await Promise.all([
+  const [localTransaction, maxAdjustmentPercent, cancelLateHours, cancelSamedayHours, sellerReliability] = await Promise.all([
     ord.isLocalPickup ? getLocalTransactionByOrderId(orderId) : Promise.resolve(null),
     getPlatformSetting<number>('commerce.local.maxAdjustmentPercent', 33),
+    getPlatformSetting<number>('commerce.local.cancelLateHours', 24),
+    getPlatformSetting<number>('commerce.local.cancelSamedayHours', 2),
     ord.isLocalPickup ? getReliabilityDisplay(ord.sellerId) : Promise.resolve(null),
   ]);
 
@@ -108,6 +110,8 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
               otherPartyName={seller.storeName ?? seller.name}
               originalPriceCents={ord.itemSubtotalCents}
               maxDiscountPercent={maxAdjustmentPercent}
+              cancelLateHours={cancelLateHours}
+              cancelSamedayHours={cancelSamedayHours}
               counterpartyReliability={sellerReliability}
             />
           ) : (

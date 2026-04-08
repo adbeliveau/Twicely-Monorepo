@@ -26,7 +26,7 @@ describe('notifyCategoryAlertMatches', () => {
       }),
     });
 
-    const { notifyCategoryAlertMatches } = await import('@/lib/notifications/category-alert-notifier');
+    const { notifyCategoryAlertMatches } = await import('@twicely/notifications/category-alert-notifier');
     await notifyCategoryAlertMatches('listing-1');
 
     expect(mockNotify).not.toHaveBeenCalled();
@@ -56,7 +56,7 @@ describe('notifyCategoryAlertMatches', () => {
         }),
       });
 
-    const { notifyCategoryAlertMatches } = await import('@/lib/notifications/category-alert-notifier');
+    const { notifyCategoryAlertMatches } = await import('@twicely/notifications/category-alert-notifier');
     await notifyCategoryAlertMatches('listing-1');
 
     expect(mockNotify).toHaveBeenCalledWith('buyer-1', 'search.new_match', expect.objectContaining({
@@ -89,7 +89,7 @@ describe('notifyCategoryAlertMatches', () => {
         }),
       });
 
-    const { notifyCategoryAlertMatches } = await import('@/lib/notifications/category-alert-notifier');
+    const { notifyCategoryAlertMatches } = await import('@twicely/notifications/category-alert-notifier');
     await notifyCategoryAlertMatches('listing-1');
 
     // Should not notify the listing owner
@@ -122,7 +122,7 @@ describe('notifyCategoryAlertMatches', () => {
 
     mockNotify.mockRejectedValue(new Error('Email failed'));
 
-    const { notifyCategoryAlertMatches } = await import('@/lib/notifications/category-alert-notifier');
+    const { notifyCategoryAlertMatches } = await import('@twicely/notifications/category-alert-notifier');
 
     // Should not throw
     await expect(notifyCategoryAlertMatches('listing-1')).resolves.toBeUndefined();

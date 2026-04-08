@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { notificationTemplate } from '../schema';
+import { notificationTemplate } from '@twicely/db/schema';
 
 const TEMPLATES = [
   {

@@ -1,0 +1,4 @@
+- [Last audit result](project_last_audit.md) — 2026-04-08 full audit: PASS, 0 violations, 2 canonical drift notes, 1 suppressed
+- [Schema table naming drift](feedback_schema_naming.md) — Spec uses plural names; implementation uses singular; intentional
+- [Emergency delist architectural pattern](feedback_emergency_delist_arch.md) — EMERGENCY_DELIST bypasses crossJob table; uses separate BullMQ queue by design
+- [Image retention lives in packages/jobs](feedback_image_retention_location.md) — R7 image retention is in packages/jobs not packages/crosslister; both correct

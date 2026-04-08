@@ -28,6 +28,8 @@ interface ListingFormProps {
   onSubmit: (data: ListingFormData, mode: 'ACTIVE' | 'DRAFT') => Promise<void>;
   isSubmitting?: boolean;
   aiAutofillRemaining?: number;
+  /** Server-read platform_settings value for listing.maxImagesPerListing. */
+  maxImages?: number;
 }
 
 const defaultFormData: ListingFormData = {
@@ -40,7 +42,7 @@ const defaultFormData: ListingFormData = {
   videoUrl: null, videoThumbUrl: null, videoDurationSeconds: null,
 };
 
-export function ListingForm({ initialData, onSubmit, isSubmitting, aiAutofillRemaining }: ListingFormProps) {
+export function ListingForm({ initialData, onSubmit, isSubmitting, aiAutofillRemaining, maxImages }: ListingFormProps) {
   const [formData, setFormData] = useState<ListingFormData>({
     ...defaultFormData,
     ...initialData,
@@ -79,6 +81,7 @@ export function ListingForm({ initialData, onSubmit, isSubmitting, aiAutofillRem
         aiAutofillRemaining={aiAutofillRemaining}
         onAiSuggestions={handleAiSuggestions}
         aiSuggestionApplied={aiSuggestionApplied}
+        maxImages={maxImages}
       />
       <ListingVideoCard
         videoUrl={formData.videoUrl}

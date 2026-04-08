@@ -40,7 +40,7 @@ describe('Seller Response Actions', () => {
       });
 
       // Mock DB queries
-      const { db } = await import('@/lib/db');
+      const { db } = await import('@twicely/db');
       const mockSelect = vi.mocked(db.select);
       const mockInsert = vi.mocked(db.insert);
 
@@ -83,7 +83,7 @@ describe('Seller Response Actions', () => {
         ability: { can: vi.fn().mockReturnValue(true) } as never,
       });
 
-      const { db } = await import('@/lib/db');
+      const { db } = await import('@twicely/db');
       const mockSelect = vi.mocked(db.select);
 
       // Mock review owned by different seller
@@ -111,7 +111,7 @@ describe('Seller Response Actions', () => {
         ability: { can: vi.fn().mockReturnValue(true) } as never,
       });
 
-      const { db } = await import('@/lib/db');
+      const { db } = await import('@twicely/db');
       const mockSelect = vi.mocked(db.select);
 
       // Mock review lookup
@@ -148,7 +148,7 @@ describe('Seller Response Actions', () => {
         ability: { can: vi.fn().mockReturnValue(true) } as never,
       });
 
-      const { db } = await import('@/lib/db');
+      const { db } = await import('@twicely/db');
       const mockSelect = vi.mocked(db.select);
 
       // Review created 31 days ago
@@ -215,7 +215,7 @@ describe('Seller Response Actions', () => {
         ability: { can: vi.fn().mockReturnValue(true) } as never,
       });
 
-      const { db } = await import('@/lib/db');
+      const { db } = await import('@twicely/db');
       const mockSelect = vi.mocked(db.select);
       const mockUpdate = vi.mocked(db.update);
 
@@ -253,7 +253,7 @@ describe('Seller Response Actions', () => {
         ability: { can: vi.fn().mockReturnValue(true) } as never,
       });
 
-      const { db } = await import('@/lib/db');
+      const { db } = await import('@twicely/db');
       const mockSelect = vi.mocked(db.select);
 
       // Response created 49 hours ago

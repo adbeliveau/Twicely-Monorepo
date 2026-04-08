@@ -209,6 +209,27 @@ describe('detectSameListingSold', () => {
     const result = await detectSameListingSold(ORDER_ID, LISTING_ID, SELLER_ID);
     expect(result.fraudDetected).toBe(false);
   });
+
+  it('skips DB cancel update when conflicting tx is already COMPLETED (invalid transition)', async () => {
+    vi.mocked(db.select)
+      .mockReturnValueOnce(makeSelectChain([{ id: TX_ID, orderId: 'ord-local', buyerId: BUYER_ID, status: 'COMPLETED' }]) as never)
+      .mockReturnValueOnce(makeSelectChain([{ stripePaymentIntentId: PAYMENT_INTENT_ID }]) as never)
+      .mockReturnValueOnce(makeSelectChain([{ itemSubtotalCents: 5000 }]) as never)
+      .mockReturnValueOnce(makeWhereTerminalChain([{ total: 0 }]) as never);
+
+    const updateChain = makeUpdateChain();
+    vi.mocked(db.update).mockReturnValue(updateChain as never);
+
+    const result = await detectSameListingSold(ORDER_ID, LISTING_ID, SELLER_ID);
+
+    // Fraud is still detected and other consequences applied
+    expect(result.fraudDetected).toBe(true);
+
+    // But the status update to CANCELED must NOT have fired (COMPLETED is terminal)
+    const setCalls = updateChain.set.mock.calls as Array<[Record<string, unknown>]>;
+    const cancelCall = setCalls.find(([s]) => s?.status === 'CANCELED');
+    expect(cancelCall).toBeUndefined();
+  });
 });
 
 // ─── checkNoshowRelist ────────────────────────────────────────────────────────

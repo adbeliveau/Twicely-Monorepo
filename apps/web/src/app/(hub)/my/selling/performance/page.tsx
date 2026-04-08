@@ -12,7 +12,7 @@ import { ScoreChart } from '@/components/pages/performance/score-chart';
 import { MetricCard } from '@/components/pages/performance/metric-card';
 import { RewardsSummary } from '@/components/pages/performance/rewards-summary';
 import { EnforcementAppealForm } from '@/components/pages/performance/enforcement-appeal-form';
-import type { PerformanceBand, TrendState } from '@/lib/scoring/score-types';
+import type { PerformanceBand, TrendState } from '@twicely/scoring/score-types';
 
 export const dynamic = 'force-dynamic';
 

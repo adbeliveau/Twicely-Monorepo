@@ -8,7 +8,7 @@
 
 This consolidated version merges the base rationale, additions, duplicate copies, and addendum into a single file. No substantive content was omitted. Conflicting section numbers from standalone additions/addenda were renumbered to maintain a single continuous sequence. Original numbering is preserved in the source files.
 
-**Last Updated:** 2026-03-20 (Decisions #140-141: VESTIAIRE enum shortname, extension tables removed)
+**Last Updated:** 2026-04-06 (Decisions #142-144: buyer trust signals replace quality tiers, brand v2 magenta+nunito, heart-button auth intent)
 
 ---
 
@@ -65,10 +65,6 @@ This consolidated version merges the base rationale, additions, duplicate copies
 42. [Local Transaction Fee Model](#42-local-transaction-fee-model)
 43. [No-Show Penalty for Local Meetups](#43-no-show-penalty-for-local-meetups)
 44. [Combined Shipping: Five Modes](#44-combined-shipping-five-modes)
-
-**G2 Local Extensions (128–129)**
-128. [RESERVED as New Listing Status Enum Value](#128-reserved-as-new-listing-status-enum-value)
-129. [Immediate Unreserve on NO_SHOW](#129-immediate-unreserve-on-no_show)
 
 **Financial & Subscription Decisions (45–52)**
 45. [Financial Center as Fourth Subscription Axis](#45-financial-center-as-fourth-subscription-axis)
@@ -171,6 +167,34 @@ This consolidated version merges the base rationale, additions, duplicate copies
 122. [Day-of Confirmation as Column-State, Not Status Enum](#122-day-of-confirmation-as-column-state-not-status-enum)
 123. [SELLER_DARK Mark: Option A Minimal Escalation](#123-seller_dark-mark-option-a-minimal-escalation)
 124. [Reschedule Counts as Valid Day-of Confirmation Response](#124-reschedule-counts-as-valid-day-of-confirmation-response)
+
+**Meetup Reminders & Photo Evidence (125–131)**
+125. [Meetup Reminder Intervals — Hardcoded Constants, Not Admin-Configurable](#125-meetup-reminder-intervals--hardcoded-constants-not-admin-configurable)
+126. [Reminder Data Resolved at Fire-Time, Not Enqueue-Time](#126-reminder-data-resolved-at-fire-time-not-enqueue-time)
+127. [Skip Past Reminder Windows — Don't Fire With Zero Delay](#127-skip-past-reminder-windows--dont-fire-with-zero-delay)
+128. [RESERVED as New Listing Status Enum Value](#128-reserved-as-new-listing-status-enum-value)
+129. [Immediate Unreserve on NO_SHOW](#129-immediate-unreserve-on-no_show)
+130. [At-Meetup Photo Evidence — Optional Capture, Not Mandatory](#130-at-meetup-photo-evidence--optional-capture-not-mandatory)
+131. [Affiliate Commission Lifecycle — Hold, Reverse, Graduate](#131-affiliate-commission-lifecycle--hold-reverse-graduate)
+
+**Affiliate Fraud, Impersonation, Stripe Customer Split (132–135)**
+132. [Affiliate Fraud: Multi-Signal Detection + Three-Strikes Escalation](#132-affiliate-fraud-multi-signal-detection--three-strikes-escalation)
+133. [Impersonation Session Storage: Stateless HMAC Cookie](#133-impersonation-session-storage-stateless-hmac-cookie)
+134. [Buyer stripeCustomerId Stored on User Table (Separate from Seller Connect ID)](#134-buyer-stripecustomerid-stored-on-user-table-separate-from-seller-connect-id)
+135. [Newsletter Subscriber Table Added Outside Schema v2.1.0 (G10.12)](#135-newsletter-subscriber-table-added-outside-schema-v210-g1012)
+
+**Browser Extension Architecture (136–141)**
+136. [Browser Extension Architecture — Chrome MV3 Only, Dev-Only Unpacked Distribution](#136-browser-extension-architecture--chrome-mv3-only-dev-only-unpacked-distribution)
+137. [Extension Registration Flow — localStorage + postMessage Token Relay](#137-extension-registration-flow--localstorage--postmessage-token-relay)
+138. [Extension JWT Library Choice — jose](#138-extension-jwt-library-choice--jose)
+139. [Extension Session TTL — 30-Day Manual Re-authentication Required](#139-extension-session-ttl--30-day-manual-re-authentication-required)
+140. [channelEnum Value: VESTIAIRE (Not VESTIAIRE_COLLECTIVE)](#140-channelenum-value-vestiaire-not-vestiaire_collective)
+141. [Extension Tables Removed — JWT + Valkey Architecture](#141-extension-tables-removed--jwt--valkey-architecture)
+
+**Buyer Trust Signals & Brand v2 (142–144)**
+142. [Replace Buyer Quality Tiers (GREEN/YELLOW/RED) with Factual Trust Signals](#142-replace-buyer-quality-tiers-greenyellowred-with-factual-trust-signals)
+143. [Brand System v2 — Magenta + Nunito](#143-brand-system-v2--magenta--nunito)
+144. [Heart Button Auth Intent — Reuse `?action=watch` Pattern](#144-heart-button-auth-intent--reuse-actionwatch-pattern)
 
 
 ## 1. TF Treatment on Returns
@@ -4743,6 +4767,110 @@ When a local transaction is marked NO_SHOW, the listing is reserved for that tra
 
 ---
 
+## 130. At-Meetup Photo Evidence — Optional Capture, Not Mandatory
+
+**Date:** 2026-03-12
+**Status:** LOCKED
+**Builds in:** G2.16 (At-Meetup Photo Evidence)
+**Related:** Decision #41 (QR Code Escrow for Local Pickup), Decision #118 (Twicely SafeTrade), Decision #114 (Local Reliability System)
+
+### The Problem
+
+Local meetups in Twicely SafeTrade resolve disputes after the fact: a buyer claims the item was wrong/damaged, the platform must adjudicate. Photo evidence captured at the moment of handover is the strongest possible signal of the item's condition at exchange. The question is whether to make the buyer take photos before they can confirm receipt (mandatory) or to prompt + allow skip (optional).
+
+### Options Considered
+
+**Option A (Mandatory):** Buyer cannot scan the QR code or enter the confirmation code without first capturing at least one photo. Forces evidence collection on every transaction.
+**Downside:** Adds friction to confirmation. Buyers in a parking lot, on a phone with poor signal, or with a non-cooperative camera permission abandon the flow. SafeTrade adoption suffers because the friction is greater than the perceived protection benefit.
+
+**Option B (Optional):** Prompt buyer to take photos before confirmation, but allow skip. If skipped, the claim UI later shows "No meetup photos captured" as context (not a block).
+**Upside:** Zero friction on the happy path. Buyers who care about protection use it. Buyers who skip face informational consequences if they later file a claim — but their right to file is preserved.
+
+**Option C (Conditional Mandatory):** Mandatory only above a price threshold (e.g., items > $200). Below threshold, optional.
+**Downside:** Threshold logic creates edge cases. Buyers don't understand why some items require photos and others don't. Adds settings complexity.
+
+### The Decision
+
+**Use Option B: Photo capture is optional. Prompt prominently on the confirmation screen ("Take photos before confirming receipt"). If the buyer takes photos, store to R2 with timestamp via `localTransaction.meetupPhotoUrls` and `meetupPhotosAt`. If the buyer skips, allow confirmation immediately. Surface the skip status as informational context in the claim UI later.**
+
+### Why This Design Wins
+
+**1. Friction kills SafeTrade adoption.** SafeTrade is already a behavioral upgrade from cash meetups. Adding a mandatory photo step before confirmation pushes users back to "let's just skip the app and trade cash." The platform loses the entire transaction. Optional capture preserves the win.
+
+**2. Education does the heavy lifting.** A prominent prompt that explains the value ("Photos protect you if there's a dispute") teaches buyers without coercing them. Over time, community norms — sellers asking "did you take a photo?" — drive adoption far better than a forced screen ever could.
+
+**3. Buyers who skip absorb the risk fairly.** A buyer who skips photos and later files a damage claim still has the right to file. But the absence of meetup photos becomes evidence the platform considers when adjudicating. The skip is recorded; nothing is hidden. The buyer made an informed choice.
+
+**4. Sellers benefit asymmetrically from photo capture.** A buyer who takes photos at handover and then claims "it arrived broken" is contradicted by their own evidence. Sellers should encourage photo capture; the platform should enable but not enforce it. Optional capture aligns incentives without policing behavior.
+
+**5. Schema is minimal and reversible.** Two columns on `localTransaction`: `meetupPhotoUrls text[] default '{}'` and `meetupPhotosAt timestamp nullable`. No new tables, no enum changes, no migration cascade. If Option C is needed later (price-threshold mandatory), the columns already exist.
+
+**6. Capture pipeline reuses existing infrastructure.** Photos go through the same R2 upload pipeline used for listings. Base64 client-side capture, server-side validation, signed URLs. Zero new infrastructure required to ship the optional flow.
+
+### Implementation Notes
+
+- `PhotoEvidenceCapture` component appears on the buyer confirmation screen above the QR scanner / code entry
+- Capture is client-side base64 → server validates content type and size → uploads to R2 with `transaction-id` prefix
+- `meetupPhotoUrls` stores R2 keys, not signed URLs (sign on read)
+- `meetupPhotosAt` is set when the upload completes; null = skipped
+- Both parties and support staff can view captured photos through the transaction record (signed URL with short TTL)
+- Claim UI surfaces a banner: "📷 Meetup photos captured at 2:14 PM" or "ℹ️ No meetup photos captured" — informational, never a block
+
+---
+
+## 131. Affiliate Commission Lifecycle — Hold, Reverse, Graduate
+
+**Date:** 2026-03-13
+**Status:** LOCKED
+**Builds in:** G3.3 (Affiliate Payouts), G3.5 (Affiliate Anti-Fraud)
+**Related:** Decision #112 (Affiliate Program Structure), Decision #132 (Affiliate Fraud Detection)
+
+### The Problem
+
+Affiliate commissions on subscription revenue create an accounting lifecycle question: when does a commission become "real money" the affiliate can withdraw? Subscriptions can be refunded, charged back, or churn within the trial. If the platform pays the commission immediately and the underlying subscription is reversed, the platform eats the loss. If the platform waits forever, affiliates lose trust and stop promoting.
+
+The system needs three things: a hold period (so refunds can claw back commission), a reversal pipeline (so refunded subscriptions reduce affiliate balance correctly), and a graduation rule (so confirmed commissions move from PENDING → PAYABLE → PAID without manual intervention).
+
+### Options Considered
+
+**Option A (Pay Immediately):** Commission becomes PAYABLE the moment the subscription invoice succeeds. No hold.
+**Downside:** Refund within 30 days = platform absorbs full commission loss. Bad actors exploit by signing up referred users, collecting commission, refunding, repeating.
+
+**Option B (Long Hold + Manual Reversals):** 90-day hold. Refunds processed by support staff manually.
+**Downside:** Affiliates wait forever for first payout, churn out before payable. Manual reversals don't scale.
+
+**Option C (Hold + Automatic Reversal + Graduation Job):** 30-day hold from invoice success. Refund webhook triggers automatic commission reversal. Monthly job graduates HELD commissions whose hold has expired into PAYABLE state. Payouts batch on the 15th.
+**Upside:** Affiliates see balance updates immediately (PENDING) but can only withdraw graduated balance. Refunds claw back automatically. Staff intervention is exception only.
+
+### The Decision
+
+**Use Option C. Commission lifecycle: PENDING (invoice succeeded, hold active) → PAYABLE (hold expired, no reversals) → PAID (transferred to affiliate). Refund webhook reverses commission with `REVERSED` status and creates a negative ledger entry. Monthly graduation job runs alongside the payout job on the 15th. Hold period configured via `affiliate.holdDays` (default 30).**
+
+### Why This Design Wins
+
+**1. Affiliates see immediate signal, withdraw only confirmed value.** The dashboard shows PENDING balance ("earned, not yet payable") and AVAILABLE balance ("graduated, withdrawable"). Affiliates feel the platform working immediately without being able to withdraw money the platform might have to claw back.
+
+**2. Reversals are atomic and idempotent.** When a Stripe `charge.refunded` webhook fires, the affiliate-payout-service finds the matching commission, marks it REVERSED, and writes a compensating ledger entry (`affiliate.commission_reversed`). Idempotency key on the webhook prevents double-reversals if Stripe retries.
+
+**3. Graduation is a single SQL update + ledger writes.** The monthly job runs `UPDATE affiliate_commission SET status='PAYABLE' WHERE status='PENDING' AND holdExpiresAt < now()` followed by per-affiliate ledger entries. No external API calls during graduation; payouts happen in a separate stage.
+
+**4. Hold period is configurable per platform_settings.** `affiliate.holdDays` defaults to 30, tunable up if fraud spikes or down if affiliate experience needs a boost. No code changes required to adjust.
+
+**5. The payout job stays simple.** On the 15th: query PAYABLE commissions per affiliate, sum into balance, gate by `affiliate.minPayoutCents` ($25 default), batch transfer via Stripe Connect or PayPal. Failed payouts roll forward to the next month — no partial state.
+
+**6. Disputed and chargebacks are handled the same way.** A chargeback is a refund + a fraud signal. The reversal pipeline processes the financial side; the fraud detection system (Decision #132) processes the behavioral side. Two systems, one webhook, clean separation.
+
+### Implementation Notes
+
+- `affiliate_commission` table columns: `status` (PENDING/PAYABLE/PAID/REVERSED), `holdExpiresAt`, `reversedAt`, `reversalReason`
+- Reversal triggers from these Stripe webhooks: `charge.refunded`, `charge.dispute.created`, `customer.subscription.deleted` (within hold window)
+- Monthly graduation + payout job: `affiliate-payout-service.runMonthlyJob()` — runs on cron, idempotent per month, writes to `affiliate_payout` and ledger
+- Admin reversal action available in `/fin/affiliate-payouts` for edge cases (stripe sync failures, manual disputes)
+- Audit trail: every state transition writes a row to the audit log with actor, reason, before/after values
+- Tests cover: happy path (PENDING → PAYABLE → PAID), refund mid-hold (PENDING → REVERSED), refund after payout (PAID → REVERSED with claw-back ledger entry), batch with affiliates below minimum (rolls forward)
+
+---
+
 ## 132. Affiliate Fraud: Multi-Signal Detection + Three-Strikes Escalation
 
 **Date:** 2026-03-13
@@ -5198,6 +5326,61 @@ if (verified.payload.exp < Date.now() / 1000) throw new Error('Token expired');
 - **Algorithm:** HS256 (HMAC-SHA256) for now. Can migrate to RS256 (RSA) later if needed.
 - **Claims validated automatically:** iat (issued at), exp (expiration), custom sub (user ID), extensionId (chrome-extension://...)
 - **Offline mode:** If server unreachable, extension checks local token validity (not expired). Heartbeat will fail when online.
+
+---
+
+## 142. Buyer/Seller Session Absolute Timeout — 24 Hours (was 7 Days)
+
+**Date:** 2026-04-07
+**Status:** LOCKED
+**Supersedes:** ACTORS_SECURITY_CANONICAL §9.1.2 (which originally specified 7 days)
+**Tracked in code as:** SEC-036
+**Owner-confirmed:** 2026-04-07 (during /twicely-audit cleanup)
+
+### The Decision
+
+Buyer and Seller session absolute timeouts are now **24 hours**, not 7 days as originally specified in `TWICELY_V3_ACTORS_SECURITY_CANONICAL.md §9.1.2`. The change shipped in production code (`packages/auth/src/server.ts:131`) under the in-code identifier "SEC-036" but was never logged here. This entry formalizes the decision and brings the rationale doc + canonical into alignment with shipped code.
+
+### Why 24 Hours
+
+1. **Resale marketplace risk profile.** Twicely sellers handle real money via Stripe Connect payouts, financial dashboards with 7-year tax data, and order/refund flows that move funds. A stolen 7-day session = a week of unauthorized payout requests, listing edits, and message access. A stolen 24-hour session = at most a day. The risk reduction is concrete and measurable.
+
+2. **Industry baseline.** eBay session: 24 hours. Poshmark: 24 hours. Mercari: 24 hours. Stripe Dashboard: 16 hours (then prompts step-up). Our risk profile matches theirs.
+
+3. **Re-auth friction is low.** Better Auth's magic-link + remember-this-device flow makes re-auth a single click for users who tick "remember me." We don't lose retention; we lose unauthorized access windows.
+
+4. **Operator/staff timeouts unchanged.** Agent sessions still 8 hours, Admin still 4 hours per §9.1.2. Only Buyer/Seller changed.
+
+### What Stays at 7 Days
+
+- Payout minimum hold period (commerce, not security): 7 days
+- Failed BullMQ job retention: 7 days
+- PostgreSQL PITR window: 7 days
+
+These are unrelated to session security and are not affected.
+
+### Implementation (Already Shipped)
+
+- `packages/auth/src/server.ts:131` — Better Auth `session.expiresIn` set to `60 * 60 * 24` (24h in seconds)
+- `apps/web/src/lib/auth/server.ts` — mirror in app-side Better Auth config
+- Refresh-on-activity unchanged: any auth-required request within the 24h window slides the cookie forward
+- Remember-me cookie still allowed (extends max session to 30 days, but absolute hard cap is 24h per session)
+
+### What This Closes
+
+- Audit finding 2026-04-07: `engine-security` reported "session absolute timeout = 24h in code vs 7d in canonical, citing SEC-036 which is unlogged." This entry resolves the gap. SEC-036 = Decision #142.
+- Updates required:
+  - `TWICELY_V3_ACTORS_SECURITY_CANONICAL.md §9.1.2` — change "7 days" to "24 hours" for Buyer/Seller (DONE in same commit)
+  - `engine-security` agent file OPEN ISSUE callout — remove (DONE in same commit)
+
+### Reversal Conditions
+
+This decision reverts to 7 days only if:
+- A documented user-research finding shows >5% drop in DAU due to re-auth friction
+- AND the security tradeoff is explicitly accepted by the owner
+- AND the canonical AND this decision entry are both updated
+
+Default: 24 hours stands.
 
 ---
 

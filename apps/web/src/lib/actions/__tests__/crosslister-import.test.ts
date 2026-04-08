@@ -311,7 +311,7 @@ describe('startImport — channel-generic behavior', () => {
     const { retryImportRecord } = await import('../crosslister-import');
     await retryImportRecord({ recordId: 'rec-pm' });
 
-    const { normalizeExternalListing } = await import('@/lib/crosslister/services/normalizer-dispatch');
+    const { normalizeExternalListing } = await import('@twicely/crosslister/services/normalizer-dispatch');
     expect(normalizeExternalListing).toBeDefined();
   });
 

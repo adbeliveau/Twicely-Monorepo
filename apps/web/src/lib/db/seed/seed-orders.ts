@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { order, orderItem, listing, sequenceCounter } from '../schema';
+import { order, orderItem, listing, sequenceCounter } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { LISTING_IDS } from './seed-listings';
 import { generateOrderNumber } from '@twicely/commerce/order-number';

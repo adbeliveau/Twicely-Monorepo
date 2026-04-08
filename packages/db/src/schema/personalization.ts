@@ -26,7 +26,7 @@ export const interestTag = pgTable('interest_tag', {
 export const userInterest = pgTable('user_interest', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  tagSlug: varchar('tag_slug', { length: 50 }).notNull().references(() => interestTag.slug),
+  tagSlug: varchar('tag_slug', { length: 50 }).notNull().references(() => interestTag.slug, { onDelete: 'cascade' }),
   weight: decimal('weight', { precision: 6, scale: 3 }).notNull().default('1.0'),
   source: interestSourceEnum('source').notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }),

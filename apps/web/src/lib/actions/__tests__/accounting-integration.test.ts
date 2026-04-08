@@ -228,7 +228,7 @@ describe('triggerAccountingSync', () => {
 
   it('returns Unauthorized when no session', async () => {
     mockAuthorize.mockResolvedValue({ session: null, ability: { can: vi.fn() } });
-    const { triggerAccountingSync } = await import('../accounting-integration');
+    const { triggerAccountingSync } = await import('../accounting-integration-sync');
     const result = await triggerAccountingSync({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toBe('Unauthorized');
@@ -237,7 +237,7 @@ describe('triggerAccountingSync', () => {
   it('returns error when finance tier is FREE', async () => {
     mockAuth();
     mockGetFinanceTier.mockResolvedValue('FREE');
-    const { triggerAccountingSync } = await import('../accounting-integration');
+    const { triggerAccountingSync } = await import('../accounting-integration-sync');
     const result = await triggerAccountingSync({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toContain('Finance Pro');
@@ -247,7 +247,7 @@ describe('triggerAccountingSync', () => {
     mockAuth();
     mockGetFinanceTier.mockResolvedValue('PRO');
     mockDbSelect.mockReturnValue(makeSelectChain([]));
-    const { triggerAccountingSync } = await import('../accounting-integration');
+    const { triggerAccountingSync } = await import('../accounting-integration-sync');
     const result = await triggerAccountingSync({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toBe('Integration not found');
@@ -263,7 +263,7 @@ describe('triggerAccountingSync', () => {
       recordsSynced: 5,
       recordsFailed: 0,
     });
-    const { triggerAccountingSync } = await import('../accounting-integration');
+    const { triggerAccountingSync } = await import('../accounting-integration-sync');
     const result = await triggerAccountingSync({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -284,7 +284,7 @@ describe('getAccountingSyncHistory', () => {
 
   it('returns Unauthorized when no session', async () => {
     mockAuthorize.mockResolvedValue({ session: null, ability: { can: vi.fn() } });
-    const { getAccountingSyncHistory } = await import('../accounting-integration');
+    const { getAccountingSyncHistory } = await import('../accounting-integration-sync');
     const result = await getAccountingSyncHistory({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
   });
@@ -294,7 +294,7 @@ describe('getAccountingSyncHistory', () => {
     mockDbSelect
       .mockReturnValueOnce(makeSelectChain([]))  // ownership check
       .mockReturnValueOnce(makeSelectChain([])); // logs query
-    const { getAccountingSyncHistory } = await import('../accounting-integration');
+    const { getAccountingSyncHistory } = await import('../accounting-integration-sync');
     const result = await getAccountingSyncHistory({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toBe('Integration not found');
@@ -324,7 +324,7 @@ describe('getAccountingSyncHistory', () => {
           }),
         }),
       });
-    const { getAccountingSyncHistory } = await import('../accounting-integration');
+    const { getAccountingSyncHistory } = await import('../accounting-integration-sync');
     const result = await getAccountingSyncHistory({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -344,7 +344,7 @@ describe('updateSyncFrequency', () => {
 
   it('returns validation error for invalid frequency', async () => {
     mockAuth();
-    const { updateSyncFrequency } = await import('../accounting-integration');
+    const { updateSyncFrequency } = await import('../accounting-integration-sync');
     const result = await updateSyncFrequency({ integrationId: INTEGRATION_ID, frequency: 'WEEKLY' });
     expect(result.success).toBe(false);
   });
@@ -353,7 +353,7 @@ describe('updateSyncFrequency', () => {
     mockAuth();
     mockDbSelect.mockReturnValue(makeSelectChain([{ id: INTEGRATION_ID }]));
     mockDbUpdate.mockReturnValue(makeUpdateChain());
-    const { updateSyncFrequency } = await import('../accounting-integration');
+    const { updateSyncFrequency } = await import('../accounting-integration-sync');
 
     for (const freq of ['HOURLY', 'DAILY', 'MANUAL']) {
       vi.resetAllMocks();
@@ -368,7 +368,7 @@ describe('updateSyncFrequency', () => {
   it('returns not found when integration does not exist', async () => {
     mockAuth();
     mockDbSelect.mockReturnValue(makeSelectChain([]));
-    const { updateSyncFrequency } = await import('../accounting-integration');
+    const { updateSyncFrequency } = await import('../accounting-integration-sync');
     const result = await updateSyncFrequency({ integrationId: INTEGRATION_ID, frequency: 'DAILY' });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toBe('Integration not found');
@@ -385,7 +385,7 @@ describe('getAccountingSyncStatus', () => {
 
   it('returns Unauthorized when no session', async () => {
     mockAuthorize.mockResolvedValue({ session: null, ability: { can: vi.fn() } });
-    const { getAccountingSyncStatus } = await import('../accounting-integration');
+    const { getAccountingSyncStatus } = await import('../accounting-integration-sync');
     const result = await getAccountingSyncStatus({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toBe('Unauthorized');
@@ -402,7 +402,7 @@ describe('getAccountingSyncStatus', () => {
         userId: USER_ID,
       }]),
     );
-    const { getAccountingSyncStatus } = await import('../accounting-integration');
+    const { getAccountingSyncStatus } = await import('../accounting-integration-sync');
     const result = await getAccountingSyncStatus({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -414,7 +414,7 @@ describe('getAccountingSyncStatus', () => {
   it('returns not found when integration is not owned by user', async () => {
     mockAuth();
     mockDbSelect.mockReturnValue(makeSelectChain([]));
-    const { getAccountingSyncStatus } = await import('../accounting-integration');
+    const { getAccountingSyncStatus } = await import('../accounting-integration-sync');
     const result = await getAccountingSyncStatus({ integrationId: INTEGRATION_ID });
     expect(result.success).toBe(false);
     expect((result as { success: false; error: string }).error).toBe('Integration not found');

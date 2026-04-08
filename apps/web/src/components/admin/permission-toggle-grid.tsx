@@ -6,7 +6,7 @@ import {
   getModulesByCategory,
   type PermissionCategory,
   type PermissionModule,
-} from '@/lib/casl/permission-registry';
+} from '@twicely/casl/permission-registry';
 
 interface PermissionToggleGridProps {
   /** Current permissions as { subject, action }[] */

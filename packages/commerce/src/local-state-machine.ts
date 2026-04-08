@@ -11,13 +11,22 @@
  */
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  SCHEDULED: ['SELLER_CHECKED_IN', 'BUYER_CHECKED_IN', 'BOTH_CHECKED_IN', 'RESCHEDULE_PENDING', 'CANCELED'],
+  // COMPLETED added for cash local sales (§A0): cash transactions skip all check-in
+  // and QR steps — seller manually marks the sale complete directly from SCHEDULED.
+  // SafeTrade path still requires BOTH_CHECKED_IN → RECEIPT_CONFIRMED → COMPLETED.
+  SCHEDULED: ['SELLER_CHECKED_IN', 'BUYER_CHECKED_IN', 'BOTH_CHECKED_IN', 'RESCHEDULE_PENDING', 'CANCELED', 'COMPLETED'],
   SELLER_CHECKED_IN: ['BOTH_CHECKED_IN', 'RECEIPT_CONFIRMED', 'RESCHEDULE_PENDING', 'NO_SHOW', 'CANCELED'],
   BUYER_CHECKED_IN: ['BOTH_CHECKED_IN', 'RECEIPT_CONFIRMED', 'RESCHEDULE_PENDING', 'NO_SHOW', 'CANCELED'],
   BOTH_CHECKED_IN: ['ADJUSTMENT_PENDING', 'RECEIPT_CONFIRMED', 'NO_SHOW', 'CANCELED'],
-  ADJUSTMENT_PENDING: ['BOTH_CHECKED_IN', 'RECEIPT_CONFIRMED'],
+  // CANCELED added: fraud detection (§A12) must be able to cancel from ADJUSTMENT_PENDING
+  // regardless of the user-facing no-cancel rule (§A8). System-initiated fraud cancellation
+  // is a different actor than user-initiated cancellation.
+  ADJUSTMENT_PENDING: ['BOTH_CHECKED_IN', 'RECEIPT_CONFIRMED', 'CANCELED'],
   RESCHEDULE_PENDING: ['SCHEDULED', 'CANCELED'],
-  RECEIPT_CONFIRMED: ['COMPLETED', 'DISPUTED'],
+  // CANCELED added: fraud detection (§A12) can fire while transaction is RECEIPT_CONFIRMED
+  // (e.g. offline submission race with a concurrent shipped-order completion).
+  // Normal user path is RECEIPT_CONFIRMED → DISPUTED → CANCELED (admin resolution).
+  RECEIPT_CONFIRMED: ['COMPLETED', 'DISPUTED', 'CANCELED'],
   COMPLETED: [],    // terminal
   CANCELED: [],     // terminal
   NO_SHOW: [],      // terminal

@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { listingQuestion, curatedCollection, curatedCollectionItem, watcherOffer, liveSession, liveSessionProduct } from '../schema';
+import { listingQuestion, curatedCollection, curatedCollectionItem, watcherOffer, liveSession, liveSessionProduct } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { LISTING_IDS } from './seed-listings';
 

@@ -1,7 +1,7 @@
 import { db } from '@twicely/db';
 import { promotion, promotionUsage, promoCode, promoCodeRedemption, affiliate, user, order } from '@twicely/db/schema';
 import { eq, and, sql, desc, gt, lt, or, isNull, ilike, count } from 'drizzle-orm';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 import { alias } from 'drizzle-orm/pg-core';
 import { getPromotionStats } from './promotions';
 import type { PromotionStats } from './promotions';

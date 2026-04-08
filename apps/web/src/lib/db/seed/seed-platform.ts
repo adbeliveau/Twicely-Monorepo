@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { platformSetting } from '../schema';
+import { platformSetting } from '@twicely/db/schema';
 import { V32_ALL_SETTINGS } from './v32-platform-settings';
 import { SEED_IDS } from './seed-system';
 import { SEED_I14_SETTINGS } from './seed-i14-settings';

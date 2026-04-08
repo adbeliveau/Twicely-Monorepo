@@ -1,6 +1,6 @@
 import { hashSync } from 'bcryptjs';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { user, account, sellerProfile, businessInfo } from '../schema';
+import { user, account, sellerProfile, businessInfo } from '@twicely/db/schema';
 
 // Hardcoded IDs for idempotency
 export const USER_IDS = {

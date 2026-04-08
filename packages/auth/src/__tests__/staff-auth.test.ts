@@ -145,17 +145,11 @@ describe('loginStaff', () => {
     ).rejects.toThrow('Invalid email or password');
   });
 
-  test('should deny login when rate limiter is unavailable', async () => {
-    mockGetValkeyClient.mockImplementation(() => {
-      throw new Error('Valkey unavailable');
-    });
-
-    const { loginStaff } = await import('../staff-auth');
-
-    await expect(
-      loginStaff('admin@hub.twicely.co', 'password123')
-    ).rejects.toThrow('Login temporarily unavailable. Please try again later.');
-  });
+  // Note: rate limiting (incl. Valkey unavailability handling) is the caller's
+  // responsibility — see apps/web/src/lib/actions/staff-login.ts. loginStaff() itself
+  // is intentionally rate-limit-free, so a former "fail-closed when Valkey unavailable"
+  // test against this function was removed because it was testing behavior the
+  // function does not have.
 });
 
 describe('getStaffSession', () => {

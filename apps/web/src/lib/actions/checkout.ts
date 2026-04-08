@@ -77,14 +77,18 @@ export async function initiateCheckout(input: InitiateCheckoutInput): Promise<In
     return { success: false, error: 'Your account cannot place orders' };
   }
 
-  // SECURITY: Rate limit checkout to prevent abuse/DoS (5 per 10 min per user)
+  // SECURITY: Rate limit checkout to prevent abuse/DoS — window/max from platform_settings
   try {
+    const [rateLimitWindowSec, rateLimitMaxAttempts] = await Promise.all([
+      getPlatformSetting<number>('commerce.checkout.rateLimitWindowSec', 600),
+      getPlatformSetting<number>('commerce.checkout.rateLimitMaxAttempts', 5),
+    ]);
     const valkey = getValkeyClient();
     const rateLimitKey = `checkout-rate:${session.userId}`;
     const attempts = await valkey.incr(rateLimitKey);
-    if (attempts === 1) await valkey.expire(rateLimitKey, 600);
-    if (attempts > 5) {
-      logger.warn('[checkout] Rate limited', { userId: session.userId, attempts });
+    if (attempts === 1) await valkey.expire(rateLimitKey, rateLimitWindowSec);
+    if (attempts > rateLimitMaxAttempts) {
+      logger.warn('[checkout] Rate limited', { userId: session.userId, attempts, max: rateLimitMaxAttempts });
       return { success: false, error: 'Too many checkout attempts. Please wait a few minutes.' };
     }
   } catch (err) {

@@ -24,7 +24,7 @@ export async function registerAffiliatePayoutJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'affiliate-payout-monthly',
-      repeat: { pattern: '0 6 15 * *' },
+      repeat: { pattern: '0 6 15 * *', tz: 'UTC' },
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     }
@@ -68,3 +68,12 @@ export function createAffiliatePayoutWorker(createTransfer: StripeTransferCreato
     1 // single concurrency — avoid duplicate processing
   );
 }
+
+// ─── Auto-instantiated worker ────────────────────────────────────────────────
+// Lazy-initialized after stripe loads to avoid circular dep.
+
+void (async () => {
+  const { stripe } = await import('@twicely/stripe/server');
+  const createTransfer: StripeTransferCreator = (params) => stripe.transfers.create(params);
+  createAffiliatePayoutWorker(createTransfer);
+})();

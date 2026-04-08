@@ -14,7 +14,8 @@ import { user } from './auth';
 // §8.6 contentReport — user-submitted reports on listings, reviews, messages, users (G4)
 export const contentReport = pgTable('content_report', {
   id:             text('id').primaryKey().$defaultFn(() => createId()),
-  reporterUserId: text('reporter_user_id').notNull().references(() => user.id),
+  // restrict: content reports are moderation records — must survive user deletion for audit
+  reporterUserId: text('reporter_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   targetType:     contentReportTargetEnum('target_type').notNull(),
   targetId:       text('target_id').notNull(),
   reason:         contentReportReasonEnum('reason').notNull(),
@@ -36,7 +37,8 @@ export const contentReport = pgTable('content_report', {
 // §8.7 enforcementAction — staff-issued enforcement actions against sellers/users (G4)
 export const enforcementAction = pgTable('enforcement_action', {
   id:             text('id').primaryKey().$defaultFn(() => createId()),
-  userId:         text('user_id').notNull().references(() => user.id),
+  // restrict: enforcement actions are moderation audit records — must survive user deletion
+  userId:         text('user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   actionType:     enforcementActionTypeEnum('action_type').notNull(),
   trigger:        enforcementTriggerEnum('trigger').notNull(),
   status:         enforcementActionStatusEnum('status').notNull().default('ACTIVE'),

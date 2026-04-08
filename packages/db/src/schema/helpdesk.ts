@@ -110,7 +110,7 @@ export const caseWatcher = pgTable('case_watcher', {
 // §13.5 caseCsat
 export const caseCsat = pgTable('case_csat', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  caseId:              text('case_id').notNull().unique().references(() => helpdeskCase.id),
+  caseId:              text('case_id').notNull().unique().references(() => helpdeskCase.id, { onDelete: 'cascade' }),
   userId:              text('user_id').notNull(),
   rating:              integer('rating').notNull(),
   comment:             text('comment'),

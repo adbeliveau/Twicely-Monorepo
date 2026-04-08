@@ -21,7 +21,10 @@ export default async function NewListingPage() {
   }
 
   // Fetch AI autofill usage if feature is enabled
-  const aiEnabled = await getPlatformSetting<boolean>('ai.autofill.enabled', true);
+  const [aiEnabled, maxImages] = await Promise.all([
+    getPlatformSetting<boolean>('ai.autofill.enabled', true),
+    getPlatformSetting<number>('listing.maxImagesPerListing', 24),
+  ]);
   let aiAutofillRemaining: number | undefined;
   if (aiEnabled) {
     const usage = await getMonthlyUsage(session.user.id);
@@ -37,7 +40,7 @@ export default async function NewListingPage() {
         </p>
       </div>
 
-      <ListingFormWrapper mode="create" aiAutofillRemaining={aiAutofillRemaining} />
+      <ListingFormWrapper mode="create" aiAutofillRemaining={aiAutofillRemaining} maxImages={maxImages} />
     </div>
   );
 }

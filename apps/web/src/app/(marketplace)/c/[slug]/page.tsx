@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { auth } from '@twicely/auth';
 import { getCategoryBySlug } from '@/lib/queries/categories';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { searchListings } from '@twicely/search/listings';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { ListingGrid } from '@/components/shared/listing-grid';
@@ -74,11 +75,12 @@ export default async function CategoryPage({
   }
 
   // Build search filters for this category
+  const pageSize = await getPlatformSetting<number>('discovery.search.defaultPageSize', 48);
   const filters: SearchFilters = {
     categoryId: category.id,
     sort: (sort as SearchFilters['sort']) ?? 'newest',
     page: page ? parseInt(page, 10) : 1,
-    limit: 24,
+    limit: pageSize,
   };
 
   const results = await searchListings(filters);

@@ -27,7 +27,7 @@ export const taxInfo = pgTable('tax_info', {
 // §17.2 taxQuote
 export const taxQuote = pgTable('tax_quote', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:             text('order_id').references(() => order.id),
+  orderId:             text('order_id').references(() => order.id, { onDelete: 'cascade' }),
   buyerState:          text('buyer_state').notNull(),
   sellerState:         text('seller_state'),
   subtotalCents:       integer('subtotal_cents').notNull(),

@@ -104,16 +104,19 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'trust.review.moderationEnabled', value: true, type: 'boolean', category: 'trust', description: 'Enable review moderation' },
   { key: 'trust.review.editWindowHours', value: 24, type: 'number', category: 'trust', description: 'Hours to edit review after posting' },
   { key: 'trust.review.sellerResponseWindowDays', value: 30, type: 'number', category: 'trust', description: 'Days after review for seller to respond' },
+  { key: 'trust.review.autoApproveAboveStars', value: 0, type: 'number', category: 'trust', description: 'Auto-approve reviews above X stars (0=all moderated) — canonical §10.3' },
+  { key: 'trust.review.minLengthChars', value: 0, type: 'number', category: 'trust', description: 'Minimum review text length (0=none) — canonical §10.3' },
+  { key: 'trust.review.maxLengthChars', value: 5000, type: 'number', category: 'trust', description: 'Maximum review text length — canonical §10.3' },
   { key: 'trust.standards.evaluationPeriodDays', value: 90, type: 'number', category: 'trust', description: 'Rolling window for seller standards evaluation' },
   { key: 'trust.standards.maxDefectRatePercent', value: 2, type: 'number', category: 'trust', description: 'Max transaction defect rate for GOOD standing' },
   { key: 'trust.standards.topRatedMinOrdersYear', value: 100, type: 'number', category: 'trust', description: 'Minimum annual orders for TOP_RATED' },
   { key: 'trust.standards.minOrdersForEvaluation', value: 10, type: 'number', category: 'trust', description: 'Minimum orders before standards evaluation applies' },
-  { key: 'trust.standards.maxLateShipRatePercent', value: 5, type: 'number', category: 'trust', description: 'Max late shipment rate for GOOD standing' },
-  { key: 'trust.standards.maxUnresolvedCasesPercent', value: 1, type: 'number', category: 'trust', description: 'Max unresolved case rate for GOOD standing' },
+  { key: 'trust.standards.maxLateShipRatePercent', value: 4, type: 'number', category: 'trust', description: 'Max late shipment rate for GOOD standing (canonical §10.4)' },
+  { key: 'trust.standards.maxUnresolvedCasesPercent', value: 0.3, type: 'number', category: 'trust', description: 'Max unresolved case rate for GOOD standing (canonical §10.4)' },
   { key: 'trust.standards.topRatedMaxDefectRate', value: 0.5, type: 'number', category: 'trust', description: 'Max defect rate for TOP_RATED' },
   { key: 'trust.standards.topRatedMaxLateShipRate', value: 1, type: 'number', category: 'trust', description: 'Max late ship rate for TOP_RATED' },
   { key: 'trust.standards.belowStandardVisibilityReduction', value: 50, type: 'number', category: 'trust', description: 'Search visibility reduction % for BELOW_STANDARD sellers' },
-  { key: 'trust.standards.belowStandardTfSurcharge', value: 200, type: 'number', category: 'trust', description: 'TF surcharge in bps for BELOW_STANDARD sellers' },
+  { key: 'trust.standards.belowStandardTfSurcharge', value: 500, type: 'number', category: 'trust', description: 'TF surcharge in bps for BELOW_STANDARD sellers (canonical §10.4 — 5.0%)' },
   { key: 'trust.standards.restrictedMaxListings', value: 10, type: 'number', category: 'trust', description: 'Max active listings for RESTRICTED sellers' },
   { key: 'trust.standards.defectExpiryDays', value: 365, type: 'number', category: 'trust', description: 'Days after which a defect no longer counts' },
 
@@ -513,4 +516,37 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // Cleanup batch sizes
   { key: 'cleanup.dataPurge.exportBatchSize', value: 500, type: 'number' as const, category: 'cleanup', description: 'Max expired data exports purged per run' },
   { key: 'cleanup.auditArchive.batchSize', value: 10000, type: 'number' as const, category: 'cleanup', description: 'Max audit events archived per run' },
+
+  // ─── Buyer Protection (canonical §10.5) ────────────────────────────────────
+  { key: 'trust.protection.defaultWindowDays', value: 30, type: 'number' as const, category: 'trust', description: 'Standard buyer protection claim window (days)' },
+  { key: 'trust.protection.counterfeitWindowDays', value: 60, type: 'number' as const, category: 'trust', description: 'Extended claim window for counterfeit claims (days)' },
+  { key: 'trust.protection.sellerResponseDays', value: 3, type: 'number' as const, category: 'trust', description: 'Business days for seller to respond to a claim' },
+  { key: 'trust.protection.platformReviewHours', value: 48, type: 'number' as const, category: 'trust', description: 'Hours for platform to review escalated claims' },
+  { key: 'trust.protection.appealWindowDays', value: 30, type: 'number' as const, category: 'trust', description: 'Days after resolution to file an appeal' },
+  { key: 'trust.protection.defaultMaxCoverageCents', value: 500000, type: 'cents' as const, category: 'trust', description: 'Default max coverage per claim ($5,000)' },
+  { key: 'trust.protection.autoApproveThresholdCents', value: 2500, type: 'cents' as const, category: 'trust', description: 'Auto-approve claims under this amount if seller does not respond ($25)' },
+
+  // ─── Discovery — Search & Price Alerts (canonical §11.1, §11.3) ────────────
+  { key: 'discovery.search.maxPageSize', value: 100, type: 'number' as const, category: 'discovery', description: 'Maximum search results per page' },
+  { key: 'discovery.priceAlert.defaultExpiryDays', value: 90, type: 'number' as const, category: 'discovery', description: 'Default price alert expiration (days)' },
+  { key: 'discovery.priceAlert.categoryAlertsEnabled', value: true, type: 'boolean' as const, category: 'discovery', description: 'Enable category-wide price alerts' },
+  { key: 'discovery.priceAlert.categoryAlertMaxPerUser', value: 20, type: 'number' as const, category: 'discovery', description: 'Max category alerts per user' },
+  { key: 'discovery.priceAlert.immediateLimit', value: 10, type: 'number' as const, category: 'discovery', description: 'Max immediate alert notifications sent per day' },
+
+  // ─── Payments — Disputes & Reconciliation (canonical §13.1, §13.2) ─────────
+  { key: 'payments.chargebackFeeCents', value: 1500, type: 'cents' as const, category: 'payments', description: 'Fee charged for chargebacks ($15)' },
+  { key: 'payments.generateDailyReports', value: true, type: 'boolean' as const, category: 'payments', description: 'Auto-generate daily financial reports' },
+
+  // ─── Fulfillment — Returns (canonical §9.3) ────────────────────────────────
+  { key: 'fulfillment.returns.returnShipByDays', value: 7, type: 'number' as const, category: 'fulfillment', description: 'Days buyer has to ship return after label issued — canonical §9.3' },
+  { key: 'fulfillment.returns.autoApproveUnderCents', value: 1000, type: 'cents' as const, category: 'fulfillment', description: 'Auto-approve returns under this amount if seller does not respond ($10) — canonical §9.3' },
+  { key: 'fulfillment.returns.maxReturnsPerBuyerPerMonth', value: 10, type: 'number' as const, category: 'fulfillment', description: 'Flag serial returners above this threshold — canonical §9.3' },
+
+  // ─── Fulfillment — Shipping Carriers (canonical §9.1) ──────────────────────
+  { key: 'fulfillment.shipping.enabledCarriers', value: ['USPS', 'UPS', 'FedEx'], type: 'array' as const, category: 'fulfillment', description: 'Carriers available for shipping labels — canonical §9.1' },
+
+  // ─── Discovery — Market Index (canonical §11.4) ────────────────────────────
+  { key: 'discovery.marketIndex.minSample', value: 10, type: 'number' as const, category: 'discovery', description: 'Min sales required for market index calculation — canonical §11.4' },
+  { key: 'discovery.marketIndex.highConfidence', value: 50, type: 'number' as const, category: 'discovery', description: 'Min sales for HIGH confidence market index — canonical §11.4' },
+  { key: 'discovery.marketIndex.lowConfidenceVisible', value: false, type: 'boolean' as const, category: 'discovery', description: 'Display LOW confidence indexes to users — canonical §11.4' },
 ];

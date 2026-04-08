@@ -50,6 +50,8 @@ export async function runAuditArchive(): Promise<void> {
     true
   );
 
+  const archiveBatchSize = await getPlatformSetting<number>('cleanup.auditArchive.batchSize', 10000);
+
   const cutoff = new Date(now);
   cutoff.setMonth(cutoff.getMonth() - retentionMonths);
 
@@ -58,7 +60,7 @@ export async function runAuditArchive(): Promise<void> {
     .select()
     .from(auditEvent)
     .where(lt(auditEvent.createdAt, cutoff))
-    .limit(10000);
+    .limit(archiveBatchSize);
 
   if (events.length === 0) {
     logger.info('[auditArchive] No events to archive', { retentionMonths });

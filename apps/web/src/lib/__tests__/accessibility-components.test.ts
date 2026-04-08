@@ -107,9 +107,10 @@ describe('SearchBar accessibility', () => {
 describe('Logo accessibility', () => {
   const SRC = read('src/components/shared/logo.tsx');
 
-  it('logo link has no redundant aria-label (visible text "Twicely" is sufficient)', () => {
-    expect(SRC).not.toContain('aria-label="Twicely home"');
-    expect(SRC).toContain('Twicely');
+  // The current logo splits the wordmark into separate spans (T / W / ICELY) so
+  // a screen reader would read "T W ICELY" without an explicit aria-label.
+  it('logo link has aria-label so screen readers announce a clean wordmark', () => {
+    expect(SRC).toContain('aria-label="Twicely home"');
   });
 
   it('logo navigates to home route "/"', () => {

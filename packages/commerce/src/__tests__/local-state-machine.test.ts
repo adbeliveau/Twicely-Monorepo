@@ -18,8 +18,10 @@ describe('canTransition', () => {
     expect(canTransition('ADJUSTMENT_PENDING', 'RECEIPT_CONFIRMED')).toBe(true);
   });
 
-  it('denies ADJUSTMENT_PENDING → CANCELED', () => {
-    expect(canTransition('ADJUSTMENT_PENDING', 'CANCELED')).toBe(false);
+  it('allows ADJUSTMENT_PENDING → CANCELED (fraud system cancel per §A12)', () => {
+    // Fraud detection must be able to cancel from any active status (§A12).
+    // User-initiated cancel from ADJUSTMENT_PENDING is blocked at the action layer.
+    expect(canTransition('ADJUSTMENT_PENDING', 'CANCELED')).toBe(true);
   });
 
   it('denies ADJUSTMENT_PENDING → NO_SHOW', () => {
@@ -82,8 +84,10 @@ describe('canTransition', () => {
     expect(canTransition('NO_SHOW', 'COMPLETED')).toBe(false);
   });
 
-  it('denies SCHEDULED → COMPLETED (skips steps)', () => {
-    expect(canTransition('SCHEDULED', 'COMPLETED')).toBe(false);
+  it('allows SCHEDULED → COMPLETED (cash local sale direct completion — §A0)', () => {
+    // Cash sales skip check-in and QR steps entirely; seller manually marks complete.
+    // SafeTrade path still requires BOTH_CHECKED_IN → RECEIPT_CONFIRMED → COMPLETED.
+    expect(canTransition('SCHEDULED', 'COMPLETED')).toBe(true);
   });
 
   it('returns false for unknown from-status', () => {
@@ -129,6 +133,15 @@ describe('canTransition', () => {
 
   it('denies RESCHEDULE_PENDING → RECEIPT_CONFIRMED', () => {
     expect(canTransition('RESCHEDULE_PENDING', 'RECEIPT_CONFIRMED')).toBe(false);
+  });
+
+  // Fraud detection system cancellation paths (§A12)
+  it('allows ADJUSTMENT_PENDING → CANCELED (fraud system cancel)', () => {
+    expect(canTransition('ADJUSTMENT_PENDING', 'CANCELED')).toBe(true);
+  });
+
+  it('allows RECEIPT_CONFIRMED → CANCELED (fraud system cancel)', () => {
+    expect(canTransition('RECEIPT_CONFIRMED', 'CANCELED')).toBe(true);
   });
 });
 

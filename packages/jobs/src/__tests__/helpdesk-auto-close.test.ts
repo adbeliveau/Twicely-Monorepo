@@ -21,6 +21,7 @@ vi.mock('@twicely/db/schema', () => ({
   helpdeskCase: {
     id: 'id', status: 'status', lastActivityAt: 'last_activity_at',
     closedAt: 'closed_at', updatedAt: 'updated_at',
+    requesterId: 'requester_id', caseNumber: 'case_number',
   },
   caseEvent: {
     caseId: 'case_id', eventType: 'event_type', actorType: 'actor_type',
@@ -34,6 +35,10 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
 
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+}));
+
+vi.mock('@twicely/notifications/service', () => ({
+  notify: vi.fn(),
 }));
 
 import { enqueueHelpdeskAutoClose } from '../helpdesk-auto-close';
@@ -68,7 +73,8 @@ describe('enqueueHelpdeskAutoClose', () => {
     await enqueueHelpdeskAutoClose();
     expect(mockQueueAdd).toHaveBeenCalledWith(
       'auto-close',
-      expect.objectContaining({ triggeredAt: expect.any(String) })
+      expect.objectContaining({ triggeredAt: expect.any(String) }),
+      expect.objectContaining({ jobId: 'helpdesk-auto-close', removeOnComplete: true }),
     );
   });
 

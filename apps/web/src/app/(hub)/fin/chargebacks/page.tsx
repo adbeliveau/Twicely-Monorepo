@@ -16,7 +16,7 @@ export default async function ChargebacksPage({
   searchParams: Promise<{ page?: string; status?: string; from?: string; to?: string }>;
 }) {
   const { ability } = await staffAuthorize();
-  if (!ability.can('read', 'LedgerEntry')) {
+  if (!ability.can('read', 'Chargeback')) {
     return <p className="text-red-600">Access denied</p>;
   }
 

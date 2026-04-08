@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { getAllTeamsWithMembers } from '@/lib/queries/helpdesk-teams';
 import { TeamList } from './team-list';
 import { Users } from 'lucide-react';

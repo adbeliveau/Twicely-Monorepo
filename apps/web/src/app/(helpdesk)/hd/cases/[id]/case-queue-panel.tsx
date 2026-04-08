@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PriorityBadge } from "@/components/helpdesk/helpdesk-badges";
 import type { Priority } from "@/components/helpdesk/helpdesk-badges";
+import { CaseWatchersList } from "@/components/helpdesk/case-watchers";
+import type { CaseWatcherItem } from "@/lib/queries/helpdesk-cases";
 
 interface QueueCase {
   id: string;
@@ -13,11 +15,15 @@ interface QueueCase {
   status: string;
   type: string;
   lastActivityAt: Date;
+  slaFirstResponseDueAt?: Date | null;
+  firstResponseAt?: Date | null;
+  slaFirstResponseBreached?: boolean;
 }
 
 interface CaseQueuePanelProps {
   cases: QueueCase[];
   selectedCaseId: string;
+  watchers?: CaseWatcherItem[];
   className?: string;
 }
 
@@ -25,6 +31,8 @@ const TYPE_ICONS: Record<string, string> = {
   SUPPORT: "💬", DISPUTE: "⚖️", RETURN: "📦",
   CHARGEBACK: "💳", MODERATION: "🛡️", ACCOUNT: "👤",
 };
+
+const AVAILABILITY_KEY = "hd-agent-availability";
 
 function timeAgo(date: Date): string {
   const diffMs = Date.now() - date.getTime();
@@ -35,8 +43,47 @@ function timeAgo(date: Date): string {
   return `${Math.floor(hrs / 24)}d`;
 }
 
-export function CaseQueuePanel({ cases, selectedCaseId, className }: CaseQueuePanelProps) {
+/**
+ * Compact SLA label for queue rows.
+ * Returns { label, className } based on remaining time.
+ */
+function slaLabel(dueAt: Date | null | undefined, firstResponseAt: Date | null | undefined): { label: string; cls: string } | null {
+  if (firstResponseAt) return { label: "Met", cls: "text-[11px] text-green-500 font-medium" };
+  if (!dueAt) return null;
+  const diffMs = new Date(dueAt).getTime() - Date.now();
+  const absMins = Math.max(0, Math.floor(Math.abs(diffMs) / 60000));
+  const hrs = Math.floor(absMins / 60);
+  const mins = absMins % 60;
+  const text = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  if (diffMs < 0) return { label: "BREACH", cls: "hd-sla-breach" };
+  if (diffMs < 30 * 60000) return { label: text, cls: "hd-sla-breach" };
+  if (diffMs < 60 * 60000) return { label: text, cls: "hd-sla-warning" };
+  return { label: text, cls: "hd-sla" };
+}
+
+export function CaseQueuePanel({ cases, selectedCaseId, watchers = [], className }: CaseQueuePanelProps) {
   const [search, setSearch] = useState("");
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Load persisted availability state on mount (client-only)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(AVAILABILITY_KEY);
+      if (stored === "offline") setIsOnline(false);
+    } catch {
+      // localStorage unavailable; keep default
+    }
+  }, []);
+
+  function toggleAvailability() {
+    const next = !isOnline;
+    setIsOnline(next);
+    try {
+      localStorage.setItem(AVAILABILITY_KEY, next ? "online" : "offline");
+    } catch {
+      // ignore persistence failure
+    }
+  }
 
   const filtered = cases.filter(
     (c) =>
@@ -46,14 +93,25 @@ export function CaseQueuePanel({ cases, selectedCaseId, className }: CaseQueuePa
 
   return (
     <div className={cn("hd-workspace-left", className)}>
-      {/* Header */}
+      {/* Header — with online status dot */}
       <div
         className="flex items-center justify-between px-4 py-3 border-b"
         style={{ borderColor: "rgb(var(--hd-border))" }}
       >
-        <span className="font-bold text-sm" style={{ color: "rgb(var(--hd-text-primary))" }}>
-          My Cases
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "inline-block h-2 w-2 rounded-full",
+              isOnline ? "bg-emerald-500" : "bg-slate-400"
+            )}
+            style={isOnline ? { boxShadow: "0 0 6px rgba(34,197,94,0.6)" } : undefined}
+            title={isOnline ? "Online — receiving routed cases" : "Offline — not receiving new cases"}
+            aria-label={isOnline ? "Agent online" : "Agent offline"}
+          />
+          <span className="font-bold text-sm" style={{ color: "rgb(var(--hd-text-primary))" }}>
+            My Cases
+          </span>
+        </div>
         <span className="text-xs" style={{ color: "rgb(var(--hd-text-muted))" }}>
           {cases.length}
         </span>
@@ -90,6 +148,7 @@ export function CaseQueuePanel({ cases, selectedCaseId, className }: CaseQueuePa
         ) : (
           filtered.map((c) => {
             const isSelected = c.id === selectedCaseId;
+            const sla = slaLabel(c.slaFirstResponseDueAt, c.firstResponseAt);
             return (
               <a
                 key={c.id}
@@ -120,12 +179,40 @@ export function CaseQueuePanel({ cases, selectedCaseId, className }: CaseQueuePa
                     <span>{TYPE_ICONS[c.type] ?? "📋"}</span>
                     <span className="capitalize">{c.type.toLowerCase()}</span>
                   </div>
-                  <span>{timeAgo(c.lastActivityAt)}</span>
+                  {sla ? (
+                    <span className={sla.cls}>{sla.label}</span>
+                  ) : (
+                    <span>{timeAgo(c.lastActivityAt)}</span>
+                  )}
                 </div>
               </a>
             );
           })
         )}
+      </div>
+
+      {/* Watchers list — moved here from header to save vertical space in the center panel */}
+      <CaseWatchersList watchers={watchers} />
+
+      {/* Footer — availability toggle */}
+      <div
+        className="border-t px-3 py-2 flex-shrink-0"
+        style={{ borderColor: "rgb(var(--hd-border))", background: "rgb(var(--hd-bg-deep))" }}
+      >
+        <button
+          type="button"
+          onClick={toggleAvailability}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hd-transition",
+            isOnline
+              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/20"
+              : "bg-slate-500/10 text-slate-500 border border-slate-500/30 hover:bg-slate-500/20"
+          )}
+          title={isOnline ? "Go offline (stop receiving new cases)" : "Go online (resume receiving new cases)"}
+        >
+          <span className={cn("inline-block h-1.5 w-1.5 rounded-full", isOnline ? "bg-emerald-500" : "bg-slate-400")} />
+          <span>{isOnline ? "Online" : "Offline"}</span>
+        </button>
       </div>
     </div>
   );

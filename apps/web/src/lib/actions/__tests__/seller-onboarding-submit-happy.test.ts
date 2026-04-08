@@ -53,55 +53,44 @@ function makeAbility(allowed = true) {
   return { can: vi.fn().mockReturnValue(allowed) };
 }
 
-function mockTx() {
-  return mockTransaction.mockImplementation(async (cb) => {
-    const tx = {
-      insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
-      update: vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
-      }),
-    };
-    await cb(tx as never);
-  });
-}
-
 describe('submitBusinessInfoAction — happy path', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
-  it('creates businessInfo and upgrades sellerType to BUSINESS', async () => {
+  it('creates businessInfo WITHOUT flipping sellerType to BUSINESS', async () => {
     mockAuthorize.mockResolvedValue({
       session: { userId: 'user-test-123', delegationId: null } as never,
       ability: makeAbility() as never,
     });
     mockGetBusinessInfo.mockResolvedValue(null);
     mockGetSellerProfile.mockResolvedValue({ id: 'sp-test-1', userId: 'user-test-123' } as never);
-    mockTx();
     mockInsert.mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) } as never);
 
     const result = await submitBusinessInfoAction(validBizInput);
 
     expect(result).toEqual({ success: true });
-    expect(mockTransaction).toHaveBeenCalled();
+    // sellerType flip is deferred to updateStoreNameAction (final wizard step)
+    expect(mockTransaction).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it('emits BUSINESS_UPGRADED audit event', async () => {
+  it('emits BUSINESS_INFO_SUBMITTED audit event (not BUSINESS_UPGRADED)', async () => {
     mockAuthorize.mockResolvedValue({
       session: { userId: 'user-test-123', delegationId: null } as never,
       ability: makeAbility() as never,
     });
     mockGetBusinessInfo.mockResolvedValue(null);
     mockGetSellerProfile.mockResolvedValue({ id: 'sp-test-1', userId: 'user-test-123' } as never);
-    mockTx();
 
     const mockValues = vi.fn().mockResolvedValue(undefined);
     mockInsert.mockReturnValue({ values: mockValues } as never);
 
     await submitBusinessInfoAction(validBizInput);
 
-    const arg = mockValues.mock.calls[0]![0];
-    expect(arg.action).toBe('BUSINESS_UPGRADED');
-    expect(arg.severity).toBe('MEDIUM');
-    expect(arg.detailsJson).toMatchObject({ businessName: 'Acme LLC', businessType: 'LLC' });
+    // First insert is the businessInfo row, second is the audit event.
+    const auditArg = mockValues.mock.calls[1]![0];
+    expect(auditArg.action).toBe('BUSINESS_INFO_SUBMITTED');
+    expect(auditArg.severity).toBe('LOW');
+    expect(auditArg.detailsJson).toMatchObject({ businessName: 'Acme LLC', businessType: 'LLC' });
   });
 
   it('accepts valid input without optional fields', async () => {
@@ -111,7 +100,6 @@ describe('submitBusinessInfoAction — happy path', () => {
     });
     mockGetBusinessInfo.mockResolvedValue(null);
     mockGetSellerProfile.mockResolvedValue({ id: 'sp-test-1', userId: 'user-test-123' } as never);
-    mockTx();
     mockInsert.mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) } as never);
 
     const result = await submitBusinessInfoAction({
@@ -138,7 +126,6 @@ describe('submitBusinessInfoAction — happy path', () => {
     });
     mockGetBusinessInfo.mockResolvedValue(null);
     mockGetSellerProfile.mockResolvedValue({ id: 'sp-test-1', userId: 'seller-test-456' } as never);
-    mockTx();
     mockInsert.mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) } as never);
 
     await submitBusinessInfoAction(validBizInput);

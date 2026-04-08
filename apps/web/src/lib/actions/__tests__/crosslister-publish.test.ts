@@ -48,9 +48,9 @@ vi.mock('@twicely/crosslister/services/publish-meter', () => ({
   canPublish: vi.fn().mockResolvedValue(true),
   getPublishAllowance: vi.fn().mockResolvedValue({
     tier: 'FREE',
-    monthlyLimit: 25,
+    monthlyLimit: 5, // Decision #105: FREE tier = 5 publishes / 6 months (not 25/month)
     usedThisMonth: 0,
-    remaining: 25,
+    remaining: 5,
     rolloverBalance: 0,
   }),
 }));
@@ -142,7 +142,7 @@ describe('publishListings', () => {
   });
 
   it('returns Unauthorized when no session', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ session: null, ability: { can: vi.fn().mockReturnValue(true) } });
     const { publishListings } = await import('../crosslister-publish');
     const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
@@ -151,7 +151,7 @@ describe('publishListings', () => {
   });
 
   it('returns Forbidden when ability.can returns false', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -163,10 +163,11 @@ describe('publishListings', () => {
   });
 
   it('returns error when insufficient publish credits', async () => {
-    const { canPublish, getPublishAllowance } = await import('@/lib/crosslister/services/publish-meter');
+    const { canPublish, getPublishAllowance } = await import('@twicely/crosslister/services/publish-meter');
     (canPublish as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
     (getPublishAllowance as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      tier: 'FREE', monthlyLimit: 25, usedThisMonth: 25, remaining: 0, rolloverBalance: 0,
+      // Decision #105: FREE tier cap is 5, so exhausted state = usedThisMonth: 5
+      tier: 'FREE', monthlyLimit: 5, usedThisMonth: 5, remaining: 0, rolloverBalance: 0,
     });
     const { publishListings } = await import('../crosslister-publish');
     const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
@@ -175,7 +176,7 @@ describe('publishListings', () => {
   });
 
   it('returns success with queued count on happy path (F3.1: async enqueue)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'user-1', status: 'ACTIVE' }]),
@@ -188,19 +189,19 @@ describe('publishListings', () => {
   });
 
   it('uses onBehalfOfSellerId when delegationId is set', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'staff-user', delegationId: 'del-1', onBehalfOfSellerId: 'seller-2' },
       ability: { can: vi.fn().mockReturnValue(true) },
     });
-    const { canPublish } = await import('@/lib/crosslister/services/publish-meter');
+    const { canPublish } = await import('@twicely/crosslister/services/publish-meter');
     (canPublish as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'seller-2', status: 'ACTIVE' }]),
     });
-    const { publishListingToChannel } = await import('@/lib/crosslister/services/publish-service');
+    const { publishListingToChannel } = await import('@twicely/crosslister/services/publish-service');
     const { publishListings } = await import('../crosslister-publish');
     await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
     // publishListingToChannel should be called with sellerId = 'seller-2'
@@ -208,7 +209,7 @@ describe('publishListings', () => {
   });
 
   it('records failed listings not owned by seller', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'other-user', status: 'ACTIVE' }]),
@@ -221,7 +222,7 @@ describe('publishListings', () => {
   });
 
   it('records failed listings with non-ACTIVE status', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'user-1', status: 'DRAFT' }]),
@@ -240,7 +241,7 @@ describe('delistFromChannel', () => {
   });
 
   it('returns Unauthorized when no session', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ session: null, ability: { can: vi.fn() } });
     const { delistFromChannel } = await import('../crosslister-publish');
     const result = await delistFromChannel({ projectionId: 'proj-1' });
@@ -255,7 +256,7 @@ describe('delistFromChannel', () => {
   });
 
   it('returns Not found when projection does not belong to seller', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -268,7 +269,7 @@ describe('delistFromChannel', () => {
   });
 
   it('creates a DELIST crossJob when delisting (F3.1: enqueue pattern)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let callNum = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockReturnThis(),
@@ -312,7 +313,7 @@ describe('delistFromChannel', () => {
   });
 
   it('returns error when projection status is not ACTIVE', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -342,7 +343,7 @@ describe('updateProjectionOverrides', () => {
   });
 
   it('returns success and sets hasPendingSync=true for ACTIVE projection', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -379,11 +380,11 @@ describe('getPublishAllowanceAction', () => {
     const result = await getPublishAllowanceAction();
     expect(result.success).toBe(true);
     expect(result.data?.tier).toBe('FREE');
-    expect(result.data?.monthlyLimit).toBe(25);
+    expect(result.data?.monthlyLimit).toBe(5); // Decision #105: FREE tier = 5 publishes / 6 months
   });
 
   it('returns Unauthorized when no session', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: null,
       ability: { can: vi.fn() },

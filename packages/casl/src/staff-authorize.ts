@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getStaffSession } from '@twicely/auth/staff-auth';
 import { defineAbilitiesFor } from './ability';
 import { ForbiddenError } from './authorize';
@@ -97,4 +98,24 @@ export async function staffAuthorize(): Promise<{
   };
 
   return { ability, session };
+}
+
+/**
+ * Convenience wrapper around `staffAuthorize` that redirects to the staff
+ * login page if no valid staff session is present, instead of throwing.
+ * Use this in pages and layouts under (helpdesk)/(hub) so a missing or
+ * expired session results in a clean redirect rather than a runtime error.
+ */
+export async function staffAuthorizeOrRedirect(): Promise<{
+  ability: AppAbility;
+  session: StaffCaslSession;
+}> {
+  try {
+    return await staffAuthorize();
+  } catch (err) {
+    if (err instanceof ForbiddenError) {
+      redirect('/login');
+    }
+    throw err;
+  }
 }

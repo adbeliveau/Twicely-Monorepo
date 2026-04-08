@@ -13,7 +13,7 @@ import { eq } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
-import { getClientIp } from '@/lib/utils/get-client-ip';
+import { getClientIp } from '@twicely/utils/get-client-ip';
 import NewsletterWelcomeEmail from '@twicely/email/templates/newsletter-welcome';
 import NewsletterConfirmationEmail from '@twicely/email/templates/newsletter-confirmation';
 

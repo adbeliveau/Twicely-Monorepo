@@ -11,7 +11,7 @@
  */
 
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { featureFlag } from '../schema';
+import { featureFlag } from '@twicely/db/schema';
 import { SEED_IDS } from './seed-system';
 
 interface FlagSeed {

@@ -32,7 +32,7 @@ export async function registerAffiliateSuspensionExpiryJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'affiliate-suspension-expiry',
-      repeat: { pattern: '0 2 * * *' }, // Daily at 2 AM UTC
+      repeat: { pattern: '0 2 * * *', tz: 'UTC' }, // Daily at 2 AM UTC
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     },

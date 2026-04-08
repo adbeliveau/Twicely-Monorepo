@@ -345,19 +345,21 @@ crosslister.rolloverMaxMultiplier: 3
 | Tier | Annual/mo | Monthly | Key Features |
 |------|-----------|---------|-------------|
 | Free | $0 | $0 | 30-day revenue dashboard, Twicely sales only |
-| Pro | $9.99 | $14.99 | Full P&L, cross-platform revenue, expense tracking, receipt scanning, mileage, tax prep, 2yr history |
+| Pro | $11.99 | $14.99 | Full P&L, cross-platform revenue, expense tracking, receipt scanning, mileage, tax prep, 2yr history |
+
+> **Superseded by FC v3.0 §2** — Finance PRO pricing is $11.99 annual / $14.99 monthly. Earlier drafts listed $9.99 annual; that value is retired. Code uses $11.99 via `packages/subscriptions/src/price-map.ts` `FALLBACK_FINANCE_CENTS.PRO = { monthlyCents: 1499, annualMonthlyCents: 1199 }`.
 
 ### 7.2 Rules
 
 - Finance is standalone — does NOT require Store or Crosslister
-- Finance Pro gets 6 months free with Seller Pro or Seller Power bundle
+- Finance Pro gets 6 months free with Seller Pro or Seller Power bundle (per FC v3.0 §2, trial activation wiring is Phase D4 work)
 - If trial-to-paid conversion < 30%, fold Finance into Store tiers instead of standalone (monitor closely)
 
 ### 7.3 Platform Settings Keys
 
 ```
-finance.pricing.pro.annualCents: 999
-finance.pricing.pro.monthlyCents: 1499
+finance.pricing.pro.annualCents: 1199    // $11.99 (FC v3.0 §2 supersedes the earlier $9.99)
+finance.pricing.pro.monthlyCents: 1499   // $14.99
 finance.trialMonths.bundlePromo: 6
 finance.foldThreshold: 30                // conversion % below which Finance gets folded into Store
 ```

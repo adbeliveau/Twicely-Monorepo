@@ -8,7 +8,7 @@
 
 import { db } from '@twicely/db';
 import { platformSetting } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, like } from 'drizzle-orm';
 
 /**
  * Get a single platform setting value by key.
@@ -31,19 +31,22 @@ export async function getPlatformSetting<T>(
 /**
  * Get multiple platform settings by key prefix.
  * Returns a map of key → parsed value.
+ *
+ * NOTE: prefix is always a hardcoded domain namespace (e.g. "commerce."),
+ * never user-controlled input — SQL LIKE wildcard escaping is not required.
  */
 export async function getPlatformSettingsByPrefix(
   prefix: string
 ): Promise<Map<string, unknown>> {
+  if (!prefix) return new Map();
   const rows = await db
     .select({ key: platformSetting.key, value: platformSetting.value })
-    .from(platformSetting);
+    .from(platformSetting)
+    .where(like(platformSetting.key, `${prefix}%`));
 
   const result = new Map<string, unknown>();
   for (const row of rows) {
-    if (row.key.startsWith(prefix)) {
-      result.set(row.key, row.value);
-    }
+    result.set(row.key, row.value);
   }
   return result;
 }

@@ -18,6 +18,7 @@ import { eq, and } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { logger } from '@twicely/logger';
 import { submitChargebackEvidence } from './chargeback-evidence';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 
 // Re-export from split file for existing consumers
 export { submitChargebackEvidence, handleChargebackResolution, getChargebackStatus } from './chargeback-evidence';
@@ -93,7 +94,7 @@ export async function handleChargebackWebhook(
         // Deadline from Stripe dispute
         deadlineAt: stripeDispute.evidence_details?.due_by
           ? new Date(stripeDispute.evidence_details.due_by * 1000)
-          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          : new Date(Date.now() + (await getPlatformSetting<number>('commerce.dispute.chargebackDeadlineDays', 7)) * 24 * 60 * 60 * 1000),
       })
       .returning({ id: dispute.id });
 
@@ -129,6 +130,34 @@ export async function handleChargebackWebhook(
     });
   } else {
     logger.info('[webhook] charge.dispute.created — skipping duplicate CHARGEBACK_DEBIT', { disputeId: stripeDispute.id });
+  }
+
+  // Post CHARGEBACK_FEE — Stripe chargeback fee ($15, Finance Engine §5.5).
+  // Fee is always -1500 cents regardless of disputed amount; read from platform_settings
+  // with fallback of 1500 (key: commerce.chargeback.feeCents).
+  // Idempotency: (stripeDisputeId, type='CHARGEBACK_FEE') is unique via DB partial index
+  // le_uniq_dispute; this guard is the belt-and-suspenders application-layer check.
+  const [existingFee] = await db
+    .select({ id: ledgerEntry.id })
+    .from(ledgerEntry)
+    .where(and(eq(ledgerEntry.stripeDisputeId, stripeDispute.id), eq(ledgerEntry.type, 'CHARGEBACK_FEE')))
+    .limit(1);
+
+  if (!existingFee) {
+    const chargebackFeeCents = await getPlatformSetting<number>('commerce.chargeback.feeCents', 1500);
+    await db.insert(ledgerEntry).values({
+      type: 'CHARGEBACK_FEE',
+      status: 'POSTED',
+      amountCents: -chargebackFeeCents, // Negative: debit from seller (Finance Engine §5.5)
+      userId: ord.sellerId,
+      orderId: ord.id,
+      stripeDisputeId: stripeDispute.id,
+      stripeEventId: eventId ?? null,
+      memo: 'Stripe chargeback dispute fee',
+      postedAt: new Date(),
+    });
+  } else {
+    logger.info('[webhook] charge.dispute.created — skipping duplicate CHARGEBACK_FEE', { disputeId: stripeDispute.id });
   }
 
   // Auto-submit evidence if we have it

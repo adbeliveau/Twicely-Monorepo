@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   serverExternalPackages: ['postgres', 'pino', 'pino-loki', 'pino-pretty', 'telnyx', 'ioredis', 'bullmq'],
   allowedDevOrigins: ['twicely.co', 'twicely.local', 'hub.twicely.co', 'hub.twicely.local'],
-  transpilePackages: ['@puckeditor/core','@twicely/db','@twicely/auth','@twicely/casl','@twicely/commerce','@twicely/crosslister','@twicely/stripe','@twicely/email','@twicely/notifications','@twicely/ui','@twicely/utils','@twicely/logger','@twicely/storage','@twicely/realtime','@twicely/jobs','@twicely/subscriptions','@twicely/scoring','@twicely/finance','@twicely/shipping','@twicely/search','@twicely/config','@twicely/sms','@twicely/geocoding'],
+  transpilePackages: ['@puckeditor/core','@twicely/db','@twicely/auth','@twicely/casl','@twicely/commerce','@twicely/crosslister','@twicely/stripe','@twicely/email','@twicely/notifications','@twicely/ui','@twicely/utils','@twicely/logger','@twicely/storage','@twicely/realtime','@twicely/jobs','@twicely/subscriptions','@twicely/scoring','@twicely/finance','@twicely/search','@twicely/config','@twicely/sms','@twicely/geocoding'],
   images: {
     dangerouslyAllowSVG: false,
     contentDispositionType: 'attachment',

@@ -24,6 +24,7 @@ import { stripe } from '@twicely/stripe/server';
 import { notify } from '@twicely/notifications/service';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
+import { canTransition } from './local-state-machine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ export async function detectSameListingSold(
     conflictingTransactionId: conflict.id,
     conflictingOrderId: conflict.orderId,
     conflictingBuyerId: conflict.buyerId,
+    conflictingStatus: conflict.status,
     completingOrderId,
     stripePaymentIntentId: localPayment.stripePaymentIntentId,
   });
@@ -121,6 +123,7 @@ interface SignalOneConsequenceParams {
   conflictingTransactionId: string;
   conflictingOrderId: string;
   conflictingBuyerId: string;
+  conflictingStatus: string;
   completingOrderId: string;
   stripePaymentIntentId: string;
 }
@@ -134,6 +137,7 @@ async function applySignalOneConsequences(
     conflictingTransactionId,
     conflictingOrderId,
     conflictingBuyerId,
+    conflictingStatus,
     completingOrderId,
     stripePaymentIntentId,
   } = params;
@@ -163,10 +167,20 @@ async function applySignalOneConsequences(
   const fraudFlagId = fraudFlagRow?.id;
 
   // 2. Cancel the local transaction (Decision D: listing stays SOLD — skip unreserve)
-  await db
-    .update(localTransaction)
-    .set({ status: 'CANCELED', canceledByParty: 'SELLER', updatedAt: now })
-    .where(eq(localTransaction.id, conflictingTransactionId));
+  // Guard: validate the state machine allows this transition. If it doesn't
+  // (e.g. transaction was already terminal), skip the update and log — the
+  // flag and refund still proceed so the buyer is made whole.
+  if (!canTransition(conflictingStatus, 'CANCELED')) {
+    logger.warn('[local-fraud] Signal 1: cannot cancel transaction in current status', {
+      conflictingTransactionId,
+      conflictingStatus,
+    });
+  } else {
+    await db
+      .update(localTransaction)
+      .set({ status: 'CANCELED', canceledByParty: 'SELLER', updatedAt: now })
+      .where(eq(localTransaction.id, conflictingTransactionId));
+  }
 
   // 3. Issue Stripe refund for the local buyer's SafeTrade payment
   try {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { getAllRoutingRulesWithTeams } from '@/lib/queries/helpdesk-routing';
 import { RoutingRuleList } from './routing-rule-list';
 import { GitBranch } from 'lucide-react';

@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import type { PerformanceBand } from '@/lib/scoring/score-types';
+import type { PerformanceBand } from '@twicely/scoring/score-types';
 
 interface RewardsSummaryProps {
   currentBand: PerformanceBand;

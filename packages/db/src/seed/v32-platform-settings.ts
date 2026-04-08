@@ -64,6 +64,8 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
 
   // ── ORDER & CHECKOUT ───────────────────────────────────────────────────────
   { key: 'commerce.order.minimumCents', value: 100, type: 'cents', category: 'commerce.order', description: 'Minimum order value in cents ($1.00)' },
+  { key: 'commerce.checkout.rateLimitWindowSec', value: 600, type: 'number', category: 'commerce.checkout', description: 'Checkout rate-limit window in seconds (default 10 min)' },
+  { key: 'commerce.checkout.rateLimitMaxAttempts', value: 5, type: 'number', category: 'commerce.checkout', description: 'Max checkout attempts per user within the window before blocking' },
 
   // ── SUBSCRIPTION ───────────────────────────────────────────────────────────
   { key: 'commerce.subscription.trialDays', value: 14, type: 'number', category: 'commerce.subscription', description: 'Default trial length in days for new subscriptions' },
@@ -127,6 +129,23 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   { key: 'crosslister.rolloverMaxMultiplier', value: 3, type: 'number', category: 'crosslister', description: 'Max rollover as multiplier of monthly allowance' },
   { key: 'crosslister.freeTierMonths', value: 6, type: 'number', category: 'crosslister', description: 'Months a new seller has FREE ListerTier before downgrade to NONE' },
 
+  // ── Image retention (Decision #111) ─────────────────────────────────────
+  { key: 'crosslister.images.variantPurgeAfterDays', value: 120, type: 'number', category: 'crosslister', description: 'Days after sold/ended before non-cover image variants are purged (Decision #111 stage 2)' },
+  { key: 'crosslister.images.fullPurgeAfterDays', value: 730, type: 'number', category: 'crosslister', description: 'Days after sold/ended before all images and the listing record are deleted (Decision #111 stage 3, ~2 years)' },
+  { key: 'crosslister.images.batchSize', value: 200, type: 'number', category: 'crosslister', description: 'Max listings processed per retention pass (per stage)' },
+  { key: 'jobs.cron.listingImageRetention.pattern', value: '30 4 * * *', type: 'string', category: 'crosslister', description: 'Cron pattern for the listing image retention job (default: daily at 04:30 UTC)' },
+
+  // ── Monthly Boost Credit (Seller Score Canonical §5.4) ──────────────────
+  { key: 'score.rewards.powerSellerMonthlyCreditCents', value: 1500, type: 'cents', category: 'score', description: 'Monthly boost credit for POWER_SELLER band ($15.00)' },
+  { key: 'score.rewards.topRatedMonthlyCreditCents', value: 1000, type: 'cents', category: 'score', description: 'Monthly boost credit for TOP_RATED band ($10.00)' },
+  { key: 'score.rewards.batchSize', value: 500, type: 'number', category: 'score', description: 'Max sellers processed per batch in monthly boost credit job' },
+  { key: 'jobs.cron.monthlyBoostCredit.pattern', value: '0 6 1 * *', type: 'string', category: 'score', description: 'Cron pattern for monthly boost credit issuance (default: 06:00 UTC on the 1st of each month)' },
+
+  // ── SOLD listing Typesense purge (Decision #71 — 90-day index window) ───
+  { key: 'search.soldPurge.retentionDays', value: 90, type: 'number', category: 'search', description: 'Days after soldAt before a SOLD listing is purged from the Typesense index (Decision #71)' },
+  { key: 'search.soldPurge.batchSize', value: 500, type: 'number', category: 'search', description: 'Max SOLD listing documents deleted from Typesense per purge pass' },
+  { key: 'jobs.cron.listingSoldPurge.pattern', value: '0 3 * * *', type: 'string', category: 'search', description: 'Cron pattern for the SOLD listing Typesense purge job (default: daily at 03:00 UTC)' },
+
   // ── Polling intervals (Decision Rationale #96) ──────────────────────────
   { key: 'crosslister.polling.hot.intervalMs', value: 90000, type: 'number', category: 'crosslister', description: 'HOT polling interval in ms (90 seconds)' },
   { key: 'crosslister.polling.warm.intervalMs', value: 600000, type: 'number', category: 'crosslister', description: 'WARM polling interval in ms (10 minutes)' },
@@ -146,6 +165,47 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   { key: 'crosslister.polling.doubleSellReleaseDays', value: 7, type: 'number', category: 'crosslister', description: 'Consecutive days below doubleSellReleaseRate before forced HOT is released' },
   { key: 'crosslister.polling.coldDemotionDays', value: 7, type: 'number', category: 'crosslister', description: 'Days since last poll before demoting to COLD tier' },
   { key: 'crosslister.polling.longtailDemotionDays', value: 30, type: 'number', category: 'crosslister', description: 'Days since last poll before demoting to LONGTAIL tier' },
+  { key: 'crosslister.polling.batchSize', value: 100, type: 'number', category: 'crosslister', description: 'Max projections processed per scheduler tick' },
+  { key: 'crosslister.polling.webhookPrimaryChannels', value: '["EBAY","ETSY"]', type: 'string', category: 'crosslister', description: 'JSON array of channels where webhooks are primary signal — HOT/WARM tiers skip polling for these' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CROSSLISTER SCHEDULER (loop tick + batch sizes — Lister Canonical §8.4)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'crosslister.scheduler.tickIntervalMs', value: 5000, type: 'number', category: 'crosslister', description: 'Scheduler dispatch loop tick interval in ms (requires worker restart to take effect)' },
+  { key: 'crosslister.scheduler.batchPullSize', value: 50, type: 'number', category: 'crosslister', description: 'Max PENDING jobs pulled per scheduler tick' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CROSSLISTER QUEUE (BullMQ priorities, attempts, backoff, retention)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'crosslister.queue.priority.poll', value: 700, type: 'number', category: 'crosslister', description: 'BullMQ priority for POLL jobs (lower = higher priority)' },
+  { key: 'crosslister.queue.priority.create', value: 300, type: 'number', category: 'crosslister', description: 'BullMQ priority for CREATE/PUBLISH jobs' },
+  { key: 'crosslister.queue.priority.sync', value: 500, type: 'number', category: 'crosslister', description: 'BullMQ priority for SYNC/UPDATE jobs' },
+  { key: 'crosslister.queue.priority.delist', value: 100, type: 'number', category: 'crosslister', description: 'BullMQ priority for DELIST jobs (highest priority — seller intent)' },
+  { key: 'crosslister.queue.maxAttempts.poll', value: 2, type: 'number', category: 'crosslister', description: 'Max retry attempts for POLL jobs' },
+  { key: 'crosslister.queue.maxAttempts.publish', value: 3, type: 'number', category: 'crosslister', description: 'Max retry attempts for PUBLISH/CREATE jobs' },
+  { key: 'crosslister.queue.maxAttempts.sync', value: 3, type: 'number', category: 'crosslister', description: 'Max retry attempts for SYNC/UPDATE jobs' },
+  { key: 'crosslister.queue.backoffMs.poll', value: 60000, type: 'number', category: 'crosslister', description: 'Initial exponential backoff delay for POLL job retries (ms)' },
+  { key: 'crosslister.queue.backoffMs.publish', value: 30000, type: 'number', category: 'crosslister', description: 'Initial exponential backoff delay for PUBLISH job retries (ms)' },
+  { key: 'crosslister.queue.backoffMs.sync', value: 60000, type: 'number', category: 'crosslister', description: 'Initial exponential backoff delay for SYNC job retries (ms)' },
+  { key: 'crosslister.queue.removeOnCompleteCount', value: 1000, type: 'number', category: 'crosslister', description: 'Number of completed jobs to retain in BullMQ for debugging' },
+  { key: 'crosslister.queue.removeOnFailCount', value: 5000, type: 'number', category: 'crosslister', description: 'Number of failed jobs to retain in BullMQ for admin inspection' },
+  { key: 'crosslister.queue.workerConcurrency', value: 10, type: 'number', category: 'crosslister', description: 'BullMQ worker concurrency for the lister-publish queue (requires worker restart)' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CROSSLISTER AUTOMATION ENGINE (auto-relist, price drop, offer-to-likers, posh share/follow)
+  // Business settings (pricing, daily action limits) live under the automation.* namespace.
+  // These are engine internals — priorities, tick intervals, fire hours, backoff.
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'crosslister.automation.jobPriority', value: 700, type: 'number', category: 'crosslister', description: 'BullMQ priority for automation jobs (lower = higher priority)' },
+  { key: 'crosslister.automation.workerConcurrency', value: 5, type: 'number', category: 'crosslister', description: 'BullMQ worker concurrency for the lister-automation queue (requires worker restart)' },
+  { key: 'crosslister.automation.tickIntervalMs', value: 3600000, type: 'number', category: 'crosslister', description: 'Automation scheduler tick interval (default 1 hour). Determines how often the automation scheduler checks the UTC clock to fire engines.' },
+  { key: 'crosslister.automation.autoRelistHourUTC', value: 3, type: 'number', category: 'crosslister', description: 'UTC hour at which the auto-relist engine fires (0-23)' },
+  { key: 'crosslister.automation.priceDropHourUTC', value: 4, type: 'number', category: 'crosslister', description: 'UTC hour at which the price-drop engine fires (0-23)' },
+  { key: 'crosslister.automation.offerToLikersHourUTC', value: 10, type: 'number', category: 'crosslister', description: 'UTC hour at which the offer-to-likers engine fires (0-23)' },
+  { key: 'crosslister.automation.offerCooldownDays', value: 7, type: 'number', category: 'crosslister', description: 'Cooldown period in days between offer-to-likers sends for the same projection' },
+  { key: 'crosslister.automation.maxAttempts', value: 2, type: 'number', category: 'crosslister', description: 'Max retry attempts for AUTOMATION jobs' },
+  { key: 'crosslister.automation.backoffMs.first', value: 60000, type: 'number', category: 'crosslister', description: 'First retry backoff delay for AUTOMATION jobs (60s)' },
+  { key: 'crosslister.automation.backoffMs.second', value: 300000, type: 'number', category: 'crosslister', description: 'Second retry backoff delay for AUTOMATION jobs (300s)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FINANCE PRICING (Financial Center Canonical v3.0 §2)

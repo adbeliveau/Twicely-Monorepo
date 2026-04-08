@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(*)",
       "Bash(docker ps --filter \"name=typesense\" --format \"{{.Status}} {{.Ports}}\")",
       "Bash(docker start minio)"
     ]

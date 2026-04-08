@@ -4,16 +4,18 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@twicely/utils';
 import { ImagePlus } from 'lucide-react';
 import type { UploadedImage } from '@/types/upload';
-import { MAX_IMAGES, MAX_FILE_SIZE, ALLOWED_TYPES } from '@/lib/upload/validate';
+import { FALLBACK_MAX_IMAGES, MAX_FILE_SIZE, ALLOWED_TYPES } from '@/lib/upload/validate';
 import { ImageUploaderPreview } from './image-uploader-preview';
 
 interface ImageUploaderProps {
   images: UploadedImage[];
   onChange: (images: UploadedImage[]) => void;
   disabled?: boolean;
+  /** Server-read platform_settings value for listing.maxImagesPerListing. Defaults to FALLBACK_MAX_IMAGES. */
+  maxImages?: number;
 }
 
-export function ImageUploader({ images, onChange, disabled }: ImageUploaderProps) {
+export function ImageUploader({ images, onChange, disabled, maxImages = FALLBACK_MAX_IMAGES }: ImageUploaderProps) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [uploading, setUploading] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,14 +26,14 @@ export function ImageUploader({ images, onChange, disabled }: ImageUploaderProps
     imagesRef.current = images;
   }, [images]);
 
-  const canAddMore = images.length < MAX_IMAGES;
+  const canAddMore = images.length < maxImages;
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
       if (disabled) return;
 
       const fileArray = Array.from(files);
-      const remainingSlots = MAX_IMAGES - imagesRef.current.length;
+      const remainingSlots = maxImages - imagesRef.current.length;
       const filesToUpload = fileArray.slice(0, remainingSlots);
 
       for (const file of filesToUpload) {
@@ -206,7 +208,7 @@ export function ImageUploader({ images, onChange, disabled }: ImageUploaderProps
           {canAddMore ? 'Drop images here or click to upload' : 'Maximum images reached'}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          JPEG, PNG, or WebP up to 20MB ({images.length}/{MAX_IMAGES})
+          JPEG, PNG, or WebP up to 20MB ({images.length}/{maxImages})
         </p>
       </div>
 

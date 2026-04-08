@@ -22,7 +22,7 @@ export interface CronHandlers {
 
 const QUEUE_NAME = 'platform-cron';
 
-type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc';
+type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc' | 'listing-image-retention' | 'listing-sold-purge';
 
 interface CronJobData {
   task: CronTask;
@@ -41,6 +41,8 @@ export async function registerCronJobs(): Promise<void> {
     healthPattern,
     vacationPattern,
     sellerScorePattern,
+    imageRetentionPattern,
+    soldPurgePattern,
   ] = await Promise.all([
     getPlatformSetting('jobs.cron.orders.pattern', '0 * * * *'),
     getPlatformSetting('jobs.cron.returns.pattern', '10 * * * *'),
@@ -48,51 +50,67 @@ export async function registerCronJobs(): Promise<void> {
     getPlatformSetting('jobs.cron.health.pattern', '*/5 * * * *'),
     getPlatformSetting('jobs.cron.vacation.pattern', '0 0 * * *'),
     getPlatformSetting('jobs.cron.sellerScoreRecalc.pattern', '0 3 * * *'),
+    getPlatformSetting('jobs.cron.listingImageRetention.pattern', '30 4 * * *'),
+    getPlatformSetting('jobs.cron.listingSoldPurge.pattern', '0 3 * * *'),
   ]);
 
   // Orders: auto-complete after escrow hold
   await cronQueue.add(
     'cron:orders',
     { task: 'orders', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-orders', repeat: { pattern: ordersPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-orders', repeat: { pattern: ordersPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Returns: auto-approve overdue
   await cronQueue.add(
     'cron:returns',
     { task: 'returns', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-returns', repeat: { pattern: returnsPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-returns', repeat: { pattern: returnsPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Shipping: scan for exceptions
   await cronQueue.add(
     'cron:shipping',
     { task: 'shipping', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-shipping', repeat: { pattern: shippingPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-shipping', repeat: { pattern: shippingPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Health: doctor checks
   await cronQueue.add(
     'cron:health',
     { task: 'health', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-health', repeat: { pattern: healthPattern }, removeOnComplete: true, removeOnFail: { count: 50 } },
+    { jobId: 'cron-health', repeat: { pattern: healthPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
   );
 
   // Vacation: auto-end expired vacation modes
   await cronQueue.add(
     'cron:vacation',
     { task: 'vacation', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-vacation', repeat: { pattern: vacationPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-vacation', repeat: { pattern: vacationPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
   // Seller score recalculation
   await cronQueue.add(
     'cron:seller-score-recalc',
     { task: 'seller-score-recalc', triggeredAt: new Date().toISOString() },
-    { jobId: 'cron-seller-score-recalc', repeat: { pattern: sellerScorePattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+    { jobId: 'cron-seller-score-recalc', repeat: { pattern: sellerScorePattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
-  logger.info('[cronJobs] Registered 6 platform cron jobs');
+  // Listing image retention — Decision #111
+  await cronQueue.add(
+    'cron:listing-image-retention',
+    { task: 'listing-image-retention', triggeredAt: new Date().toISOString() },
+    { jobId: 'cron-listing-image-retention', repeat: { pattern: imageRetentionPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
+  );
+
+  // SOLD listing Typesense purge — Decision #71 (90-day index window)
+  await cronQueue.add(
+    'cron:listing-sold-purge',
+    { task: 'listing-sold-purge', triggeredAt: new Date().toISOString() },
+    { jobId: 'cron-listing-sold-purge', repeat: { pattern: soldPurgePattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 100 } },
+  );
+
+  logger.info('[cronJobs] Registered 8 platform cron jobs');
 
   // Tax document generation — separate queue, January 15 annually
   const { registerTaxDocumentGenerationJob } = await import('./tax-document-generation');
@@ -114,6 +132,32 @@ export async function registerCronJobs(): Promise<void> {
   const { enqueueHelpdeskRetentionPurge } = await import('./helpdesk-retention-purge');
   await enqueueHelpdeskRetentionPurge();
   logger.info('[cronJobs] Registered helpdesk retention purge cron job');
+
+  // Helpdesk auto-close — every 15 min (Helpdesk Canonical §17)
+  const { enqueueHelpdeskAutoClose } = await import('./helpdesk-auto-close');
+  await enqueueHelpdeskAutoClose();
+  logger.info('[cronJobs] Registered helpdesk auto-close cron job');
+
+  // Helpdesk SLA check — every 5 min (Helpdesk Canonical §12.4)
+  const { enqueueHelpdeskSlaCheck } = await import('./helpdesk-sla-check');
+  await enqueueHelpdeskSlaCheck();
+  logger.info('[cronJobs] Registered helpdesk SLA check cron job');
+
+  // Helpdesk CSAT send — every 5 min (Helpdesk Canonical §18)
+  const { enqueueHelpdeskCsatSend } = await import('./helpdesk-csat-send');
+  await enqueueHelpdeskCsatSend();
+  logger.info('[cronJobs] Registered helpdesk CSAT send cron job');
+
+  // Monthly boost credit issuance — 1st of each month at 06:00 UTC (Seller Score Canonical §5.4)
+  const { registerMonthlyBoostCreditJob } = await import('./monthly-boost-credit');
+  await registerMonthlyBoostCreditJob();
+  logger.info('[cronJobs] Registered monthly boost credit job');
+
+  // Crosslister auth health check — hourly at :15, detects expired OAuth tokens
+  // and stale session cookies, flips status to REAUTHENTICATION_REQUIRED, notifies user.
+  const { registerCrosslisterAuthHealthJob } = await import('./crosslister-auth-health-check');
+  await registerCrosslisterAuthHealthJob();
+  logger.info('[cronJobs] Registered crosslister auth health check job');
 
   // Buyer quality tier recalc REMOVED — Decision #142.
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
@@ -163,6 +207,18 @@ export function createCronWorker(handlers: CronHandlers) {
         logger.info('[cronJobs] seller-score-recalc complete');
         break;
       }
+      case 'listing-image-retention': {
+        const { runListingImageRetention } = await import('@twicely/jobs/listing-image-retention');
+        const result = await runListingImageRetention();
+        logger.info('[cronJobs] listing-image-retention complete', result);
+        break;
+      }
+      case 'listing-sold-purge': {
+        const { runListingSoldPurge } = await import('@twicely/jobs/listing-sold-purge');
+        const result = await runListingSoldPurge();
+        logger.info('[cronJobs] listing-sold-purge complete', result);
+        break;
+      }
     }
   }
 
@@ -172,3 +228,21 @@ export function createCronWorker(handlers: CronHandlers) {
     1,
   );
 }
+
+// ─── Auto-instantiated worker ────────────────────────────────────────────────
+// Default handlers use dynamic imports of @twicely/commerce to avoid a
+// compile-time circular dep (commerce → jobs → commerce). Importing this
+// module side-effects the worker into existence.
+
+const defaultHandlers: CronHandlers = {
+  autoCompleteDeliveredOrders: async () =>
+    (await import('@twicely/commerce/shipping')).autoCompleteDeliveredOrders(),
+  autoApproveOverdueReturns: async () =>
+    (await import('@twicely/commerce/returns')).autoApproveOverdueReturns(),
+  scanForShippingExceptions: async () =>
+    (await import('@twicely/commerce/shipping-exceptions')).scanForShippingExceptions(),
+  processVacationAutoEnd: async () =>
+    (await import('@twicely/commerce/vacation-cron')).processVacationAutoEnd(),
+};
+
+export const cronWorker = createCronWorker(defaultHandlers);

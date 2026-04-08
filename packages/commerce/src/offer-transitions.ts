@@ -25,8 +25,9 @@ export async function declineOffer(offerId: string, sellerId: string): Promise<O
 
   const [updated] = await db.update(listingOffer)
     .set({ status: 'DECLINED', respondedAt: new Date(), updatedAt: new Date() })
-    .where(eq(listingOffer.id, offerId)).returning();
+    .where(and(eq(listingOffer.id, offerId), eq(listingOffer.status, 'PENDING'))).returning();
 
+  if (!updated) return { success: false, error: 'Offer was already processed' };
   return { success: true, offer: updated };
 }
 
@@ -38,6 +39,9 @@ export async function counterOffer(
   message?: string,
   paymentMethodId?: string
 ): Promise<OfferResult> {
+  const counterEnabled = await getPlatformSetting<boolean>('commerce.offer.counterOfferEnabled', true);
+  if (!counterEnabled) return { success: false, error: 'Counter-offers are currently disabled' };
+
   const offer = await getOfferById(offerId);
   if (!offer) return { success: false, error: 'Offer not found' };
   if (offer.status !== 'PENDING') return { success: false, error: 'Offer is no longer pending' };
@@ -125,8 +129,9 @@ export async function cancelOffer(offerId: string, buyerId: string): Promise<Off
   }
 
   const [updated] = await db.update(listingOffer).set({ status: 'CANCELED', updatedAt: new Date() })
-    .where(eq(listingOffer.id, offerId)).returning();
+    .where(and(eq(listingOffer.id, offerId), eq(listingOffer.status, 'PENDING'))).returning();
 
+  if (!updated) return { success: false, error: 'Offer was already processed' };
   return { success: true, offer: updated };
 }
 
@@ -141,8 +146,9 @@ export async function expireOffer(offerId: string): Promise<OfferResult> {
   }
 
   const [updated] = await db.update(listingOffer).set({ status: 'EXPIRED', updatedAt: new Date() })
-    .where(eq(listingOffer.id, offerId)).returning();
+    .where(and(eq(listingOffer.id, offerId), eq(listingOffer.status, 'PENDING'))).returning();
 
+  if (!updated) return { success: true }; // Idempotent — already processed
   return { success: true, offer: updated };
 }
 

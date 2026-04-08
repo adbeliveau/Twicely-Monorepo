@@ -355,7 +355,7 @@ describe('createAttributeSchema', () => {
 
   it('returns access denied for non-admin', async () => {
     mockStaffAuthorize.mockResolvedValue(makeModSession());
-    const { createAttributeSchema } = await import('../admin-categories');
+    const { createAttributeSchema } = await import('../admin-categories-attrs');
     const result = await createAttributeSchema(validAttr);
     expect(result.success).toBe(false);
     expect(result.error).toContain('Access denied');
@@ -364,7 +364,7 @@ describe('createAttributeSchema', () => {
   it('creates attribute schema with all fields mapped explicitly', async () => {
     mockStaffAuthorize.mockResolvedValue(makeAdminSession());
     mockInsert.mockReturnValue(makeInsertChain([{ id: SCHEMA_ID }]));
-    const { createAttributeSchema } = await import('../admin-categories');
+    const { createAttributeSchema } = await import('../admin-categories-attrs');
     const result = await createAttributeSchema(validAttr);
     expect(result.success).toBe(true);
     expect(result.data?.id).toBe(SCHEMA_ID);
@@ -376,7 +376,7 @@ describe('createAttributeSchema', () => {
 
   it('rejects invalid fieldType value', async () => {
     mockStaffAuthorize.mockResolvedValue(makeAdminSession());
-    const { createAttributeSchema } = await import('../admin-categories');
+    const { createAttributeSchema } = await import('../admin-categories-attrs');
     const result = await createAttributeSchema({ ...validAttr, fieldType: 'invalid' });
     expect(result.success).toBe(false);
   });
@@ -391,7 +391,7 @@ describe('updateAttributeSchema', () => {
     mockStaffAuthorize.mockResolvedValue(makeAdminSession());
     const updateChain = makeUpdateChain();
     mockUpdate.mockReturnValue(updateChain);
-    const { updateAttributeSchema } = await import('../admin-categories');
+    const { updateAttributeSchema } = await import('../admin-categories-attrs');
     const result = await updateAttributeSchema({ id: SCHEMA_ID, label: 'Updated Label' });
     expect(result.success).toBe(true);
     expect(updateChain.set).toHaveBeenCalledWith(
@@ -413,7 +413,7 @@ describe('deleteAttributeSchema', () => {
     mockSelect.mockReturnValue(makeSelectChain([{ id: SCHEMA_ID }]));
     const deleteChain = makeDeleteChain();
     mockDelete.mockReturnValue(deleteChain);
-    const { deleteAttributeSchema } = await import('../admin-categories');
+    const { deleteAttributeSchema } = await import('../admin-categories-attrs');
     const result = await deleteAttributeSchema(SCHEMA_ID);
     expect(result.success).toBe(true);
     expect(mockDelete).toHaveBeenCalled();
@@ -422,7 +422,7 @@ describe('deleteAttributeSchema', () => {
   it('returns not found for nonexistent schema', async () => {
     mockStaffAuthorize.mockResolvedValue(makeAdminSession());
     mockSelect.mockReturnValue(makeSelectChain([]));
-    const { deleteAttributeSchema } = await import('../admin-categories');
+    const { deleteAttributeSchema } = await import('../admin-categories-attrs');
     const result = await deleteAttributeSchema(SCHEMA_ID);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Not found.');
