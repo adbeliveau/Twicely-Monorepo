@@ -15,6 +15,8 @@ import { db } from '@twicely/db';
 import { helpdeskCase, helpdeskSlaPolicy, caseEvent, helpdeskTeam } from '@twicely/db/schema';
 import { eq, and, isNotNull, inArray } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
+import { notify } from '@twicely/notifications/service';
 
 const QUEUE_NAME = 'helpdesk-sla-check';
 
@@ -36,6 +38,10 @@ const queue = createQueue<HelpdeskSlaCheckData>(QUEUE_NAME, {
 createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
   const now = new Date();
   const nowMs = now.getTime();
+  const [slaWarningThreshold, slaBatchSize] = await Promise.all([
+    getPlatformSetting<number>('helpdesk.sla.warningThreshold', 0.75),
+    getPlatformSetting<number>('helpdesk.slaCheck.batchSize', 500),
+  ]);
 
   const activeCases = await db
     .select({
@@ -46,6 +52,10 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
       slaFirstResponseBreached: helpdeskCase.slaFirstResponseBreached,
       slaResolutionBreached: helpdeskCase.slaResolutionBreached,
       createdAt: helpdeskCase.createdAt,
+      assignedAgentId: helpdeskCase.assignedAgentId,
+      caseNumber: helpdeskCase.caseNumber,
+      subject: helpdeskCase.subject,
+      requesterId: helpdeskCase.requesterId,
     })
     .from(helpdeskCase)
     .where(
@@ -54,7 +64,7 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
         isNotNull(helpdeskCase.slaResolutionDueAt)
       )
     )
-    .limit(500);
+    .limit(slaBatchSize);
 
   const slaPolicies = await db
     .select({ priority: helpdeskSlaPolicy.priority, escalateOnBreach: helpdeskSlaPolicy.escalateOnBreach })
@@ -100,7 +110,22 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
         dataJson: { priority: c.priority, breachedAt: now.toISOString() },
       });
 
-    } else if (!c.slaResolutionBreached && elapsedRatio >= 0.75) {
+      if (c.assignedAgentId) {
+        void notify(c.assignedAgentId, 'helpdesk.agent.sla_breach', {
+          caseNumber: c.caseNumber,
+          subject: c.subject,
+        });
+      }
+
+      // Notify user if case was escalated
+      if (policy?.escalateOnBreach && escalationTeamId) {
+        void notify(c.requesterId, 'helpdesk.case.escalated_user', {
+          caseNumber: c.caseNumber,
+          subject: c.subject,
+        });
+      }
+
+    } else if (!c.slaResolutionBreached && elapsedRatio >= slaWarningThreshold) {
       // 75% warning — insert event only once
       await db.insert(caseEvent).values({
         caseId: c.id,
@@ -111,6 +136,20 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
       }).catch(() => {
         // Ignore duplicate insertions from concurrent runs
       });
+
+      const remainingMs = resolutionDue - nowMs;
+      const remainingMins = Math.max(1, Math.round(remainingMs / 60_000));
+      const timeRemaining = remainingMins >= 60
+        ? `${Math.round(remainingMins / 60)}h`
+        : `${remainingMins}m`;
+
+      if (c.assignedAgentId) {
+        void notify(c.assignedAgentId, 'helpdesk.agent.sla_warning', {
+          caseNumber: c.caseNumber,
+          subject: c.subject,
+          timeRemaining,
+        });
+      }
     }
   }
 
@@ -118,5 +157,10 @@ createWorker<HelpdeskSlaCheckData>(QUEUE_NAME, async (_job) => {
 }, 1);
 
 export async function enqueueHelpdeskSlaCheck(): Promise<void> {
-  await queue.add('sla-check', { triggeredAt: new Date().toISOString() });
+  const cronPattern = await getPlatformSetting<string>('helpdesk.cron.slaCheck.pattern', '*/5 * * * *');
+  await queue.add(
+    'sla-check',
+    { triggeredAt: new Date().toISOString() },
+    { jobId: 'helpdesk-sla-check', repeat: { pattern: cronPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+  );
 }

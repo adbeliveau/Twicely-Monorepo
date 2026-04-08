@@ -40,7 +40,7 @@ export async function registerTaxDocumentGenerationJob(): Promise<void> {
     },
     {
       jobId: 'tax-1099-annual',
-      repeat: { pattern: '0 0 15 1 *' }, // January 15, midnight UTC
+      repeat: { pattern: '0 0 15 1 *', tz: 'UTC' }, // January 15, midnight UTC
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     }

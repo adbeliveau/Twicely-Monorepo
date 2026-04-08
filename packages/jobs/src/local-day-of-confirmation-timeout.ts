@@ -18,10 +18,24 @@ import { logger } from '@twicely/logger';
 
 // ─── Callback Type (DI to avoid circular dep on @twicely/commerce) ───────────
 
+// Mirror the type from @twicely/commerce/local-reliability so we keep parity
+// without a compile-time import (which would create a cycle: commerce → jobs).
+export type LocalReliabilityEventType =
+  | 'BUYER_CANCEL_GRACEFUL'
+  | 'BUYER_CANCEL_LATE'
+  | 'BUYER_CANCEL_SAMEDAY'
+  | 'BUYER_NOSHOW'
+  | 'SELLER_CANCEL_GRACEFUL'
+  | 'SELLER_CANCEL_LATE'
+  | 'SELLER_CANCEL_SAMEDAY'
+  | 'SELLER_NOSHOW'
+  | 'SELLER_DARK'
+  | 'RESCHEDULE_EXCESS';
+
 export type ReliabilityMarkPoster = (params: {
   userId: string;
   transactionId: string;
-  eventType: string;
+  eventType: LocalReliabilityEventType;
   marksApplied: number;
 }) => Promise<void>;
 
@@ -179,3 +193,11 @@ export function createDayOfConfirmationTimeoutWorker(
     1,
   );
 }
+
+// ─── Auto-instantiated worker ────────────────────────────────────────────────
+// Lazy-initialized after commerce module loads to avoid circular dep.
+
+void (async () => {
+  const { postReliabilityMark } = await import('@twicely/commerce/local-reliability');
+  createDayOfConfirmationTimeoutWorker(postReliabilityMark);
+})();

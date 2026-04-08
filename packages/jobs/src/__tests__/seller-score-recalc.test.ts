@@ -64,6 +64,20 @@ vi.mock('@twicely/notifications/service', () => ({
   notify: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@twicely/search/typesense-client', () => ({
+  getTypesenseClient: vi.fn().mockReturnValue({
+    collections: vi.fn().mockReturnValue({
+      documents: vi.fn().mockReturnValue({
+        import: vi.fn().mockResolvedValue(undefined),
+      }),
+    }),
+  }),
+}));
+
+vi.mock('@twicely/search/typesense-schema', () => ({
+  LISTINGS_COLLECTION: 'listings',
+}));
+
 vi.mock('../seller-score-recalc-helpers', async () => {
   const actual = await vi.importActual('../seller-score-recalc-helpers');
   return {
@@ -120,7 +134,7 @@ describe('seller-score-recalc', () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(
       'seller-score-recalc-daily',
       expect.any(Object),
-      expect.objectContaining({ repeat: { pattern: '0 3 * * *' } }),
+      expect.objectContaining({ repeat: { pattern: '0 3 * * *', tz: 'UTC' } }),
     );
   });
 

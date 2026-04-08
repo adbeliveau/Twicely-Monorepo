@@ -49,32 +49,32 @@ export async function register(): Promise<void> {
     const { initListerWorker } = await import('@twicely/crosslister/queue/worker-init');
     await initListerWorker();
 
-    const { registerAffiliatePayoutJob } = await import('@/lib/jobs/affiliate-payout-cron');
+    const { registerAffiliatePayoutJob } = await import('@twicely/jobs/affiliate-payout-cron');
     await registerAffiliatePayoutJob();
 
-    const { registerAffiliateFraudScanJob } = await import('@/lib/jobs/affiliate-fraud-scan');
+    const { registerAffiliateFraudScanJob } = await import('@twicely/jobs/affiliate-fraud-scan');
     await registerAffiliateFraudScanJob();
 
     // Start offer expiry worker — processes delayed offer expiration jobs
-    await import('@/lib/jobs/offer-expiry');
+    await import('@twicely/jobs/offer-expiry');
 
     // In development, drain stale delayed jobs from local-transaction queues.
     // These accumulate in Valkey across dev server restarts and trigger
     // "transaction not found" warnings when workers process orphaned jobs.
     if (process.env.NODE_ENV !== 'production') {
-      const { drainLocalTransactionQueues } = await import('@/lib/jobs/drain-dev-queues');
+      const { drainLocalTransactionQueues } = await import('@twicely/jobs/drain-dev-queues');
       await drainLocalTransactionQueues();
     }
 
     // Start local-transaction workers — QR escrow, safety, meetup, scheduling
-    await import('@/lib/jobs/local-auto-cancel');
-    await import('@/lib/jobs/local-escrow-release');
-    await import('@/lib/jobs/local-noshow-check');
-    await import('@/lib/jobs/local-safety-timer');
-    await import('@/lib/jobs/local-meetup-reminder');
-    await import('@/lib/jobs/local-fraud-noshow-relist');
-    await import('@/lib/jobs/local-schedule-nudge');
-    await import('@/lib/jobs/local-day-of-confirmation-timeout');
+    await import('@twicely/jobs/local-auto-cancel');
+    await import('@twicely/jobs/local-escrow-release');
+    await import('@twicely/jobs/local-noshow-check');
+    await import('@twicely/jobs/local-safety-timer');
+    await import('@twicely/jobs/local-meetup-reminder');
+    await import('@twicely/jobs/local-fraud-noshow-relist');
+    await import('@twicely/jobs/local-schedule-nudge');
+    await import('@twicely/jobs/local-day-of-confirmation-timeout');
 
     // Install centralized SIGTERM/SIGINT handlers AFTER all workers are created.
     // Each createWorker() call auto-registers its worker; worker-init.ts registers

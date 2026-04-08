@@ -27,7 +27,7 @@ export async function registerExpireFreeListerJob(): Promise<void> {
     { triggeredAt: new Date().toISOString() },
     {
       jobId: 'expire-free-lister-tier',
-      repeat: { pattern: '0 2 * * *' },
+      repeat: { pattern: '0 2 * * *', tz: 'UTC' },
       removeOnComplete: true,
       removeOnFail: { count: 100 },
     }

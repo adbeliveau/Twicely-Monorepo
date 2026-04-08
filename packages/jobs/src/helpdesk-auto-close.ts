@@ -14,6 +14,7 @@ import { helpdeskCase, caseEvent } from '@twicely/db/schema';
 import { eq, and, lt, inArray } from 'drizzle-orm';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
+import { notify } from '@twicely/notifications/service';
 
 const QUEUE_NAME = 'helpdesk-auto-close';
 
@@ -31,9 +32,10 @@ const queue = createQueue<HelpdeskAutoCloseData>(QUEUE_NAME, {
 });
 
 createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
-  const [pendingDays, resolvedDays] = await Promise.all([
+  const [pendingDays, resolvedDays, batchSize] = await Promise.all([
     getPlatformSetting<number>('helpdesk.autoClose.pendingUserDays', 14),
     getPlatformSetting<number>('helpdesk.autoClose.resolvedDays', 7),
+    getPlatformSetting<number>('helpdesk.autoClose.batchSize', 100),
   ]);
 
   const now = new Date();
@@ -42,7 +44,7 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
 
   // Auto-close stale PENDING_USER cases
   const stalePending = await db
-    .select({ id: helpdeskCase.id })
+    .select({ id: helpdeskCase.id, requesterId: helpdeskCase.requesterId, caseNumber: helpdeskCase.caseNumber })
     .from(helpdeskCase)
     .where(
       and(
@@ -50,7 +52,7 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
         lt(helpdeskCase.lastActivityAt, pendingCutoff)
       )
     )
-    .limit(100);
+    .limit(batchSize);
 
   if (stalePending.length > 0) {
     const ids = stalePending.map((c) => c.id);
@@ -68,12 +70,19 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
       }))
     );
 
+    for (const c of stalePending) {
+      void notify(c.requesterId, 'helpdesk.case.closed', {
+        caseNumber: c.caseNumber,
+        contactUrl: '/h/contact',
+      });
+    }
+
     logger.info('Auto-closed stale PENDING_USER cases', { count: ids.length });
   }
 
   // Auto-close stale RESOLVED cases
   const staleResolved = await db
-    .select({ id: helpdeskCase.id })
+    .select({ id: helpdeskCase.id, requesterId: helpdeskCase.requesterId, caseNumber: helpdeskCase.caseNumber })
     .from(helpdeskCase)
     .where(
       and(
@@ -81,7 +90,7 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
         lt(helpdeskCase.lastActivityAt, resolvedCutoff)
       )
     )
-    .limit(100);
+    .limit(batchSize);
 
   if (staleResolved.length > 0) {
     const ids = staleResolved.map((c) => c.id);
@@ -99,10 +108,22 @@ createWorker<HelpdeskAutoCloseData>(QUEUE_NAME, async (_job) => {
       }))
     );
 
+    for (const c of staleResolved) {
+      void notify(c.requesterId, 'helpdesk.case.closed', {
+        caseNumber: c.caseNumber,
+        contactUrl: '/h/contact',
+      });
+    }
+
     logger.info('Auto-closed stale RESOLVED cases', { count: ids.length });
   }
 }, 1);
 
 export async function enqueueHelpdeskAutoClose(): Promise<void> {
-  await queue.add('auto-close', { triggeredAt: new Date().toISOString() });
+  const cronPattern = await getPlatformSetting<string>('helpdesk.cron.autoClose.pattern', '*/15 * * * *');
+  await queue.add(
+    'auto-close',
+    { triggeredAt: new Date().toISOString() },
+    { jobId: 'helpdesk-auto-close', repeat: { pattern: cronPattern, tz: 'UTC' }, removeOnComplete: true, removeOnFail: { count: 50 } },
+  );
 }

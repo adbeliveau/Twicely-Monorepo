@@ -19,12 +19,26 @@ import { logger } from '@twicely/logger';
 
 // ─── Callback Types (DI to avoid circular dep on @twicely/commerce) ──────────
 
+// Mirror the type from @twicely/commerce/local-reliability so we keep parity
+// without a compile-time import (which would create a cycle: commerce → jobs).
+export type LocalReliabilityEventType =
+  | 'BUYER_CANCEL_GRACEFUL'
+  | 'BUYER_CANCEL_LATE'
+  | 'BUYER_CANCEL_SAMEDAY'
+  | 'BUYER_NOSHOW'
+  | 'SELLER_CANCEL_GRACEFUL'
+  | 'SELLER_CANCEL_LATE'
+  | 'SELLER_CANCEL_SAMEDAY'
+  | 'SELLER_NOSHOW'
+  | 'SELLER_DARK'
+  | 'RESCHEDULE_EXCESS';
+
 export interface LocalNoShowHandlers {
   canTransition: (from: string, to: string) => boolean;
   postReliabilityMark: (params: {
     userId: string;
     transactionId: string;
-    eventType: string;
+    eventType: LocalReliabilityEventType;
     marksApplied: number;
   }) => Promise<void>;
   unreserveListingForLocalTransaction: (orderId: string) => Promise<void>;
@@ -194,3 +208,22 @@ export function createLocalNoShowCheckWorker(handlers: LocalNoShowHandlers) {
     1,
   );
 }
+
+// ─── Auto-instantiated worker ────────────────────────────────────────────────
+// Initializes the worker AFTER dynamically loading commerce, breaking the
+// compile-time circular dep (commerce/local-cancel imports our queue but
+// doesn't yet have local-state-machine in its module load). Workers come up
+// a few hundred ms after module load — pending jobs simply wait.
+
+void (async () => {
+  const [sm, rel, res] = await Promise.all([
+    import('@twicely/commerce/local-state-machine'),
+    import('@twicely/commerce/local-reliability'),
+    import('@twicely/commerce/local-reserve'),
+  ]);
+  createLocalNoShowCheckWorker({
+    canTransition: sm.canTransition,
+    postReliabilityMark: rel.postReliabilityMark,
+    unreserveListingForLocalTransaction: res.unreserveListingForLocalTransaction,
+  });
+})();

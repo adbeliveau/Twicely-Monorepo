@@ -19,7 +19,7 @@ vi.mock('@twicely/db', () => ({
 vi.mock('@twicely/db/schema', () => ({
   helpdeskCase: {
     id: 'id', status: 'status', requesterId: 'requester_id',
-    resolvedAt: 'resolved_at',
+    resolvedAt: 'resolved_at', caseNumber: 'case_number',
   },
   caseCsat: {
     id: 'id', caseId: 'case_id', userId: 'user_id',
@@ -34,6 +34,10 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
 
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+}));
+
+vi.mock('@twicely/notifications/service', () => ({
+  notify: vi.fn(),
 }));
 
 import { enqueueHelpdeskCsatSend } from '../helpdesk-csat-send';
@@ -60,7 +64,8 @@ describe('enqueueHelpdeskCsatSend', () => {
     await enqueueHelpdeskCsatSend();
     expect(mockQueueAdd).toHaveBeenCalledWith(
       'csat-send',
-      expect.objectContaining({ triggeredAt: expect.any(String) })
+      expect.objectContaining({ triggeredAt: expect.any(String) }),
+      expect.objectContaining({ jobId: 'helpdesk-csat-send', removeOnComplete: true }),
     );
   });
 

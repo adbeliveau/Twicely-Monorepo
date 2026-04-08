@@ -604,6 +604,9 @@ importers:
       '@paralleldrive/cuid2':
         specifier: ^3.3.0
         version: 3.3.0
+      '@twicely/commerce':
+        specifier: workspace:*
+        version: link:../commerce
       '@twicely/db':
         specifier: workspace:*
         version: link:../db
@@ -616,9 +619,15 @@ importers:
       '@twicely/scoring':
         specifier: workspace:*
         version: link:../scoring
+      '@twicely/search':
+        specifier: workspace:*
+        version: link:../search
       '@twicely/storage':
         specifier: workspace:*
         version: link:../storage
+      '@twicely/stripe':
+        specifier: workspace:*
+        version: link:../stripe
       '@twicely/utils':
         specifier: workspace:*
         version: link:../utils

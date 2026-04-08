@@ -83,10 +83,10 @@ describe('runDataPurge', () => {
     const { runDataPurge } = await import('../cleanup-data-purge');
     await runDataPurge();
 
-    expect(getPlatformSetting).toHaveBeenCalledWith('retention.searchLogDays', 90);
-    expect(getPlatformSetting).toHaveBeenCalledWith('retention.webhookLogDays', 90);
-    expect(getPlatformSetting).toHaveBeenCalledWith('retention.analyticsEventDays', 365);
-    expect(getPlatformSetting).toHaveBeenCalledWith('retention.notificationLogDays', 180);
+    expect(getPlatformSetting).toHaveBeenCalledWith('privacy.retention.searchLogDays', 90);
+    expect(getPlatformSetting).toHaveBeenCalledWith('privacy.retention.webhookLogDays', 90);
+    expect(getPlatformSetting).toHaveBeenCalledWith('privacy.retention.analyticsEventDays', 365);
+    expect(getPlatformSetting).toHaveBeenCalledWith('privacy.retention.notificationLogDays', 180);
   });
 
   it('gracefully skips tables that do not exist', async () => {

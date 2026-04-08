@@ -93,3 +93,11 @@ export function createLocalFraudNoshowRelistWorker(
     1,
   );
 }
+
+// ─── Auto-instantiated worker ────────────────────────────────────────────────
+// Lazy-initialized after commerce module loads to avoid circular dep.
+
+void (async () => {
+  const { checkNoshowRelist } = await import('@twicely/commerce/local-fraud-detection');
+  createLocalFraudNoshowRelistWorker(checkNoshowRelist);
+})();

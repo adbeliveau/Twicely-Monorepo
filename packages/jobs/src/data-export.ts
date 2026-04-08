@@ -28,13 +28,11 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { S3Client } from '@aws-sdk/client-s3';
 import { notify } from '@twicely/notifications/service';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
 import { collectUserDataFull } from './data-export-full';
 
 const QUEUE_NAME = 'data-export';
-
-// Download URL TTL: 24 hours
-const DOWNLOAD_URL_TTL_SECONDS = 24 * 60 * 60;
 
 export interface DataExportJobData {
   requestId: string;
@@ -90,6 +88,12 @@ export function registerDataExportWorker(): void {
 
     logger.info('Data export job started', { requestId, userId, format });
 
+    const downloadTtlHours = await getPlatformSetting<number>(
+      'privacy.dataExport.downloadUrlTtlHours',
+      24,
+    );
+    const downloadTtlSeconds = downloadTtlHours * 60 * 60;
+
     // Mark as PROCESSING
     await db
       .update(dataExportRequest)
@@ -110,17 +114,17 @@ export function registerDataExportWorker(): void {
 
       const publicUrl = await uploadToR2(key, Buffer.from(content), contentType);
 
-      // Generate signed download URL (24h TTL)
+      // Generate signed download URL
       const s3Client = buildS3Client();
       const downloadUrl = s3Client
         ? await getSignedUrl(
             s3Client,
             new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key: key }),
-            { expiresIn: DOWNLOAD_URL_TTL_SECONDS }
+            { expiresIn: downloadTtlSeconds }
           )
         : publicUrl;
 
-      const downloadExpiresAt = new Date(Date.now() + DOWNLOAD_URL_TTL_SECONDS * 1000);
+      const downloadExpiresAt = new Date(Date.now() + downloadTtlSeconds * 1000);
 
       await db
         .update(dataExportRequest)

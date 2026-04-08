@@ -22,6 +22,16 @@
     "@twicely/storage": "workspace:*",
     "@twicely/utils": "workspace:*"
   },
+  "peerDependencies": {
+    "@twicely/commerce": "workspace:*",
+    "@twicely/search": "workspace:*",
+    "@twicely/stripe": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@twicely/commerce": { "optional": true },
+    "@twicely/search": { "optional": true },
+    "@twicely/stripe": { "optional": true }
+  },
   "devDependencies": {
     "@types/node": "^20"
   }

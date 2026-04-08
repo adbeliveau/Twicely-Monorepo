@@ -9,9 +9,9 @@ Turborepo monorepo for Twicely, a peer-to-peer resale marketplace. Converted fro
 Phases A–I complete. Monorepo conversion done. All features built. Audit-clean.
 
 - TypeScript: 24/24 packages pass
-- Tests: 23/23 packages pass, 11769+ tests green
+- Tests: 23/23 packages pass, 9631+ tests green (ghost-duplicate-free)
 - Audit: 11/11 streams clean (0 blockers, 0 warnings)
-- Duplicate-tree consolidation: Tier 0 + 1 + 2 + 3 done (13 trees consolidated, security layer fully merged)
+- Duplicate-tree consolidation: Tier 0 + 1 + 2 + 3 + 4 + 5 COMPLETE (all 18 trees consolidated)
 
 ### Important Notes
 
@@ -44,19 +44,34 @@ npx turbo dev         # Start dev server
 - TypeScript strict mode, zero `as any`
 - Integer cents for money, never floats
 - All settings from `platform_settings` table
-- 12,043+ tests must pass (baseline)
+- 9,631+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=9884
+BASELINE_TESTS=9631
 
 ## Duplicate-tree consolidation status
 
 | Status | Trees |
 |---|---|
-| Done (Tier 0–5a) | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications, commerce, crosslister |
-| Pending Tier 5 | jobs |
+| Done (ALL TIERS 0–5) | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications, commerce, crosslister, **jobs** |
 
-Old `BASELINE_TESTS=13443` was inflated by ~3,559 ghost duplicate runs from mirror trees. The 9884 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33; Tier 4 commerce: 550; Tier 5 crosslister: 1,193.)
+Old `BASELINE_TESTS=13443` was inflated by ~3,812 ghost duplicate runs from mirror trees. The 9631 count is the honest unique-test total verified by `npx turbo test`. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33; Tier 4 commerce: 550; Tier 5 crosslister: 1,193; Tier 5 jobs: 253.)
+
+**Tier 5 jobs findings (many bidirectional regressions):**
+- Package lost `getPlatformSetting` calls across the board. All restored in package: `privacy.dataExport.downloadUrlTtlHours` (data-export.ts), `affiliate.fraud.scanWindowHours` (affiliate-fraud-scan.ts), `trust.standards.evaluationPeriodDays` as `windowDays` (seller-score-recalc.ts — also replaced the hardcoded `WINDOW_DAYS = 90` constant), `commerce.local.meetupReminder{24Hr,1Hr}Offset` (local-meetup-reminder.ts), `cleanup.auditArchive.batchSize` (cleanup-audit-archive.ts), `helpdesk.{autoClose,slaCheck,csatSend,retentionPurge}.batchSize` (all 4 helpdesk workers), `helpdesk.cron.{autoClose,slaCheck,csatSend,retentionPurge}.pattern` (all 4 helpdesk enqueue helpers — read cron schedule from platform_settings).
+- Package was silently running cron jobs without `tz: 'UTC'` — restored on `affiliate-suspension-expiry`, `expire-free-lister-tier`, `seller-score-recalc`, `affiliate-fraud-scan`, `tax-document-generation`, `affiliate-payout-cron`, and all 4 helpdesk enqueue functions. Without UTC anchoring, the BullMQ scheduler would drift across DST boundaries.
+- Package had dropped `helpdesk.cleanup.dataPurge.exportBatchSize` + all four `privacy.retention.*` setting keys (had rewritten them as `retention.*` which didn't match the seed). **Restored web's `privacy.retention.*` keys + `privacy.dataExport.expiryDays`** (cleanup-data-purge.ts).
+- Package had dropped SEC-027 purge allowlist (`ALLOWED_PURGE_TABLES` + `ALLOWED_PURGE_COLUMNS` + explicit membership check in `purgeTableGracefully`). **Restored** — unconditional table/column names in purge queries were a SQL-injection guardrail.
+- Package had dropped the `shipping.penaltyDiscountPercent` read — restored with the canonical key `commerce.shippingQuote.penaltyDiscountPercent` (matches seed).
+- `seller-score-recalc.ts`: package had dropped the Typesense sync block that patches `sellerScore` and `sellerPerformanceBand` on all ACTIVE listings after a score recalc. Restored with **dynamic imports** of `@twicely/search/typesense-client` + `@twicely/search/typesense-schema` to avoid the `jobs → search → commerce → jobs` circular dep at compile time.
+- `helpdesk-auto-close.ts`, `helpdesk-sla-check.ts`, `helpdesk-csat-send.ts`: package had dropped user/agent notification calls (`notify(requesterId, 'helpdesk.case.closed')`, `notify(assignedAgentId, 'helpdesk.agent.sla_{breach,warning}')`, `notify(requesterId, 'helpdesk.case.escalated_user')`, `notify(requesterId, 'helpdesk.csat.request')`) and the SELECT columns that feed them (`requesterId`, `caseNumber`, `assignedAgentId`, `subject`). Restored all.
+- `queue.ts`: package added `registerShutdown(() => worker.close())` on every `createWorker()` call — centralized SIGTERM/SIGINT handling (Node.js MaxListeners default is 10, web mirror had 16+ individual `process.on('SIGTERM')` calls). Package wins.
+- **Circular dep resolved with DI factory + lazy IIFE pattern**: `jobs → commerce` can't be a compile-time dep because `commerce → jobs` already exists. Solution: files that need commerce export a `create…Worker(handlers)` factory + mirror the `LocalReliabilityEventType` union type inline. An auto-instantiated `void (async () => { const mod = await import('@twicely/commerce/…'); createWorker(mod.fn); })()` IIFE at module bottom launches the worker once commerce is loaded. Applied to `local-noshow-check.ts`, `local-day-of-confirmation-timeout.ts`, `local-fraud-noshow-relist.ts`, `offer-expiry.ts`, `affiliate-payout-cron.ts`. Dynamic imports in `seller-score-recalc.ts` (Typesense) and `cron-jobs.ts` (commerce shipping/returns/vacation/exceptions) follow the same pattern.
+- Declared `@twicely/commerce`, `@twicely/search`, `@twicely/stripe` as **optional peerDependencies** in `packages/jobs/package.json` so pnpm's workspace resolver can resolve the dynamic imports without treating it as a hard cycle. Install emits a cyclic workspace warning (expected — dev-only, runtime-safe).
+- `cleanup-queue.ts`, `cron-jobs.ts`: registered the 4 helpdesk cron jobs (auto-close, sla-check, csat-send, retention-purge) in `packages/jobs/src/cron-jobs.ts` that the package had missed. Cron-jobs test assertion count bumped from 14 → 17.
+- 14 test files needed mock additions: `@twicely/db/queries/platform-settings`, `@twicely/notifications/service`, `@twicely/search/typesense-{client,schema}` — package tests were written against the regressed source files so they lacked the mocks I needed once the source was restored.
+- **`shipping-quote-deadline.ts`** was importing `resolveQuoteFinalPrice` from `@/lib/services/shipping-quote-resolver` (web mirror path) — pointed to `./shipping-quote-resolver` (package already had the helper).
+- **Baseline corrected 9884 → 9631** (jobs pkg: 257 tests already counted, web mirror's 253 ghost runs removed).
 
 **Tier 5 crosslister findings:**
 124 source files differed + 3 package-only files. Pattern: package was uniformly canonical — no bidirectional regressions, no platform_settings reads were stripped (verified by `grep` of `getPlatformSetting('crosslister.*')` calls). All package wins:
