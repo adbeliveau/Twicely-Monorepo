@@ -552,11 +552,13 @@ Seller selects listings + target platforms
 
 ### 7.3 Publish Limits by ListerTier
 
-| Tier | Publishes/Month | Rollover |
-|------|----------------|----------|
-| Lister Free | 25 | None |
-| Lister Lite | 200 | 60 days, max 600 |
-| Lister Pro | 2,000 | 60 days, max 6,000 |
+| Tier | Publishes | Rollover |
+|------|-----------|----------|
+| Lister Free | 5 total / 6 months (teaser) | None (one-time allowance) |
+| Lister Lite | 200/month | 60 days, max 600 |
+| Lister Pro | 2,000/month | 60 days, max 6,000 |
+
+> **Decision #105 (LOCKED):** Lister Free is a **6-month time-limited teaser** with 5 total publishes — NOT a recurring monthly allowance. New sellers receive 5 credits on activation; the FREE tier auto-downgrades to NONE after `listerFreeExpiresAt` (activation + 180 days). Existing FREE accounts without an expiry timestamp are grandfathered. The earlier "25/month" wording is retired.
 
 Rollover max stockpile: 3× monthly plan allotment. Rollover expires FIFO. On downgrade: excess rollover forfeited to new tier's max.
 

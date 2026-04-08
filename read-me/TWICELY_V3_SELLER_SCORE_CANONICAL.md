@@ -80,7 +80,9 @@ Different categories have different baseline performance patterns. An electronic
 | Return Rate (ideal) | ≤ 4% | ≤ 3% | ≤ 3% | ≤ 2% |
 | Cancellation Rate (ideal) | ≤ 1.5% | ≤ 1.5% | ≤ 1.5% | ≤ 1.0% |
 
-"Ideal" means score 1000 on that metric. Actual thresholds for warning/restriction levels are defined in Platform Settings §11 and follow the ranges from Feature Lock-in §44.
+"Ideal" means score 1000 on that metric. The **review average ideal is 4.5 stars** (sigmoid center) across all category buckets. Actual thresholds for warning/restriction levels are defined in Platform Settings §11 and follow the ranges from Feature Lock-in §44.
+
+> **CANONICAL ENGINE NOTICE:** The scoring engine at `packages/scoring/src/calculate-seller-score.ts` is the authoritative implementation with `REVIEW_IDEAL = 4.5` and sigmoid normalization per §2.3. The deprecated engine at `packages/commerce/src/performance-band.ts` uses linear interpolation with `REVIEW_IDEAL = 5.0` and is scheduled for removal. All code paths (nightly cron AND admin refresh) must use `packages/scoring`.
 
 Sellers who list across multiple categories are scored against the primary category of each individual order. The per-metric scores are then weighted by order volume per category before being combined into the final score.
 

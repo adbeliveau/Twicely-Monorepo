@@ -6,7 +6,7 @@
  */
 
 import { db } from '@twicely/db';
-import { dispute, order } from '@twicely/db/schema';
+import { dispute, order, returnRequest } from '@twicely/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { processReturnRefund } from '@twicely/stripe/refunds';
@@ -187,7 +187,7 @@ export async function resolveDispute(
     .where(eq(dispute.id, disputeId));
 
   const [ord] = await db
-    .select({ orderNumber: order.orderNumber })
+    .select({ orderNumber: order.orderNumber, totalCents: order.totalCents })
     .from(order)
     .where(eq(order.id, disp.orderId))
     .limit(1);
@@ -208,8 +208,34 @@ export async function resolveDispute(
     resolution: resolutionText,
   });
 
-  if ((resolution === 'RESOLVED_BUYER' || resolution === 'RESOLVED_PARTIAL') && disp.returnRequestId) {
-    const refundAmount = resolution === 'RESOLVED_PARTIAL' ? resolutionAmountCents : undefined;
+  if (resolution === 'RESOLVED_BUYER' || resolution === 'RESOLVED_PARTIAL') {
+    // Determine the refund amount before running the waterfall.
+    //
+    // RESOLVED_PARTIAL: the admin-specified partial amount.
+    //
+    // RESOLVED_BUYER (full buyer win): use the canonical amount from the return
+    // request when one exists, otherwise fall back to the order total. This is
+    // the root-cause fix for the D1 audit finding: previously refundAmount was
+    // left undefined for RESOLVED_BUYER, so the `if (refundAmount > 0)` guard
+    // below was never entered and the waterfall was silently skipped for the
+    // most common dispute outcome.
+    let refundAmount: number | undefined;
+    if (resolution === 'RESOLVED_PARTIAL') {
+      refundAmount = resolutionAmountCents;
+    } else {
+      // RESOLVED_BUYER: look up returnRequest.refundAmountCents if a return
+      // request is linked; fall back to order.totalCents otherwise.
+      if (disp.returnRequestId) {
+        const [rr] = await db
+          .select({ refundAmountCents: returnRequest.refundAmountCents })
+          .from(returnRequest)
+          .where(eq(returnRequest.id, disp.returnRequestId))
+          .limit(1);
+        refundAmount = rr?.refundAmountCents ?? ord?.totalCents;
+      } else {
+        refundAmount = ord?.totalCents;
+      }
+    }
 
     // Decision #92: Post-Release Claim Recovery Waterfall.
     // Before refunding the buyer from platform funds, attempt to claw back from
@@ -227,6 +253,7 @@ export async function resolveDispute(
         logger.info('Dispute recovery waterfall complete (Decision #92)', {
           disputeId,
           sellerId: disp.sellerId,
+          resolution,
           recoveredFromAvailable: recovery.recoveredFromAvailableCents,
           recoveredFromReserved: recovery.recoveredFromReservedCents,
           platformAbsorbed: recovery.platformAbsorbedCents,
@@ -239,13 +266,15 @@ export async function resolveDispute(
       }
     }
 
-    const refundResult = await processReturnRefund({
-      returnId: disp.returnRequestId,
-      amountCents: refundAmount,
-      callerUserId: 'SYSTEM',
-    }, applyReturnFees);
-    if (!refundResult.success) {
-      logger.error('Failed to process refund for dispute', { disputeId, error: refundResult.error });
+    if (disp.returnRequestId) {
+      const refundResult = await processReturnRefund({
+        returnId: disp.returnRequestId,
+        amountCents: refundAmount,
+        callerUserId: 'SYSTEM',
+      }, applyReturnFees);
+      if (!refundResult.success) {
+        logger.error('Failed to process refund for dispute', { disputeId, error: refundResult.error });
+      }
     }
   }
 

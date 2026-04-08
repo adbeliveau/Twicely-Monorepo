@@ -428,11 +428,9 @@ suppress them.
     The unrelated `order.cancelReason` text field is fine.
   - **Owner:** hub-local, engine-local
 
-- **FP-205 — `apps/web/src/lib/db/schema/platform.ts` duplicates `packages/db/src/schema/platform.ts`**
-  - **Pattern:** Two `platform.ts` schema files with identical content.
-  - **Why safe (for now):** Pre-existing maintenance hazard from monorepo conversion.
-    Both files must be kept in sync. Tracked separately as a refactor item, not a
-    domain audit failure.
+- **FP-205 — RETIRED 2026-04-08** (was: `apps/web/src/lib/db/schema/platform.ts` duplicates `packages/db/src/schema/platform.ts`)
+  - **Status:** RETIRED. The web mirror `apps/web/src/lib/db/schema/platform.ts` was deleted during Tier 3 duplicate-tree consolidation. There is no longer a duplicate — `packages/db/src/schema/platform.ts` is the single source of truth. The two seed files under `apps/web/src/lib/db/seed/` and `packages/db/src/seed/` remain a byte-identical pair by necessity (the `@twicely/db/queries` vitest alias points at `apps/web/src/lib/queries`). That is tracked under the duplicate-tree consolidation memory, not here.
+  - **Do not reuse FP-205.** Keep the ID reserved for historical audit comparisons.
   - **Owner:** engine-schema, hub-platform-settings
 
 ---

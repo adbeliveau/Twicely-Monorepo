@@ -48,24 +48,25 @@ This document covers:
 ### 1.2 Drizzle Schema: `platformSetting`
 
 ```typescript
+// SHIPPED SCHEMA (2026-04-08) — differs from earlier spec drafts; see DEVIATION NOTE below
 export const platformSetting = pgTable('platform_setting', {
-  id:          text('id').primaryKey().$defaultFn(() => createId()),
-  category:    text('category').notNull(),         // 'fees', 'commerce', 'trust', etc.
-  key:         text('key').notNull(),               // 'cart.expiryHours', 'tf.electronics'
-  valueJson:   jsonb('value_json').notNull(),       // The setting value (any JSON-serializable type)
-  valueType:   text('value_type').notNull(),        // 'number' | 'boolean' | 'string' | 'enum' | 'cents' | 'bps' | 'array'
-  version:     integer('version').notNull().default(1),
-  isActive:    boolean('is_active').notNull().default(true),
-  effectiveAt: timestamp('effective_at', { withTimezone: true }).notNull().defaultNow(),
-  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedBy:   text('updated_by'),                  // StaffUser ID
+  id:                 text('id').primaryKey().$defaultFn(() => createId()),
+  category:           text('category').notNull(),               // 'fees', 'commerce', 'trust', etc.
+  key:                text('key').notNull().unique(),            // 'cart.expiryHours', 'tf.electronics'
+  value:              jsonb('value').notNull(),                  // The setting value (any JSON-serializable type)
+  type:               text('type').notNull(),                    // 'number' | 'boolean' | 'string' | 'enum' | 'cents' | 'bps' | 'array'
+  description:        text('description'),                       // Human-readable purpose
+  isSecret:           boolean('is_secret').notNull().default(false), // Values masked in admin UI
+  updatedByStaffId:   text('updated_by_staff_id'),                // StaffUser ID of last editor
+  createdAt:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  categoryKeyIdx: uniqueIndex('ps_cat_key_eff').on(table.category, table.key, table.effectiveAt),
-  categoryActiveIdx: index('ps_cat_active').on(table.category, table.isActive),
-  effectiveIdx: index('ps_effective').on(table.effectiveAt),
+  keyIdx:      uniqueIndex('ps_key').on(table.key),
+  categoryIdx: index('ps_category').on(table.category),
 }));
 ```
+
+> **DEVIATION NOTE:** Earlier spec drafts referenced `valueJson`, `valueType`, `version`, `isActive`, `effectiveAt`, `updatedBy`. The shipped schema consolidates these to `value`, `type`, `updatedByStaffId` and adds `description` + `isSecret`. Versioning is handled via a separate `platform_setting_history` table written on every update. The `updatedBy` column was renamed to `updatedByStaffId` for clarity (it references `staffUser.id`, not `user.id`).
 
 ### 1.3 Drizzle Schema: `environmentSecret`
 
@@ -123,33 +124,23 @@ export function maskSecret(value: string): string {
 }
 ```
 
-### 1.5 Settings Access Pattern
+### 1.5 Settings Access Pattern (SHIPPED)
 
 ```typescript
-// lib/settings.ts
-export async function getSetting<T>(
-  category: string,
+// packages/db/src/queries/platform-settings.ts
+export async function getPlatformSetting<T>(
   key: string,
   defaultValue: T
 ): Promise<T> {
-  // 1. Check database (most recent active row where effectiveAt <= now)
-  const row = await db.query.platformSetting.findFirst({
-    where: and(
-      eq(platformSetting.category, category),
-      eq(platformSetting.key, key),
-      eq(platformSetting.isActive, true),
-      lte(platformSetting.effectiveAt, new Date()),
-    ),
-    orderBy: desc(platformSetting.effectiveAt),
-  });
-  if (row) return row.valueJson as T;
+  // 1. Check database (single row per key — no versioning/effective-dating)
+  const [row] = await db
+    .select({ value: platformSetting.value })
+    .from(platformSetting)
+    .where(eq(platformSetting.key, key))
+    .limit(1);
+  if (row) return row.value as T;
 
-  // 2. Check env (for backwards compat / initial setup)
-  const envKey = `TWICELY_${category.toUpperCase()}_${key.toUpperCase().replace(/\./g, '_')}`;
-  const envVal = process.env[envKey];
-  if (envVal !== undefined) return JSON.parse(envVal) as T;
-
-  // 3. Return hardcoded default
+  // 2. Fallback (DB unreachable or setting not seeded)
   return defaultValue;
 }
 
@@ -184,7 +175,7 @@ On first admin setup, the Environment tab shows a "Migrate from .env" button. Th
 
 ## 2. Setting Value Types
 
-Every setting has an explicit `valueType` that drives the admin UI input component:
+Every setting has an explicit `type` (formerly `valueType`) that drives the admin UI input component:
 
 | Type | Storage | UI Component | Example |
 |------|---------|-------------|---------|
@@ -208,15 +199,17 @@ Every setting has an explicit `valueType` that drives the admin UI input compone
 On first application boot (or database migration), a seed script inserts every setting from this document with its default value. The seed is idempotent — it only inserts settings that don't already exist.
 
 ```typescript
-// db/seed/settings.ts
+// packages/db/src/seed/v32-platform-settings.ts (shipped shape)
 const SETTINGS_SEED: Array<{
   category: string;
   key: string;
-  valueJson: unknown;
-  valueType: string;
+  value: unknown;
+  type: string;
+  description?: string;
+  isSecret?: boolean;
 }> = [
-  { category: 'commerce', key: 'cart.expiryHours', valueJson: 72, valueType: 'number' },
-  { category: 'commerce', key: 'cart.maxItems', valueJson: 100, valueType: 'number' },
+  { category: 'commerce', key: 'cart.expiryHours', value: 72, type: 'number', description: 'Hours before a cart expires and releases reservations' },
+  { category: 'commerce', key: 'cart.maxItems', value: 100, type: 'number' },
   // ... every setting from §7–§16
 ];
 ```
