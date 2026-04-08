@@ -171,12 +171,22 @@ The previous report (`.claude/audit/last-report.md` dated 2026-04-07, commit `e8
 
 ---
 
-## Verdict: **NOT READY**
+## Verdict: **READY** (after fix at commit `8859b10`)
 
-2 real blockers in stream 3 (hardcoded values / seed file integrity). Both are mechanical fixes:
-1. Add 3 `crosslister.images.*` keys to `packages/db/src/seed/v32-platform-settings-extended.ts`
-2. Diff the two `v32-platform-settings.ts` seed files and copy the 32 missing keys from `apps/web` → `packages/db`
+### Resolution
+Both blockers fixed at commit `8859b10`:
+1. **B-1 resolved:** 3 `crosslister.images.*` keys added to `packages/db/src/seed/v32-platform-settings.ts`
+2. **B-2 resolved:** Copied `apps/web/src/lib/db/seed/v32-platform-settings.ts` verbatim → `packages/db/src/seed/v32-platform-settings.ts`. Files are now byte-identical (verified by `diff`).
 
-After those fixes, all 11 streams pass.
+### Stream 3 re-run confirms
+- B-1: all 3 `crosslister.images.*` keys present at lines 133-135
+- B-2: 32 previously-missing keys now present (commerce.checkout rate limits, crosslister.automation/polling/queue/scheduler, jobs.cron.listingImageRetention.pattern)
+- No new blockers introduced
+- 6 prior warnings (W-3.1 through W-3.6) all still warnings — none escalated to blockers, none resolved (separate work)
 
-**Recommended next step:** `/audit fix` (auto-repair) or fix manually then re-run `/audit 3`.
+### Test results after fix
+- TypeScript: 24/24 packages pass
+- Tests: 23/23 packages, 9631 passing (baseline 9631)
+- All tests green
+
+**All 11 audit streams now PASS after FP suppression.** The 17 remaining real warnings are non-blocking (registry doc backfill, schema spec drift, minor value mismatches, 1 hardcoded cron interval). Address during next refactor sprint.
