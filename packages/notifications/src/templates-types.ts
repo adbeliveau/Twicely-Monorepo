@@ -96,6 +96,8 @@ export type TemplateKey =
   | 'helpdesk.case.watcher_update'
   | 'helpdesk.case.status_changed_user'
   | 'helpdesk.case.escalated_user'
+  // Seller performance rewards — Seller Score Canonical §5.4
+  | 'seller.boostCredit.issued'
   // Seller bank payouts — G10 / Stripe Connect
   | 'seller.payout.paid'
   | 'seller.payout.failed'

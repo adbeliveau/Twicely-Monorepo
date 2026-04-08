@@ -49,8 +49,8 @@ describe('cron-jobs', () => {
     const { registerCronJobs } = await import('../cron-jobs');
     await registerCronJobs();
 
-    // 8 platform cron jobs (incl. listing image retention Decision #111 + listing sold purge Decision #71) + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6) + 1 helpdesk auto-close + 1 helpdesk SLA check + 1 helpdesk CSAT send
-    expect(mockQueueAdd).toHaveBeenCalledTimes(18);
+    // 8 platform cron jobs (incl. listing image retention Decision #111 + listing sold purge Decision #71) + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6) + 1 helpdesk auto-close + 1 helpdesk SLA check + 1 helpdesk CSAT send + 1 monthly boost credit (Seller Score §5.4)
+    expect(mockQueueAdd).toHaveBeenCalledTimes(19);
   });
 
   it('registers orders cron at every hour', async () => {

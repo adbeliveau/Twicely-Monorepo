@@ -115,7 +115,8 @@ export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
   'BUYER_REFERRAL_CREDIT_ISSUED', 'BUYER_REFERRAL_CREDIT_REDEEMED',
   'AFFILIATE_COMMISSION_PAYOUT',
   'CROSSLISTER_SALE_REVENUE', 'CROSSLISTER_PLATFORM_FEE',
-  'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT'
+  'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT',
+  'BOOST_CREDIT_ISSUED'  // §5.4 Seller Score Canonical — monthly performance reward credit
 ]);
 export const ledgerEntryStatusEnum = pgEnum('ledger_entry_status', ['PENDING', 'POSTED', 'REVERSED']);
 export const payoutStatusEnum = pgEnum('payout_status', ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'REVERSED']);

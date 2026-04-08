@@ -135,6 +135,12 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   { key: 'crosslister.images.batchSize', value: 200, type: 'number', category: 'crosslister', description: 'Max listings processed per retention pass (per stage)' },
   { key: 'jobs.cron.listingImageRetention.pattern', value: '30 4 * * *', type: 'string', category: 'crosslister', description: 'Cron pattern for the listing image retention job (default: daily at 04:30 UTC)' },
 
+  // ── Monthly Boost Credit (Seller Score Canonical §5.4) ──────────────────
+  { key: 'score.rewards.powerSellerMonthlyCreditCents', value: 1500, type: 'cents', category: 'score', description: 'Monthly boost credit for POWER_SELLER band ($15.00)' },
+  { key: 'score.rewards.topRatedMonthlyCreditCents', value: 1000, type: 'cents', category: 'score', description: 'Monthly boost credit for TOP_RATED band ($10.00)' },
+  { key: 'score.rewards.batchSize', value: 500, type: 'number', category: 'score', description: 'Max sellers processed per batch in monthly boost credit job' },
+  { key: 'jobs.cron.monthlyBoostCredit.pattern', value: '0 6 1 * *', type: 'string', category: 'score', description: 'Cron pattern for monthly boost credit issuance (default: 06:00 UTC on the 1st of each month)' },
+
   // ── SOLD listing Typesense purge (Decision #71 — 90-day index window) ───
   { key: 'search.soldPurge.retentionDays', value: 90, type: 'number', category: 'search', description: 'Days after soldAt before a SOLD listing is purged from the Typesense index (Decision #71)' },
   { key: 'search.soldPurge.batchSize', value: 500, type: 'number', category: 'search', description: 'Max SOLD listing documents deleted from Typesense per purge pass' },

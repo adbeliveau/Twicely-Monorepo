@@ -435,6 +435,12 @@ importers:
       '@twicely/notifications':
         specifier: workspace:*
         version: link:../notifications
+      '@twicely/scoring':
+        specifier: workspace:*
+        version: link:../scoring
+      '@twicely/search':
+        specifier: workspace:*
+        version: link:../search
       '@twicely/stripe':
         specifier: workspace:*
         version: link:../stripe

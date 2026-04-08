@@ -22,8 +22,15 @@
     "@twicely/jobs": "workspace:*",
     "@twicely/logger": "workspace:*",
     "@twicely/notifications": "workspace:*",
+    "@twicely/scoring": "workspace:*",
     "@twicely/stripe": "workspace:*",
     "@twicely/utils": "workspace:*"
+  },
+  "peerDependencies": {
+    "@twicely/search": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@twicely/search": { "optional": true }
   },
   "devDependencies": {
     "@types/node": "^20"

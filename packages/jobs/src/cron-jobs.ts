@@ -148,6 +148,11 @@ export async function registerCronJobs(): Promise<void> {
   await enqueueHelpdeskCsatSend();
   logger.info('[cronJobs] Registered helpdesk CSAT send cron job');
 
+  // Monthly boost credit issuance — 1st of each month at 06:00 UTC (Seller Score Canonical §5.4)
+  const { registerMonthlyBoostCreditJob } = await import('./monthly-boost-credit');
+  await registerMonthlyBoostCreditJob();
+  logger.info('[cronJobs] Registered monthly boost credit job');
+
   // Buyer quality tier recalc REMOVED — Decision #142.
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }
