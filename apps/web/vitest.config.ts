@@ -74,7 +74,7 @@ export default defineConfig({
       '@twicely/finance/expense-categories': path.resolve(__dirname, '../../packages/finance/src/expense-categories'),
       '@twicely/finance': path.resolve(__dirname, '../../packages/finance/src'),
       '@twicely/commerce': path.resolve(__dirname, './src/lib/commerce'),
-      '@twicely/stripe': path.resolve(__dirname, './src/lib/stripe'),
+      '@twicely/stripe': path.resolve(__dirname, '../../packages/stripe/src'),
       '@twicely/notifications': path.resolve(__dirname, './src/lib/notifications'),
       '@twicely/crosslister': path.resolve(__dirname, './src/lib/crosslister'),
       '@twicely/subscriptions': path.resolve(__dirname, '../../packages/subscriptions/src'),

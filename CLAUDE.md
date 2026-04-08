@@ -47,17 +47,25 @@ npx turbo dev         # Start dev server
 - 12,043+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=11769
+BASELINE_TESTS=11660
 
 ## Duplicate-tree consolidation status
 
 | Status | Trees |
 |---|---|
-| Done | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only) |
-| Pending Tier 4 | stripe, notifications, commerce |
+| Done | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe |
+| Pending Tier 4 | notifications, commerce |
 | Pending Tier 5 | crosslister, jobs |
 
-Old `BASELINE_TESTS=13443` was inflated by ~1,674 ghost duplicate runs from mirror trees. The 11769 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274.)
+Old `BASELINE_TESTS=13443` was inflated by ~1,783 ghost duplicate runs from mirror trees. The 11660 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109.)
+
+**Tier 4 stripe findings (critical):**
+- `packages/stripe/src/webhook-idempotency.ts` was the canonical — had SEC-022 fail-CLOSED on DB error to prevent double-processing. The web mirror was failing OPEN (returning false on error), meaning if both Valkey and DB were down, Stripe webhooks could double-charge. Package wins.
+- `packages/stripe/src/payouts.ts` had SEC-016 minimum 2-day delay enforcement (`Math.max(2, options.delayDays)`) that the web mirror lacked. Package won on enforcement but had HARDCODED delayDays defaults (2); web mirror had the correct `getPlatformSetting('commerce.payout.delayDays', 2)` read. Merged both into package.
+- `packages/stripe/src/chargebacks.ts` had a hardcoded `7 * 24 * 60 * 60 * 1000` chargeback deadline; web mirror read `commerce.dispute.chargebackDeadlineDays` from platform_settings. Merged web's settings read into package.
+- `packages/stripe/src/subscription-webhooks.ts` used modern `@twicely/subscriptions/{queries,mutations,apply-pending-downgrade}` paths and passed `stripe.subscriptions.update` as a dependency-inject parameter to `applyPendingDowngradeIfNeeded`; web mirror used old `@/lib/*` paths. Package wins.
+- All remaining stripe files had only import-path drift (`@twicely/stripe/X` vs `./X`) and CRLF/LF line endings — package wins (relative imports required once consolidated, LF normalized).
+- `apps/web/src/lib/__tests__/helpers/stripe-mocks.ts` stays in the web tree — it's still imported by `apps/web/src/lib/actions/__tests__/create-subscription-checkout.test.ts`. The package has its own byte-identical copy at `packages/stripe/src/__tests__/helpers/stripe-mocks.ts`.
 
 **Tier 3 security findings (critical):**
 - `packages/casl/src/authorize.ts` was missing G10.8 staff impersonation + H1 banned-user blocking that the web mirror had. Production was broken; tests validated the correct mirror. Promoted web→package.
