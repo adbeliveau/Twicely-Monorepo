@@ -75,7 +75,10 @@ export async function enableSellerAction(): Promise<ActionResult> {
 
 /**
  * Path B step 1: Submit business info for the first time.
- * Creates businessInfo record + upgrades sellerType to BUSINESS.
+ * Creates a businessInfo record only. The seller's sellerType is NOT flipped
+ * to BUSINESS here — that happens at the end of the wizard in
+ * updateStoreNameAction, so the seller is only "a business" once the full
+ * onboarding process is complete.
  */
 export async function submitBusinessInfoAction(input: unknown): Promise<ActionResult> {
   const { ability, session } = await authorize();
@@ -105,35 +108,28 @@ export async function submitBusinessInfoAction(input: unknown): Promise<ActionRe
     return { success: false, error: 'Seller profile not found. Please enable selling first.' };
   }
 
-  await db.transaction(async (tx) => {
-    await tx.insert(businessInfo).values({
-      userId,
-      businessName: data.businessName,
-      businessType: data.businessType,
-      ein: data.ein ?? null,
-      address1: data.address1,
-      address2: data.address2 ?? null,
-      city: data.city,
-      state: data.state,
-      zip: data.zip,
-      country: data.country,
-      phone: data.phone ?? null,
-      website: data.website ?? null,
-    });
-
-    await tx
-      .update(sellerProfile)
-      .set({ sellerType: 'BUSINESS', updatedAt: new Date() })
-      .where(eq(sellerProfile.userId, userId));
+  await db.insert(businessInfo).values({
+    userId,
+    businessName: data.businessName,
+    businessType: data.businessType,
+    ein: data.ein ?? null,
+    address1: data.address1,
+    address2: data.address2 ?? null,
+    city: data.city,
+    state: data.state,
+    zip: data.zip,
+    country: data.country,
+    phone: data.phone ?? null,
+    website: data.website ?? null,
   });
 
   await db.insert(auditEvent).values({
     actorType: 'USER',
     actorId: session.userId,
-    action: 'BUSINESS_UPGRADED',
+    action: 'BUSINESS_INFO_SUBMITTED',
     subject: 'SellerProfile',
     subjectId: userId,
-    severity: 'MEDIUM',
+    severity: 'LOW',
     detailsJson: { businessName: data.businessName, businessType: data.businessType },
   });
 
@@ -206,8 +202,11 @@ export async function updateBusinessInfoAction(input: unknown): Promise<ActionRe
 // ─── updateStoreNameAction ────────────────────────────────────────────────────
 
 /**
- * Path B step 3: Set storeName + storeSlug on the seller profile.
- * Requires BUSINESS seller type.
+ * Path B step 3 (final config step): Set storeName + storeSlug on the seller
+ * profile. Requires that business info has been submitted. This is the last
+ * configuration step of the business wizard, so if the seller is still
+ * PERSONAL we upgrade them to BUSINESS here — this is what "complete the
+ * business onboarding process completely" means in practice.
  */
 export async function updateStoreNameAction(input: unknown): Promise<ActionResult> {
   const { ability, session } = await authorize();
@@ -225,12 +224,15 @@ export async function updateStoreNameAction(input: unknown): Promise<ActionResul
     return { success: false, error: 'Invalid input' };
   }
 
-  const profile = await getSellerProfile(userId);
+  const [profile, bizInfo] = await Promise.all([
+    getSellerProfile(userId),
+    getBusinessInfo(userId),
+  ]);
   if (!profile) {
     return { success: false, error: 'Seller profile not found' };
   }
-  if (profile.sellerType !== 'BUSINESS') {
-    return { success: false, error: 'Business account required to set a store name' };
+  if (!bizInfo) {
+    return { success: false, error: 'Business info required before setting a store name' };
   }
 
   const { storeName, storeSlug } = parsed.data;
@@ -248,9 +250,16 @@ export async function updateStoreNameAction(input: unknown): Promise<ActionResul
     }
   }
 
+  const shouldUpgrade = profile.sellerType !== 'BUSINESS';
+
   await db
     .update(sellerProfile)
-    .set({ storeName, storeSlug, updatedAt: new Date() })
+    .set({
+      storeName,
+      storeSlug,
+      ...(shouldUpgrade ? { sellerType: 'BUSINESS' as const } : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(sellerProfile.userId, userId));
 
   await db.insert(auditEvent).values({
@@ -262,6 +271,21 @@ export async function updateStoreNameAction(input: unknown): Promise<ActionResul
     severity: 'LOW',
     detailsJson: { storeName, storeSlug },
   });
+
+  if (shouldUpgrade) {
+    await db.insert(auditEvent).values({
+      actorType: 'USER',
+      actorId: session.userId,
+      action: 'BUSINESS_UPGRADED',
+      subject: 'SellerProfile',
+      subjectId: userId,
+      severity: 'MEDIUM',
+      detailsJson: {
+        businessName: bizInfo.businessName,
+        businessType: bizInfo.businessType,
+      },
+    });
+  }
 
   revalidatePath('/my/selling/onboarding');
 

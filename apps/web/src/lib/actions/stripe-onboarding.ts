@@ -9,6 +9,7 @@ import {
   createOnboardingLink,
   getAccountStatus,
   createDashboardLink,
+  syncAccountStatus,
 } from '@twicely/stripe/connect';
 
 interface OnboardingResult {
@@ -150,12 +151,29 @@ export async function getOnboardingStatusAction(): Promise<AccountStatusResult> 
     };
   }
 
+  // Write fresh Stripe status back to DB so downstream reads (seller profile,
+  // payout request, onboarding page initialStep) see the current state instead
+  // of waiting for the account.updated webhook.
+  const freshStripeOnboarded = stripeStatus.status.detailsSubmitted;
+  const freshPayoutsEnabled =
+    stripeStatus.status.chargesEnabled && stripeStatus.status.payoutsEnabled;
+  if (
+    freshStripeOnboarded !== profile.stripeOnboarded ||
+    freshPayoutsEnabled !== profile.payoutsEnabled
+  ) {
+    try {
+      await syncAccountStatus(profile.stripeAccountId);
+    } catch {
+      // Non-fatal: the return value below still reflects the fresh Stripe state.
+    }
+  }
+
   return {
     success: true,
     status: {
       stripeAccountId: profile.stripeAccountId,
-      stripeOnboarded: profile.stripeOnboarded,
-      payoutsEnabled: profile.payoutsEnabled,
+      stripeOnboarded: freshStripeOnboarded,
+      payoutsEnabled: freshPayoutsEnabled,
       chargesEnabled: stripeStatus.status.chargesEnabled,
       detailsSubmitted: stripeStatus.status.detailsSubmitted,
       requiresAction: stripeStatus.status.requiresAction,

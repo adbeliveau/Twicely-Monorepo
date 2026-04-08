@@ -15,10 +15,12 @@ import {
 import { Loader2, Link2, Unlink, RefreshCw, Clock } from 'lucide-react';
 import {
   disconnectAccountingIntegration,
-  triggerAccountingSync,
-  updateSyncFrequency,
   type IntegrationRow,
 } from '@/lib/actions/accounting-integration';
+import {
+  triggerAccountingSync,
+  updateSyncFrequency,
+} from '@/lib/actions/accounting-integration-sync';
 
 interface Props {
   integrations: IntegrationRow[];

@@ -14,117 +14,25 @@ import type {
   JournalEntryData,
   ExternalEntity,
 } from './types';
+import {
+  qbGetAuthorizationUrl,
+  qbExchangeCode,
+  qbRefreshTokens,
+} from './quickbooks-oauth';
 
 export class QuickBooksAdapter implements AccountingAdapter {
   readonly provider = 'QUICKBOOKS' as const;
 
   async getAuthorizationUrl(state: string, redirectUri: string): Promise<string> {
-    const authUrl = await getPlatformSetting<string>(
-      'accounting.quickbooks.authUrl',
-      'https://appcenter.intuit.com/connect/oauth2',
-    );
-    const clientId = await getPlatformSetting<string>('accounting.quickbooks.clientId', '');
-    const scopes = await getPlatformSetting<string>(
-      'accounting.quickbooks.scopes',
-      'com.intuit.quickbooks.accounting',
-    );
-
-    const params = new URLSearchParams({
-      client_id: clientId,
-      scope: scopes,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      state,
-    });
-
-    return `${authUrl}?${params.toString()}`;
+    return qbGetAuthorizationUrl(state, redirectUri);
   }
 
   async exchangeCode(code: string, redirectUri: string): Promise<TokenResult> {
-    const tokenUrl = await getPlatformSetting<string>(
-      'accounting.quickbooks.tokenUrl',
-      'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
-    );
-    const clientId = await getPlatformSetting<string>('accounting.quickbooks.clientId', '');
-    const clientSecret = await getPlatformSetting<string>('accounting.quickbooks.clientSecret', '');
-
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-      }).toString(),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`QuickBooks token exchange failed (${response.status}): ${body}`);
-    }
-
-    const data = await response.json() as {
-      access_token: string;
-      refresh_token: string;
-      expires_in: number;
-      realmId?: string;
-    };
-
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresInSeconds: data.expires_in,
-      realmId: data.realmId,
-    };
+    return qbExchangeCode(code, redirectUri);
   }
 
   async refreshTokens(refreshToken: string): Promise<TokenResult> {
-    const tokenUrl = await getPlatformSetting<string>(
-      'accounting.quickbooks.tokenUrl',
-      'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
-    );
-    const clientId = await getPlatformSetting<string>('accounting.quickbooks.clientId', '');
-    const clientSecret = await getPlatformSetting<string>('accounting.quickbooks.clientSecret', '');
-
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      }).toString(),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`QuickBooks token refresh failed (${response.status}): ${body}`);
-    }
-
-    const data = await response.json() as {
-      access_token: string;
-      refresh_token: string;
-      expires_in: number;
-      realmId?: string;
-    };
-
-    return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresInSeconds: data.expires_in,
-      realmId: data.realmId,
-    };
+    return qbRefreshTokens(refreshToken);
   }
 
   async getCompanyInfo(accessToken: string, realmId: string): Promise<CompanyInfo> {

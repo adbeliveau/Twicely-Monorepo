@@ -19,9 +19,8 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 import {
   addAgentReply,
   assignCase,
-  updateCasePriority,
-  updateCaseTags,
 } from '../helpdesk-agent-cases';
+import { updateCasePriority, updateCaseTags } from '../helpdesk-agent-cases-meta';
 
 // Valid cuid2 test IDs
 const CASE_ID = 'cljd4bvd00000wjh07mcy26x';

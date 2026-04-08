@@ -176,6 +176,13 @@ export function HubSidebar({ capabilities, unreadMessageCount = 0 }: HubSidebarP
       {capabilities.isSeller && capabilities.sellerType === 'PERSONAL' && !capabilities.hasStore && (
         <div className="p-4 border-t">
           <Button asChild variant="secondary" size="sm" className="w-full">
+            <Link href="/my/selling/onboarding?flow=business">Upgrade to Business →</Link>
+          </Button>
+        </div>
+      )}
+      {capabilities.isSeller && capabilities.sellerType === 'BUSINESS' && !capabilities.hasStore && (
+        <div className="p-4 border-t">
+          <Button asChild variant="secondary" size="sm" className="w-full">
             <Link href="/my/selling/subscription">Open a Store →</Link>
           </Button>
         </div>

@@ -76,8 +76,21 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
 - **FP-061:** `as unknown as` in `src/lib/queries/__tests__/*.test.ts`
   — Test mocks. Not production code.
 
-- **FP-062:** 18 production files over 300 lines (largest: `admin-moderation.ts` 552 lines)
-  — Owner accepts file size violations. Not blocking. Will address during refactor sprints.
+- **FP-062:** 7 production files still over 300 lines after Phase D refactor sprint
+  — Down from 17 originally flagged. Phase D (`chore/contributing-and-ci-fix`) successfully split:
+  admin-moderation.ts (552→229), admin-analytics.ts (436→229), admin-categories.ts (363→274),
+  listings-update.ts (358→227), helpdesk-agent-cases.ts (335→259), sync-engine.ts (461→169),
+  accounting-integration.ts (400→182), xero-adapter.ts (340→236), quickbooks-adapter.ts (324→232),
+  seed-crosslister.ts (335→41, both mirrors).
+  — Remaining over 300 lines (owner-accepted, refactor sprint follow-up):
+    1. v32-platform-settings-extended.ts (552) — both packages/db and apps/web mirrors. Pure data file.
+    2. crosslister-accounts.ts (414) — OAuth/session platform connection actions.
+    3. checkout-finalize.ts (336) — Stripe confirm + order creation transaction.
+    4. checkout.ts (328) — Checkout initiate with preflight validation.
+    5. messaging.ts (328) — Conversation queries.
+    6. pricing-toggle.tsx (330) — Marketing pricing page tier comparison UI.
+    7. notification-template-editor.tsx (328) — Admin notification template editor.
+  — Not blocking. Will address in a future dedicated refactor pass.
 
 - **FP-064:** Dead exports in commerce/stripe packages
   — Most dead exports exist because app-local copies (`src/lib/commerce/`) are imported directly

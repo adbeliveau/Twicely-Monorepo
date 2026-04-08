@@ -70,8 +70,10 @@ export function ReplyComposer({
     if (focusTrigger > 0) textareaRef.current?.focus();
   }, [focusTrigger]);
 
-  // Respond to external macro toggle requests (from hotkey M)
-  const [prevMacroSignal, setPrevMacroSignal] = useState<number | undefined>(undefined);
+  // Respond to external macro toggle requests (from hotkey M).
+  // Initialize prevMacroSignal to the incoming value so the first render
+  // does NOT auto-toggle the dropdown open.
+  const [prevMacroSignal, setPrevMacroSignal] = useState<number | undefined>(macroToggleSignal);
   if (macroToggleSignal !== undefined && macroToggleSignal !== prevMacroSignal) {
     setPrevMacroSignal(macroToggleSignal);
     setShowMacros((s) => !s);

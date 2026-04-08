@@ -146,7 +146,7 @@ describe('getListingForModeration', () => {
     const chain = makeChain([]);
     mockSelect.mockReturnValue(chain);
 
-    const { getListingForModeration } = await import('../admin-moderation');
+    const { getListingForModeration } = await import('../admin-moderation-detail');
     const result = await getListingForModeration('nonexistent');
     expect(result).toBeNull();
   });
@@ -173,7 +173,7 @@ describe('getListingForModeration', () => {
       .mockReturnValueOnce(perfChain)
       .mockReturnValueOnce(enfChain);
 
-    const { getListingForModeration } = await import('../admin-moderation');
+    const { getListingForModeration } = await import('../admin-moderation-detail');
     const result = await getListingForModeration('lst-full');
 
     expect(result).not.toBeNull();

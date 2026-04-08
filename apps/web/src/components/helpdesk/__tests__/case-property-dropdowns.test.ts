@@ -6,8 +6,10 @@ const mockAssignCase = vi.fn();
 
 vi.mock('@/lib/actions/helpdesk-agent-cases', () => ({
   updateCaseStatus: mockUpdateCaseStatus,
-  updateCasePriority: mockUpdateCasePriority,
   assignCase: mockAssignCase,
+}));
+vi.mock('@/lib/actions/helpdesk-agent-cases-meta', () => ({
+  updateCasePriority: mockUpdateCasePriority,
 }));
 
 // Also mock the query to avoid importing DB in tests
@@ -48,7 +50,7 @@ describe('CasePropertyDropdowns — action wiring', () => {
 
   it('calls updateCasePriority on priority change', async () => {
     mockUpdateCasePriority.mockResolvedValue({ success: true });
-    const { updateCasePriority } = await import('@/lib/actions/helpdesk-agent-cases');
+    const { updateCasePriority } = await import('@/lib/actions/helpdesk-agent-cases-meta');
     await updateCasePriority({ caseId: CASE_ID, priority: 'URGENT' });
     expect(mockUpdateCasePriority).toHaveBeenCalledWith({ caseId: CASE_ID, priority: 'URGENT' });
   });
