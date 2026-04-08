@@ -9,9 +9,10 @@ Turborepo monorepo for Twicely, a peer-to-peer resale marketplace. Converted fro
 Phases A–I complete. Monorepo conversion done. All features built. Audit-clean.
 
 - TypeScript: 24/24 packages pass
-- Tests: 23/23 packages pass, 9836+ tests green (ghost-duplicate-free)
-- Audit: 11/11 streams clean (0 blockers, 0 warnings)
+- Tests: 23/23 packages pass, 9838+ tests green (ghost-duplicate-free)
+- Audit: 11/11 streams clean (0 blockers, 0 warnings after FP suppression)
 - Duplicate-tree consolidation: Tier 0 + 1 + 2 + 3 + 4 + 5 COMPLETE (all 18 trees consolidated)
+- Domains: 20 (added hub-messaging in Phase C of audit-remediation branch)
 
 ### Important Notes
 
@@ -44,10 +45,10 @@ npx turbo dev         # Start dev server
 - TypeScript strict mode, zero `as any`
 - Integer cents for money, never floats
 - All settings from `platform_settings` table
-- 9,836+ tests must pass (baseline)
+- 9,838+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=9836
+BASELINE_TESTS=9838
 
 ## Duplicate-tree consolidation status
 
