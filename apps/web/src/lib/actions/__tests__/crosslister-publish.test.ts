@@ -163,7 +163,7 @@ describe('publishListings', () => {
   });
 
   it('returns error when insufficient publish credits', async () => {
-    const { canPublish, getPublishAllowance } = await import('@/lib/crosslister/services/publish-meter');
+    const { canPublish, getPublishAllowance } = await import('@twicely/crosslister/services/publish-meter');
     (canPublish as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
     (getPublishAllowance as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       tier: 'FREE', monthlyLimit: 25, usedThisMonth: 25, remaining: 0, rolloverBalance: 0,
@@ -193,14 +193,14 @@ describe('publishListings', () => {
       session: { userId: 'staff-user', delegationId: 'del-1', onBehalfOfSellerId: 'seller-2' },
       ability: { can: vi.fn().mockReturnValue(true) },
     });
-    const { canPublish } = await import('@/lib/crosslister/services/publish-meter');
+    const { canPublish } = await import('@twicely/crosslister/services/publish-meter');
     (canPublish as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
     const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'seller-2', status: 'ACTIVE' }]),
     });
-    const { publishListingToChannel } = await import('@/lib/crosslister/services/publish-service');
+    const { publishListingToChannel } = await import('@twicely/crosslister/services/publish-service');
     const { publishListings } = await import('../crosslister-publish');
     await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
     // publishListingToChannel should be called with sellerId = 'seller-2'

@@ -47,16 +47,27 @@ npx turbo dev         # Start dev server
 - 12,043+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=11077
+BASELINE_TESTS=9884
 
 ## Duplicate-tree consolidation status
 
 | Status | Trees |
 |---|---|
-| Done (Tier 0–4) | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications, commerce |
-| Pending Tier 5 | crosslister, jobs |
+| Done (Tier 0–5a) | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications, commerce, crosslister |
+| Pending Tier 5 | jobs |
 
-Old `BASELINE_TESTS=13443` was inflated by ~2,366 ghost duplicate runs from mirror trees. The 11077 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33; Tier 4 commerce: 550.)
+Old `BASELINE_TESTS=13443` was inflated by ~3,559 ghost duplicate runs from mirror trees. The 9884 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33; Tier 4 commerce: 550; Tier 5 crosslister: 1,193.)
+
+**Tier 5 crosslister findings:**
+124 source files differed + 3 package-only files. Pattern: package was uniformly canonical — no bidirectional regressions, no platform_settings reads were stripped (verified by `grep` of `getPlatformSetting('crosslister.*')` calls). All package wins:
+- `services/publish-service.ts` (largest diff, 116 lines): split out into `publish-service-helpers.ts` to keep both files under 300-line CLAUDE.md limit. Helpers: `channelSettingKey`, `isCrosslistEnabled` (platform_setting + featureFlag dual-check kill switch), `enqueueSyncJob`. Re-exported from `publish-service.ts` for source compatibility.
+- `connectors/etsy-connector.ts` (65 lines): package adds **proper PKCE code verifier** (`randomBytes(32) → SHA-256 challenge`); web mirror was passing the OAuth `state` as `code_challenge`, a fake PKCE that any auditor would flag.
+- All other connectors (`ebay`, `grailed`, `vestiaire`, `therealreal`, etc.): refactor of `const acc = withDecryptedTokens(account); ...acc.X` → reassigning `account = withDecryptedTokens(account); ...account.X`. No semantic change.
+- `queue/scheduler-loop.ts`: package reads `crosslister.scheduler.tickIntervalMs` and `crosslister.scheduler.batchPullSize` from platform_settings (web hardcoded both as constants). Package wins on the platform_settings rule.
+- `services/queue-settings-loader.ts`: web mirror's file header literally said "Mirror of packages/crosslister/src/services/queue-settings-loader.ts". Now obsolete.
+- `types.ts`: package re-exports `ExternalChannel`/`Channel` from `@twicely/db/channel-types` (single source of truth, breaks finance↔crosslister circular dep).
+- 3 package-only files: `queries.ts`, `services/publish-service-helpers.ts`, `slug.ts`.
+- **One typecheck regression caught at flip time**: `apps/web/src/lib/queries/crosslister.ts` had `import type ... from '../crosslister/db-types'` (relative path that broke when the mirror was deleted). Updated to `@twicely/crosslister/db-types`.
 
 **Tier 4 commerce findings (multiple regressions surfaced):**
 The commerce mirror was the most diverged tree (84 source files differ + 13 package-only files). Pattern:

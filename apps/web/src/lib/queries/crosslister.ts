@@ -14,8 +14,8 @@ import {
   listingImage,
 } from '@twicely/db/schema';
 import { eq, and, desc, count, asc, sql } from 'drizzle-orm';
-import type { CrosslisterAccount, ImportBatch, ImportRecord, ChannelProjection, CrossJob } from '../crosslister/db-types';
-import type { CanonicalListingData, CanonicalImageData } from '../crosslister/services/listing-transform';
+import type { CrosslisterAccount, ImportBatch, ImportRecord, ChannelProjection, CrossJob } from '@twicely/crosslister/db-types';
+import type { CanonicalListingData, CanonicalImageData } from '@twicely/crosslister/services/listing-transform';
 
 /**
  * Get all connected channel accounts for a seller, ordered by channel name.

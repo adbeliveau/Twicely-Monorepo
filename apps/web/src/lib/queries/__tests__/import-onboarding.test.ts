@@ -28,7 +28,7 @@ vi.mock('@twicely/db/schema', () => ({
 
 // Real channel-registry needed for display name assertions
 vi.mock('@twicely/crosslister/channel-registry', async (importOriginal) => {
-  const real = await importOriginal<typeof import('@/lib/crosslister/channel-registry')>();
+  const real = await importOriginal<typeof import('@twicely/crosslister/channel-registry')>();
   return real;
 });
 

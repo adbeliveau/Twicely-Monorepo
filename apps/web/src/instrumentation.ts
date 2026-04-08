@@ -46,7 +46,7 @@ export async function register(): Promise<void> {
     const { loadInfraConfig } = await import('@twicely/config/infra-config');
     await loadInfraConfig();
 
-    const { initListerWorker } = await import('@/lib/crosslister/queue/worker-init');
+    const { initListerWorker } = await import('@twicely/crosslister/queue/worker-init');
     await initListerWorker();
 
     const { registerAffiliatePayoutJob } = await import('@/lib/jobs/affiliate-payout-cron');

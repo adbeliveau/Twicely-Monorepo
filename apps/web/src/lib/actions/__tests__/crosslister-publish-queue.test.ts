@@ -150,7 +150,7 @@ describe('publishListings — queued response', () => {
   });
 
   it('calls publishListingToChannel (enqueue) for each listing x channel', async () => {
-    const { publishListingToChannel } = await import('@/lib/crosslister/services/publish-service');
+    const { publishListingToChannel } = await import('@twicely/crosslister/services/publish-service');
     const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
@@ -259,7 +259,7 @@ describe('cancelJob', () => {
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
 
-    const { listerPublishQueue } = await import('@/lib/crosslister/queue/lister-queue');
+    const { listerPublishQueue } = await import('@twicely/crosslister/queue/lister-queue');
     const { cancelJob } = await import('../crosslister-publish');
     await cancelJob({ jobId: 'cj-1' });
     expect(listerPublishQueue.remove).toHaveBeenCalledWith('bq-xyz');
@@ -348,7 +348,7 @@ describe('delistFromChannel — enqueue pattern', () => {
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
 
-    const { listerPublishQueue } = await import('@/lib/crosslister/queue/lister-queue');
+    const { listerPublishQueue } = await import('@twicely/crosslister/queue/lister-queue');
     const { delistFromChannel } = await import('../crosslister-publish');
     const result = await delistFromChannel({ projectionId: 'proj-1' });
 
@@ -380,7 +380,7 @@ describe('updateProjectionOverrides — sync enqueue', () => {
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
 
-    const { enqueueSyncJob } = await import('@/lib/crosslister/services/publish-service');
+    const { enqueueSyncJob } = await import('@twicely/crosslister/services/publish-service');
     const { updateProjectionOverrides } = await import('../crosslister-publish');
     await updateProjectionOverrides({ projectionId: 'proj-1', titleOverride: 'New Title' });
 
@@ -401,7 +401,7 @@ describe('updateProjectionOverrides — sync enqueue', () => {
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
 
-    const { enqueueSyncJob } = await import('@/lib/crosslister/services/publish-service');
+    const { enqueueSyncJob } = await import('@twicely/crosslister/services/publish-service');
     const { updateProjectionOverrides } = await import('../crosslister-publish');
     await updateProjectionOverrides({ projectionId: 'proj-1', titleOverride: 'New Title' });
 
