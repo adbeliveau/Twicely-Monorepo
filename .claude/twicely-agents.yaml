@@ -219,6 +219,21 @@ domains:
       auth: engine-security
       schema: engine-schema
 
+  - id: hub-messaging
+    layer: hub
+    title: Messaging — Conversations, Typing, Keyword Moderation
+    summary: Buyer ↔ seller conversations, typing indicators, read receipts, attachments, keyword moderation, flagged messages. Owns (hub)/my/messages/*, (hub)/mod/messages, (hub)/admin-messages, (hub)/cfg/messaging/keywords, all messaging actions/API routes, and realtime messaging channels. Separate from hub-helpdesk case messaging.
+    canonicals:
+      - read-me/TWICELY_V3_FEATURE_LOCKIN_ALL_DOMAINS.md
+      - read-me/TWICELY_V3_ACTORS_SECURITY_CANONICAL.md
+    handoffs:
+      helpdesk_case_messaging: hub-helpdesk
+      notification_templates: "(notifications package — shared infrastructure)"
+      realtime_layer: "(realtime package — shared infrastructure)"
+      local_auto_messages: engine-local
+      auth: engine-security
+      schema: engine-schema
+
   # ════════════════════════════════════════════════════════════════════════════
   # LAYER 3 — ENGINE (cross-cutting, no UI)
   # ════════════════════════════════════════════════════════════════════════════
