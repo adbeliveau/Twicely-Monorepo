@@ -1,0 +1,2 @@
+- [Crosslister gate deviation](project_crosslister_gate_deviation.md) — hub-nav.ts uses IS_SELLER (not HAS_CROSSLISTER) for crosslister; undocumented product decision, flag each audit
+- [Hardcoded SETTINGS_NAV in settings layout](project_settings_layout_hardcoded_nav.md) — R3 FAIL: settings/layout.tsx has inline 5-item nav array, diverged from hub-nav.ts

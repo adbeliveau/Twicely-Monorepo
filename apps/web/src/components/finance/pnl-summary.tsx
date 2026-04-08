@@ -1,7 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@twicely/ui/card';
 import { formatCentsToDollars } from '@twicely/finance/format';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { FinanceDashboardKPIs } from '@/lib/queries/finance-center';
 import type { ExpenseSummaryResult, MileageSummaryResult } from '@/lib/queries/finance-center';
+
+// Canonical §5 null-COGS tooltip text (Financial Center Canonical v3.0)
+const COGS_MISSING_TOOLTIP = 'Add your item cost to calculate profit';
 
 interface PnlSummaryProps {
   kpis: FinanceDashboardKPIs;
@@ -35,7 +44,64 @@ function LineItem({ label, valueCents, indent, bold, negative }: LineItemProps) 
   );
 }
 
-// Canonical P&L formula (Financial Center Canonical section 6):
+interface CogsLineItemProps {
+  label: string;
+  valueCents: number;
+  indent?: boolean;
+  bold?: boolean;
+  negative?: boolean;
+  cogsIncomplete: boolean;
+}
+
+// A line item that always renders. When cogsIncomplete is true it shows "—" + tooltip
+// instead of a formatted dollar amount. Used for COGS, Gross Profit, and Net Profit rows.
+function CogsAwareLineItem({
+  label,
+  valueCents,
+  indent,
+  bold,
+  negative,
+  cogsIncomplete,
+}: CogsLineItemProps) {
+  if (!cogsIncomplete) {
+    return (
+      <LineItem
+        label={label}
+        valueCents={valueCents}
+        indent={indent}
+        bold={bold}
+        negative={negative}
+      />
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <div
+          className={`flex justify-between items-center py-1 ${indent ? 'pl-4' : ''} ${
+            bold ? 'font-semibold' : 'text-sm'
+          }`}
+        >
+          <span className={bold ? '' : 'text-muted-foreground'}>{label}</span>
+          {/* TooltipTrigger wraps only the dash glyph — Radix handles portal placement */}
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="cursor-help text-muted-foreground bg-transparent border-0 p-0 text-sm font-inherit leading-inherit"
+              aria-label={COGS_MISSING_TOOLTIP}
+            >
+              —
+            </button>
+          </TooltipTrigger>
+        </div>
+        <TooltipContent>{COGS_MISSING_TOOLTIP}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+// Canonical P&L formula (Financial Center Canonical §6):
 // Gross Revenue
 // - COGS
 // = Gross Profit
@@ -46,7 +112,9 @@ function LineItem({ label, valueCents, indent, bold, negative }: LineItemProps) 
 // - Mileage Deductions
 // = Net Profit
 export function PnlSummary({ kpis, expenses, mileage, financeTier }: PnlSummaryProps) {
-  const hasCogs = kpis.cogsTotalCents > 0;
+  // Canonical §5: cogsTotalCents === 0 means no COGS data — treat as incomplete.
+  // Real zero-COGS sellers do not exist (every item has a sourcing cost).
+  const cogsIncomplete = kpis.cogsTotalCents === 0;
   const grossProfit = kpis.grossRevenueCents - kpis.cogsTotalCents;
 
   const netProfit =
@@ -66,24 +134,24 @@ export function PnlSummary({ kpis, expenses, mileage, financeTier }: PnlSummaryP
         <div className="divide-y">
           <LineItem label="Gross revenue" valueCents={kpis.grossRevenueCents} />
 
-          {hasCogs && (
-            <LineItem
-              label="Cost of goods sold"
-              valueCents={kpis.cogsTotalCents}
-              indent
-              negative
-            />
-          )}
+          {/* COGS row — always rendered; shows "—" + tooltip when incomplete (canonical §5) */}
+          <CogsAwareLineItem
+            label="Cost of goods sold"
+            valueCents={kpis.cogsTotalCents}
+            indent
+            negative
+            cogsIncomplete={cogsIncomplete}
+          />
 
-          {hasCogs && (
-            <div className="pt-1 pb-1">
-              <LineItem
-                label="Gross profit"
-                valueCents={grossProfit}
-                bold
-              />
-            </div>
-          )}
+          {/* Gross Profit — always rendered; shows "—" when COGS incomplete */}
+          <div className="pt-1 pb-1">
+            <CogsAwareLineItem
+              label="Gross profit"
+              valueCents={grossProfit}
+              bold
+              cogsIncomplete={cogsIncomplete}
+            />
+          </div>
 
           <LineItem
             label="Transaction Fee"
@@ -133,11 +201,14 @@ export function PnlSummary({ kpis, expenses, mileage, financeTier }: PnlSummaryP
               negative
             />
           )}
+
+          {/* Net earnings — shows "—" when COGS incomplete (can't compute honest profit) */}
           <div className="pt-2">
-            <LineItem
+            <CogsAwareLineItem
               label="Net earnings"
               valueCents={netProfit}
               bold
+              cogsIncomplete={cogsIncomplete}
             />
           </div>
         </div>
@@ -145,3 +216,4 @@ export function PnlSummary({ kpis, expenses, mileage, financeTier }: PnlSummaryP
     </Card>
   );
 }
+

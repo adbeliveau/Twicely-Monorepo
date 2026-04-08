@@ -143,8 +143,9 @@ describe('rollover-manager', () => {
     });
 
     it('sets expiresAt = periodEnd for FREE tier (no rollover)', async () => {
+      // Decision #105: FREE = 5 publishes / 6-month window. Setting returns '5'.
       mockDbSelect
-        .mockReturnValueOnce(makeSelectChain([{ value: '25' }]))
+        .mockReturnValueOnce(makeSelectChain([{ value: '5' }]))
         .mockReturnValueOnce(makeSelectChain([{ value: '60' }]))
         .mockReturnValueOnce(makeSelectChain([{ value: '3' }]))
         .mockReturnValueOnce(makeSelectChain([]));
@@ -153,10 +154,43 @@ describe('rollover-manager', () => {
       mockDbInsert.mockReturnValue(insertChain);
 
       const { addMonthlyCredits } = await import('../rollover-manager');
-      await addMonthlyCredits('user-test-004', 'FREE', periodStart, periodEnd, 'sub-test-004');
+      await addMonthlyCredits('user-test-004', 'FREE', periodStart, periodEnd, null);
 
       const valuesArg = (insertChain.values as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(valuesArg.expiresAt).toEqual(periodEnd);
+    });
+
+    // Decision #105 closed-loop: FREE credit expiry MUST equal listerFreeExpiresAt
+    // (activatedAt + freeTierMonths * 30 days). The caller passes that date as periodEnd;
+    // addMonthlyCredits assigns it directly to expiresAt for FREE tier.
+    it('Decision #105: FREE credit expiresAt anchors to listerFreeExpiresAt (180-day window)', async () => {
+      const activatedAt = new Date('2025-01-01T00:00:00Z');
+      // 6 months * 30 days/month = 180 days — matches seller-activate.ts calculation
+      const listerFreeExpiresAt = new Date(activatedAt.getTime() + 6 * 30 * 24 * 60 * 60 * 1000);
+
+      mockDbSelect
+        .mockReturnValueOnce(makeSelectChain([{ value: '5' }]))   // crosslister.publishes.FREE
+        .mockReturnValueOnce(makeSelectChain([{ value: '60' }]))  // crosslister.rolloverDays
+        .mockReturnValueOnce(makeSelectChain([{ value: '3' }]))   // crosslister.rolloverMaxMultiplier
+        .mockReturnValueOnce(makeSelectChain([]));                 // getAvailableCredits (no existing)
+
+      const insertChain = makeInsertChain();
+      mockDbInsert.mockReturnValue(insertChain);
+
+      const { addMonthlyCredits } = await import('../rollover-manager');
+      // Caller passes listerFreeExpiresAt as periodEnd — null subscriptionId (FREE, no Stripe)
+      await addMonthlyCredits('user-test-016', 'FREE', activatedAt, listerFreeExpiresAt, null);
+
+      const valuesArg = (insertChain.values as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+
+      // Credit expiry equals the tier expiry — both anchored to the same 180-day window
+      expect(valuesArg.expiresAt).toEqual(listerFreeExpiresAt);
+      // Exactly 5 credits granted (Decision #105)
+      expect(valuesArg.totalCredits).toBe(5);
+      // No subscription linkage for FREE tier
+      expect(valuesArg.listerSubscriptionId).toBeNull();
+      // periodEnd stored as passed — callers can verify the window in the ledger
+      expect(valuesArg.periodEnd).toEqual(listerFreeExpiresAt);
     });
 
     it('sets expiresAt = now + 60 days for LITE tier (rollover enabled)', async () => {

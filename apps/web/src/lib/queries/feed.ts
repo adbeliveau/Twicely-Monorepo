@@ -12,6 +12,7 @@ import {
 import { eq, and, desc, sql, ne, notInArray, isNotNull, gt } from 'drizzle-orm';
 import { mapToListingCard } from './shared';
 import { getFollowedSellerNewListings } from './follow';
+import { getTrendingListings } from './explore-trending';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import type { ListingCardData } from '@/types/listings';
 
@@ -24,6 +25,12 @@ export interface FeedData {
   matchedListings: ListingCardData[];
   boostedListings: ListingCardData[];
   hasInterests: boolean;
+  /**
+   * Cold-start fallback — populated with trending listings when hasInterests = false.
+   * Per Personalization Canonical §4: skip behavior shows generic trending feed.
+   * Empty array when hasInterests = true.
+   */
+  trendingFallback: ListingCardData[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -87,6 +94,20 @@ export async function getForYouFeed(
   // TODO G3.9: watchlist price drops — requires snapshotPriceCents on watchlistItem
   const watchlistDrops: ListingCardData[] = [];
 
+  // Cold-start fallback: no interests → show trending feed (Canonical §4 Skip Behavior)
+  if (!hasInterests) {
+    const fallbackLimit = await getPlatformSetting<number>('discovery.explore.trendingLimit', 24);
+    const trendingFallback = await getTrendingListings(fallbackLimit);
+    return {
+      followedListings,
+      watchlistDrops,
+      matchedListings: [],
+      boostedListings: [],
+      hasInterests: false,
+      trendingFallback,
+    };
+  }
+
   // Section 3 — interest-matched listings
   const interestLimit = await getPlatformSetting<number>('social.feed.interestListingLimit', 40);
   const matchedListings = await getInterestMatchedListings(
@@ -105,7 +126,7 @@ export async function getForYouFeed(
     allExcludedIds,
   );
 
-  return { followedListings, watchlistDrops, matchedListings, boostedListings, hasInterests };
+  return { followedListings, watchlistDrops, matchedListings, boostedListings, hasInterests, trendingFallback: [] };
 }
 
 // ─── Interest Matched ─────────────────────────────────────────────────────────

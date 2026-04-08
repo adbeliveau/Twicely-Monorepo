@@ -2,6 +2,7 @@ import { db } from '@twicely/db';
 import { user, sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { addMonthlyCredits } from '@twicely/crosslister/services/rollover-manager';
 
 /**
  * Ensure a user has a seller profile.
@@ -51,4 +52,12 @@ export async function ensureSellerProfile(userId: string): Promise<void> {
       .set({ isSeller: true })
       .where(eq(user.id, userId));
   });
+
+  // Decision #105 (LOCKED): Grant the one-time FREE credit bucket.
+  // periodEnd is listerFreeExpiresAt so credits and tier expiry share the same anchor.
+  // listerSubscriptionId is null — FREE sellers have no Stripe subscription.
+  // addMonthlyCredits is idempotent: if called twice (re-activation edge case), the
+  // stockpile cap ensures no double-grant beyond the 5-publish limit.
+  const now = new Date();
+  await addMonthlyCredits(userId, 'FREE', now, listerFreeExpiresAt, null);
 }

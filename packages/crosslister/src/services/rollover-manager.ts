@@ -49,17 +49,23 @@ function publishLimitSettingKey(tier: string): string {
  * Add monthly credits when a billing period renews.
  * FREE tier credits expire at periodEnd (no rollover).
  * LITE/PRO tier credits expire at NOW() + rolloverDays, capped at maxStockpile.
+ *
+ * Decision #105 (LOCKED): FREE tier = 5 publishes / 6-month window.
+ * For FREE sellers, call with periodEnd = sellerProfile.listerFreeExpiresAt so that
+ * credit expiry is co-anchored to the tier expiry. listerSubscriptionId is null for
+ * FREE (no Stripe subscription).
  */
 export async function addMonthlyCredits(
   userId: string,
   tier: string,
   periodStart: Date,
   periodEnd: Date,
-  listerSubscriptionId: string,
+  listerSubscriptionId: string | null,
 ): Promise<void> {
   const limitKey = publishLimitSettingKey(tier);
   const [monthlyLimit, rolloverDays, rolloverMaxMultiplier] = await Promise.all([
-    getNumericSetting(limitKey, tier === 'FREE' ? 25 : tier === 'LITE' ? 200 : 2000),
+    // Decision #105: FREE fallback is 5 (NOT 25 — 25 was the stale pre-#105 value)
+    getNumericSetting(limitKey, tier === 'FREE' ? 5 : tier === 'LITE' ? 200 : 2000),
     getNumericSetting('crosslister.rolloverDays', 60),
     getNumericSetting('crosslister.rolloverMaxMultiplier', 3),
   ]);
