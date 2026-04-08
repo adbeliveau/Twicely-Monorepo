@@ -23,7 +23,7 @@ import { addAgentReply, updateCaseStatus, assignCase } from "@/lib/actions/helpd
 import { updateCasePriority } from "@/lib/actions/helpdesk-agent-cases-meta";
 import type { MacroContext } from "@/lib/helpdesk/macro-substitution";
 import { useHelpdeskHotkeys } from "@/lib/helpdesk/use-helpdesk-hotkeys";
-import { CaseWatchers } from "@/components/helpdesk/case-watchers";
+import { WatchToggleButton } from "@/components/helpdesk/case-watchers";
 import type { CaseWatcherItem } from "@/lib/queries/helpdesk-cases";
 import { AiSuggestionCard } from "@/components/helpdesk/ai-suggestion-card";
 
@@ -199,7 +199,11 @@ export function CaseWorkspace({
 
   return (
     <div className="hd-workspace">
-      <CaseQueuePanel cases={caseQueue} selectedCaseId={caseDetail.id} />
+      <CaseQueuePanel
+        cases={caseQueue}
+        selectedCaseId={caseDetail.id}
+        watchers={watchers}
+      />
 
       <div className="hd-workspace-center">
         {/* Header — V2 pattern: back button, case#, subject, SLA, inline properties, tags, watchers */}
@@ -223,7 +227,14 @@ export function CaseWorkspace({
                   <span className="font-mono text-xs" style={{ color: "rgb(var(--hd-text-dim))" }}>{caseDetail.caseNumber}</span>
                   <ChannelBadge channel={caseDetail.channel as Channel} />
                 </div>
-                <h1 className="text-base font-semibold truncate mt-0.5" style={{ color: "rgb(var(--hd-text-primary))" }}>{caseDetail.subject}</h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <h1 className="text-base font-semibold truncate" style={{ color: "rgb(var(--hd-text-primary))" }}>{caseDetail.subject}</h1>
+                  <WatchToggleButton
+                    caseId={caseDetail.id}
+                    watchers={watchers}
+                    currentStaffUserId={agentStaffUserId}
+                  />
+                </div>
               </div>
             </div>
             {caseDetail.slaFirstResponseDueAt && !caseDetail.firstResponseAt && (
@@ -239,11 +250,6 @@ export function CaseWorkspace({
             caseId={caseDetail.id}
             tags={caseDetail.tags}
             isClosed={isClosed}
-          />
-          <CaseWatchers
-            caseId={caseDetail.id}
-            watchers={watchers}
-            currentStaffUserId={agentStaffUserId}
           />
         </div>
 

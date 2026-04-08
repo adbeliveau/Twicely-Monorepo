@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PriorityBadge } from "@/components/helpdesk/helpdesk-badges";
 import type { Priority } from "@/components/helpdesk/helpdesk-badges";
+import { CaseWatchersList } from "@/components/helpdesk/case-watchers";
+import type { CaseWatcherItem } from "@/lib/queries/helpdesk-cases";
 
 interface QueueCase {
   id: string;
@@ -21,6 +23,7 @@ interface QueueCase {
 interface CaseQueuePanelProps {
   cases: QueueCase[];
   selectedCaseId: string;
+  watchers?: CaseWatcherItem[];
   className?: string;
 }
 
@@ -58,7 +61,7 @@ function slaLabel(dueAt: Date | null | undefined, firstResponseAt: Date | null |
   return { label: text, cls: "hd-sla" };
 }
 
-export function CaseQueuePanel({ cases, selectedCaseId, className }: CaseQueuePanelProps) {
+export function CaseQueuePanel({ cases, selectedCaseId, watchers = [], className }: CaseQueuePanelProps) {
   const [search, setSearch] = useState("");
   const [isOnline, setIsOnline] = useState(true);
 
@@ -187,6 +190,9 @@ export function CaseQueuePanel({ cases, selectedCaseId, className }: CaseQueuePa
           })
         )}
       </div>
+
+      {/* Watchers list — moved here from header to save vertical space in the center panel */}
+      <CaseWatchersList watchers={watchers} />
 
       {/* Footer — availability toggle */}
       <div
