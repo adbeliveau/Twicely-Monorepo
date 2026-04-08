@@ -1090,7 +1090,7 @@ Per Pricing Canonical v3.2 §5.2. All orders, all tiers, no exceptions.
 | `trust.standards.topRatedMaxLateShipRate` | percent | 1.0 | Max late ship rate for TOP_RATED |
 | `trust.standards.topRatedMinOrdersYear` | number | 100 | Min annual orders for TOP_RATED |
 | `trust.standards.belowStandardVisibilityReduction` | percent | 50.0 | Search visibility penalty |
-| `trust.standards.belowStandardFvfSurcharge` | percent | 5.0 | Additional TF penalty |
+| `trust.standards.belowStandardTfSurcharge` | bps | 200 | Additional TF penalty in basis points (renamed from `belowStandardFvfSurcharge` per Decision #75 — FvF → TF terminology; value reduced from 500 bps to 200 bps by operator decision) |
 | `trust.standards.restrictedMaxListings` | number | 10 | Max listings for restricted sellers |
 | `trust.standards.defectExpiryDays` | number | 365 | Days before defects expire |
 

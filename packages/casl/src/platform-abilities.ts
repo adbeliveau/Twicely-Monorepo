@@ -151,6 +151,12 @@ export function definePlatformAgentAbilities(
     can('read', 'ProviderAdapter');
     can('read', 'ProviderInstance');
     can('read', 'ProviderHealthLog');
+    // Platform config read access — DEVELOPER needs to inspect settings,
+    // feature modules, and provider usage mappings for debugging, but
+    // cannot mutate them (ADMIN-only per Actors & Security Canonical §3.6).
+    can('read', 'Setting');
+    can('read', 'Module');
+    can('read', 'ProviderUsageMapping');
   }
 
   if (roles.includes('SRE')) {
