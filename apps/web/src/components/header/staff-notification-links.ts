@@ -1,6 +1,10 @@
 /**
  * Resolve a notification template key + data to the appropriate hub route.
  * Used by the HubNotificationDropdown to generate links for each notification.
+ *
+ * Lives in apps/web/src/components/header/ (not packages/notifications) because
+ * the returned routes (/hd, /mod, /tx) are app-specific hub paths — the
+ * notifications engine is UI-agnostic.
  */
 
 interface NotificationData {

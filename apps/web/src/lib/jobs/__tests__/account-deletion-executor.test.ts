@@ -143,7 +143,7 @@ describe('runAccountDeletionBatch — lifecycle', () => {
 
   it('sends confirmation email before clearing PII', async () => {
     const { db } = await import('@twicely/db');
-    const { notify } = await import('@/lib/notifications/service');
+    const { notify } = await import('@twicely/notifications/service');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {

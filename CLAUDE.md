@@ -47,17 +47,26 @@ npx turbo dev         # Start dev server
 - 12,043+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=11660
+BASELINE_TESTS=11627
 
 ## Duplicate-tree consolidation status
 
 | Status | Trees |
 |---|---|
-| Done | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe |
-| Pending Tier 4 | notifications, commerce |
+| Done | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications |
+| Pending Tier 4 | commerce |
 | Pending Tier 5 | crosslister, jobs |
 
-Old `BASELINE_TESTS=13443` was inflated by ~1,783 ghost duplicate runs from mirror trees. The 11660 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109.)
+Old `BASELINE_TESTS=13443` was inflated by ~1,816 ghost duplicate runs from mirror trees. The 11627 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33.)
+
+**Tier 4 notifications findings:**
+- Package had `templates-authentication.ts` (G10.2 AI authentication: authenticated/counterfeit/inconclusive) and `templates-accounting.ts` (G10.3 accounting sync completed/failed) that the web mirror lacked entirely. Package wins.
+- Package's `templates-types.ts` had 5 new TemplateKey entries (`auth.ai.*`, `accounting.sync.*`) that the web mirror lacked. Package wins.
+- Package's `templates.ts` spread in the two new template groups; web mirror did not. Package wins.
+- `service.tsx` in web vs `service.ts` in package — no actual JSX (only a comment referencing lazy-loaded email components). Package `.ts` extension wins.
+- All 15 notifier/template files had only import-path drift (`@twicely/notifications/X` → `./X`).
+- `followed-seller-notifier.ts` existed only in web — promoted to `packages/notifications/src/` with `./service` relative import. Web consumers (`listings-create.ts`, 2 test files) updated to `@twicely/notifications/followed-seller-notifier`.
+- `staff-notification-links.ts` existed only in web and returns app-specific hub routes (`/hd`, `/mod`, `/tx`) — moved to `apps/web/src/components/header/` (co-located with its only consumer `HubNotificationDropdown.tsx`) rather than the package.
 
 **Tier 4 stripe findings (critical):**
 - `packages/stripe/src/webhook-idempotency.ts` was the canonical — had SEC-022 fail-CLOSED on DB error to prevent double-processing. The web mirror was failing OPEN (returning false on error), meaning if both Valkey and DB were down, Stripe webhooks could double-charge. Package wins.

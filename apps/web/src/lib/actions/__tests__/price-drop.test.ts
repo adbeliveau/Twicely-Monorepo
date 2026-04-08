@@ -99,7 +99,7 @@ describe('notifyPriceDropWatchers', () => {
   });
 
   it('does not notify when price increases', async () => {
-    const { notifyPriceDropWatchers } = await import('@/lib/notifications/price-drop-notifier');
+    const { notifyPriceDropWatchers } = await import('@twicely/notifications/price-drop-notifier');
     await notifyPriceDropWatchers('listing-1', 1000, 1500);
 
     expect(mockDbSelect).not.toHaveBeenCalled();
@@ -107,7 +107,7 @@ describe('notifyPriceDropWatchers', () => {
   });
 
   it('does not notify when price stays the same', async () => {
-    const { notifyPriceDropWatchers } = await import('@/lib/notifications/price-drop-notifier');
+    const { notifyPriceDropWatchers } = await import('@twicely/notifications/price-drop-notifier');
     await notifyPriceDropWatchers('listing-1', 1000, 1000);
 
     expect(mockDbSelect).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe('notifyPriceDropWatchers', () => {
         }),
       });
 
-    const { notifyPriceDropWatchers } = await import('@/lib/notifications/price-drop-notifier');
+    const { notifyPriceDropWatchers } = await import('@twicely/notifications/price-drop-notifier');
     await notifyPriceDropWatchers('listing-1', 2000, 1500);
 
     expect(mockNotify).toHaveBeenCalledTimes(2);
@@ -167,7 +167,7 @@ describe('notifyPriceDropWatchers', () => {
         }),
       });
 
-    const { notifyPriceDropWatchers } = await import('@/lib/notifications/price-drop-notifier');
+    const { notifyPriceDropWatchers } = await import('@twicely/notifications/price-drop-notifier');
     await notifyPriceDropWatchers('listing-1', 2000, 1500);
 
     expect(mockNotify).toHaveBeenCalledTimes(1);
@@ -182,7 +182,7 @@ describe('notifyPriceDropWatchers', () => {
       }),
     });
 
-    const { notifyPriceDropWatchers } = await import('@/lib/notifications/price-drop-notifier');
+    const { notifyPriceDropWatchers } = await import('@twicely/notifications/price-drop-notifier');
     await notifyPriceDropWatchers('nonexistent', 2000, 1500);
 
     expect(mockNotify).not.toHaveBeenCalled();
@@ -207,7 +207,7 @@ describe('notifyPriceDropWatchers', () => {
 
     mockNotify.mockRejectedValue(new Error('Email failed'));
 
-    const { notifyPriceDropWatchers } = await import('@/lib/notifications/price-drop-notifier');
+    const { notifyPriceDropWatchers } = await import('@twicely/notifications/price-drop-notifier');
 
     // Should not throw even if notify fails
     await expect(notifyPriceDropWatchers('listing-1', 2000, 1500)).resolves.toBeUndefined();

@@ -7,7 +7,7 @@
 import { db } from '@twicely/db';
 import { listing, follow, user, sellerProfile } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-import { notify } from '@twicely/notifications/service';
+import { notify } from './service';
 import { formatPrice } from '@twicely/utils/format';
 import { logger } from '@twicely/logger';
 

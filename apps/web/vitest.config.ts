@@ -75,7 +75,7 @@ export default defineConfig({
       '@twicely/finance': path.resolve(__dirname, '../../packages/finance/src'),
       '@twicely/commerce': path.resolve(__dirname, './src/lib/commerce'),
       '@twicely/stripe': path.resolve(__dirname, '../../packages/stripe/src'),
-      '@twicely/notifications': path.resolve(__dirname, './src/lib/notifications'),
+      '@twicely/notifications': path.resolve(__dirname, '../../packages/notifications/src'),
       '@twicely/crosslister': path.resolve(__dirname, './src/lib/crosslister'),
       '@twicely/subscriptions': path.resolve(__dirname, '../../packages/subscriptions/src'),
       '@twicely/scoring': path.resolve(__dirname, '../../packages/scoring/src'),

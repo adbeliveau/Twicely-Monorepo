@@ -10,7 +10,7 @@ import {
 import {
   resolveNotificationLink,
   resolveNotificationTitle,
-} from '@/lib/notifications/staff-notification-links';
+} from './staff-notification-links';
 import { formatRelativeTime } from './notification-time';
 
 interface NotificationItem {

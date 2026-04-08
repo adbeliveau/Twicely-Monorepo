@@ -195,7 +195,7 @@ describe('getQuestionById', () => {
 
 describe('Q&A notification template keys exist in TEMPLATES', () => {
   it('qa.new_question template is defined with correct fields', async () => {
-    const { TEMPLATES } = await import('@/lib/notifications/templates');
+    const { TEMPLATES } = await import('@twicely/notifications/templates');
     const template = TEMPLATES['qa.new_question'];
 
     expect(template).toBeDefined();
@@ -210,7 +210,7 @@ describe('Q&A notification template keys exist in TEMPLATES', () => {
   });
 
   it('qa.answer_received template is defined with correct fields', async () => {
-    const { TEMPLATES } = await import('@/lib/notifications/templates');
+    const { TEMPLATES } = await import('@twicely/notifications/templates');
     const template = TEMPLATES['qa.answer_received'];
 
     expect(template).toBeDefined();

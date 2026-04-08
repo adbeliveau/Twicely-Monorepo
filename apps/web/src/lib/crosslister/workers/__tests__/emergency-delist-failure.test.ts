@@ -173,7 +173,7 @@ describe('emergency delist processor — failure paths', () => {
       }),
     });
 
-    const { notify } = await import('@/lib/notifications/service');
+    const { notify } = await import('@twicely/notifications/service');
     const processor = await getProcessor();
     if (processor) {
       try {

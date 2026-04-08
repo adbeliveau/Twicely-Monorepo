@@ -7,7 +7,7 @@ import { authorize, sub } from '@twicely/casl';
 import { generateListingSlug } from '@/lib/listings/slug';
 import { ensureSellerProfile } from '@/lib/listings/seller-activate';
 import { notifyCategoryAlertMatches } from '@twicely/notifications/category-alert-notifier';
-import { notifyFollowedSellerNewListing } from '@/lib/notifications/followed-seller-notifier';
+import { notifyFollowedSellerNewListing } from '@twicely/notifications/followed-seller-notifier';
 import { recordPriceChange } from '@/lib/services/price-history-service';
 import type { ListingFormData } from '@/types/listing-form';
 import { listingFormSchema } from '@/lib/validations/listing';

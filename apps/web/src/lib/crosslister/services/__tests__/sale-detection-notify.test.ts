@@ -121,7 +121,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
     setupUpdateMock(db);
     setupInsertMock(db);
 
-    const { notify } = await import('@/lib/notifications/service');
+    const { notify } = await import('@twicely/notifications/service');
     const { handleDetectedSale } = await import('../sale-detection');
     await handleDetectedSale(BASE_SALE);
 

@@ -63,7 +63,7 @@ vi.mock('@twicely/search/typesense-index', () => ({
   deleteListingDocument: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/notifications/followed-seller-notifier', () => ({
+vi.mock('@twicely/notifications/followed-seller-notifier', () => ({
   notifyFollowedSellerNewListing: vi.fn().mockResolvedValue(undefined),
 }));
 
