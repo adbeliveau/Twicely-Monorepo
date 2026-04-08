@@ -14,6 +14,8 @@ interface ListingPhotosCardProps {
   aiAutofillRemaining?: number;
   onAiSuggestions: (suggestions: AiAutofillSuggestions) => void;
   aiSuggestionApplied: boolean;
+  /** Server-read platform_settings value for listing.maxImagesPerListing. */
+  maxImages?: number;
 }
 
 export function ListingPhotosCard({
@@ -24,6 +26,7 @@ export function ListingPhotosCard({
   aiAutofillRemaining,
   onAiSuggestions,
   aiSuggestionApplied,
+  maxImages,
 }: ListingPhotosCardProps) {
   const imageUrls = images.map((img) => img.url).filter(Boolean);
 
@@ -33,7 +36,7 @@ export function ListingPhotosCard({
         <CardTitle>Photos</CardTitle>
       </CardHeader>
       <CardContent>
-        <ImageUploader images={images} onChange={onChange} disabled={disabled} />
+        <ImageUploader images={images} onChange={onChange} disabled={disabled} maxImages={maxImages} />
         {imagesError && <p className="mt-2 text-sm text-destructive">{imagesError}</p>}
         {aiAutofillRemaining !== undefined && (
           <div className="mt-3">

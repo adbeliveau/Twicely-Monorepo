@@ -11,9 +11,11 @@ interface ListingFormWrapperProps {
   listingId?: string;
   initialData?: Partial<ListingFormData>;
   aiAutofillRemaining?: number;
+  /** Server-read platform_settings value for listing.maxImagesPerListing. */
+  maxImages?: number;
 }
 
-export function ListingFormWrapper({ mode, listingId, initialData, aiAutofillRemaining }: ListingFormWrapperProps) {
+export function ListingFormWrapper({ mode, listingId, initialData, aiAutofillRemaining, maxImages }: ListingFormWrapperProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +57,7 @@ export function ListingFormWrapper({ mode, listingId, initialData, aiAutofillRem
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         aiAutofillRemaining={aiAutofillRemaining}
+        maxImages={maxImages}
       />
     </div>
   );

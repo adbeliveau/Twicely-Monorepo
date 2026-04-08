@@ -1,12 +1,5 @@
 import Link from 'next/link';
-
-const SETTINGS_NAV = [
-  { href: '/my/settings', label: 'Profile' },
-  { href: '/my/settings/notifications', label: 'Notifications' },
-  { href: '/my/settings/security', label: 'Security' },
-  { href: '/my/settings/privacy', label: 'Privacy & Data' },
-  { href: '/my/settings/payments', label: 'Payments' },
-];
+import { SETTINGS_SUB_NAV } from '@/lib/hub/hub-nav';
 
 export default function SettingsLayout({
   children,
@@ -16,7 +9,7 @@ export default function SettingsLayout({
   return (
     <div className="space-y-6">
       <nav className="flex gap-4 border-b pb-2 text-sm" aria-label="Settings navigation">
-        {SETTINGS_NAV.map((item) => (
+        {SETTINGS_SUB_NAV.map((item) => (
           <Link
             key={item.href}
             href={item.href}

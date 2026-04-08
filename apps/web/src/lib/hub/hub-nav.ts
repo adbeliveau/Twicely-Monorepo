@@ -194,11 +194,12 @@ export const HUB_NAV: HubNavSection[] = [
     icon: 'Settings',
     gate: 'ALWAYS',
     items: [
-      { key: 'account', label: 'Account', href: '/my/settings', icon: 'UserCircle' },
-      { key: 'addresses', label: 'Addresses', href: '/my/settings/addresses', icon: 'MapPin' },
-      { key: 'payments', label: 'Payment Methods', href: '/my/settings/payments', icon: 'CreditCard' },
-      { key: 'security', label: 'Security', href: '/my/settings/security', icon: 'Shield' },
+      { key: 'account', label: 'Account', href: '/my/settings', icon: 'UserCircle', exact: true },
       { key: 'notifications', label: 'Notifications', href: '/my/settings/notifications', icon: 'Bell' },
+      { key: 'security', label: 'Security', href: '/my/settings/security', icon: 'Shield' },
+      { key: 'privacy', label: 'Privacy & Data', href: '/my/settings/privacy', icon: 'Lock' },
+      { key: 'payments', label: 'Payment Methods', href: '/my/settings/payments', icon: 'CreditCard' },
+      { key: 'addresses', label: 'Addresses', href: '/my/settings/addresses', icon: 'MapPin' },
     ],
   },
 
@@ -259,3 +260,11 @@ export function filterHubNav(
   // Step 3: Remove empty sections
   return scoped.filter((section) => section.items.length > 0);
 }
+
+// ─── Settings Sub-Navigation ─────────────────────────────────────────────────
+// Canonical ordered list for the horizontal sub-nav strip in settings layouts.
+// Source of truth: TWICELY_V3_PAGE_REGISTRY.md §5 (rows 74-79).
+export const SETTINGS_SUB_NAV: Pick<HubNavItem, 'key' | 'label' | 'href'>[] =
+  (HUB_NAV.find((s) => s.key === 'settings')?.items ?? []).map(
+    ({ key, label, href }) => ({ key, label, href }),
+  );

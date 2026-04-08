@@ -48,7 +48,8 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@twicely/crosslister/services/publish-meter', () => ({
   canPublish: vi.fn().mockResolvedValue(true),
   getPublishAllowance: vi.fn().mockResolvedValue({
-    tier: 'FREE', monthlyLimit: 25, usedThisMonth: 0, remaining: 25, rolloverBalance: 0,
+    // Decision #105: FREE tier = 5 publishes / 6 months (not 25/month)
+    tier: 'FREE', monthlyLimit: 5, usedThisMonth: 0, remaining: 5, rolloverBalance: 0,
   }),
 }));
 

@@ -2,7 +2,9 @@ import type { ValidationResult } from '@/types/upload';
 
 // Constants
 export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-export const MAX_IMAGES = 12;
+// FALLBACK only — real limit comes from platform_settings key 'listing.maxImagesPerListing'
+// Read via getPlatformSetting on the server and pass as a prop. Never use this for enforcement.
+export const FALLBACK_MAX_IMAGES = 24;
 export const MIN_DIMENSION = 200;
 export const MAX_DIMENSION = 8000;
 export const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];

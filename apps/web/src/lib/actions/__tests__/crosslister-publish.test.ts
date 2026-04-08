@@ -48,9 +48,9 @@ vi.mock('@twicely/crosslister/services/publish-meter', () => ({
   canPublish: vi.fn().mockResolvedValue(true),
   getPublishAllowance: vi.fn().mockResolvedValue({
     tier: 'FREE',
-    monthlyLimit: 25,
+    monthlyLimit: 5, // Decision #105: FREE tier = 5 publishes / 6 months (not 25/month)
     usedThisMonth: 0,
-    remaining: 25,
+    remaining: 5,
     rolloverBalance: 0,
   }),
 }));
@@ -166,7 +166,8 @@ describe('publishListings', () => {
     const { canPublish, getPublishAllowance } = await import('@twicely/crosslister/services/publish-meter');
     (canPublish as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
     (getPublishAllowance as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      tier: 'FREE', monthlyLimit: 25, usedThisMonth: 25, remaining: 0, rolloverBalance: 0,
+      // Decision #105: FREE tier cap is 5, so exhausted state = usedThisMonth: 5
+      tier: 'FREE', monthlyLimit: 5, usedThisMonth: 5, remaining: 0, rolloverBalance: 0,
     });
     const { publishListings } = await import('../crosslister-publish');
     const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
@@ -379,7 +380,7 @@ describe('getPublishAllowanceAction', () => {
     const result = await getPublishAllowanceAction();
     expect(result.success).toBe(true);
     expect(result.data?.tier).toBe('FREE');
-    expect(result.data?.monthlyLimit).toBe(25);
+    expect(result.data?.monthlyLimit).toBe(5); // Decision #105: FREE tier = 5 publishes / 6 months
   });
 
   it('returns Unauthorized when no session', async () => {
