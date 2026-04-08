@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@twicely/ui/badge';
 import { Button } from '@twicely/ui/button';
 import type { AdminCategoryDetail } from '@/lib/queries/admin-categories';
-import { deleteAttributeSchema } from '@/lib/actions/admin-categories';
+import { deleteAttributeSchema } from '@/lib/actions/admin-categories-attrs';
 import { AttributeSchemaForm } from './attribute-schema-form';
 
 type SchemaRow = AdminCategoryDetail['attributeSchemas'][number];

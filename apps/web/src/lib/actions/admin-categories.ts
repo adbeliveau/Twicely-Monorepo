@@ -266,9 +266,7 @@ export async function reorderCategories(
   return { success: true };
 }
 
-// ─── Re-exports from admin-categories-attrs.ts (split) ────────────────────
-export {
-  createAttributeSchema,
-  updateAttributeSchema,
-  deleteAttributeSchema,
-} from './admin-categories-attrs';
+// NOTE: createAttributeSchema, updateAttributeSchema, deleteAttributeSchema
+// live in './admin-categories-attrs'. Import them from there directly —
+// Next.js 'use server' files cannot re-export server actions from other
+// files (Turbopack rejects this at build time).

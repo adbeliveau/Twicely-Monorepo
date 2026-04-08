@@ -223,5 +223,6 @@ export async function updateListing(
   }
 }
 
-// ─── Re-exports from listings-update-status.ts (split) ────────────────────
-export { updateListingStatus, getListingForEdit } from './listings-update-status';
+// NOTE: updateListingStatus, getListingForEdit live in
+// './listings-update-status'. Import them from there directly — Next.js
+// 'use server' files cannot re-export server actions from other files.

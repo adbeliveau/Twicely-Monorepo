@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@twicely/ui/select';
 import { Textarea } from '@twicely/ui/textarea';
-import { createAttributeSchema, updateAttributeSchema } from '@/lib/actions/admin-categories';
+import { createAttributeSchema, updateAttributeSchema } from '@/lib/actions/admin-categories-attrs';
 import type { AdminCategoryDetail } from '@/lib/queries/admin-categories';
 
 type SchemaRow = AdminCategoryDetail['attributeSchemas'][number];

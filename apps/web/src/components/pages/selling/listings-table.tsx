@@ -10,7 +10,7 @@ import { Badge } from '@twicely/ui/badge';
 import { ImageIcon, Heart } from 'lucide-react';
 import { cn } from '@twicely/utils';
 import { formatPrice, formatDate } from '@twicely/utils/format';
-import { updateListingStatus } from '@/lib/actions/listings-update';
+import { updateListingStatus } from '@/lib/actions/listings-update-status';
 import { deleteListing } from '@/lib/actions/listings-delete';
 import { bulkUpdateListingStatus, bulkDeleteListings } from '@/lib/actions/seller-listings';
 import type { SellerListingRow, ListingStatus, StatusCounts } from '@/lib/queries/seller-listings';

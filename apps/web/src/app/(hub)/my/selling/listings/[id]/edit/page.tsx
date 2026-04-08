@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { auth } from '@twicely/auth';
-import { getListingForEdit } from '@/lib/actions/listings';
+import { getListingForEdit } from '@/lib/actions/listings-update-status';
 import { getCategoryById } from '@/lib/queries/category-search';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { ListingFormWrapper } from '@/components/pages/listing/listing-form-wrapper';
