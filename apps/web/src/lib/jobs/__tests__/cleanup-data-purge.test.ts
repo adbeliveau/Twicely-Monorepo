@@ -123,7 +123,7 @@ describe('runDataPurge', () => {
 
   it('deletes R2 files for expired exports that have a downloadUrl', async () => {
     const { db } = await import('@/lib/db');
-    const { deleteFromR2 } = await import('@/lib/storage/r2-client');
+    const { deleteFromR2 } = await import('@twicely/storage/r2-client');
 
     vi.mocked(db.execute).mockResolvedValue({ count: 0, rows: [] } as unknown as Awaited<ReturnType<typeof db.execute>>);
 

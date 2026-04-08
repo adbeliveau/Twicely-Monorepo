@@ -5,6 +5,7 @@
  * Falls back to mock URLs in dev mode when R2_ACCOUNT_ID is missing.
  */
 
+import { logger } from '@twicely/logger';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -54,7 +55,7 @@ export async function uploadToR2(
   const client = getS3Client();
 
   if (!client) {
-    console.warn('[R2] Credentials not configured, returning mock URL');
+    logger.warn('[R2] Credentials not configured, returning mock URL');
     return `${R2_PUBLIC_URL}/mock/${key}`;
   }
 
@@ -78,7 +79,7 @@ export async function deleteFromR2(key: string): Promise<void> {
   const client = getS3Client();
 
   if (!client) {
-    console.warn('[R2] Credentials not configured, skipping delete');
+    logger.warn('[R2] Credentials not configured, skipping delete');
     return;
   }
 
@@ -106,7 +107,7 @@ export async function generateSignedUploadUrl(
   const client = getS3Client();
 
   if (!client) {
-    console.warn('[R2] Credentials not configured, returning mock presigned URL');
+    logger.warn('[R2] Credentials not configured, returning mock presigned URL');
     return `${R2_PUBLIC_URL}/mock-presigned/${key}?expires=${expiresIn}`;
   }
 

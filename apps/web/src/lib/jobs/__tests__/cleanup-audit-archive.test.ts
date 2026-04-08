@@ -75,7 +75,7 @@ describe('runAuditArchive', () => {
 
   it('skips archive and delete when no events exist', async () => {
     const { db } = await import('@/lib/db');
-    const { uploadToR2 } = await import('@/lib/storage/r2-client');
+    const { uploadToR2 } = await import('@twicely/storage/r2-client');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
     const { runAuditArchive } = await import('../cleanup-audit-archive');
@@ -87,7 +87,7 @@ describe('runAuditArchive', () => {
 
   it('uploads gzip archive to R2 when events exist', async () => {
     const { db } = await import('@/lib/db');
-    const { uploadToR2 } = await import('@/lib/storage/r2-client');
+    const { uploadToR2 } = await import('@twicely/storage/r2-client');
 
     const sampleEvent = {
       id: 'evt-1',
@@ -110,7 +110,7 @@ describe('runAuditArchive', () => {
 
   it('groups events by year/month in R2 key', async () => {
     const { db } = await import('@/lib/db');
-    const { uploadToR2 } = await import('@/lib/storage/r2-client');
+    const { uploadToR2 } = await import('@twicely/storage/r2-client');
 
     const events = [
       { id: 'e1', createdAt: new Date('2024-01-15') },
@@ -160,7 +160,7 @@ describe('runAuditArchive', () => {
 
   it('does NOT delete events when R2 upload fails (archiveBeforePurge guard)', async () => {
     const { db } = await import('@/lib/db');
-    const { uploadToR2 } = await import('@/lib/storage/r2-client');
+    const { uploadToR2 } = await import('@twicely/storage/r2-client');
     const { logger } = await import('@/lib/logger');
 
     const sampleEvent = { id: 'evt-r2-fail', createdAt: new Date('2024-01-01') };
@@ -181,7 +181,7 @@ describe('runAuditArchive', () => {
   it('skips R2 upload when archiveBeforePurge is false', async () => {
     const { db } = await import('@/lib/db');
     const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
-    const { uploadToR2 } = await import('@/lib/storage/r2-client');
+    const { uploadToR2 } = await import('@twicely/storage/r2-client');
 
     vi.mocked(getPlatformSetting).mockImplementation((key: string, defaultVal: unknown) => {
       if (key === 'audit.retentionMonths') return Promise.resolve(24);

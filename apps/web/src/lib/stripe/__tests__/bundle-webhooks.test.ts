@@ -45,7 +45,7 @@ describe('D3-S5: Bundle Webhook Integration', () => {
     it('routes bundle subscription to upsertBundleSubscription', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
       const { upsertBundleSubscription } = await import('@/lib/mutations/subscriptions');
-      const { resolveStripePriceId } = await import('@/lib/subscriptions/price-map');
+      const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
         product: 'bundle', tier: 'PRO', interval: 'monthly',
@@ -62,7 +62,7 @@ describe('D3-S5: Bundle Webhook Integration', () => {
     it('passes correct params from Stripe subscription to bundle upsert', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
       const { upsertBundleSubscription } = await import('@/lib/mutations/subscriptions');
-      const { resolveStripePriceId } = await import('@/lib/subscriptions/price-map');
+      const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
         product: 'bundle', tier: 'POWER', interval: 'annual',
@@ -86,7 +86,7 @@ describe('D3-S5: Bundle Webhook Integration', () => {
     it('resolves bundle from price ID when metadata is missing', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
       const { upsertBundleSubscription } = await import('@/lib/mutations/subscriptions');
-      const { resolveStripePriceId } = await import('@/lib/subscriptions/price-map');
+      const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
       const { findSellerByStripeCustomerId } = await import('@/lib/queries/subscription-lookups');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
@@ -132,7 +132,7 @@ describe('D3-S5: Bundle Webhook Integration', () => {
     it('dispatches customer.subscription.created for bundle', async () => {
       const { handleSubscriptionWebhook } = await import('../subscription-webhooks');
       const { upsertBundleSubscription } = await import('@/lib/mutations/subscriptions');
-      const { resolveStripePriceId } = await import('@/lib/subscriptions/price-map');
+      const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
         product: 'bundle', tier: 'STARTER', interval: 'annual',
@@ -151,7 +151,7 @@ describe('D3-S5: Bundle Webhook Integration', () => {
       const { handleSubscriptionWebhook } = await import('../subscription-webhooks');
       const { upsertBundleSubscription } = await import('@/lib/mutations/subscriptions');
       const { applyPendingDowngradeIfNeeded } = await import('@/lib/mutations/apply-pending-downgrade');
-      const { resolveStripePriceId } = await import('@/lib/subscriptions/price-map');
+      const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
         product: 'bundle', tier: 'PRO', interval: 'monthly',
@@ -190,7 +190,7 @@ describe('D3-S5: Bundle Webhook Integration', () => {
     it('routes bundle upgrade to upsert with new tier', async () => {
       const { handleSubscriptionUpsert } = await import('../subscription-webhooks');
       const { upsertBundleSubscription } = await import('@/lib/mutations/subscriptions');
-      const { resolveStripePriceId } = await import('@/lib/subscriptions/price-map');
+      const { resolveStripePriceId } = await import('@twicely/subscriptions/price-map');
 
       vi.mocked(resolveStripePriceId).mockReturnValue({
         product: 'bundle', tier: 'POWER', interval: 'annual',

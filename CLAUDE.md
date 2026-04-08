@@ -9,9 +9,9 @@ Turborepo monorepo for Twicely, a peer-to-peer resale marketplace. Converted fro
 Phases A–I complete. Monorepo conversion done. All features built. Audit-clean.
 
 - TypeScript: 24/24 packages pass
-- Tests: 23/23 packages pass, 12210+ tests green
+- Tests: 23/23 packages pass, 12043+ tests green
 - Audit: 11/11 streams clean (0 blockers, 0 warnings)
-- Duplicate-tree consolidation: Tier 0 + Tier 1 done (7 trees, 38 mirror files removed)
+- Duplicate-tree consolidation: Tier 0 + Tier 1 + Tier 2 done (10 trees consolidated)
 
 ### Important Notes
 
@@ -44,19 +44,18 @@ npx turbo dev         # Start dev server
 - TypeScript strict mode, zero `as any`
 - Integer cents for money, never floats
 - All settings from `platform_settings` table
-- 12,210+ tests must pass (baseline)
+- 12,043+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=12210
+BASELINE_TESTS=12043
 
 ## Duplicate-tree consolidation status
 
 | Status | Trees |
 |---|---|
-| Done | shipping (deleted), realtime, email, scoring, config, finance, utils |
-| Pending Tier 2 | storage, subscriptions, search |
+| Done | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search |
 | Pending Tier 3 (HIGH RISK) | auth, casl, db |
 | Pending Tier 4 | stripe, notifications, commerce |
 | Pending Tier 5 | crosslister, jobs |
 
-Old `BASELINE_TESTS=13443` was inflated by ~1,233 ghost duplicate runs from mirror trees. The 12210 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files.
+Old `BASELINE_TESTS=13443` was inflated by ~1,400 ghost duplicate runs from mirror trees. The 12043 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1 eliminated 1,233; Tier 2 eliminated another 167.)
