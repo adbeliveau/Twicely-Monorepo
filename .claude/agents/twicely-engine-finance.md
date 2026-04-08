@@ -73,6 +73,8 @@ Owns the math, the operator payout integrity surface, and Stripe.
 - `apps/web/src/lib/actions/payout-settings.ts`
 - `apps/web/src/lib/actions/payout-request.ts`
 - `apps/web/src/lib/actions/admin-finance.ts`
+- `apps/web/src/lib/actions/admin-trust.ts` (trust scoring override / suspend — finance integrity)
+- `apps/web/src/lib/actions/stripe-onboarding.ts` (Stripe Connect onboarding flow)
 
 ### Queries (admin/operator)
 - `apps/web/src/lib/queries/admin-finance.ts`

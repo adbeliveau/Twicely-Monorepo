@@ -66,6 +66,25 @@ Layer: **hub**. Operator-only.
 - `apps/web/src/lib/queries/platform-settings.ts`
 - `packages/db/src/queries/platform-settings.ts`
 
+### Server actions
+- `apps/web/src/lib/actions/admin-anonymization-queue.ts`
+- `apps/web/src/lib/actions/admin-audit-export.ts`
+- `apps/web/src/lib/actions/admin-broadcast.ts`
+- `apps/web/src/lib/actions/admin-connector-settings.ts`
+- `apps/web/src/lib/actions/admin-data-management.ts`
+- `apps/web/src/lib/actions/admin-data-retention-exports.ts`
+- `apps/web/src/lib/actions/admin-data-retention.ts`
+- `apps/web/src/lib/actions/admin-feature-flag-schemas.ts`
+- `apps/web/src/lib/actions/admin-feature-flags.ts`
+- `apps/web/src/lib/actions/admin-integrations.ts`
+- `apps/web/src/lib/actions/admin-meetup-locations.ts`
+- `apps/web/src/lib/actions/admin-modules.ts`
+- `apps/web/src/lib/actions/admin-notifications.ts`
+- `apps/web/src/lib/actions/admin-policy-version.ts`
+- `apps/web/src/lib/actions/admin-promotions.ts`
+- `apps/web/src/lib/actions/admin-providers.ts`
+- `apps/web/src/lib/actions/admin-settings.ts`
+
 ## TESTS YOU OWN
 - (None found in current research — flag if you find drift here)
 

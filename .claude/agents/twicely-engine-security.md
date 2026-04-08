@@ -58,11 +58,31 @@ Layer: **engine**.
 - `apps/web/src/app/(marketplace)/p/authentication/page.tsx`
 
 ### Server actions
-- `apps/web/src/lib/actions/delegation.ts`
-- `apps/web/src/lib/actions/authentication.ts`
-- `apps/web/src/lib/actions/authentication-ai.ts`
+- `apps/web/src/lib/actions/account-deletion.ts`
+- `apps/web/src/lib/actions/addresses.ts`
+- `apps/web/src/lib/actions/admin-custom-role-schemas.ts`
+- `apps/web/src/lib/actions/admin-custom-roles-assign.ts`
+- `apps/web/src/lib/actions/admin-custom-roles.ts`
+- `apps/web/src/lib/actions/admin-delegations.ts`
+- `apps/web/src/lib/actions/admin-staff-lifecycle.ts`
+- `apps/web/src/lib/actions/admin-staff-schemas.ts`
+- `apps/web/src/lib/actions/admin-staff.ts`
+- `apps/web/src/lib/actions/admin-users-management.ts`
+- `apps/web/src/lib/actions/admin-users.ts`
 - `apps/web/src/lib/actions/auth-offer-check.ts`
+- `apps/web/src/lib/actions/authentication-ai.ts`
 - `apps/web/src/lib/actions/authentication-complete.ts`
+- `apps/web/src/lib/actions/authentication.ts`
+- `apps/web/src/lib/actions/cookie-consent.ts`
+- `apps/web/src/lib/actions/data-export.ts`
+- `apps/web/src/lib/actions/delegation.ts`
+- `apps/web/src/lib/actions/health-checks.ts`
+- `apps/web/src/lib/actions/payment-methods.ts`
+- `apps/web/src/lib/actions/phone-verification.ts`
+- `apps/web/src/lib/actions/privacy-settings.ts`
+- `apps/web/src/lib/actions/staff-login.ts`
+- `apps/web/src/lib/actions/staff-mfa.ts`
+- `apps/web/src/lib/actions/staff-notifications.ts`
 
 ### Packages — `packages/auth/src/` (Better Auth)
 - `client.ts`, `server.ts`, `index.ts`

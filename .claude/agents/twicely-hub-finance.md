@@ -79,6 +79,8 @@ P&L (`hub/company/*` → hub-company-finance).
 ### Server actions — `apps/web/src/lib/actions/`
 - `finance-center.ts`, `finance-center-expenses.ts`
 - `finance-center-mileage.ts`, `finance-center-reports.ts`
+- `accounting-integration.ts` (QuickBooks/Xero connect — FC v3.0 §4)
+- `tax-info.ts` (seller tax profile — 1099 prep)
 
 ### Queries — `apps/web/src/lib/queries/`
 - `finance-center.ts`, `finance-center-detail.ts`

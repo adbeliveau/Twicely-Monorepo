@@ -63,13 +63,23 @@ with `mk-browse`. Browse renders them; this agent OWNS create/edit/archive.
 - `apps/web/src/app/(hub)/my/selling/listings/bulk/page.tsx` — bulk operations
 
 ### Server actions
-- `apps/web/src/lib/actions/listings-create.ts`
-- `apps/web/src/lib/actions/listings-update.ts`
-- `apps/web/src/lib/actions/listings.ts`
+- `apps/web/src/lib/actions/admin-categories.ts`
+- `apps/web/src/lib/actions/admin-curated-collections.ts`
+- `apps/web/src/lib/actions/admin-moderation-helpers.ts`
+- `apps/web/src/lib/actions/admin-moderation.ts`
+- `apps/web/src/lib/actions/admin-search.ts`
+- `apps/web/src/lib/actions/bulk-listings.ts`
 - `apps/web/src/lib/actions/listing-archive.ts`
 - `apps/web/src/lib/actions/listing-delete.ts`
+- `apps/web/src/lib/actions/listings-create.ts`
 - `apps/web/src/lib/actions/listings-delete.ts`
-- `apps/web/src/lib/actions/bulk-listings.ts`
+- `apps/web/src/lib/actions/listings-update.ts`
+- `apps/web/src/lib/actions/listings.ts`
+- `apps/web/src/lib/actions/seller-onboarding.ts`
+- `apps/web/src/lib/actions/storefront-pages-helpers.ts`
+- `apps/web/src/lib/actions/storefront-pages.ts`
+- `apps/web/src/lib/actions/vacation.ts`
+- `apps/web/src/lib/actions/vacation-auto-reply.ts`
 
 ### Queries
 - `apps/web/src/lib/queries/listing-page.ts`

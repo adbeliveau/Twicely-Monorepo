@@ -63,8 +63,12 @@ Layer: **mk** (marketplace, twicely.co).
 - `apps/web/src/app/(marketplace)/explore/page.tsx` — explore landing
 
 ### Server actions
-- `apps/web/src/lib/actions/browsing-history.ts`
 - `apps/web/src/lib/actions/browsing-history-helpers.ts`
+- `apps/web/src/lib/actions/browsing-history.ts`
+- `apps/web/src/lib/actions/deal-badge.ts`
+- `apps/web/src/lib/actions/follow.ts`
+- `apps/web/src/lib/actions/price-alerts.ts`
+- `apps/web/src/lib/actions/watchlist.ts`
 
 ### Queries
 - `apps/web/src/lib/queries/listings.ts`

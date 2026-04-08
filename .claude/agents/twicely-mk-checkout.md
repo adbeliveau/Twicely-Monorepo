@@ -59,11 +59,21 @@ Layer: **mk**.
 - `apps/web/src/app/(marketplace)/cart/page.tsx`
 
 ### Server actions
-- `apps/web/src/lib/actions/cart.ts`
+- `apps/web/src/lib/actions/admin-analytics.ts`
+- `apps/web/src/lib/actions/admin-orders.ts`
+- `apps/web/src/lib/actions/apply-coupon.ts`
+- `apps/web/src/lib/actions/bundle-offer-details.ts`
 - `apps/web/src/lib/actions/cart-helpers.ts`
-- `apps/web/src/lib/actions/checkout.ts`
+- `apps/web/src/lib/actions/cart.ts`
 - `apps/web/src/lib/actions/checkout-finalize.ts`
+- `apps/web/src/lib/actions/checkout.ts`
+- `apps/web/src/lib/actions/offer-listing-queries.ts`
+- `apps/web/src/lib/actions/offers.ts`
 - `apps/web/src/lib/actions/orders.ts`
+- `apps/web/src/lib/actions/shipping-profile-manage.ts`
+- `apps/web/src/lib/actions/shipping-profiles.ts`
+- `apps/web/src/lib/actions/shipping-quote.ts`
+- `apps/web/src/lib/actions/watcher-offers.ts`
 
 ### Queries
 - `apps/web/src/lib/queries/cart.ts`

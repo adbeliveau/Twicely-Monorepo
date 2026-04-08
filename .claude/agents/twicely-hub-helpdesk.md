@@ -81,6 +81,9 @@ Single source of truth for **Helpdesk** in Twicely V3. Layer: **hub**.
 - `apps/web/src/lib/actions/helpdesk-manage.ts`
 - `apps/web/src/lib/actions/helpdesk-merge.ts`
 - `apps/web/src/lib/actions/helpdesk-signature.ts`
+- `apps/web/src/lib/actions/kb-articles.ts`
+- `apps/web/src/lib/actions/kb-categories.ts`
+- `apps/web/src/lib/actions/kb-feedback.ts`
 
 ### Queries
 - `apps/web/src/lib/queries/helpdesk-{activity,agents,automation,badges,cases,context,dashboard,dashboard-deltas,macros,merge-search,reports,routing,teams}.ts`

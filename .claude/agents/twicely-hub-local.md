@@ -71,6 +71,7 @@ Layer: **hub**. UI surface only — math and ledger events belong to `engine-loc
 - `apps/web/src/lib/actions/local-transaction-core.ts`
 - `apps/web/src/lib/actions/local-transaction-offline.ts`
 - `apps/web/src/lib/actions/seller-local-settings.ts`
+- `apps/web/src/lib/actions/geocode.ts` (address → lat/lon for safe meetup locations)
 
 ### Components
 - `apps/web/src/components/local/**`
