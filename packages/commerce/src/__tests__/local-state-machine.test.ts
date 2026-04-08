@@ -84,8 +84,10 @@ describe('canTransition', () => {
     expect(canTransition('NO_SHOW', 'COMPLETED')).toBe(false);
   });
 
-  it('denies SCHEDULED → COMPLETED (skips steps)', () => {
-    expect(canTransition('SCHEDULED', 'COMPLETED')).toBe(false);
+  it('allows SCHEDULED → COMPLETED (cash local sale direct completion — §A0)', () => {
+    // Cash sales skip check-in and QR steps entirely; seller manually marks complete.
+    // SafeTrade path still requires BOTH_CHECKED_IN → RECEIPT_CONFIRMED → COMPLETED.
+    expect(canTransition('SCHEDULED', 'COMPLETED')).toBe(true);
   });
 
   it('returns false for unknown from-status', () => {

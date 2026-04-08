@@ -16,6 +16,9 @@ import { reserveListingForLocalTransaction } from './local-reserve';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { canTransition } from './local-state-machine';
 
+// Re-export cash completion so callers can import from one place
+export { completeCashLocalSale, type CompleteCashLocalSaleInput } from './local-cash-complete';
+
 // Re-export token validation from split module
 export {
   validateSellerToken,
@@ -292,3 +295,4 @@ export async function recordCheckIn(
 
   return { success: true, bothCheckedIn };
 }
+

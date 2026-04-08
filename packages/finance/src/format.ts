@@ -71,6 +71,7 @@ const TYPE_LABELS: Record<string, string> = {
   SELLER_ADJUSTMENT: 'Seller adjustment',
   CROSSLISTER_SALE_REVENUE: 'Off-platform sale',
   CROSSLISTER_PLATFORM_FEE: 'External platform fee',
+  LOCAL_CASH_SALE_REVENUE: 'Cash local sale',
 };
 
 const FEE_TYPES = new Set([
@@ -112,7 +113,11 @@ export function getLedgerTypeLabel(type: string): string {
 export function getLedgerTypeGroup(
   type: string,
 ): 'SALES' | 'FEES' | 'PAYOUTS' | 'REFUNDS' | 'OTHER' {
-  if (type === 'ORDER_PAYMENT_CAPTURED' || type === 'CROSSLISTER_SALE_REVENUE') return 'SALES';
+  if (
+    type === 'ORDER_PAYMENT_CAPTURED' ||
+    type === 'CROSSLISTER_SALE_REVENUE' ||
+    type === 'LOCAL_CASH_SALE_REVENUE'
+  ) return 'SALES';
   if (FEE_TYPES.has(type) || type === 'CROSSLISTER_PLATFORM_FEE') return 'FEES';
   if (PAYOUT_TYPES.has(type)) return 'PAYOUTS';
   if (REFUND_TYPES.has(type)) return 'REFUNDS';

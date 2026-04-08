@@ -1,7 +1,8 @@
 /**
  * Tests for local-transaction.ts
  *
- * Covers confirmLocalTransaction and recordCheckIn state machine guards (R8).
+ * Covers confirmLocalTransaction, recordCheckIn state machine guards (R8),
+ * and completeCashLocalSale cash routing (§A0/§A16).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -49,6 +50,10 @@ vi.mock('../local-token', () => ({
 
 vi.mock('../local-reserve', () => ({
   reserveListingForLocalTransaction: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../local-cash-sale', () => ({
+  postLocalCashSale: vi.fn().mockResolvedValue({ ledgerEntryId: 'le-cash-test' }),
 }));
 
 // Use real local-state-machine (pure logic, no deps)
@@ -256,3 +261,5 @@ describe('recordCheckIn — state machine guard', () => {
     expect(result.error).toBe('Transaction not found');
   });
 });
+
+// completeCashLocalSale tests live in local-cash-complete.test.ts

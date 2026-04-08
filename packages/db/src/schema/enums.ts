@@ -116,6 +116,7 @@ export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
   'AFFILIATE_COMMISSION_PAYOUT',
   'CROSSLISTER_SALE_REVENUE', 'CROSSLISTER_PLATFORM_FEE',
   'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT',
+  'LOCAL_CASH_SALE_REVENUE',  // §8/A16 Cash local sale — INFORMATIONAL ONLY, no sellerBalance update
   'BOOST_CREDIT_ISSUED'  // §5.4 Seller Score Canonical — monthly performance reward credit
 ]);
 export const ledgerEntryStatusEnum = pgEnum('ledger_entry_status', ['PENDING', 'POSTED', 'REVERSED']);

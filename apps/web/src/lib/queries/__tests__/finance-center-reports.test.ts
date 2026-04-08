@@ -41,11 +41,13 @@ describe('getPnlReportData', () => {
     vi.resetModules();
   });
 
-  // Helper: set up all 8 sequential select calls for getPnlReportData
-  // Call order: revenue, xRev (CROSSLISTER_SALE_REVENUE), fees, shipping, cogs, expTotal, expCat, mileage
+  // Helper: set up all 9 sequential select calls for getPnlReportData
+  // Call order: revenue, xRev (CROSSLISTER_SALE_REVENUE), cashRev (LOCAL_CASH_SALE_REVENUE),
+  //             fees, shipping, cogs, expTotal, expCat, mileage
   function setupPnlMocks({
     revenue = [{ gross: 0, cnt: 0 }],
     xRev = [{ total: 0 }],
+    cashRev = [{ total: 0 }],
     fees = [],
     shipping = [{ total: 0 }],
     cogs = [],
@@ -55,6 +57,7 @@ describe('getPnlReportData', () => {
   }: {
     revenue?: unknown[];
     xRev?: unknown[];
+    cashRev?: unknown[];
     fees?: unknown[];
     shipping?: unknown[];
     cogs?: unknown[];
@@ -65,6 +68,7 @@ describe('getPnlReportData', () => {
     mockDb.select
       .mockReturnValueOnce(createChain(revenue))
       .mockReturnValueOnce(createChain(xRev))
+      .mockReturnValueOnce(createChain(cashRev))
       .mockReturnValueOnce(createChain(fees))
       .mockReturnValueOnce(createChain(shipping))
       .mockReturnValueOnce(createChain(cogs))
@@ -104,6 +108,18 @@ describe('getPnlReportData', () => {
     expect(result.grossRevenueCents).toBe(50000);
     expect(result.totalOrderCount).toBe(5);
     expect(result.avgSalePriceCents).toBe(10000); // Math.floor(50000/5)
+  });
+
+  it('includes LOCAL_CASH_SALE_REVENUE in grossRevenueCents (§A16)', async () => {
+    setupPnlMocks({
+      revenue: [{ gross: 30000, cnt: 3 }],
+      cashRev: [{ total: 5000 }],
+    });
+    const { getPnlReportData } = await import('../finance-center-reports');
+    const result = await getPnlReportData('user-test-001', START, END);
+
+    expect(result.grossRevenueCents).toBe(35000); // 30000 Twicely + 5000 cash
+    expect(result.cashLocalRevenueCents).toBe(5000);
   });
 
   it('separates TF fees from Stripe fees in fee breakdown', async () => {
@@ -345,13 +361,15 @@ describe('getBalanceSheetData', () => {
     vi.resetModules();
   });
 
-  // getBalanceSheetData: 3 select calls itself + 8 from getPnlReportData inside
+  // getBalanceSheetData: 3 select calls itself + 9 from getPnlReportData inside
+  // Call order for getPnlReportData: revenue, xRev, cashRev, fees, shipping, cogs, expTotal, expCat, mileage
   function setupBalanceMocks({
     balance = [{ availableCents: 0, pendingCents: 0, reservedCents: 0 }],
     inventory = [{ inventoryValueCents: 0, inventoryCount: 0 }],
     pendingRefunds = [{ total: 0 }],
     revenue = [{ gross: 0, cnt: 0 }],
     xRev = [{ total: 0 }],
+    cashRev = [{ total: 0 }],
     fees = [],
     shipping = [{ total: 0 }],
     cogs = [],
@@ -364,6 +382,7 @@ describe('getBalanceSheetData', () => {
     pendingRefunds?: unknown[];
     revenue?: unknown[];
     xRev?: unknown[];
+    cashRev?: unknown[];
     fees?: unknown[];
     shipping?: unknown[];
     cogs?: unknown[];
@@ -375,9 +394,10 @@ describe('getBalanceSheetData', () => {
       .mockReturnValueOnce(createChain(balance))
       .mockReturnValueOnce(createChain(inventory))
       .mockReturnValueOnce(createChain(pendingRefunds))
-      // These are the 8 calls from getPnlReportData called inside getBalanceSheetData
+      // These are the 9 calls from getPnlReportData called inside getBalanceSheetData
       .mockReturnValueOnce(createChain(revenue))
       .mockReturnValueOnce(createChain(xRev))
+      .mockReturnValueOnce(createChain(cashRev))
       .mockReturnValueOnce(createChain(fees))
       .mockReturnValueOnce(createChain(shipping))
       .mockReturnValueOnce(createChain(cogs))
