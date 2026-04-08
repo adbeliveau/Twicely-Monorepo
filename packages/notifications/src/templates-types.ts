@@ -33,6 +33,7 @@ export type TemplateKey =
   | 'crosslister.sale_detected'
   | 'crosslister.delist_failed'
   | 'crosslister.double_sell'
+  | 'crosslister.account.reauth_required'
   | 'local.safety.nudge'
   | 'local.safety.escalated'
   | 'local.auto_cancel'

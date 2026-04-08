@@ -153,6 +153,12 @@ export async function registerCronJobs(): Promise<void> {
   await registerMonthlyBoostCreditJob();
   logger.info('[cronJobs] Registered monthly boost credit job');
 
+  // Crosslister auth health check — hourly at :15, detects expired OAuth tokens
+  // and stale session cookies, flips status to REAUTHENTICATION_REQUIRED, notifies user.
+  const { registerCrosslisterAuthHealthJob } = await import('./crosslister-auth-health-check');
+  await registerCrosslisterAuthHealthJob();
+  logger.info('[cronJobs] Registered crosslister auth health check job');
+
   // Buyer quality tier recalc REMOVED — Decision #142.
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }

@@ -31,4 +31,13 @@ export const CROSSLISTER_TEMPLATES: Record<string, TemplateDef> = {
     subjectTemplate: 'Action required: {{itemTitle}} may have sold twice',
     bodyTemplate: '{{itemTitle}} may have sold on both {{channel1}} and {{channel2}}. Please cancel one sale immediately to avoid a dispute.',
   },
+  'crosslister.account.reauth_required': {
+    key: 'crosslister.account.reauth_required',
+    name: 'Reconnect Crosslister Account',
+    category: 'crosslister',
+    priority: 'HIGH',
+    defaultChannels: ['EMAIL', 'IN_APP'],
+    subjectTemplate: 'Reconnect your {{channelLabel}} account',
+    bodyTemplate: '{{reasonLabel}} for {{channelLabel}}. Visit your crosslister settings to reconnect and keep your listings syncing.',
+  },
 };
