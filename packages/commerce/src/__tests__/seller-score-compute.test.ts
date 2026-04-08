@@ -252,4 +252,41 @@ describe('computeAndStoreSellerScore', () => {
     expect(result.isNew).toBe(true);
     expect(calculateSellerScore).not.toHaveBeenCalled();
   });
+
+  it('passes isSuspended=true to calculateSearchMultiplier when profile.status is SUSPENDED', async () => {
+    // SUSPENDED status zeroes out the search multiplier (listing visibility), per spec §2.3.
+    // The SUSPENDED performanceBand is admin-only and never score-derived.
+    const suspendedProfile = { ...mockProfile, status: 'SUSPENDED' };
+    vi.mocked(db.select).mockImplementationOnce(
+      () => makeSelectChain([suspendedProfile]) as ReturnType<typeof db.select>,
+    );
+    const { calculateSearchMultiplier } = await import('@twicely/scoring/calculate-seller-score');
+    await computeAndStoreSellerScore('user-1');
+    // isSuspended should be true — calculateSearchMultiplier returns 0.0 for suspended sellers
+    expect(calculateSearchMultiplier).toHaveBeenCalledWith(
+      expect.any(Number), // score
+      true,              // isSuspended
+      expect.any(Number), // orderCount
+      expect.any(Number), // newSellerThreshold
+      expect.any(Number), // transitionThreshold
+    );
+  });
+
+  it('skips band-change notification when previousBand is SUSPENDED (admin path owns that)', async () => {
+    // When a seller is coming off SUSPENDED, the admin action owns the notification.
+    // computeAndStoreSellerScore must NOT call notifyBandTransition in this case.
+    const suspendedBandProfile = { ...mockProfile, performanceBand: 'SUSPENDED' };
+    let selectCallCount = 0;
+    vi.mocked(db.select).mockImplementation(() => {
+      selectCallCount++;
+      if (selectCallCount === 1) return makeSelectChain([suspendedBandProfile]) as ReturnType<typeof db.select>;
+      if (selectCallCount === 2) return makeSelectChain([{ overallScore: 700 }, { overallScore: 750 }]) as ReturnType<typeof db.select>;
+      if (selectCallCount === 3) return makeSelectChain([]) as ReturnType<typeof db.select>;
+      if (selectCallCount === 4) return makeSelectChain([{ id: 'listing-1' }]) as ReturnType<typeof db.select>;
+      return makeSelectChain([]) as ReturnType<typeof db.select>;
+    });
+    await computeAndStoreSellerScore('user-1');
+    // notifyBandTransition must NOT be called — previousBand was SUSPENDED
+    expect(notifyBandTransition).not.toHaveBeenCalled();
+  });
 });
