@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { browsingHistory, priceAlert, categoryAlert, listingPriceHistory, buyerBlockList } from '../schema';
+import { browsingHistory, priceAlert, categoryAlert, listingPriceHistory, buyerBlockList } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { LISTING_IDS } from './seed-listings';
 import { SEED_IDS } from './seed-system';

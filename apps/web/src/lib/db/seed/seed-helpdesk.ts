@@ -9,7 +9,7 @@ import {
   helpdeskRoutingRule,
   helpdeskAutomationRule,
   kbCategory,
-} from '../schema';
+} from '@twicely/db/schema';
 
 const TEAM_IDS = {
   generalSupport: 'seed-hd-team-general',

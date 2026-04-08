@@ -65,7 +65,7 @@ function makeImages(count: number = 2) {
 }
 
 async function mockDbNoRules() {
-  const { db } = await import('@/lib/db');
+  const { db } = await import('@twicely/db');
   (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue([]),
@@ -73,7 +73,7 @@ async function mockDbNoRules() {
 }
 
 async function mockDbWithRules(rules: unknown[]) {
-  const { db } = await import('@/lib/db');
+  const { db } = await import('@twicely/db');
   (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue(rules),

@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { platformSetting, listingOffer, offerBundleItem } from '../schema';
+import { platformSetting, listingOffer, offerBundleItem } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { LISTING_IDS } from './seed-listings';
 import { ADDRESS_DATA } from './seed-addresses';

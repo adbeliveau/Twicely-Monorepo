@@ -48,7 +48,7 @@ describe('getRevenueByPlatform', () => {
   });
 
   it('returns empty array when there are no ledger entries', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db as unknown as { select: Mock }).select.mockReturnValue(createQueryChain([]));
 
     const { getRevenueByPlatform } = await import('../revenue-by-platform');
@@ -58,7 +58,7 @@ describe('getRevenueByPlatform', () => {
   });
 
   it('returns one TWICELY row when only Twicely sales exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const rows = [
       { channel: 'TWICELY', type: 'ORDER_PAYMENT_CAPTURED', total: 10000, cnt: 2 },
       { channel: 'TWICELY', type: 'ORDER_TF_FEE', total: -1000, cnt: 2 },
@@ -75,7 +75,7 @@ describe('getRevenueByPlatform', () => {
   });
 
   it('returns separate rows for each platform with correct revenue and fees', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const rows = [
       { channel: 'TWICELY', type: 'ORDER_PAYMENT_CAPTURED', total: 8000, cnt: 1 },
       { channel: 'TWICELY', type: 'ORDER_TF_FEE', total: -800, cnt: 1 },
@@ -105,7 +105,7 @@ describe('getRevenueByPlatform', () => {
   });
 
   it('date range filter is applied (query uses startDate and endDate)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { gte, lte } = await import('drizzle-orm');
 
     (db as unknown as { select: Mock }).select.mockReturnValue(createQueryChain([]));
@@ -118,7 +118,7 @@ describe('getRevenueByPlatform', () => {
   });
 
   it('net calculation equals revenue minus fees', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const rows = [
       { channel: 'EBAY', type: 'CROSSLISTER_SALE_REVENUE', total: 5000, cnt: 1 },
       { channel: 'EBAY', type: 'CROSSLISTER_PLATFORM_FEE', total: -645, cnt: 1 },

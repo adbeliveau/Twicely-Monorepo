@@ -1,6 +1,6 @@
 import { hash } from 'bcryptjs';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { feeSchedule, sequenceCounter, staffUser, staffUserRole } from '../schema';
+import { feeSchedule, sequenceCounter, staffUser, staffUserRole } from '@twicely/db/schema';
 import { CATEGORY_IDS } from './seed-categories';
 
 // Hardcoded IDs for idempotency

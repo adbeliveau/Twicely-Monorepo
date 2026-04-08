@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { getAllMacros } from '@/lib/queries/helpdesk-macros';
 import { MacroList } from './macro-list';
 

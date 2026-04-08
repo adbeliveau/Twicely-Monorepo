@@ -6,9 +6,9 @@
  */
 
 import { db } from '@twicely/db';
-import { sellerProfile } from '@/lib/db/schema/identity';
-import { listerSubscription } from '@/lib/db/schema/subscriptions';
-import { crosslisterAccount } from '@/lib/db/schema/crosslister';
+import { sellerProfile } from '@twicely/db/schema/identity';
+import { listerSubscription } from '@twicely/db/schema/subscriptions';
+import { crosslisterAccount } from '@twicely/db/schema/crosslister';
 import { eq, and } from 'drizzle-orm';
 import { getPublishAllowance } from '@twicely/crosslister/services/publish-meter';
 import type { ListerTier } from '@/types/enums';

@@ -145,7 +145,7 @@ describe('publishListingToChannel', () => {
   });
 
   it('returns success=false when listing not found', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => ({
         where: vi.fn().mockReturnThis(),
@@ -159,7 +159,7 @@ describe('publishListingToChannel', () => {
   });
 
   it('returns success=false when listing owner mismatch', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => ({
         where: vi.fn().mockReturnThis(),
@@ -172,7 +172,7 @@ describe('publishListingToChannel', () => {
   });
 
   it('returns success=false when listing is not ACTIVE', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => ({
         where: vi.fn().mockReturnThis(),
@@ -191,7 +191,7 @@ describe('publishListingToChannel', () => {
       status: 'DENY',
       reason: 'Title required',
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -211,7 +211,7 @@ describe('publishListingToChannel', () => {
   it('returns success=false when crosslist is disabled via platformSetting', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -239,7 +239,7 @@ describe('publishListingToChannel', () => {
   it('returns success=false when no connected account found', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -261,7 +261,7 @@ describe('publishListingToChannel', () => {
   it('creates crossJob with priority=300 and status=QUEUED (not IN_PROGRESS)', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -301,7 +301,7 @@ describe('publishListingToChannel', () => {
   it('adds job to BullMQ queue and populates bullmqJobId', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -344,7 +344,7 @@ describe('publishListingToChannel', () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
     const { getConnector } = await import('@/lib/crosslister/connector-registry');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -376,7 +376,7 @@ describe('publishListingToChannel', () => {
   it('projection status is PUBLISHING after enqueue (not ACTIVE)', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -413,7 +413,7 @@ describe('publishListingToChannel', () => {
   it('returns error if already published (ACTIVE projection exists)', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {
@@ -437,7 +437,7 @@ describe('publishListingToChannel', () => {
   it('idempotencyKey includes listingId and channel', async () => {
     const { validateForChannel } = await import('../policy-validator');
     (validateForChannel as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 'ALLOW' });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let fromCall = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockImplementation(() => {

@@ -53,7 +53,7 @@ describe('getPlatformFeeRate', () => {
   });
 
   it('returns 1290 bps for EBAY from platform_settings', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { select: Mock };
     dbAny.select.mockImplementation(() => ({
       from: vi.fn().mockReturnValue({
@@ -69,7 +69,7 @@ describe('getPlatformFeeRate', () => {
   });
 
   it('returns 2000 bps for POSHMARK from platform_settings', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { select: Mock };
     dbAny.select.mockImplementation(() => ({
       from: vi.fn().mockReturnValue({
@@ -85,7 +85,7 @@ describe('getPlatformFeeRate', () => {
   });
 
   it('returns default rate when setting not found in DB', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { select: Mock };
     dbAny.select.mockImplementation(() => ({
       from: vi.fn().mockReturnValue({
@@ -101,7 +101,7 @@ describe('getPlatformFeeRate', () => {
   });
 
   it('returns default rate when DB throws', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { select: Mock };
     dbAny.select.mockImplementation(() => ({
       from: vi.fn().mockReturnValue({
@@ -117,7 +117,7 @@ describe('getPlatformFeeRate', () => {
   });
 
   it('returns default rate for DEPOP when not in settings', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { select: Mock };
     dbAny.select.mockImplementation(() => ({
       from: vi.fn().mockReturnValue({

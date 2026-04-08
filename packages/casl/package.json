@@ -15,7 +15,8 @@
   "dependencies": {
     "@casl/ability": "^6.8.0",
     "drizzle-orm": "^0.45.1",
-    "@twicely/db": "workspace:*"
+    "@twicely/db": "workspace:*",
+    "@twicely/logger": "workspace:*"
   },
   "peerDependencies": {
     "@twicely/auth": "workspace:*"

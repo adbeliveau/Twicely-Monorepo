@@ -7,7 +7,7 @@
  */
 
 import { db } from '@twicely/db';
-import { taxInfo } from '@/lib/db/schema/tax';
+import { taxInfo } from '@twicely/db/schema/tax';
 import { maskTaxId } from '@twicely/db/encryption';
 import { eq } from 'drizzle-orm';
 

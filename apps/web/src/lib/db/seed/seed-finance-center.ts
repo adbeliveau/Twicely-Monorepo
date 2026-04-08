@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { financeSubscription, expense, mileageEntry } from '../schema';
+import { financeSubscription, expense, mileageEntry } from '@twicely/db/schema';
 import { USER_IDS, SELLER_IDS } from './seed-users';
 
 // Hardcoded IDs for idempotency

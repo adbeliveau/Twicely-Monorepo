@@ -49,7 +49,7 @@ describe('retryExportAction', () => {
   });
 
   it('returns Forbidden when CASL denies manage on DataExport', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
     vi.mocked(staffAuthorize).mockResolvedValue({
       session: { staffUserId: 'staff-1' },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -60,7 +60,7 @@ describe('retryExportAction', () => {
   });
 
   it('returns error when export record not found', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
     vi.mocked(staffAuthorize).mockResolvedValue({
       session: { staffUserId: 'staff-1' },
       ability: { can: vi.fn().mockReturnValue(true) },
@@ -72,7 +72,7 @@ describe('retryExportAction', () => {
   });
 
   it('retries a FAILED export and returns success', async () => {
-    const { staffAuthorize } = await import('@/lib/casl/staff-authorize');
+    const { staffAuthorize } = await import('@twicely/casl/staff-authorize');
     vi.mocked(staffAuthorize).mockResolvedValue({
       session: { staffUserId: 'staff-1' },
       ability: { can: vi.fn().mockReturnValue(true) },

@@ -7,7 +7,7 @@
  */
 
 import { db } from '@twicely/db';
-import { sellerProfile } from '@/lib/db/schema/identity';
+import { sellerProfile } from '@twicely/db/schema/identity';
 import { eq } from 'drizzle-orm';
 
 /**

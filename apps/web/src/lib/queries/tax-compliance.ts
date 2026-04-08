@@ -8,8 +8,8 @@
 
 import { db } from '@twicely/db';
 import { order, financialReport, affiliateCommission } from '@twicely/db/schema';
-import { taxInfo } from '@/lib/db/schema/tax';
-import { user } from '@/lib/db/schema/auth';
+import { taxInfo } from '@twicely/db/schema/tax';
+import { user } from '@twicely/db/schema/auth';
 import { and, count, eq, gte, lt, sum } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { maskTaxId } from '@twicely/db/encryption';

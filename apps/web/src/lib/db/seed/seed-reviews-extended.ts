@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { buyerReview } from '../schema';
+import { buyerReview } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 
 // Order IDs from seed-orders.ts (referencing completed/delivered orders)

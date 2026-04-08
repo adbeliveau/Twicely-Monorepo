@@ -130,7 +130,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('skips users with open buyer orders (both buy-side and sell-side blockers checked)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { logger } = await import('@/lib/logger');
 
     // Variant: seller orders empty, buyer orders non-empty → still blocked
@@ -159,7 +159,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('handles user with no orders/listings/messages gracefully (no-data user)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupFullDeletionMocks(db, 'user-empty-data');
 
@@ -172,7 +172,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('is idempotent: processing already-pseudonymized user does not re-pseudonymize', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizeOrders } = await import('@/lib/gdpr/pseudonymize');
 
     // First run
@@ -194,7 +194,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('logs info about Typesense removal being skipped (not yet wired)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { logger } = await import('@/lib/logger');
 
     setupFullDeletionMocks(db, 'user-typesense-log');
@@ -209,7 +209,7 @@ describe('runAccountDeletionBatch — edge cases', () => {
   });
 
   it('skips processing when user is not found in DB', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { logger } = await import('@/lib/logger');
 
     let n = 0;

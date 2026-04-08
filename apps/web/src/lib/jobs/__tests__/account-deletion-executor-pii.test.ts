@@ -104,7 +104,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('pseudonymizes message senderIds', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizeMessages } = await import('@/lib/gdpr/pseudonymize');
 
     let n = 0;
@@ -125,7 +125,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('pseudonymizes audit event actorIds', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { pseudonymizeAuditEvents } = await import('@/lib/gdpr/pseudonymize');
 
     let n = 0;
@@ -146,7 +146,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('hard-deletes addresses and tax info (4 delete calls total)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -167,7 +167,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('replaces email with pseudonym@deleted.twicely.co', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -193,7 +193,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('replaces username with pseudonym', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -219,7 +219,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('creates CRITICAL audit event after deletion', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     let n = 0;
     vi.mocked(db.select).mockImplementation(() => {
@@ -243,7 +243,7 @@ describe('runAccountDeletionBatch — PII clearing', () => {
   });
 
   it('continues processing remaining users when one fails', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { logger } = await import('@/lib/logger');
 
     let selectCallCount = 0;

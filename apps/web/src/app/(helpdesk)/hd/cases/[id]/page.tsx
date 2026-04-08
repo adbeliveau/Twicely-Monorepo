@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { staffAuthorizeOrRedirect } from "@/lib/casl/staff-authorize";
+import { staffAuthorizeOrRedirect } from "@twicely/casl/staff-authorize";
 import { getAgentCaseDetail, getAgentCaseQueue, getCaseWatchers } from "@/lib/queries/helpdesk-cases";
 import { getCaseContext } from "@/lib/queries/helpdesk-context";
 import { getAgentMacros } from "@/lib/queries/helpdesk-macros";

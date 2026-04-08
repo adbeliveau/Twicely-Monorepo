@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { getResolvedCases } from '@/lib/queries/helpdesk-cases';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { RetentionBadge } from '@/components/helpdesk/retention-badge';

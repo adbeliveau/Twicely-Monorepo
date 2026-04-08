@@ -116,7 +116,7 @@ describe('publishListings — queued response', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('returns queued count instead of published count', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([{ id: 'lst-1', ownerUserId: 'user-1', status: 'ACTIVE' }]),
@@ -129,7 +129,7 @@ describe('publishListings — queued response', () => {
   });
 
   it('returns Unauthorized when no session', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ session: null, ability: { can: vi.fn() } });
     const { publishListings } = await import('../crosslister-publish');
     const result = await publishListings({ listingIds: ['lst-1'], channels: ['EBAY'] });
@@ -138,7 +138,7 @@ describe('publishListings — queued response', () => {
   });
 
   it('returns Forbidden when ability.can returns false', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -151,7 +151,7 @@ describe('publishListings — queued response', () => {
 
   it('calls publishListingToChannel (enqueue) for each listing x channel', async () => {
     const { publishListingToChannel } = await import('@/lib/crosslister/services/publish-service');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockResolvedValue([
@@ -171,7 +171,7 @@ describe('cancelJob', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('cancels a QUEUED job successfully', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -190,7 +190,7 @@ describe('cancelJob', () => {
   });
 
   it('rejects cancellation of IN_PROGRESS job', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -207,7 +207,7 @@ describe('cancelJob', () => {
   });
 
   it('returns Not found for job owned by different seller', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -221,7 +221,7 @@ describe('cancelJob', () => {
   });
 
   it('reverts projection status from QUEUED to DRAFT for CREATE jobs', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -246,7 +246,7 @@ describe('cancelJob', () => {
   });
 
   it('removes BullMQ job from queue when bullmqJobId exists', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -266,7 +266,7 @@ describe('cancelJob', () => {
   });
 
   it('requires delete CrossJob CASL permission', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -292,7 +292,7 @@ describe('getJobQueueStatus', () => {
   });
 
   it('returns Unauthorized when no session', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ session: null, ability: { can: vi.fn() } });
     const { getJobQueueStatus } = await import('../crosslister-publish');
     const result = await getJobQueueStatus();
@@ -301,7 +301,7 @@ describe('getJobQueueStatus', () => {
   });
 
   it('requires read CrossJob CASL permission', async () => {
-    const { authorize } = await import('@/lib/casl');
+    const { authorize } = await import('@twicely/casl');
     (authorize as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       session: { userId: 'user-1', delegationId: null },
       ability: { can: vi.fn().mockReturnValue(false) },
@@ -319,7 +319,7 @@ describe('delistFromChannel — enqueue pattern', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('enqueues DELIST job instead of calling connector inline', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     let callNum = 0;
     (db.select as ReturnType<typeof vi.fn>).mockImplementation(() => ({
       from: vi.fn().mockReturnThis(),
@@ -367,7 +367,7 @@ describe('updateProjectionOverrides — sync enqueue', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
   it('enqueues SYNC job when hasPendingSync is true and projection is ACTIVE', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -388,7 +388,7 @@ describe('updateProjectionOverrides — sync enqueue', () => {
   });
 
   it('does NOT enqueue SYNC job when projection is not ACTIVE', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),

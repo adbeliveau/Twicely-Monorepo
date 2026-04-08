@@ -12,7 +12,7 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn((_key: string, fallback: unknown) => Promise.resolve(fallback)),
 }));
 
-const { db } = await import('@/lib/db');
+const { db } = await import('@twicely/db');
 const mockDb = vi.mocked(db);
 
 describe('getBuyerReviews', () => {

@@ -9,7 +9,7 @@
 
 import { db } from '@twicely/db';
 import { order, financialReport } from '@twicely/db/schema';
-import { taxInfo } from '@/lib/db/schema/tax';
+import { taxInfo } from '@twicely/db/schema/tax';
 import { and, eq, gte, lt, count, sum } from 'drizzle-orm';
 import { getTaxInfoByUserId } from '@/lib/queries/tax-info';
 import { logger } from '@twicely/logger';

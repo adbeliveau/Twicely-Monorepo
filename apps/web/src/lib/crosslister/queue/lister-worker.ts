@@ -85,7 +85,7 @@ async function processPublishJob(job: Job<ListerPublishJobData>): Promise<void> 
 
   if (jobType === 'UPDATE' || jobType === 'SYNC') {
     // Load externalId from projection
-    const { channelProjection } = await import('@/lib/db/schema');
+    const { channelProjection } = await import('@twicely/db/schema');
     const [proj] = await db
       .select({ externalId: channelProjection.externalId })
       .from(channelProjection)
@@ -118,7 +118,7 @@ async function processPublishJob(job: Job<ListerPublishJobData>): Promise<void> 
   }
 
   if (jobType === 'DELIST') {
-    const { channelProjection } = await import('@/lib/db/schema');
+    const { channelProjection } = await import('@twicely/db/schema');
     const [proj] = await db
       .select({ externalId: channelProjection.externalId })
       .from(channelProjection)

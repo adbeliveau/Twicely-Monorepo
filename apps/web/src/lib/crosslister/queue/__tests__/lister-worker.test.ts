@@ -88,7 +88,7 @@ describe('listerWorker — CREATE job', () => {
 
   it('calls executeCreateJob for CREATE jobType', async () => {
     const { executeCreateJob } = await import('../../services/job-executor');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
@@ -108,7 +108,7 @@ describe('listerWorker — CREATE job', () => {
   });
 
   it('marks crossJob IN_PROGRESS at start', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const setCalls: unknown[] = [];
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockImplementation((vals: unknown) => {
@@ -143,7 +143,7 @@ describe('listerWorker — UPDATE job', () => {
 
   it('calls executeUpdateJob for UPDATE jobType', async () => {
     const { executeUpdateJob } = await import('../../services/job-executor');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
@@ -172,7 +172,7 @@ describe('listerWorker — DELIST job', () => {
 
   it('calls executeDelistJob for DELIST jobType', async () => {
     const { executeDelistJob } = await import('../../services/job-executor');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });
@@ -205,7 +205,7 @@ describe('listerWorker — failure handling', () => {
       success: false, externalId: null, externalUrl: null, error: 'Connector error', retryable: false,
     });
 
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const setCalls: unknown[] = [];
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockImplementation((vals: unknown) => {
@@ -233,7 +233,7 @@ describe('listerWorker — failure handling', () => {
     const { getDelayMs } = await import('../rate-limiter');
     (getDelayMs as ReturnType<typeof vi.fn>).mockReturnValueOnce(5000);
 
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
       set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
     });

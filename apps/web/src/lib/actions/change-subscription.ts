@@ -18,7 +18,7 @@ import {
   listerSubscription,
   financeSubscription,
   bundleSubscription,
-} from '@/lib/db/schema/subscriptions';
+} from '@twicely/db/schema/subscriptions';
 import { eq } from 'drizzle-orm';
 import { stripe } from '@twicely/stripe/server';
 import { authorize, sub } from '@twicely/casl';

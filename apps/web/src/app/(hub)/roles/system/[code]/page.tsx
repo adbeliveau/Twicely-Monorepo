@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
-import { getSystemRoleDefinition } from '@/lib/casl/system-role-defaults';
-import { getAllPermissionPairs } from '@/lib/casl/permission-registry';
+import { getSystemRoleDefinition } from '@twicely/casl/system-role-defaults';
+import { getAllPermissionPairs } from '@twicely/casl/permission-registry';
 import { SystemRolePermissionGrid } from '@/components/admin/system-role-permission-grid';
 
 export const metadata: Metadata = { title: 'Role Details | Twicely Hub' };

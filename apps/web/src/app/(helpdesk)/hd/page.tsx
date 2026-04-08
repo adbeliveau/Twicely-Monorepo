@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { staffAuthorizeOrRedirect } from "@/lib/casl/staff-authorize";
+import { staffAuthorizeOrRedirect } from "@twicely/casl/staff-authorize";
 import { StatCard, CaseVolumeChart, SlaRing, TeamWorkloadRow } from "./dashboard-widgets";
 import {
   getHelpdeskDashboardStats,

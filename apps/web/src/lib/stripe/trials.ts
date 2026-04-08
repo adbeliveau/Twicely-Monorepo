@@ -9,7 +9,7 @@ import { stripe } from '@twicely/stripe/server';
 import { db } from '@twicely/db';
 import { eq, and } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { trialUsage } from '@/lib/db/schema/subscriptions';
+import { trialUsage } from '@twicely/db/schema/subscriptions';
 import { logger } from '@twicely/logger';
 
 export type TrialProductType = 'STORE' | 'LISTER' | 'AUTOMATION';

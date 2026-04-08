@@ -6,7 +6,7 @@
  * Sub-seeders (messages, events, macros, CSAT) extracted to seed-helpdesk-cases-data.ts.
  */
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { helpdeskCase, sequenceCounter } from '../schema';
+import { helpdeskCase, sequenceCounter } from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 import { HELPDESK_SEED_IDS } from './seed-helpdesk';
 import { sql } from 'drizzle-orm';

@@ -11,8 +11,8 @@ import {
   automationSubscription,
   financeSubscription,
   bundleSubscription,
-} from '@/lib/db/schema/subscriptions';
-import { sellerProfile } from '@/lib/db/schema/identity';
+} from '@twicely/db/schema/subscriptions';
+import { sellerProfile } from '@twicely/db/schema/identity';
 import { eq } from 'drizzle-orm';
 import type { StoreTier, ListerTier, FinanceTier, BundleTier } from '@/types/enums';
 import { getBillingIntervalFromPriceId } from '@twicely/subscriptions/subscription-engine';

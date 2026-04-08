@@ -63,7 +63,7 @@ describe('runAuditArchive', () => {
   });
 
   it('reads retentionMonths from platform settings with default 24', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
@@ -74,7 +74,7 @@ describe('runAuditArchive', () => {
   });
 
   it('skips archive and delete when no events exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { uploadToR2 } = await import('@twicely/storage/r2-client');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
@@ -86,7 +86,7 @@ describe('runAuditArchive', () => {
   });
 
   it('uploads gzip archive to R2 when events exist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { uploadToR2 } = await import('@twicely/storage/r2-client');
 
     const sampleEvent = {
@@ -109,7 +109,7 @@ describe('runAuditArchive', () => {
   });
 
   it('groups events by year/month in R2 key', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { uploadToR2 } = await import('@twicely/storage/r2-client');
 
     const events = [
@@ -127,7 +127,7 @@ describe('runAuditArchive', () => {
   });
 
   it('uses raw SQL to delete archived rows', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     const sampleEvent = { id: 'evt-del-1', createdAt: new Date('2024-01-01') };
     vi.mocked(db.select).mockReturnValue(
@@ -141,7 +141,7 @@ describe('runAuditArchive', () => {
   });
 
   it('writes lastRunAt and lastResult to platform_settings', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { upsertPlatformSetting } = await import('@/lib/jobs/cleanup-helpers');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
@@ -159,7 +159,7 @@ describe('runAuditArchive', () => {
   });
 
   it('does NOT delete events when R2 upload fails (archiveBeforePurge guard)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { uploadToR2 } = await import('@twicely/storage/r2-client');
     const { logger } = await import('@/lib/logger');
 
@@ -179,7 +179,7 @@ describe('runAuditArchive', () => {
   });
 
   it('skips R2 upload when archiveBeforePurge is false', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const { getPlatformSetting } = await import('@/lib/queries/platform-settings');
     const { uploadToR2 } = await import('@twicely/storage/r2-client');
 

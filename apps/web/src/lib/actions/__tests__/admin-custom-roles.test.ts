@@ -174,7 +174,7 @@ describe('createCustomRoleAction', () => {
   });
 
   it('validates permissions against registry (rejects invalid subject)', async () => {
-    const { validatePermissions } = await import('@/lib/casl/permission-registry');
+    const { validatePermissions } = await import('@twicely/casl/permission-registry');
     vi.mocked(validatePermissions).mockReturnValueOnce({
       valid: false,
       errors: ['Invalid permission: BadSubject.read'],

@@ -4,7 +4,7 @@
  */
 
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { platformSetting, channelCategoryMapping, channelPolicyRule } from '../schema';
+import { platformSetting, channelCategoryMapping, channelPolicyRule } from '@twicely/db/schema';
 import { CATEGORY_IDS } from './seed-categories';
 
 // All crosslister platform settings

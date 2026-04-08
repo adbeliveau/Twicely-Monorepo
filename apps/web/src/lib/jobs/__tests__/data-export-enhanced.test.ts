@@ -61,7 +61,7 @@ describe('collectUserDataFull', () => {
   });
 
   it('returns _metadata with version 2.0 and exportedAt', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     // All queries return empty arrays
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
@@ -78,7 +78,7 @@ describe('collectUserDataFull', () => {
   });
 
   it('includes required sections list in metadata', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
     const { collectUserDataFull } = await import('../data-export-full');
@@ -94,7 +94,7 @@ describe('collectUserDataFull', () => {
   });
 
   it('omits taxIdEncrypted from tax info (returns safe fields only)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     const taxRecord = {
       taxIdType: 'SSN',
@@ -127,7 +127,7 @@ describe('collectUserDataFull', () => {
   });
 
   it('includes cookieConsentPreferences from user record', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     const userRecord = {
       id: 'user-test-4',
@@ -155,7 +155,7 @@ describe('collectUserDataFull', () => {
   });
 
   it('returns null for cookieConsentPreferences when user has none', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     const userRecord = { id: 'user-test-5', email: 'u@example.com', cookieConsentJson: null };
 
@@ -175,7 +175,7 @@ describe('collectUserDataFull', () => {
   });
 
   it('includes identityVerifications in output', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     vi.mocked(db.select).mockReturnValue(makeSelectChain([]) as unknown as ReturnType<typeof db.select>);
 
     const { collectUserDataFull } = await import('../data-export-full');

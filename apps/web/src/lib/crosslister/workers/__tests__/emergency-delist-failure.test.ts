@@ -124,7 +124,7 @@ describe('emergency delist processor — failure paths', () => {
   });
 
   it('throws on connector failure to trigger BullMQ retry', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -147,7 +147,7 @@ describe('emergency delist processor — failure paths', () => {
   });
 
   it('marks ERROR and notifies seller after 3 failed attempts', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock };
 
     setupSelectSequence(db, [

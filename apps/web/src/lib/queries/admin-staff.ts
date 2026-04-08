@@ -4,8 +4,8 @@
  */
 
 import { db } from '@twicely/db';
-import { staffUser, staffUserRole } from '@/lib/db/schema/staff';
-import { customRole, staffUserCustomRole } from '@/lib/db/schema/platform';
+import { staffUser, staffUserRole } from '@twicely/db/schema/staff';
+import { customRole, staffUserCustomRole } from '@twicely/db/schema/platform';
 import { eq, or, ilike, count, desc, and, isNull } from 'drizzle-orm';
 import type { PlatformRole } from '@twicely/casl/types';
 import { escapeLike } from '@twicely/utils/escape-like';

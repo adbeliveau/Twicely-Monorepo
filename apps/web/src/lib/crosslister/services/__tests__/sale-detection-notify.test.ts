@@ -111,7 +111,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('notifies seller when sale is detected', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -136,7 +136,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('emits sale.detected Centrifugo event on channel private-user.{sellerId}', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -162,7 +162,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('creates no delist jobs when listing has no other projections', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -192,7 +192,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('gracefully skips when projection not found', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [],
@@ -206,7 +206,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('stores soldPriceCents as integer cents (not float)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock; insert: Mock };
 
     setupSelectSequence(db, [
@@ -233,7 +233,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
   });
 
   it('double-sell does NOT create new delist jobs (delists already running from first sale)', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],

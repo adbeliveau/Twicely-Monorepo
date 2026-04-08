@@ -3,7 +3,7 @@
  */
 
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { safeMeetupLocation } from '../schema';
+import { safeMeetupLocation } from '@twicely/db/schema';
 
 const SEED_LOCATIONS = [
   {

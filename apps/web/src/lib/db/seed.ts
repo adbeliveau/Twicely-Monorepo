@@ -3,7 +3,7 @@ config({ path: '.env.local' });
 
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { platformSetting, listingOffer } from './schema';
+import { platformSetting, listingOffer } from '@twicely/db/schema';
 import { seedSystem } from './seed/seed-system';
 import { seedCategories } from './seed/seed-categories';
 import { seedPlatform } from './seed/seed-platform';

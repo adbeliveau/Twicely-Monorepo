@@ -77,7 +77,7 @@ describe('executeCreateJob', () => {
 
   it('calls connector.createListing with transformed data', async () => {
     const { getConnector } = await import('@/lib/crosslister/connector-registry');
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -95,7 +95,7 @@ describe('executeCreateJob', () => {
   });
 
   it('updates projection to ACTIVE on success', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -122,7 +122,7 @@ describe('executeCreateJob', () => {
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue({
       createListing: vi.fn().mockResolvedValue({ success: false, externalId: null, externalUrl: null, error: 'Bad creds', retryable: false }),
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -149,7 +149,7 @@ describe('executeCreateJob', () => {
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue({
       createListing: vi.fn().mockRejectedValue(new Error('Network timeout')),
     });
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -188,7 +188,7 @@ describe('executeUpdateJob', () => {
       updateListing: vi.fn().mockResolvedValue({ success: true, retryable: false }),
     };
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue(mockConnector);
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -215,7 +215,7 @@ describe('executeDelistJob', () => {
       delistListing: vi.fn().mockResolvedValue({ success: true, retryable: false }),
     };
     (getConnector as ReturnType<typeof vi.fn>).mockReturnValue(mockConnector);
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
@@ -233,7 +233,7 @@ describe('executeDelistJob', () => {
   });
 
   it('updates projection to DELISTED on success', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({
       from: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),

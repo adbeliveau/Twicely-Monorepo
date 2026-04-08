@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { sellerScoreSnapshot } from '../schema';
+import { sellerScoreSnapshot } from '@twicely/db/schema';
 import { SELLER_IDS } from './seed-users';
 
 // Hardcoded IDs for idempotency

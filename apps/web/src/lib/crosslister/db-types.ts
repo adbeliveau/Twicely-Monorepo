@@ -16,7 +16,7 @@ import {
   channelCategoryMapping,
   channelPolicyRule,
   automationSetting,
-} from '@/lib/db/schema/crosslister';
+} from '@twicely/db/schema/crosslister';
 
 export type CrosslisterAccount = InferSelectModel<typeof crosslisterAccount>;
 export type NewCrosslisterAccount = InferInsertModel<typeof crosslisterAccount>;

@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { category } from '../schema';
+import { category } from '@twicely/db/schema';
 
 // Hardcoded IDs for idempotency
 export const CATEGORY_IDS = {

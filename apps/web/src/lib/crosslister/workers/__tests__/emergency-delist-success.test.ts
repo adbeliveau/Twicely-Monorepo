@@ -152,7 +152,7 @@ describe('emergency delist processor — success paths', () => {
   });
 
   it('updates projection to DELISTED on successful delist', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock };
 
     setupSelectSequence(db, [
@@ -176,7 +176,7 @@ describe('emergency delist processor — success paths', () => {
   });
 
   it('emits delist.completed Centrifugo event when all projections delisted', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [ACTIVE_PROJECTION],
@@ -203,7 +203,7 @@ describe('emergency delist processor — success paths', () => {
   });
 
   it('skips idempotently when projection is already DELISTED', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
 
     setupSelectSequence(db, [
       [{ ...ACTIVE_PROJECTION, status: 'DELISTED' }],
@@ -219,7 +219,7 @@ describe('emergency delist processor — success paths', () => {
   });
 
   it('Tier C platform (session-based) goes through same delist flow', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const sessionAccount = { ...ACCOUNT_ROW, channel: 'POSHMARK' };
 
     setupSelectSequence(db, [
@@ -242,7 +242,7 @@ describe('emergency delist processor — success paths', () => {
   });
 
   it('does not cross-contaminate projections from different listings', async () => {
-    const { db } = await import('@/lib/db');
+    const { db } = await import('@twicely/db');
     const dbAny = db as unknown as { update: Mock };
 
     setupSelectSequence(db, [

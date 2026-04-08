@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { staffAuthorizeOrRedirect } from '@/lib/casl/staff-authorize';
+import { staffAuthorizeOrRedirect } from '@twicely/casl/staff-authorize';
 import { getAllAutomationRules } from '@/lib/queries/helpdesk-automation';
 import { AutomationRuleList } from './automation-rule-list';
 import { Zap } from 'lucide-react';

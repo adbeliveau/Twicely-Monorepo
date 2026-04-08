@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { platformSetting } from '../schema';
+import { platformSetting } from '@twicely/db/schema';
 import type { PlatformSettingSeed } from './v32-platform-settings';
 
 export const COMMS_SETTINGS: PlatformSettingSeed[] = [

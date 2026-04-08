@@ -9,7 +9,7 @@ import {
   getAuthOfferConfig,
 } from '../auth-offer';
 import { ledgerEntryTypeEnum } from '@twicely/db/schema';
-import { order } from '@/lib/db/schema/commerce';
+import { order } from '@twicely/db/schema/commerce';
 
 describe('Authentication Offer (B3.5)', () => {
   describe('getAuthOfferConfig defaults', () => {

@@ -9,7 +9,7 @@ import {
   referral,
   affiliateCommission,
   affiliatePayout,
-} from '../schema';
+} from '@twicely/db/schema';
 import { USER_IDS } from './seed-users';
 
 const AFF_IDS = {

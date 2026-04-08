@@ -9,7 +9,7 @@
 
 import { db } from '@twicely/db';
 import { affiliate, affiliateCommission, financialReport } from '@twicely/db/schema';
-import { taxInfo } from '@/lib/db/schema/tax';
+import { taxInfo } from '@twicely/db/schema/tax';
 import { and, eq, gte, lt, sum } from 'drizzle-orm';
 import { getTaxInfoByUserId } from '@/lib/queries/tax-info';
 import { maskTaxId } from '@twicely/db/encryption';

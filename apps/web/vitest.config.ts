@@ -47,6 +47,10 @@ export default defineConfig({
       //
       // INFRASTRUCTURE (packages — tests mock these, never import as CUT)
       '@twicely/db/schema': path.resolve(__dirname, '../../packages/db/src/schema'),
+      // @twicely/db/queries intentionally points at apps/web/src/lib/queries (not
+      // packages/db/src/queries). 182 existing tests mock '@/lib/queries/platform-settings'
+      // and this alias makes @twicely/db/queries/platform-settings resolve to the same
+      // file so the mocks apply to both import paths. The two files are kept in sync.
       '@twicely/db/queries': path.resolve(__dirname, './src/lib/queries'),
       '@twicely/db/cache': path.resolve(__dirname, '../../packages/db/src/cache'),
       '@twicely/db/encryption': path.resolve(__dirname, '../../packages/db/src/encryption'),
@@ -54,6 +58,9 @@ export default defineConfig({
       '@twicely/db': path.resolve(__dirname, '../../packages/db/src'),
       '@twicely/casl': path.resolve(__dirname, '../../packages/casl/src'),
       '@twicely/auth': path.resolve(__dirname, '../../packages/auth/src'),
+      // auth mirror trimmed to only contain Next.js-specific files (actions.ts,
+      // extension-auth.ts) that can't live in the pure package. Those stay
+      // importable via @/lib/auth/... (no alias needed).
       '@twicely/logger': path.resolve(__dirname, '../../packages/logger/src'),
 
       // CODE-UNDER-TEST (app-local — internal imports use @/lib/* paths
