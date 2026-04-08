@@ -47,17 +47,35 @@ npx turbo dev         # Start dev server
 - 12,043+ tests must pass (baseline)
 - **Never add files to `apps/web/src/lib/X` for trees that have been consolidated.** All shared code lives in `packages/X/src`. See `memory/project_duplicate_tree_consolidation.md` for the live status table.
 
-BASELINE_TESTS=11627
+BASELINE_TESTS=11077
 
 ## Duplicate-tree consolidation status
 
 | Status | Trees |
 |---|---|
-| Done | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications |
-| Pending Tier 4 | commerce |
+| Done (Tier 0–4) | shipping (deleted), realtime, email, scoring, config, finance, utils, storage, subscriptions, search, auth, casl, db (schema/index only), stripe, notifications, commerce |
 | Pending Tier 5 | crosslister, jobs |
 
-Old `BASELINE_TESTS=13443` was inflated by ~1,816 ghost duplicate runs from mirror trees. The 11627 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33.)
+Old `BASELINE_TESTS=13443` was inflated by ~2,366 ghost duplicate runs from mirror trees. The 11077 count is the honest unique-test total verified by line-counting `it()` blocks across kept and deleted test files. (Tier 0+1: 1,233; Tier 2: 167; Tier 3: 274; Tier 4 stripe: 109; Tier 4 notifications: 33; Tier 4 commerce: 550.)
+
+**Tier 4 commerce findings (multiple regressions surfaced):**
+The commerce mirror was the most diverged tree (84 source files differ + 13 package-only files). Pattern:
+*Package wins on newer features:*
+- `dispute-queries.ts`: package has Decision #92 Post-Release Claim Recovery Waterfall (recover from seller available + reserved before platform absorption). Web mirror lacked this entirely — production was refunding from platform without attempting seller clawback.
+- `create-order.ts`: package has SEC-001 live price lookup (uses live `listing.priceCents` from locked listing instead of stale cart price), preventing price manipulation. Package also has auth-fee qualification gating.
+- `offer-queries.ts`: package extends buyer selection to include `completedPurchaseCount`, `createdAt`, `emailVerified`, `phoneVerified`.
+- `order-completion.ts`: package adds `recordBoostAttribution` call (D2.4).
+- `returns-types.ts`: package adds `getSellerResponseDeadlineHour()` reading from platform_settings.
+- 13 package-only files: `address-types.ts`, `boost-attribution.ts`, `browsing-history-helpers.ts`, `buyer-block.ts`, `combined-shipping.ts`, `dispute-recovery.ts`, `local-token-types.ts`, `local-transaction-types.ts`, `personalization-signals.ts`, `tax-threshold-tracker.ts`, `watcher-offers-validation.ts`, plus `dispute-recovery.test.ts` and `offer-notifications.test.ts`. Web mirror was stale.
+
+*Web wins on platform_settings reads & concurrency guards (restored to package):*
+- `create-order.ts`: web had `commerce.order.maxItemsPerOrder` cap check; package had hardcoded the value out. **Restored.**
+- `performance-band.ts`: web had `score.trendModifierMax` + `score.trendDampeningFactor` reads; package hardcoded `0.05` and `0.5`. **Restored.**
+- `offer-create.ts`: web had `commerce.offer.enabled` kill switch; package removed it. **Restored.**
+- `offer-transitions.ts`: web had `commerce.offer.counterOfferEnabled` kill switch + `eq(listingOffer.status, 'PENDING')` AND-conditions in all 3 update WHERE clauses (`declineOffer`, `cancelOffer`, `expireOffer`) + `if (!updated) return ...` guards. Package removed all of them — concurrency regression. **Restored all.**
+- `offer-engine.ts`: web had `.for('update')` row-level lock on `listingOffer` row in `acceptOffer` transaction to prevent double-accept race. Package removed it. **Restored** (also fixed the offer-engine.test.ts mock setup which the package had simplified to match).
+- `order-cancel.ts`: web had `commerce.cancel.buyerWindowHours` enforcement (buyers can only cancel within configurable window after `paidAt`). Package removed it AND removed `paidAt`/`createdAt` from the SELECT. **Restored both.**
+- `seller-score-compute.ts`: web had `commerce.seller.defaultOnTimeShippingPct` read; package hardcoded `100`. **Restored.**
 
 **Tier 4 notifications findings:**
 - Package had `templates-authentication.ts` (G10.2 AI authentication: authenticated/counterfeit/inconclusive) and `templates-accounting.ts` (G10.3 accounting sync completed/failed) that the web mirror lacked entirely. Package wins.

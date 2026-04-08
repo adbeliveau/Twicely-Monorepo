@@ -40,6 +40,9 @@ export interface CreateOfferParams {
 export async function createOffer(params: CreateOfferParams) {
   const { listingId, buyerId, offerCents, message, paymentMethodId, shippingAddressId } = params;
 
+  const offerEnabled = await getPlatformSetting<boolean>('commerce.offer.enabled', true);
+  if (!offerEnabled) return { success: false, error: 'Offers are currently disabled' };
+
   // 1. Validate listing exists, is ACTIVE, allowOffers = true
   const [lst] = await db.select({
     id: listing.id,

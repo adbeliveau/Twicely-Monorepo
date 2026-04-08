@@ -85,7 +85,7 @@ describe('local-escrow-release worker processing', () => {
 
   it('skips already-COMPLETED transaction (idempotent) — state machine check', async () => {
     // Verify canTransition confirms COMPLETED is terminal (no further transitions)
-    const { canTransition } = await import('@/lib/commerce/local-state-machine');
+    const { canTransition } = await import('@twicely/commerce/local-state-machine');
     expect(canTransition('COMPLETED', 'COMPLETED')).toBe(false);
     // No DB update should be called for an already-COMPLETED transaction
     expect(db.update).not.toHaveBeenCalled();

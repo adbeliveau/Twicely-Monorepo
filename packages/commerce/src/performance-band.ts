@@ -164,11 +164,13 @@ export async function computePerformanceBand(
   metrics: SellerMetrics,
   previousScore?: number
 ): Promise<PerformanceResult> {
-  const [WEIGHTS, smoothingFactor, newSellerThreshold, priorMean, defaultReviewScore, defaultResponseTimeScore] = await Promise.all([
+  const [WEIGHTS, smoothingFactor, newSellerThreshold, priorMean, trendModifierMax, trendDampeningFactor, defaultReviewScore, defaultResponseTimeScore] = await Promise.all([
     getWeights(),
     getSmoothingFactor(),
     getPlatformSetting<number>('score.newSellerOrderThreshold', 10),
     getPlatformSetting<number>('score.priorMean', 3.5),
+    getPlatformSetting<number>('score.trendModifierMax', 0.05),
+    getPlatformSetting<number>('score.trendDampeningFactor', 0.5),
     getPlatformSetting<number>('score.defaultReviewScore', 500),
     getPlatformSetting<number>('score.defaultResponseTimeScore', 700),
   ]);
@@ -240,7 +242,7 @@ export async function computePerformanceBand(
   if (previousScore !== undefined && previousScore > 0) {
     const change = rawScore - previousScore;
     const changePercent = change / previousScore;
-    trendModifier = Math.max(-0.05, Math.min(0.05, changePercent * 0.5));
+    trendModifier = Math.max(-trendModifierMax, Math.min(trendModifierMax, changePercent * trendDampeningFactor));
   }
 
   const finalScore = Math.round(rawScore * (1 + trendModifier));
