@@ -242,52 +242,100 @@ run_wiring() {
   fi
 
   # --- 7c. Dead exports (exported but never imported) ---
+  # Strategy: build a single index of all imported and re-exported symbols
+  # from ANY source (relative paths, @/lib/*, @twicely/*) once, then check each
+  # export against that index. Uses perl to handle multi-line import blocks.
   echo -e "\n  ${BOLD}Dead Exports (commerce/stripe/queries):${NC}"
+  set +e
+  set +o pipefail
   DEAD_COUNT=0
+  IMPORTED_INDEX=$(mktemp)
+  trap 'rm -f "$IMPORTED_INDEX"' EXIT
+
+  # Use perl in slurp mode (-0777) to handle multi-line `import { ... }` and
+  # `export { ... } from` blocks. We extract every symbol name between { and }.
+  find src/ ../../packages/ -type f \( -name "*.ts" -o -name "*.tsx" \) \
+    -not -path "*/__tests__/*" -not -path "*/node_modules/*" \
+    -not -name "*.test.ts" -not -name "*.test.tsx" 2>/dev/null \
+    | xargs perl -0777 -ne '
+        while (/(?:^|[\s;])(?:import|export)\s*(?:type\s+)?\{([^}]+)\}/g) {
+          my $block = $1;
+          $block =~ s/\/\*.*?\*\///gs;
+          $block =~ s/\/\/[^\n]*//g;
+          for my $name (split /,/, $block) {
+            $name =~ s/^\s+|\s+$//g;
+            $name =~ s/^type\s+//;
+            $name =~ s/\s+as\s+.*//;
+            print "$name\n" if $name =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+          }
+        }
+      ' 2>/dev/null \
+    | sort -u > "$IMPORTED_INDEX"
+
   for DIR in src/lib/commerce src/lib/stripe src/lib/queries; do
     [ -d "$DIR" ] || continue
     for FILE in "$DIR"/*.ts; do
       [ -f "$FILE" ] || continue
       [[ "$FILE" == *"test"* || "$FILE" == *"__tests__"* || "$FILE" == *"index"* ]] && continue
-      grep -oE "export (async )?function [a-zA-Z]+" "$FILE" 2>/dev/null | \
-        sed 's/export //; s/async //; s/function //' | while read -r FUNC; do
-        # Check for references outside this file (true dead = never imported elsewhere)
-        # Search both apps/web/src/ and packages/ for callers
-        EXTERNAL_REFS=$(grep -rn "\b$FUNC\b" src/ ../../packages/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
-          grep -v "$FILE" | grep -v "__tests__\|\.test\." | wc -l || true)
-        # Check for internal calls within the same file (exclude the export definition line)
-        INTERNAL_REFS=$(grep -n "\b$FUNC\b" "$FILE" 2>/dev/null | \
-          grep -v "export.*function $FUNC" | wc -l || true)
-        if [ "$EXTERNAL_REFS" -eq 0 ] && [ "$INTERNAL_REFS" -eq 0 ]; then
-          warning "Dead export: $FUNC() in $(basename $FILE)"
-          DEAD_COUNT=$((DEAD_COUNT + 1))
-        fi
-      done
+      BASEFILE=$(basename "$FILE")
+      FUNCS=$(grep -oE "export (async )?function [a-zA-Z_][a-zA-Z0-9_]*" "$FILE" 2>/dev/null \
+        | sed 's/export //; s/async //; s/function //' || true)
+      [ -z "$FUNCS" ] && continue
+      while IFS= read -r FUNC; do
+        [ -z "$FUNC" ] && continue
+        # If symbol is imported or re-exported anywhere → not dead
+        if grep -qx "$FUNC" "$IMPORTED_INDEX"; then continue; fi
+        warning "Dead export: $FUNC() in $BASEFILE"
+        DEAD_COUNT=$((DEAD_COUNT + 1))
+      done <<< "$FUNCS"
     done
   done
+  rm -f "$IMPORTED_INDEX"
+  trap - EXIT
   if [ "$DEAD_COUNT" -eq 0 ]; then
     pass "No dead exports found"
   fi
+  set -e
+  set -o pipefail
 
   # --- 7d. Broken imports (named imports that don't resolve) ---
   echo -e "\n  ${BOLD}Broken Imports:${NC}"
+  set +e
+  set +o pipefail
   BROKEN=0
+  # NOTE: We avoid `grep -P` here because Windows Git Bash builds of grep
+  # only support -P with unibyte/UTF-8 locales and crash otherwise.
+  # Use awk + sed instead for portable parsing.
   for MODULE_DIR in commerce stripe queries actions; do
     [ -d "src/lib/$MODULE_DIR" ] || continue
-    grep -rn "from '@/lib/$MODULE_DIR/" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | \
-    grep -oP "{ [^}]+ }" | tr ',' '\n' | sed 's/[{}]//g' | sed 's/^ *//;s/ *$//' | \
-    sed 's/ as .*//' | grep -v "^type " | grep -v "^$" | sort -u | while read -r EXPORT_NAME; do
-      if ! grep -rq "export.*\(function\|const\|class\|interface\|type\|enum\) $EXPORT_NAME\b" "src/lib/$MODULE_DIR/" 2>/dev/null; then
+    IMPORT_LINES=$(grep -rh "from '@/lib/$MODULE_DIR/" src/ --include="*.ts" --include="*.tsx" 2>/dev/null \
+      | grep "import {" || true)
+    [ -z "$IMPORT_LINES" ] && continue
+    # Extract symbols between { and }
+    EXPORT_NAMES=$(echo "$IMPORT_LINES" \
+      | sed -n 's/.*import[[:space:]]*{\([^}]*\)}.*/\1/p' \
+      | tr ',' '\n' \
+      | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+      | sed 's/[[:space:]]*as[[:space:]].*//' \
+      | grep -v "^type " \
+      | grep -v "^$" \
+      | sort -u)
+    [ -z "$EXPORT_NAMES" ] && continue
+    while IFS= read -r EXPORT_NAME; do
+      [ -z "$EXPORT_NAME" ] && continue
+      if ! grep -rq "export.*\(function\|const\|class\|interface\|type\|enum\)[[:space:]]*$EXPORT_NAME\b" "src/lib/$MODULE_DIR/" 2>/dev/null; then
         if ! grep -rq "export {.*$EXPORT_NAME" "src/lib/$MODULE_DIR/" 2>/dev/null; then
           warning "Broken import: $EXPORT_NAME from @/lib/$MODULE_DIR"
           BROKEN=$((BROKEN + 1))
         fi
       fi
-    done
+    done <<< "$EXPORT_NAMES"
   done
   if [ "$BROKEN" -eq 0 ]; then
     pass "All named imports resolve"
   fi
+  set -e
+  set -o pipefail
 }
 
 # =====================================================================
@@ -488,7 +536,17 @@ run_hygiene() {
 
   # --- 9f. Top 10 largest files ---
   echo -e "\n  ${BOLD}Top 10 Largest Files:${NC}"
-  find src -name "*.ts" -o -name "*.tsx" 2>/dev/null | xargs wc -l 2>/dev/null | sort -rn | head -11 | tail -10 | while read -r LINE; do
+  set +e
+  set +o pipefail
+  # NOTE: xargs may split the file list across multiple invocations,
+  # producing multiple "total" lines. Filter them BEFORE sort.
+  TOP10=$(find src \( -name "*.ts" -o -name "*.tsx" \) 2>/dev/null \
+    | xargs wc -l 2>/dev/null \
+    | grep -v " total$" \
+    | sort -rn \
+    | head -10)
+  while IFS= read -r LINE; do
+    [ -z "$LINE" ] && continue
     LINES=$(echo "$LINE" | awk '{print $1}')
     FILE=$(echo "$LINE" | awk '{print $2}')
     [ "$FILE" = "total" ] && continue
@@ -497,7 +555,9 @@ run_hygiene() {
     else
       echo "    ${LINES}  $FILE"
     fi
-  done
+  done <<< "$TOP10"
+  set -e
+  set -o pipefail
 }
 
 # =====================================================================

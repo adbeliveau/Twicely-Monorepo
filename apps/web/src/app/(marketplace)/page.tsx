@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
-import { auth } from '@twicely/auth/server';
 import './landing.css';
 import { LandingHero } from '@/components/pages/landing/landing-hero';
 import { LandingValueStrip } from '@/components/pages/landing/landing-value-strip';
@@ -16,7 +14,6 @@ import { LandingCta } from '@/components/pages/landing/landing-cta';
 import { LandingReveal } from '@/components/pages/landing/landing-reveal';
 import { getTrendingListings, getRisingSellers, getStaffPickCollections } from '@/lib/queries/explore';
 import { getRecentListings, getRecentlySoldListings, getHomepageCategories } from '@/lib/queries/homepage';
-import { getLandingStats } from '@/lib/queries/landing-stats';
 
 export const metadata: Metadata = {
   title: 'Twicely — Buy & Sell Premium Secondhand',
@@ -26,21 +23,20 @@ export const metadata: Metadata = {
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://twicely.co';
 
-// Force dynamic rendering so random sold items refresh on every page load
-export const dynamic = 'force-dynamic';
+// ISR: regenerate the homepage at most once per minute. The "recently sold"
+// strip is randomized server-side per regeneration, which is plenty of
+// variety while letting Next cache the rendered HTML between hits.
+export const revalidate = 60;
 
 export default async function HomePage() {
-  const [trending, recent, soldItems, sellers, categories, collections, stats, session] = await Promise.all([
+  const [trending, recent, soldItems, sellers, categories, collections] = await Promise.all([
     getTrendingListings(10),
     getRecentListings(8),
     getRecentlySoldListings(12),
     getRisingSellers(3),
     getHomepageCategories(),
     getStaffPickCollections(),
-    getLandingStats(),
-    auth.api.getSession({ headers: await headers() }).catch(() => null),
   ]);
-  const isLoggedIn = !!session;
 
   // Hero uses recently sold items; fallback to trending+recent if no sold items yet
   const heroSoldItems = soldItems.length > 0 ? soldItems : [...trending, ...recent].slice(0, 12);
@@ -72,10 +68,10 @@ export default async function HomePage() {
           __html: JSON.stringify(jsonLd).replace(/<\//g, '<\\/'),
         }}
       />
-      <LandingHero listings={heroSoldItems} stats={stats} />
+      <LandingHero listings={heroSoldItems} />
       <LandingValueStrip />
       <LandingCategories categories={categories} />
-      <LandingTrending listings={trendingListings} isLoggedIn={isLoggedIn} />
+      <LandingTrending listings={trendingListings} />
       <LandingDrops collections={collections} />
       <LandingTicker />
       <LandingWhy />

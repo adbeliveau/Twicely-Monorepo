@@ -1,7 +1,7 @@
 import { db } from '@twicely/db';
 import { listing, listingImage, user, sellerProfile, category, sellerPerformance } from '@twicely/db/schema';
 import { eq, and, or, ilike, gte, lte, inArray, desc, asc, sql } from 'drizzle-orm';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 import type { SearchFilters, SearchResult } from '@/types/listings';
 import { mapToListingCard } from '@/lib/queries/shared';
 

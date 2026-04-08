@@ -164,7 +164,7 @@ export function ListerSubscriptionCard({
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Crosslister</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Import your listings for free from any platform. Get 25 publishes/month with the free plan.
+            Import your listings for free from any platform. Get 5 publishes / 6 months with the free plan.
           </p>
         </CardHeader>
         <CardContent>

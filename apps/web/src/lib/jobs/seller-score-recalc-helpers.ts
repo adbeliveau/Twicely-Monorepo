@@ -9,7 +9,7 @@ import { eq, and, gte, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { notify } from '@twicely/notifications/service';
-import type { PerformanceBand } from '@/lib/scoring/score-types';
+import type { PerformanceBand } from '@twicely/scoring/score-types';
 
 type BandWithSuspended = PerformanceBand | 'SUSPENDED';
 

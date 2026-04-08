@@ -31,6 +31,45 @@ vi.mock('../../queue/circuit-breaker', () => ({
   canDispatch: vi.fn().mockReturnValue(true),
 }));
 
+vi.mock('../../queue/polling-queue', () => ({
+  listerPollingQueue: { add: vi.fn().mockResolvedValue(undefined) },
+}));
+
+// Mock the cached settings loader so the scheduler doesn't hit the real DB —
+// returns the same defaults the real loader would produce on a fresh seed.
+vi.mock('../../services/queue-settings-loader', () => ({
+  loadCrosslisterQueueSettings: vi.fn().mockResolvedValue({
+    schedulerTickIntervalMs: 5000,
+    schedulerBatchPullSize: 50,
+    pollingBatchSize: 100,
+    webhookPrimaryChannels: ['EBAY', 'ETSY'],
+    pollingTickIntervalMs: 60000,
+    priorityPoll: 700,
+    priorityCreate: 300,
+    prioritySync: 500,
+    priorityDelist: 100,
+    maxAttemptsPoll: 2,
+    maxAttemptsPublish: 3,
+    maxAttemptsSync: 3,
+    backoffPollMs: 60000,
+    backoffPublishMs: 30000,
+    backoffSyncMs: 60000,
+    removeOnCompleteCount: 1000,
+    removeOnFailCount: 5000,
+    workerConcurrency: 10,
+    automationJobPriority: 700,
+    automationWorkerConcurrency: 5,
+    automationTickIntervalMs: 3600000,
+    automationAutoRelistHourUTC: 3,
+    automationPriceDropHourUTC: 4,
+    automationOfferToLikersHourUTC: 10,
+    automationOfferCooldownDays: 7,
+    automationMaxAttempts: 2,
+    automationBackoffMsFirst: 60000,
+    automationBackoffMsSecond: 300000,
+  }),
+}));
+
 vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));

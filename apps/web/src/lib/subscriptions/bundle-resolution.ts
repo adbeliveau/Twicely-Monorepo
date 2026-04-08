@@ -43,39 +43,41 @@ export function resolveBundleComponents(tier: BundleTier): BundleComponents {
 /**
  * Calculate savings in cents when buying a bundle vs individual subscriptions.
  * Returns positive = cheaper as bundle, negative = cheaper individually.
+ *
+ * Async because getPricing() reads from platform_settings.
  */
-export function getBundleSavingsCents(tier: BundleTier, interval: BillingInterval): number {
+export async function getBundleSavingsCents(tier: BundleTier, interval: BillingInterval): Promise<number> {
   if (tier === 'NONE') return 0;
   const components = BUNDLE_COMPONENTS[tier];
   let sumCents = 0;
 
-  const storePricing = getPricing('store', components.storeTier);
+  const storePricing = await getPricing('store', components.storeTier);
   if (storePricing) {
     sumCents += interval === 'monthly' ? storePricing.monthlyCents : storePricing.annualMonthlyCents;
   }
 
   if (components.listerTier !== 'NONE') {
-    const listerPricing = getPricing('lister', components.listerTier);
+    const listerPricing = await getPricing('lister', components.listerTier);
     if (listerPricing) {
       sumCents += interval === 'monthly' ? listerPricing.monthlyCents : listerPricing.annualMonthlyCents;
     }
   }
 
   if (components.financeTier === 'PRO') {
-    const financePricing = getPricing('finance', 'PRO');
+    const financePricing = await getPricing('finance', 'PRO');
     if (financePricing) {
       sumCents += interval === 'monthly' ? financePricing.monthlyCents : financePricing.annualMonthlyCents;
     }
   }
 
   if (components.hasAutomation) {
-    const automationPricing = getPricing('automation', 'DEFAULT');
+    const automationPricing = await getPricing('automation', 'DEFAULT');
     if (automationPricing) {
       sumCents += interval === 'monthly' ? automationPricing.monthlyCents : automationPricing.annualMonthlyCents;
     }
   }
 
-  const bundlePricing = getPricing('bundle', tier);
+  const bundlePricing = await getPricing('bundle', tier);
   if (!bundlePricing) return 0;
   const bundleCents = interval === 'monthly' ? bundlePricing.monthlyCents : bundlePricing.annualMonthlyCents;
 

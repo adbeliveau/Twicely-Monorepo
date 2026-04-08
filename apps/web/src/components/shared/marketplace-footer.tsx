@@ -27,7 +27,7 @@ const footerSections = [
     links: [
       { label: 'Buyer protection', href: '/p/buyer-protection' },
       { label: 'Verified sellers', href: '/p/how-it-works' },
-      { label: 'Authentication', href: '/p/how-it-works' },
+      { label: 'Authentication', href: '/p/authentication' },
       { label: 'Returns policy', href: '/p/terms' },
     ],
   },
@@ -36,8 +36,8 @@ const footerSections = [
     links: [
       { label: 'About', href: '/about' },
       { label: 'Help center', href: '/h' },
-      { label: 'Careers', href: '/about' },
       { label: 'Contact', href: '/h/contact' },
+      { label: 'Pricing', href: '/pricing' },
     ],
   },
 ];
@@ -49,7 +49,7 @@ export function MarketplaceFooter() {
     <footer role="contentinfo" className="hidden py-12 md:block">
       <div className="mx-auto max-w-[1380px] px-7">
         <div className="bg-white border border-gray-200 rounded-[28px] p-10 shadow-[0_4px_16px_rgba(20,20,20,0.06)] dark:bg-gray-800 dark:border-gray-700">
-          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-8">
+          <nav aria-label="Footer navigation" className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-8">
             {/* Brand column */}
             <div>
               <Logo />
@@ -78,7 +78,7 @@ export function MarketplaceFooter() {
                 </ul>
               </div>
             ))}
-          </div>
+          </nav>
 
           {/* Bottom bar */}
           <div className="mt-6 pt-5 border-t border-gray-200 flex justify-between items-center dark:border-gray-600">

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCategoryBySlug, getSubcategory } from '@/lib/queries/categories';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { searchListings } from '@twicely/search/listings';
 import { Breadcrumbs } from '@/components/shared/breadcrumbs';
 import { ListingGrid } from '@/components/shared/listing-grid';
@@ -51,11 +52,12 @@ export default async function SubcategoryPage({
   }
 
   // Build search filters for this subcategory
+  const pageSize = await getPlatformSetting<number>('discovery.search.defaultPageSize', 48);
   const filters: SearchFilters = {
     categoryId: subcategory.id,
     sort: (sort as SearchFilters['sort']) ?? 'newest',
     page: page ? parseInt(page, 10) : 1,
-    limit: 24,
+    limit: pageSize,
   };
 
   const results = await searchListings(filters);

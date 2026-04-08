@@ -166,6 +166,8 @@ describe('finalizeOrder', () => {
       application_fee_amount: 500,
     } as never);
 
+    // Track .for('update') calls so we can assert the race-prevention lock fired
+    const forUpdateMock = vi.fn().mockResolvedValue([{ id: 'listing1' }]);
     const txMock = {
       update: vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
@@ -174,13 +176,23 @@ describe('finalizeOrder', () => {
           }),
         }),
       }),
-      select: vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([
-            { id: 'item1', listingId: 'listing1', quantity: 1, unitPriceCents: 5000, tfAmountCents: 500 },
-          ]),
+      select: vi.fn()
+        // First select: order items
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([
+              { id: 'item1', listingId: 'listing1', quantity: 1, unitPriceCents: 5000, tfAmountCents: 500 },
+            ]),
+          }),
+        })
+        // Second select: SELECT FOR UPDATE on listings (Decision #12 race fix)
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              for: forUpdateMock,
+            }),
+          }),
         }),
-      }),
       insert: vi.fn().mockReturnValue({
         values: vi.fn().mockResolvedValue(undefined),
       }),
@@ -197,6 +209,112 @@ describe('finalizeOrder', () => {
     expect(result).toEqual({ success: true });
     expect(mockPaymentIntentsRetrieve).toHaveBeenCalledWith('pi_123');
     expect(mockTransaction).toHaveBeenCalled();
+    // Decision #12 regression — verify SELECT FOR UPDATE was called on listing rows
+    expect(forUpdateMock).toHaveBeenCalledWith('update');
+  });
+
+  it('acquires SELECT FOR UPDATE lock on listing rows before inventory decrement (Decision #12)', async () => {
+    // Regression test for the concurrent-finalize race that the audit found.
+    // Without .for('update'), two concurrent finalize calls for different orders
+    // sharing one listing could both succeed against availableQuantity = 1.
+    // This test asserts the lock is acquired BEFORE the listing UPDATE.
+    mockAuthorize.mockResolvedValue({
+      session: { userId: 'user1' } as never,
+      ability: { can: vi.fn().mockReturnValue(true) } as never,
+    });
+    mockSelect.mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([
+          { id: 'order1', status: 'CREATED', buyerId: 'user1', sellerId: 'seller1', totalCents: 5000, sourceCartId: null },
+        ]),
+      }),
+    } as never);
+    mockSelect.mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ value: '290' }]),
+        }),
+      }),
+    } as never);
+    mockSelect.mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ value: '30' }]),
+        }),
+      }),
+    } as never);
+    mockPaymentIntentsRetrieve.mockResolvedValue({
+      status: 'succeeded',
+      application_fee_amount: 500,
+    } as never);
+
+    // Track call order to assert FOR UPDATE happens BEFORE the listing inventory UPDATE.
+    // The transaction does: update(order PAID) → select items → select listings FOR UPDATE → update(listing inventory) per item.
+    // We need to differentiate update(order) from update(listing) by inspecting the argument.
+    const callOrder: string[] = [];
+    const forUpdateMock = vi.fn().mockImplementation(() => {
+      callOrder.push('for-update');
+      return Promise.resolve([{ id: 'l1' }, { id: 'l2' }]);
+    });
+
+    const txMock = {
+      // update() is called with the table; track which table each call targets
+      update: vi.fn().mockImplementation((table: unknown) => {
+        // The schema mocks at the top of this file mark order.id = 'id' and listing.id = 'id',
+        // so we differentiate via the table reference (not the column).
+        const isListing = table && typeof table === 'object' && 'availableQuantity' in (table as Record<string, unknown>);
+        return {
+          set: vi.fn().mockImplementation(() => {
+            if (isListing) {
+              callOrder.push('update-listing');
+            }
+            return {
+              where: vi.fn().mockReturnValue({
+                returning: vi.fn().mockResolvedValue([{ availableQuantity: 0 }]),
+              }),
+            };
+          }),
+        };
+      }),
+      select: vi.fn()
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([
+              { id: 'item1', listingId: 'l1', quantity: 1, unitPriceCents: 2500, tfAmountCents: 250 },
+              { id: 'item2', listingId: 'l2', quantity: 1, unitPriceCents: 2500, tfAmountCents: 250 },
+            ]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              for: forUpdateMock,
+            }),
+          }),
+        }),
+      insert: vi.fn().mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      }),
+    };
+    mockTransaction.mockImplementation(async (cb) => {
+      await cb(txMock as never);
+      return ['l1', 'l2'];
+    });
+    mockUpdate.mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+    } as never);
+
+    await finalizeOrder('pi_lock');
+
+    // Assert the lock fired with 'update' mode
+    expect(forUpdateMock).toHaveBeenCalledWith('update');
+
+    // Assert FOR UPDATE happened BEFORE any listing UPDATE (race-prevention)
+    const lockIdx = callOrder.indexOf('for-update');
+    const firstListingUpdateIdx = callOrder.indexOf('update-listing');
+    expect(lockIdx).toBeGreaterThanOrEqual(0);
+    expect(firstListingUpdateIdx).toBeGreaterThanOrEqual(0);
+    expect(lockIdx).toBeLessThan(firstListingUpdateIdx);
   });
 
   it('records promotionUsage and increments usageCount when coupon applied', async () => {
@@ -267,7 +385,15 @@ describe('finalizeOrder', () => {
           ]),
         }),
       })
-      // Second call: SEC-017 promotion validation
+      // Second call: SELECT FOR UPDATE on listings (Decision #12 race fix)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            for: vi.fn().mockResolvedValue([{ id: 'listing1' }]),
+          }),
+        }),
+      })
+      // Third call: SEC-017 promotion validation
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([

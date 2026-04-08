@@ -8,7 +8,7 @@ import { staffUser, staffUserRole } from '@/lib/db/schema/staff';
 import { customRole, staffUserCustomRole } from '@/lib/db/schema/platform';
 import { eq, or, ilike, count, desc, and, isNull } from 'drizzle-orm';
 import type { PlatformRole } from '@twicely/casl/types';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 
 export interface StaffListItem {
   id: string;

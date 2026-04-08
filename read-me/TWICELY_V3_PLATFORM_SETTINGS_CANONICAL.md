@@ -24,12 +24,25 @@ This document covers:
 
 ## 1. Storage Architecture
 
+> **IMPLEMENTATION NOTE (added 2026-04-07, owner-confirmed):** Sections §1.2 and
+> §1.6 originally specified **effective-dated versioning** with `version`,
+> `isActive`, and `effectiveAt` columns + a "never update in place, always
+> create new rows" rule. The shipped implementation uses a **simpler in-place
+> update + separate `platformSettingHistory` table** model. This was an
+> accepted simplification: history is preserved in the audit table, and the
+> effective-dated versioning was deemed over-engineered for the current
+> operational needs (no scheduled-future settings, no rollback-by-reactivation
+> use case in production). The schema sections below describe the SHIPPED model.
+> If effective-dated versioning is needed in the future, it can be added in
+> a v2 schema iteration. **The simpler model is the canonical state as of
+> 2026-04-07.**
+
 ### 1.1 Design Principles
 
 1. **Database-first, env-fallback.** Every setting is read from the database. If not found, fall back to `process.env`. If neither exists, use the hardcoded default from this document.
-2. **Effective-dated versioning.** Settings changes create new rows with `effectiveAt` timestamps. The active value is the most recent row where `effectiveAt <= now()` and `isActive = true`. No retroactive edits — past orders used the settings that were active when they were created.
+2. **History via audit table.** Settings are mutated in place. Every edit writes a row to `platformSettingHistory` (and `auditEvent`) capturing the old value, new value, editor, and timestamp. **NOT effective-dated row versioning.**
 3. **Category + key addressing.** Settings are addressed as `category.key` (e.g., `commerce.cart.expiryHours`). Flat dot-notation. No nesting in the key itself.
-4. **Audit everything.** Every settings change creates an `AuditEvent` with the old value, new value, and the staff member who changed it.
+4. **Audit everything.** Every settings change creates an `AuditEvent` AND a `platformSettingHistory` row. Two-layer audit.
 5. **Secrets are separate.** API keys, tokens, and credentials go in `EnvironmentSecret` with AES-256-GCM encryption. They never appear in `PlatformSetting`.
 
 ### 1.2 Drizzle Schema: `platformSetting`
@@ -150,12 +163,18 @@ export async function getSecret(key: string): Promise<string | null> {
 }
 ```
 
-### 1.6 Settings Update Rules
+### 1.6 Settings Update Rules (SHIPPED MODEL — owner-confirmed 2026-04-07)
 
-1. **Never update in place.** Create a new row with incremented `version` and `effectiveAt = now()`. Mark old row `isActive = false`.
-2. **Scheduled changes.** Set `effectiveAt` to a future date. The `getSetting()` function automatically picks it up when the time arrives.
-3. **Rollback.** Re-activate a previous version by setting its `isActive = true` and deactivating the current one.
-4. **Audit.** Every change creates `AuditEvent { category: 'SETTING_CHANGE', severity: 'HIGH', metadata: { category, key, oldValue, newValue } }`.
+1. **In-place update + history table.** The `platformSetting` row is updated in place. Before the update, the prior value is captured in a `platformSettingHistory` row with `oldValue`, `newValue`, `changedAt`, `changedByStaffId`. **The original spec called for "never update in place, always create new versioned row" — the simpler in-place + history model was adopted as a deliberate simplification.**
+2. **Scheduled changes.** ~~Set `effectiveAt` to a future date.~~ **NOT IMPLEMENTED.** The shipped model does not support scheduled-future settings. If needed, implement via a BullMQ delayed job that performs the in-place update at the scheduled time.
+3. **Rollback.** ~~Re-activate a previous version.~~ Read the previous value from `platformSettingHistory` and apply it via a normal update (which itself creates a new history row). One-click revert UI reads the prior `oldValue` and POSTs it.
+4. **Audit.** Every change creates BOTH a `platformSettingHistory` row AND an `AuditEvent { category: 'SETTING_CHANGE', severity: 'HIGH', metadata: { category, key, oldValue, newValue } }`. Two-layer audit.
+
+> **Why the change?** During implementation review, the team determined that
+> effective-dated versioning was over-engineered for current operational needs.
+> No use case required scheduled-future settings or rollback-by-row-reactivation.
+> The audit trail in `platformSettingHistory` provides full historical visibility.
+> Reverting an effective-dated implementation later, if needed, is non-breaking.
 
 ### 1.7 "Migrate from .env" Feature
 

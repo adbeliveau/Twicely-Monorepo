@@ -146,7 +146,7 @@ describe('handleDetectedSale — notifications and edge cases', () => {
     setupUpdateMock(db);
     setupInsertMock(db);
 
-    const { publishToChannel } = await import('@/lib/realtime/centrifugo-publisher');
+    const { publishToChannel } = await import('@twicely/realtime/centrifugo-publisher');
     const { handleDetectedSale } = await import('../sale-detection');
     await handleDetectedSale(BASE_SALE);
 

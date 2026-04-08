@@ -12,6 +12,8 @@ import {
   LayoutTemplate, Users, DollarSign, BarChart2, FileText, Banknote,
   Crown, MessageSquare, Settings, UserCircle, MapPin, Shield, Bell,
   HelpCircle, BookOpen, Ticket, TrendingUp,
+  ShieldCheck, Activity, Clock, Receipt, Car, Link2, PieChart, Rocket,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@twicely/utils/cn';
 
@@ -22,6 +24,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Layout: LayoutTemplate, Users, DollarSign, BarChart2, FileText,
   Banknote, Crown, MessageSquare, Settings, UserCircle, MapPin,
   Shield, Bell, HelpCircle, BookOpen, Ticket, TrendingUp,
+  ShieldCheck, Activity, Clock, Receipt, Car, Link2, PieChart, Rocket,
+  CreditCard,
   Storefront: Store,
 };
 

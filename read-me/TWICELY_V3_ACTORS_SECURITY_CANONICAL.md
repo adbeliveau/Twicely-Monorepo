@@ -751,8 +751,8 @@ Total: **30 subjects, ~130 distinct permissions.**
 | Action Category | Password | 2FA | Session Max Age |
 |----------------|----------|-----|-----------------|
 | Browse / read | — | — | — |
-| Buyer actions | ✅ | — | 7 days |
-| Seller actions | ✅ | — | 7 days |
+| Buyer actions | ✅ | — | 24 hours (Decision #142, was 7 days) |
+| Seller actions | ✅ | — | 24 hours (Decision #142, was 7 days) |
 | Seller financial (payouts, subscription) | ✅ | Recommended | 24 hours |
 | Staff delegation changes | ✅ | Recommended | 24 hours |
 | Platform agent actions | ✅ | ✅ | 8 hours |
@@ -824,7 +824,7 @@ The following sections cover every security surface. Requirements are classified
 | Session rotation on privilege change | New session ID on login, role change, 2FA verification |
 | Concurrent session limit | Max 5 active sessions per user, show active sessions in settings |
 | Session revocation | User can kill individual sessions from /account/security |
-| Absolute session timeout | Buyer/Seller: 7 days, Agent: 8 hours, Admin: 4 hours |
+| Absolute session timeout | Buyer/Seller: **24 hours** (per Decision #142, was 7 days), Agent: 8 hours, Admin: 4 hours |
 | Idle timeout | Agent: 30 min, Admin: 15 min (re-auth required) |
 | Session binding | Bind to user-agent + IP range (warn on change, don't auto-kill) |
 | Logout invalidates server-side | Session deleted from database, not just cookie cleared |

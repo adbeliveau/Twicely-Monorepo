@@ -12,6 +12,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import {
   reviewContentReportSchema,
   issueEnforcementActionSchema,
@@ -231,7 +232,18 @@ export async function updateSellerBandOverrideAction(input: unknown) {
   const parsed = updateSellerEnforcementSchema.safeParse(input);
   if (!parsed.success) return { error: 'Invalid input' };
 
-  const { userId, enforcementLevel, bandOverride, bandOverrideReason } = parsed.data;
+  const { userId, enforcementLevel, bandOverride, bandOverrideReason, bandOverrideExpiresInDays } = parsed.data;
+
+  // R5: When bandOverride is set, expiry MUST be populated or the recalc job will silently
+  // ignore the override. Compute expiry from input or fall back to platform_settings default.
+  let bandOverrideExpiresAt: Date | null = null;
+  if (bandOverride) {
+    const defaultDays = await getPlatformSetting<number>('seller-score.bandOverride.defaultDays', 90);
+    const days = bandOverrideExpiresInDays ?? defaultDays;
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + days);
+    bandOverrideExpiresAt = expiry;
+  }
 
   await db
     .update(sellerProfile)
@@ -239,7 +251,7 @@ export async function updateSellerBandOverrideAction(input: unknown) {
       bandOverride: bandOverride ?? null,
       bandOverrideReason: bandOverrideReason ?? null,
       bandOverrideBy: session.staffUserId,
-      bandOverrideExpiresAt: null,
+      bandOverrideExpiresAt,
       updatedAt: new Date(),
     })
     .where(eq(sellerProfile.userId, userId));
@@ -262,7 +274,7 @@ export async function updateSellerBandOverrideAction(input: unknown) {
     subject: 'SellerProfile',
     subjectId: userId,
     severity: 'HIGH',
-    detailsJson: { userId, bandOverride: bandOverride ?? null, bandOverrideReason: bandOverrideReason ?? '' },
+    detailsJson: { userId, bandOverride: bandOverride ?? null, bandOverrideReason: bandOverrideReason ?? '', bandOverrideExpiresAt: bandOverrideExpiresAt?.toISOString() ?? null },
   });
 
   revalidatePath('/mod');

@@ -9,11 +9,12 @@ import { channelProjection, sellerProfile } from '@twicely/db/schema';
 import { and, eq, lte, isNotNull } from 'drizzle-orm';
 import { canPoll, recordPoll } from './poll-budget';
 import { canDispatch } from '../queue/circuit-breaker';
+import { listerPollingQueue, type ListerPollingJobData } from '../queue/polling-queue';
+import { loadCrosslisterQueueSettings } from '../services/queue-settings-loader';
 import { logger } from '@twicely/logger';
 import type { ExternalChannel } from '../types';
 
-// Webhook-primary channels: eBay and Etsy per §13.5
-const WEBHOOK_PRIMARY_CHANNELS: ExternalChannel[] = ['EBAY', 'ETSY'];
+// HOT/WARM tiers — pure derived data, not configurable
 const HOT_WARM_TIERS = ['HOT', 'WARM'];
 
 interface SchedulerHealth {
@@ -38,6 +39,9 @@ export async function runPollSchedulerTick(): Promise<void> {
   try {
     const now = new Date();
 
+    // Load all queue/scheduler/polling settings (cached 5 min)
+    const settings = await loadCrosslisterQueueSettings();
+
     // Query projections due for polling
     const dueProjections = await db
       .select({
@@ -56,7 +60,7 @@ export async function runPollSchedulerTick(): Promise<void> {
         )
       )
       .orderBy(channelProjection.nextPollAt)
-      .limit(100);
+      .limit(settings.pollingBatchSize);
 
     let enqueued = 0;
 
@@ -65,7 +69,7 @@ export async function runPollSchedulerTick(): Promise<void> {
       const pollTier = proj.pollTier as string;
 
       // Skip webhook-primary channels for HOT/WARM tiers (§13.5)
-      if (WEBHOOK_PRIMARY_CHANNELS.includes(channel) && HOT_WARM_TIERS.includes(pollTier)) {
+      if (settings.webhookPrimaryChannels.includes(channel) && HOT_WARM_TIERS.includes(pollTier)) {
         continue;
       }
 
@@ -88,11 +92,33 @@ export async function runPollSchedulerTick(): Promise<void> {
         continue;
       }
 
-      // Enqueue POLL job via BullMQ
-      // NOTE: In a real system this would enqueue to the lister:polling queue.
-      // For now, we log the dispatch. The actual BullMQ enqueue will be wired
-      // when the polling worker is implemented.
-      logger.info('[pollScheduler] Enqueue POLL', {
+      // Enqueue POLL job to BullMQ lister-polling queue.
+      // The polling worker (FUTURE — see polling-queue.ts header) will
+      // dequeue these and call the connector for the relevant channel.
+      // Until the worker ships, jobs accumulate harmlessly in the queue.
+      const jobData: ListerPollingJobData = {
+        projectionId: proj.id,
+        channel,
+        sellerId: proj.sellerId,
+        listingId: proj.listingId,
+        pollTier,
+        scheduledAt: now.toISOString(),
+      };
+
+      // Idempotent jobId so duplicate scheduler ticks don't double-enqueue
+      const jobId = `poll-${proj.id}-${now.getTime()}`;
+
+      await listerPollingQueue.add('poll', jobData, {
+        jobId,
+        priority: settings.priorityPoll,
+        attempts: settings.maxAttemptsPoll,
+        backoff: { type: 'exponential', delay: settings.backoffPollMs },
+        removeOnComplete: { count: settings.removeOnCompleteCount },
+        removeOnFail: { count: settings.removeOnFailCount },
+      });
+
+      logger.info('[pollScheduler] Enqueued POLL', {
+        jobId,
         projectionId: proj.id,
         channel,
         sellerId: proj.sellerId,

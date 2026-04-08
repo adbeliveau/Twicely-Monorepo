@@ -10,7 +10,7 @@ import { db } from '@twicely/db';
 import { listing, category } from '@twicely/db/schema';
 import { eq, ilike, sql, and } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
-import { getClientIp } from '@/lib/utils/get-client-ip';
+import { getClientIp } from '@twicely/utils/get-client-ip';
 
 export interface SearchSuggestion {
   text: string;

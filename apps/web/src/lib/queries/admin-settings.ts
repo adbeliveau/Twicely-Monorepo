@@ -5,7 +5,7 @@
 
 import { db } from '@twicely/db';
 import { platformSetting, platformSettingHistory, auditEvent } from '@twicely/db/schema';
-import { eq, desc, asc, inArray } from 'drizzle-orm';
+import { eq, desc, asc, inArray, like } from 'drizzle-orm';
 
 export interface SettingRow {
   id: string;
@@ -99,6 +99,31 @@ export async function getSettingsByKeys(keys: string[]): Promise<SettingRow[]> {
     .select()
     .from(platformSetting)
     .where(inArray(platformSetting.key, keys))
+    .orderBy(asc(platformSetting.key));
+
+  return rows.map((r) => ({
+    id: r.id,
+    key: r.key,
+    value: r.value,
+    type: r.type,
+    category: r.category,
+    description: r.description,
+    isSecret: r.isSecret,
+    updatedAt: r.updatedAt,
+  }));
+}
+
+/**
+ * Fetch every setting whose key starts with the given prefix.
+ * Used by per-domain admin pages (e.g., cfg/crosslister) to surface
+ * all settings in a single namespace.
+ */
+export async function getSettingsByKeyPrefix(prefix: string): Promise<SettingRow[]> {
+  if (!prefix) return [];
+  const rows = await db
+    .select()
+    .from(platformSetting)
+    .where(like(platformSetting.key, `${prefix}%`))
     .orderBy(asc(platformSetting.key));
 
   return rows.map((r) => ({

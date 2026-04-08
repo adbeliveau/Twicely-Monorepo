@@ -253,28 +253,6 @@
   gap: 12px;
   padding: 20px;
 }
-.landing .hero-stat-row {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-top: 4px;
-}
-.landing .hero-stat {
-  background: #fff;
-  border: 1px solid var(--l-border);
-  border-radius: var(--r-md);
-  padding: 14px 16px;
-  box-shadow: var(--l-shadow-sm);
-}
-.landing .hero-stat-num {
-  font-weight: 900;
-  font-size: 24px;
-  letter-spacing: -0.03em;
-  color: var(--l-black);
-  line-height: 1;
-}
-
 /* ── Product Cards ── */
 .landing .product-card {
   background: #fff;
@@ -837,7 +815,6 @@
 @media (max-width: 1024px) {
   .landing .hero-grid { grid-template-columns: 1fr; }
   .landing .hero-copy { min-height: auto; padding: 32px 24px; }
-  .landing .hero-stat-row { grid-template-columns: repeat(2, 1fr); }
   .landing .prod-grid-5 { grid-template-columns: repeat(3, 1fr); }
   .landing .trust-grid { grid-template-columns: repeat(2, 1fr); }
   .landing .drops-layout { grid-template-columns: 1fr; }

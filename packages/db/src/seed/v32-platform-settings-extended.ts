@@ -513,4 +513,24 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // Cleanup batch sizes
   { key: 'cleanup.dataPurge.exportBatchSize', value: 500, type: 'number' as const, category: 'cleanup', description: 'Max expired data exports purged per run' },
   { key: 'cleanup.auditArchive.batchSize', value: 10000, type: 'number' as const, category: 'cleanup', description: 'Max audit events archived per run' },
+
+  // ─── Buyer Protection (canonical §10.5) ────────────────────────────────────
+  { key: 'trust.protection.defaultWindowDays', value: 30, type: 'number' as const, category: 'trust', description: 'Standard buyer protection claim window (days)' },
+  { key: 'trust.protection.counterfeitWindowDays', value: 60, type: 'number' as const, category: 'trust', description: 'Extended claim window for counterfeit claims (days)' },
+  { key: 'trust.protection.sellerResponseDays', value: 3, type: 'number' as const, category: 'trust', description: 'Business days for seller to respond to a claim' },
+  { key: 'trust.protection.platformReviewHours', value: 48, type: 'number' as const, category: 'trust', description: 'Hours for platform to review escalated claims' },
+  { key: 'trust.protection.appealWindowDays', value: 30, type: 'number' as const, category: 'trust', description: 'Days after resolution to file an appeal' },
+  { key: 'trust.protection.defaultMaxCoverageCents', value: 500000, type: 'cents' as const, category: 'trust', description: 'Default max coverage per claim ($5,000)' },
+  { key: 'trust.protection.autoApproveThresholdCents', value: 2500, type: 'cents' as const, category: 'trust', description: 'Auto-approve claims under this amount if seller does not respond ($25)' },
+
+  // ─── Discovery — Search & Price Alerts (canonical §11.1, §11.3) ────────────
+  { key: 'discovery.search.maxPageSize', value: 100, type: 'number' as const, category: 'discovery', description: 'Maximum search results per page' },
+  { key: 'discovery.priceAlert.defaultExpiryDays', value: 90, type: 'number' as const, category: 'discovery', description: 'Default price alert expiration (days)' },
+  { key: 'discovery.priceAlert.categoryAlertsEnabled', value: true, type: 'boolean' as const, category: 'discovery', description: 'Enable category-wide price alerts' },
+  { key: 'discovery.priceAlert.categoryAlertMaxPerUser', value: 20, type: 'number' as const, category: 'discovery', description: 'Max category alerts per user' },
+  { key: 'discovery.priceAlert.immediateLimit', value: 10, type: 'number' as const, category: 'discovery', description: 'Max immediate alert notifications sent per day' },
+
+  // ─── Payments — Disputes & Reconciliation (canonical §13.1, §13.2) ─────────
+  { key: 'payments.chargebackFeeCents', value: 1500, type: 'cents' as const, category: 'payments', description: 'Fee charged for chargebacks ($15)' },
+  { key: 'payments.generateDailyReports', value: true, type: 'boolean' as const, category: 'payments', description: 'Auto-generate daily financial reports' },
 ];

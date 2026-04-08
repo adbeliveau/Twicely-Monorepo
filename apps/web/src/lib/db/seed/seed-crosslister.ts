@@ -62,7 +62,7 @@ const CROSSLISTER_SETTINGS = [
   { key: 'crosslister.circuitBreaker.recoveryWindowMs', value: 300000, type: 'number', description: 'Ms before OPEN circuit transitions to HALF_OPEN (5 min)' },
   { key: 'crosslister.circuitBreaker.halfOpenSuccesses', value: 2, type: 'number', description: 'Successes in HALF_OPEN before circuit closes' },
   // Publish limits by ListerTier (Source: Lister Canonical Section 7.3)
-  { key: 'crosslister.publishLimit.free', value: 25, type: 'number', description: 'Monthly publish limit for FREE ListerTier (DEPRECATED — use crosslister.publishes.FREE)' },
+  { key: 'crosslister.publishLimit.free', value: 5, type: 'number', description: 'DEPRECATED — use crosslister.publishes.FREE. Updated to 5 (was 25) per Decision #105 — FREE is a 5-publish/6-month teaser, not a 25/month allowance.' },
   { key: 'crosslister.publishLimit.lite', value: 200, type: 'number', description: 'Monthly publish limit for LITE ListerTier (DEPRECATED — use crosslister.publishes.LITE)' },
   { key: 'crosslister.publishLimit.pro', value: 2000, type: 'number', description: 'Monthly publish limit for PRO ListerTier (DEPRECATED — use crosslister.publishes.PRO)' },
   { key: 'crosslister.rolloverMaxMultiplier', value: 3, type: 'number', description: 'Max rollover multiplier (3x monthly limit)' },

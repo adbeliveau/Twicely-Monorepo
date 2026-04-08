@@ -30,7 +30,7 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
 }));
 
-vi.mock('@/lib/scoring/calculate-seller-score', () => ({
+vi.mock('@twicely/scoring/calculate-seller-score', () => ({
   calculateTrend: vi.fn().mockReturnValue('STEADY'),
 }));
 

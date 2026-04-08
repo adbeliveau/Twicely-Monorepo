@@ -53,8 +53,32 @@ vi.mock('../automation-worker', () => ({
 }));
 
 vi.mock('../scheduler-loop', () => ({
-  startSchedulerLoop: vi.fn(),
+  startSchedulerLoop: vi.fn().mockResolvedValue(undefined),
   stopSchedulerLoop: vi.fn(),
+}));
+
+vi.mock('../../services/queue-settings-loader', () => ({
+  loadCrosslisterQueueSettings: vi.fn().mockResolvedValue({
+    schedulerTickIntervalMs: 5000,
+    schedulerBatchPullSize: 50,
+    pollingBatchSize: 100,
+    webhookPrimaryChannels: ['EBAY', 'ETSY'],
+    pollingTickIntervalMs: 60000,
+    priorityPoll: 700,
+    priorityCreate: 300,
+    prioritySync: 500,
+    priorityDelist: 100,
+    maxAttemptsPoll: 2,
+    maxAttemptsPublish: 3,
+    maxAttemptsSync: 3,
+    backoffPollMs: 60000,
+    backoffPublishMs: 30000,
+    backoffSyncMs: 60000,
+    removeOnCompleteCount: 1000,
+    removeOnFailCount: 5000,
+    workerConcurrency: 10,
+  }),
+  resetCrosslisterQueueSettingsCache: vi.fn(),
 }));
 
 vi.mock('../../polling/poll-scheduler', () => ({
@@ -79,33 +103,33 @@ describe('worker-init wiring', () => {
 
   it('calls registerShippingQuoteDeadlineJob on init', async () => {
     const { initListerWorker } = await import('../worker-init');
-    initListerWorker();
+    await initListerWorker();
     expect(mockRegisterDeadline).toHaveBeenCalledTimes(1);
   });
 
   it('calls registerExpireFreeListerJob on init', async () => {
     const { initListerWorker } = await import('../worker-init');
-    initListerWorker();
+    await initListerWorker();
     expect(mockRegisterExpiry).toHaveBeenCalledTimes(1);
   });
 
   it('calls registerCronJobs on init', async () => {
     const { initListerWorker } = await import('../worker-init');
-    initListerWorker();
+    await initListerWorker();
     expect(mockRegisterCron).toHaveBeenCalledTimes(1);
   });
 
   it('starts scheduler loop on init', async () => {
     const { initListerWorker } = await import('../worker-init');
     const { startSchedulerLoop } = await import('../scheduler-loop');
-    initListerWorker();
+    await initListerWorker();
     expect(startSchedulerLoop).toHaveBeenCalledTimes(1);
   });
 
   it('is idempotent — second call is no-op', async () => {
     const { initListerWorker } = await import('../worker-init');
-    initListerWorker();
-    initListerWorker();
+    await initListerWorker();
+    await initListerWorker();
     // Only called once despite two init calls
     expect(mockRegisterCron).toHaveBeenCalledTimes(1);
   });

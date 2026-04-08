@@ -43,11 +43,11 @@ export async function register(): Promise<void> {
     await loadProviderKeys();
 
     // Load infrastructure config from platform_settings (DB-first, env fallback)
-    const { loadInfraConfig } = await import('@/lib/config/infra-config');
+    const { loadInfraConfig } = await import('@twicely/config/infra-config');
     await loadInfraConfig();
 
     const { initListerWorker } = await import('@/lib/crosslister/queue/worker-init');
-    initListerWorker();
+    await initListerWorker();
 
     const { registerAffiliatePayoutJob } = await import('@/lib/jobs/affiliate-payout-cron');
     await registerAffiliatePayoutJob();

@@ -22,7 +22,7 @@ export interface CronHandlers {
 
 const QUEUE_NAME = 'platform-cron';
 
-type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc';
+type CronTask = 'orders' | 'returns' | 'shipping' | 'health' | 'vacation' | 'seller-score-recalc' | 'listing-image-retention';
 
 interface CronJobData {
   task: CronTask;
@@ -41,6 +41,7 @@ export async function registerCronJobs(): Promise<void> {
     healthPattern,
     vacationPattern,
     sellerScorePattern,
+    imageRetentionPattern,
   ] = await Promise.all([
     getPlatformSetting('jobs.cron.orders.pattern', '0 * * * *'),
     getPlatformSetting('jobs.cron.returns.pattern', '10 * * * *'),
@@ -48,6 +49,7 @@ export async function registerCronJobs(): Promise<void> {
     getPlatformSetting('jobs.cron.health.pattern', '*/5 * * * *'),
     getPlatformSetting('jobs.cron.vacation.pattern', '0 0 * * *'),
     getPlatformSetting('jobs.cron.sellerScoreRecalc.pattern', '0 3 * * *'),
+    getPlatformSetting('jobs.cron.listingImageRetention.pattern', '30 4 * * *'),
   ]);
 
   // Orders: auto-complete after escrow hold
@@ -92,7 +94,14 @@ export async function registerCronJobs(): Promise<void> {
     { jobId: 'cron-seller-score-recalc', repeat: { pattern: sellerScorePattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
   );
 
-  logger.info('[cronJobs] Registered 6 platform cron jobs');
+  // Listing image retention — Decision #111
+  await cronQueue.add(
+    'cron:listing-image-retention',
+    { task: 'listing-image-retention', triggeredAt: new Date().toISOString() },
+    { jobId: 'cron-listing-image-retention', repeat: { pattern: imageRetentionPattern }, removeOnComplete: true, removeOnFail: { count: 100 } },
+  );
+
+  logger.info('[cronJobs] Registered 7 platform cron jobs');
 
   // Tax document generation — separate queue, January 15 annually
   const { registerTaxDocumentGenerationJob } = await import('./tax-document-generation');
@@ -161,6 +170,12 @@ export function createCronWorker(handlers: CronHandlers) {
         const { processSellerScoreRecalc } = await import('@twicely/jobs/seller-score-recalc');
         await processSellerScoreRecalc();
         logger.info('[cronJobs] seller-score-recalc complete');
+        break;
+      }
+      case 'listing-image-retention': {
+        const { runListingImageRetention } = await import('@twicely/jobs/listing-image-retention');
+        const result = await runListingImageRetention();
+        logger.info('[cronJobs] listing-image-retention complete', result);
         break;
       }
     }

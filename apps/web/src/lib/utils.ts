@@ -1,2 +1,2 @@
-// Barrel file for utilities - shadcn components expect @/lib/utils
-export { cn } from './utils/cn';
+// Barrel file for utilities — shadcn components expect @/lib/utils
+export { cn } from '@twicely/utils/cn';

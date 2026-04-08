@@ -74,11 +74,11 @@ function setupCanPublishDb(tier: string, creditRows: unknown[]) {
 describe('getPublishAllowance', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); });
 
-  it('returns 25 monthly limit for FREE tier', async () => {
-    setupDb('FREE', '25', [currentMonthBucket(25)]);
+  it('returns 5 monthly limit for FREE tier (Decision #105)', async () => {
+    setupDb('FREE', '5', [currentMonthBucket(5)]);
     const { getPublishAllowance } = await import('../publish-meter');
     const result = await getPublishAllowance('seller-1');
-    expect(result.monthlyLimit).toBe(25);
+    expect(result.monthlyLimit).toBe(5);
     expect(result.tier).toBe('FREE');
   });
 
@@ -108,20 +108,20 @@ describe('getPublishAllowance', () => {
   });
 
   it('computes usedThisMonth from credit ledger gap', async () => {
-    // 25 monthly limit, 15 remaining → 10 used
-    setupDb('FREE', '25', [currentMonthBucket(15)]);
+    // 5 monthly limit (Decision #105), 3 remaining → 2 used
+    setupDb('FREE', '5', [currentMonthBucket(3)]);
     const { getPublishAllowance } = await import('../publish-meter');
     const result = await getPublishAllowance('seller-5');
-    expect(result.usedThisMonth).toBe(10);
-    expect(result.remaining).toBe(15);
+    expect(result.usedThisMonth).toBe(2);
+    expect(result.remaining).toBe(3);
   });
 
   it('returns remaining: 0 when no credits available', async () => {
-    setupDb('FREE', '25', []);
+    setupDb('FREE', '5', []);
     const { getPublishAllowance } = await import('../publish-meter');
     const result = await getPublishAllowance('seller-6');
     expect(result.remaining).toBe(0);
-    expect(result.usedThisMonth).toBe(25);
+    expect(result.usedThisMonth).toBe(5);
   });
 
   it('rolloverBalance is 0 when only current-month credits', async () => {

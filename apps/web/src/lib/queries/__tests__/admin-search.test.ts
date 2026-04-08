@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 const mockGetInfraConfig = vi.fn();
-vi.mock('@/lib/config/infra-config', () => ({
+vi.mock('@twicely/config/infra-config', () => ({
   getInfraConfig: (...args: unknown[]) => mockGetInfraConfig(...args),
 }));
 

@@ -10,12 +10,12 @@ import { sellerProfile, sellerScoreSnapshot, listing } from '@twicely/db/schema'
 import { eq, and, gte, desc, ne } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { calculateSellerScore, calculateSearchMultiplier } from '@/lib/scoring/calculate-seller-score';
+import { calculateSellerScore, calculateSearchMultiplier } from '@twicely/scoring/calculate-seller-score';
 import {
   getOnTimeShippingRate, getInadClaimRate, getReturnRate,
   getCancellationRate, getPrimaryFeeBucket, getCompletedOrderCount, getPlatformMeanScore,
-} from '@/lib/scoring/metric-queries';
-import { getReviewAverage, getMedianResponseTime } from '@/lib/scoring/metric-queries-messaging';
+} from '@twicely/scoring/metric-queries';
+import { getReviewAverage, getMedianResponseTime } from '@twicely/scoring/metric-queries-messaging';
 import {
   determineEffectiveBand, runAutoEnforcement, notifyBandTransition, loadEnforcementSettings,
   type SellerRow,
@@ -23,7 +23,7 @@ import {
 import { logger } from '@twicely/logger';
 import { getTypesenseClient } from '@twicely/search/typesense-client';
 import { LISTINGS_COLLECTION } from '@twicely/search/typesense-schema';
-import type { BandThresholds, CategoryThresholds, MetricWeights, PerformanceBand } from '@/lib/scoring/score-types';
+import type { BandThresholds, CategoryThresholds, MetricWeights, PerformanceBand } from '@twicely/scoring/score-types';
 
 const QUEUE_NAME = 'seller-score-recalc';
 

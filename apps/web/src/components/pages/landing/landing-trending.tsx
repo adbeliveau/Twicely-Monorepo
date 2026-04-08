@@ -18,10 +18,9 @@ function formatCondition(condition: string): string {
 
 interface Props {
   listings: ListingCardData[];
-  isLoggedIn: boolean;
 }
 
-export function LandingTrending({ listings, isLoggedIn }: Props) {
+export function LandingTrending({ listings }: Props) {
   if (listings.length === 0) return null;
 
   return (
@@ -57,7 +56,6 @@ export function LandingTrending({ listings, isLoggedIn }: Props) {
                     <LandingHeartButton
                       listingId={listing.id}
                       listingSlug={listing.slug}
-                      isLoggedIn={isLoggedIn}
                     />
                   </div>
                   {listing.freeShipping && (

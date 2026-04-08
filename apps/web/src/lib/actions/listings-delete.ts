@@ -53,6 +53,16 @@ export async function deleteListing(listingId: string): Promise<ActionResult> {
       return { success: false, error: 'Unauthorized' };
     }
 
+    // Decision #109 — SOLD listings cannot be deleted (Mercari model).
+    // SOLD listings auto-archive and stay on the seller's record forever.
+    // Sellers can hide from their dashboard but never delete the row.
+    if (existingListing.status === 'SOLD') {
+      return {
+        success: false,
+        error: 'Sold listings are kept on record for your protection and cannot be deleted. You can hide this listing from your dashboard.',
+      };
+    }
+
     // Hard delete for drafts, soft delete (end) for others
     if (existingListing.status === 'DRAFT') {
       // Delete images first (cascade should handle this, but be explicit)

@@ -189,3 +189,71 @@ export function getDowngradeWarnings(ctx: DowngradeContext): DowngradeWarning[] 
 
   return warnings;
 }
+
+// ─── Change Classification (pure — moved here so client components can import
+// without dragging in price-map's postgres driver) ──────────────────────────
+
+export type BillingInterval = 'monthly' | 'annual';
+
+export type ChangeClassification =
+  | 'UPGRADE'
+  | 'DOWNGRADE'
+  | 'INTERVAL_UPGRADE'
+  | 'INTERVAL_DOWNGRADE'
+  | 'NO_CHANGE'
+  | 'BLOCKED';
+
+export interface ChangeRequest {
+  product: 'store' | 'lister' | 'finance' | 'bundle';
+  currentTier: string;
+  currentInterval: BillingInterval;
+  targetTier: string;
+  targetInterval: BillingInterval;
+}
+
+/** Simple finance tier comparison (FREE < PRO) */
+function compareFinanceTiers(a: string, b: string): number {
+  const order = ['FREE', 'PRO'];
+  return order.indexOf(a) - order.indexOf(b);
+}
+
+/**
+ * Result of a getChangePreview call. Defined here (not in subscription-engine.ts)
+ * so client components can import the type without dragging in price-map's
+ * postgres driver via the engine barrel.
+ */
+export interface ChangePreview {
+  classification: ChangeClassification;
+  currentPriceCents: number;
+  targetPriceCents: number;
+  savingsPerMonthCents: number;
+  effectiveDate: 'immediate' | Date;
+  warnings: DowngradeWarning[];
+}
+
+/**
+ * Classify a subscription change. Tier direction takes priority over interval direction.
+ * Pure function — no db access.
+ */
+export function classifySubscriptionChange(req: ChangeRequest): ChangeClassification {
+  const { product, currentTier, currentInterval, targetTier, targetInterval } = req;
+
+  if (currentTier === targetTier && currentInterval === targetInterval) return 'NO_CHANGE';
+  if (targetTier === 'ENTERPRISE' || currentTier === 'ENTERPRISE') return 'BLOCKED';
+  if (targetTier === 'NONE') return 'BLOCKED';
+
+  const tierDiff = product === 'store'
+    ? compareStoreTiers(targetTier as StoreTier, currentTier as StoreTier)
+    : product === 'lister'
+      ? compareListerTiers(targetTier as ListerTier, currentTier as ListerTier)
+      : product === 'bundle'
+        ? compareBundleTiers(targetTier as BundleTier, currentTier as BundleTier)
+        : compareFinanceTiers(targetTier, currentTier);
+
+  if (tierDiff > 0) return 'UPGRADE';
+  if (tierDiff < 0) return 'DOWNGRADE';
+
+  // Same tier, different interval
+  if (currentInterval === 'monthly' && targetInterval === 'annual') return 'INTERVAL_UPGRADE';
+  return 'INTERVAL_DOWNGRADE';
+}

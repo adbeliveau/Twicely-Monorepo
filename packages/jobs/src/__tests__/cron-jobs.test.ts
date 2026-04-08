@@ -49,8 +49,8 @@ describe('cron-jobs', () => {
     const { registerCronJobs } = await import('../cron-jobs');
     await registerCronJobs();
 
-    // 6 platform cron jobs + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6)
-    expect(mockQueueAdd).toHaveBeenCalledTimes(13);
+    // 7 platform cron jobs (incl. listing image retention, Decision #111) + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6)
+    expect(mockQueueAdd).toHaveBeenCalledTimes(14);
   });
 
   it('registers orders cron at every hour', async () => {

@@ -42,6 +42,8 @@ interface LocalMeetupCardProps {
   maxDiscountPercent?: number;
   rescheduleMaxCount?: number;
   dayOfConfirmationWindowHours?: number;
+  cancelLateHours: number;
+  cancelSamedayHours: number;
   counterpartyReliability?: CounterpartyReliability | null;
 }
 
@@ -61,6 +63,8 @@ export function LocalMeetupCard({
   maxDiscountPercent = 33,
   rescheduleMaxCount,
   dayOfConfirmationWindowHours,
+  cancelLateHours,
+  cancelSamedayHours,
   counterpartyReliability,
 }: LocalMeetupCardProps) {
   const [checkInError, setCheckInError] = useState<string | null>(null);
@@ -279,7 +283,7 @@ export function LocalMeetupCard({
           />
         )}
 
-        {['SCHEDULED','SELLER_CHECKED_IN','BUYER_CHECKED_IN','RESCHEDULE_PENDING'].includes(tx.status) && <CancelMeetupButton localTransactionId={tx.id} scheduledAt={tx.scheduledAt} />}
+        {['SCHEDULED','SELLER_CHECKED_IN','BUYER_CHECKED_IN','RESCHEDULE_PENDING'].includes(tx.status) && <CancelMeetupButton localTransactionId={tx.id} scheduledAt={tx.scheduledAt} cancelLateHours={cancelLateHours} cancelSamedayHours={cancelSamedayHours} />}
         {canCheckIn && (
           <div className="space-y-2">
             <Button

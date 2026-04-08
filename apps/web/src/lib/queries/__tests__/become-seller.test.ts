@@ -10,6 +10,12 @@ vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSettingsByPrefix: vi.fn(),
 }));
 
+// getBecomeSelllerPricing now reads canonical TF brackets via @twicely/commerce.
+// Mock the canonical loader so we can drive bracket assertions from this test.
+vi.mock('@twicely/commerce/tf-calculator', () => ({
+  getTfBrackets: vi.fn(),
+}));
+
 vi.mock('@twicely/db/schema', () => ({
   user: { id: 'id', isSeller: 'is_seller' },
   sellerProfile: { userId: 'user_id', sellerType: 'seller_type' },
@@ -22,9 +28,24 @@ vi.mock('drizzle-orm', () => ({
 import { getBecomeSelllerPricing, getSellerStatusForCtaRouting } from '../become-seller';
 import { db } from '@twicely/db';
 import { getPlatformSettingsByPrefix } from '@/lib/queries/platform-settings';
+import { getTfBrackets } from '@twicely/commerce/tf-calculator';
 
 const mockSelect = vi.mocked(db.select);
 const mockGetPrefix = vi.mocked(getPlatformSettingsByPrefix);
+const mockGetTfBrackets = vi.mocked(getTfBrackets);
+
+const CANONICAL_TF_BRACKETS = [
+  { maxCents: 49900, rateBps: 1000 },
+  { maxCents: 199900, rateBps: 1100 },
+  { maxCents: 499900, rateBps: 1050 },
+  { maxCents: 999900, rateBps: 1000 },
+  { maxCents: 2499900, rateBps: 950 },
+  { maxCents: 4999900, rateBps: 900 },
+  { maxCents: 9999900, rateBps: 850 },
+  { maxCents: null, rateBps: 800 },
+];
+
+const NULL_MAX_TF_BRACKETS = CANONICAL_TF_BRACKETS.map((b) => ({ ...b, maxCents: null }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -117,6 +138,7 @@ describe('getBecomeSelllerPricing', () => {
       const idx = order.indexOf(prefix);
       return maps[idx] ?? new Map();
     });
+    mockGetTfBrackets.mockResolvedValue(CANONICAL_TF_BRACKETS as never);
   });
 
   it('returns store pricing with correct keys mapped from platform_settings', async () => {
@@ -171,11 +193,9 @@ describe('getBecomeSelllerPricing', () => {
   });
 
   it('sets maxCents to null for brackets whose key is absent from the map', async () => {
-    mockGetPrefix.mockImplementation(async (prefix: string) =>
-      prefix === 'commerce.tf.' ? new Map() : (makePricingMaps()[
-        ['store.pricing.','crosslister.pricing.','crosslister.publishes.','fees.insertion.','fees.freeListings.','automation.pricing.'].indexOf(prefix)
-      ] ?? new Map()),
-    );
+    // When the canonical loader returns brackets with all-null maxCents (empty platform_settings),
+    // become-seller passes them through unchanged.
+    mockGetTfBrackets.mockResolvedValue(NULL_MAX_TF_BRACKETS as never);
     const result = await getBecomeSelllerPricing();
     result.tfBrackets.forEach((b) => expect(b.maxCents).toBeNull());
   });

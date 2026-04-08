@@ -51,7 +51,9 @@ async function getMonthlyLimit(tier: string): Promise<number> {
 
   if (!row) {
     // Fallback defaults (Pricing Canonical Section 6)
-    if (tier === 'FREE') return 25;
+    // FREE = 5 publishes / 6 months per Decision #105 (NOT 25/month — 25 was the original
+    // wording in the canonical, retired by #105 which makes FREE a time-limited teaser)
+    if (tier === 'FREE') return 5;
     if (tier === 'LITE') return 200;
     if (tier === 'PRO') return 2000;
     return 0;

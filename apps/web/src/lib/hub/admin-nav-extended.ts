@@ -148,10 +148,11 @@ export const ADMIN_NAV_EXTENDED: AdminNavItem[] = [
   {
     key: 'crosslister',
     label: 'Crosslister',
-    href: '/cfg/ebay',
+    href: '/cfg/crosslister',
     icon: 'RefreshCw',
     roles: ['ADMIN', 'DEVELOPER'],
     children: [
+      { key: 'cfg-crosslister', label: 'Overview', href: '/cfg/crosslister', icon: 'LayoutDashboard', roles: ['ADMIN', 'DEVELOPER'] },
       { key: 'cfg-ebay', label: 'eBay', href: '/cfg/ebay', icon: 'ShoppingBag', roles: ['ADMIN', 'DEVELOPER'] },
       { key: 'cfg-etsy', label: 'Etsy', href: '/cfg/etsy', icon: 'ShoppingBag', roles: ['ADMIN', 'DEVELOPER'] },
       { key: 'cfg-mercari', label: 'Mercari', href: '/cfg/mercari', icon: 'ShoppingBag', roles: ['ADMIN', 'DEVELOPER'] },

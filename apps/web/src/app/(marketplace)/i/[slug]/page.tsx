@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getListingBySlug } from '@/lib/queries/listings';
 import { getListingPageData, buildBreadcrumbs, buildJsonLd } from '@/lib/queries/listing-page';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getSellerLocalMetrics } from '@/lib/queries/local-metrics';
 import { recordViewAction } from '@/lib/actions/browsing-history';
 import { auth } from '@twicely/auth';
@@ -47,7 +48,6 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
     return { title: 'Listing Not Found | Twicely' };
   }
 
-  const isUnavailable = listing.status === 'SOLD' || listing.status === 'ENDED' || listing.status === 'RESERVED';
   const title = `${listing.title} — ${formatPrice(listing.priceCents)} | Twicely`;
   const conditionLabel = CONDITION_LABELS[listing.condition] ?? listing.condition;
   const description = truncate(
@@ -58,10 +58,30 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
   const imageUrl = listing.images[0]?.url;
   const priceAmount = (listing.priceCents / 100).toFixed(2);
 
+  // Decision #71 / Buyer Acquisition Addendum §B.4: SOLD listings index for 90 days,
+  // then noindex. ENDED and RESERVED stay noindex always.
+  let robotsDirective: string | undefined = undefined;
+  if (listing.status === 'ENDED' || listing.status === 'RESERVED') {
+    robotsDirective = 'noindex';
+  } else if (listing.status === 'SOLD') {
+    const indexEnabled = await getPlatformSetting<boolean>('seo.soldListingIndexEnabled', true);
+    const indexDays = await getPlatformSetting<number>('seo.soldListingIndexDays', 90);
+    if (!indexEnabled || !listing.soldAt) {
+      robotsDirective = 'noindex';
+    } else {
+      const ageMs = Date.now() - new Date(listing.soldAt).getTime();
+      const ageDays = ageMs / (1000 * 60 * 60 * 24);
+      if (ageDays > indexDays) {
+        robotsDirective = 'noindex';
+      }
+      // else: leave undefined (default = indexable) per Decision #71
+    }
+  }
+
   return {
     title,
     description,
-    robots: isUnavailable ? 'noindex' : undefined,
+    robots: robotsDirective,
     alternates: { canonical: canonicalUrl },
     openGraph: {
       title,

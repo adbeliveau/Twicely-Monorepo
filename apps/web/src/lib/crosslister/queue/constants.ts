@@ -11,6 +11,9 @@ export const LISTER_PUBLISH_QUEUE = 'lister-publish';
 /** Queue name for automation jobs (auto-relist, price drop, offer-to-likers, Posh sharing). */
 export const LISTER_AUTOMATION_QUEUE = 'lister-automation';
 
+/** Queue name for the polling pipeline (Lister Canonical §13.4 — Adaptive Polling Engine). */
+export const LISTER_POLLING_QUEUE = 'lister-polling';
+
 /** Priority for CREATE/PUBLISH jobs (crosslist a new listing). */
 export const PRIORITY_CREATE = 300;
 

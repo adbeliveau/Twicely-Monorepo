@@ -2,7 +2,12 @@
  * C4 + C4.1 — Returns & Disputes: Validation helpers
  */
 
-import { getReturnWindowDays, getCounterfeitWindowDays, getSellerResponseDays } from './returns-types';
+import {
+  getReturnWindowDays,
+  getCounterfeitWindowDays,
+  getSellerResponseDays,
+  getSellerResponseDeadlineHour,
+} from './returns-types';
 import type { ReturnReason } from './returns-types';
 
 /**
@@ -60,7 +65,8 @@ export async function calculateSellerResponseDue(): Promise<Date> {
     }
   }
 
-  // Set to end of business day (5pm)
-  result.setHours(17, 0, 0, 0);
+  // Set to end of business day (configurable, default 5pm)
+  const deadlineHour = await getSellerResponseDeadlineHour();
+  result.setHours(deadlineHour, 0, 0, 0);
   return result;
 }

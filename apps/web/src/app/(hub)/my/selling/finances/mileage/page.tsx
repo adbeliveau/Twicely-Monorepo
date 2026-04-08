@@ -53,9 +53,11 @@ export default async function MileagePage() {
   const financeTier = await getFinanceTier(session.userId);
 
   if (financeTier === 'FREE') {
-    const [annualCents, monthlyCents] = await Promise.all([
+    const [annualCents, monthlyCents, retentionDaysFree, retentionYearsPro] = await Promise.all([
       getPlatformSetting<number>('finance.pricing.pro.annualCents', 1199),
       getPlatformSetting<number>('finance.pricing.pro.monthlyCents', 1499),
+      getPlatformSetting<number>('finance.reportRetentionDays.free', 30),
+      getPlatformSetting<number>('finance.reportRetentionYears.pro', 2),
     ]);
 
     return (
@@ -64,8 +66,8 @@ export default async function MileagePage() {
         <FinanceProGate
           annualMonthlyCents={annualCents}
           monthlyMonthlyCents={monthlyCents}
-          retentionDaysFree={30}
-          retentionYearsPro={2}
+          retentionDaysFree={retentionDaysFree}
+          retentionYearsPro={retentionYearsPro}
         />
       </div>
     );

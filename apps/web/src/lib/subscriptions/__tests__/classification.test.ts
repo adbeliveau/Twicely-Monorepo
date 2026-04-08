@@ -1,9 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock platform_settings to return the supplied fallback values.
+// Decouples unit tests from a real DB connection.
+vi.mock('@twicely/db/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn(async <T>(_key: string, fallback: T): Promise<T> => fallback),
+}));
+
 import {
   classifySubscriptionChange,
   getChangePreview,
   getBillingIntervalFromPriceId,
 } from '../subscription-engine';
+import { resetSubscriptionPricingCache } from '@twicely/subscriptions/price-map';
+
+beforeEach(() => {
+  resetSubscriptionPricingCache();
+});
 
 // ─── classifySubscriptionChange ─────────────────────────────────────────────
 
@@ -131,8 +143,8 @@ describe('D3-S4: classifySubscriptionChange', () => {
 describe('D3-S4: getChangePreview', () => {
   const periodEnd = new Date('2026-04-01');
 
-  it('returns immediate effectiveDate for UPGRADE', () => {
-    const preview = getChangePreview({
+  it('returns immediate effectiveDate for UPGRADE', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'STARTER', currentInterval: 'monthly',
       targetTier: 'PRO', targetInterval: 'monthly', currentPeriodEnd: periodEnd,
     });
@@ -140,8 +152,8 @@ describe('D3-S4: getChangePreview', () => {
     expect(preview.effectiveDate).toBe('immediate');
   });
 
-  it('returns period end date for DOWNGRADE', () => {
-    const preview = getChangePreview({
+  it('returns period end date for DOWNGRADE', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'POWER', currentInterval: 'monthly',
       targetTier: 'PRO', targetInterval: 'monthly', currentPeriodEnd: periodEnd,
     });
@@ -149,35 +161,35 @@ describe('D3-S4: getChangePreview', () => {
     expect(preview.effectiveDate).toEqual(periodEnd);
   });
 
-  it('has higher targetPriceCents than currentPriceCents for UPGRADE', () => {
-    const preview = getChangePreview({
+  it('has higher targetPriceCents than currentPriceCents for UPGRADE', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'STARTER', currentInterval: 'monthly',
       targetTier: 'PRO', targetInterval: 'monthly', currentPeriodEnd: periodEnd,
     });
     expect(preview.targetPriceCents).toBeGreaterThan(preview.currentPriceCents);
   });
 
-  it('has lower targetPriceCents than currentPriceCents for DOWNGRADE', () => {
-    const preview = getChangePreview({
+  it('has lower targetPriceCents than currentPriceCents for DOWNGRADE', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'POWER', currentInterval: 'monthly',
       targetTier: 'PRO', targetInterval: 'monthly', currentPeriodEnd: periodEnd,
     });
     expect(preview.targetPriceCents).toBeLessThan(preview.currentPriceCents);
   });
 
-  it('includes downgrade warnings for store DOWNGRADE from POWER', () => {
-    const preview = getChangePreview({
+  it('includes downgrade warnings for store DOWNGRADE from POWER', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'POWER', currentInterval: 'monthly',
       targetTier: 'STARTER', targetInterval: 'monthly', currentPeriodEnd: periodEnd,
     });
     expect(preview.classification).toBe('DOWNGRADE');
     // POWER→STARTER always generates Daily Auto-Payout warning
     expect(preview.warnings.length).toBeGreaterThanOrEqual(1);
-    expect(preview.warnings.some(w => w.feature === 'Daily Auto-Payout')).toBe(true);
+    expect(preview.warnings.some((w: { feature: string }) => w.feature === 'Daily Auto-Payout')).toBe(true);
   });
 
-  it('returns immediate effectiveDate for INTERVAL_UPGRADE', () => {
-    const preview = getChangePreview({
+  it('returns immediate effectiveDate for INTERVAL_UPGRADE', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'PRO', currentInterval: 'monthly',
       targetTier: 'PRO', targetInterval: 'annual', currentPeriodEnd: periodEnd,
     });
@@ -185,8 +197,8 @@ describe('D3-S4: getChangePreview', () => {
     expect(preview.effectiveDate).toBe('immediate');
   });
 
-  it('returns period end for INTERVAL_DOWNGRADE', () => {
-    const preview = getChangePreview({
+  it('returns period end for INTERVAL_DOWNGRADE', async () => {
+    const preview = await getChangePreview({
       product: 'store', currentTier: 'PRO', currentInterval: 'annual',
       targetTier: 'PRO', targetInterval: 'monthly', currentPeriodEnd: periodEnd,
     });

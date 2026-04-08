@@ -100,12 +100,13 @@ export interface ChangePreview {
 
 /**
  * Build a preview of what a subscription change will look like.
+ * Async because getPricing() reads from platform_settings.
  */
-export function getChangePreview(req: ChangeRequest & { currentPeriodEnd: Date }): ChangePreview {
+export async function getChangePreview(req: ChangeRequest & { currentPeriodEnd: Date }): Promise<ChangePreview> {
   const classification = classifySubscriptionChange(req);
 
-  const currentPricing = getPricing(req.product, req.currentTier);
-  const targetPricing = getPricing(req.product, req.targetTier);
+  const currentPricing = await getPricing(req.product, req.currentTier);
+  const targetPricing = await getPricing(req.product, req.targetTier);
 
   const currentMonthly = req.currentInterval === 'monthly'
     ? (currentPricing?.monthlyCents ?? 0)

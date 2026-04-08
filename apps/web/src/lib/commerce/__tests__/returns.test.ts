@@ -11,6 +11,20 @@ vi.mock('@twicely/stripe/refunds', () => ({ processReturnRefund: mockProcessRetu
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback)),
 }));
+// returns-validation.ts reads settings via @twicely/commerce/returns-types helpers.
+// Stub each helper to return the spec default so the tests remain deterministic.
+vi.mock('@twicely/commerce/returns-types', async () => {
+  const actual = await vi.importActual<typeof import('@twicely/commerce/returns-types')>(
+    '@twicely/commerce/returns-types'
+  );
+  return {
+    ...actual,
+    getReturnWindowDays: vi.fn().mockResolvedValue(30),
+    getCounterfeitWindowDays: vi.fn().mockResolvedValue(60),
+    getSellerResponseDays: vi.fn().mockResolvedValue(3),
+    getSellerResponseDeadlineHour: vi.fn().mockResolvedValue(17),
+  };
+});
 
 describe('Returns Module', () => {
   beforeEach(() => {

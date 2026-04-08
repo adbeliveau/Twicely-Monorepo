@@ -8,7 +8,7 @@ import { authorize, sub } from '@twicely/casl';
 import { createId } from '@paralleldrive/cuid2';
 import { canUseFeature } from '@twicely/utils/tier-gates';
 import { z } from 'zod';
-import { sanitizeHtml } from '@/lib/utils/sanitize-html';
+import { sanitizeHtml } from '@twicely/utils/sanitize-html';
 
 const updateStorefrontSettingsSchema = z.object({
   storeName: z.string().min(1).max(100).optional(),

@@ -41,6 +41,7 @@ export interface ListingDetailData {
   fulfillmentType: string;
   localHandlingFlags: string[];
   activatedAt: Date | null;
+  soldAt: Date | null;
   createdAt: Date;
   images: Array<{
     id: string;

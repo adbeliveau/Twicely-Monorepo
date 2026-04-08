@@ -13,6 +13,7 @@ export type ReturnReasonBucket = 'SELLER_FAULT' | 'BUYER_REMORSE' | 'PLATFORM_CA
 const DEFAULT_RETURN_WINDOW_DAYS = 30;
 const DEFAULT_COUNTERFEIT_WINDOW_DAYS = 60;
 const DEFAULT_SELLER_RESPONSE_DAYS = 3;
+const DEFAULT_SELLER_RESPONSE_DEADLINE_HOUR = 17;
 
 /** Standard return window (days from delivery). Reads from platform_settings. */
 export async function getReturnWindowDays(): Promise<number> {
@@ -27,6 +28,11 @@ export async function getCounterfeitWindowDays(): Promise<number> {
 /** Business days seller has to respond to a return. Reads from platform_settings. */
 export async function getSellerResponseDays(): Promise<number> {
   return getPlatformSetting<number>('commerce.returns.sellerResponseDeadlineDays', DEFAULT_SELLER_RESPONSE_DAYS);
+}
+
+/** Hour of day (0–23) when the seller-response deadline expires. Reads from platform_settings. */
+export async function getSellerResponseDeadlineHour(): Promise<number> {
+  return getPlatformSetting<number>('commerce.returns.sellerResponseDeadlineHour', DEFAULT_SELLER_RESPONSE_DEADLINE_HOUR);
 }
 
 // Return reason to fault mapping

@@ -190,7 +190,7 @@ describe('emergency delist processor — success paths', () => {
       delistListing: vi.fn().mockResolvedValue({ success: true }),
     });
 
-    const { publishToChannel } = await import('@/lib/realtime/centrifugo-publisher');
+    const { publishToChannel } = await import('@twicely/realtime/centrifugo-publisher');
     const processor = await getProcessor();
     if (processor) {
       await processor(makeJob(BASE_JOB_DATA));

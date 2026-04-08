@@ -4,7 +4,7 @@
  * Gracefully degrades if Typesense is not configured or unreachable.
  */
 
-import { getInfraConfig } from '@/lib/config/infra-config';
+import { getInfraConfig } from '@twicely/config/infra-config';
 
 export interface TypesenseCollectionInfo {
   name: string;

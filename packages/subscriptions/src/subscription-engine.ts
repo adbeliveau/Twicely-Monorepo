@@ -1,22 +1,21 @@
 /**
- * D3-S1: Subscription Engine (Pure Functions)
+ * D3-S1: Subscription Engine
  *
- * Change classification, preview, and billing interval lookup.
- * All tier ordering/comparison/eligibility exported from subscription-engine-core.ts.
- * NO DATABASE ACCESS — pure functions only.
+ * Async change preview + reverse-lookup. The pure sync helpers
+ * (classification, comparison, eligibility, downgrade warnings) live in
+ * subscription-engine-core.ts so client components can import them without
+ * dragging in price-map's postgres driver.
  */
 
 import { getPricing, resolveStripePriceId } from './price-map';
 import type { BillingInterval } from './price-map';
 import { getListerDowngradeWarnings } from './lister-downgrade-warnings';
 import {
-  compareStoreTiers,
-  compareListerTiers,
-  compareBundleTiers,
+  classifySubscriptionChange,
   getDowngradeWarnings,
 } from './subscription-engine-core';
-import type { DowngradeWarning } from './subscription-engine-core';
-import type { StoreTier, ListerTier, BundleTier } from '@twicely/db/types';
+import type { ChangeRequest } from './subscription-engine-core';
+import type { StoreTier, ListerTier } from '@twicely/db/types';
 
 // ─── Re-export everything from core so existing imports continue to work ─────
 
@@ -31,81 +30,31 @@ export {
   isPaidListerTier,
   canSubscribeToStoreTier,
   getDowngradeWarnings,
+  classifySubscriptionChange,
 } from './subscription-engine-core';
 
 export type {
   StoreEligibility,
   DowngradeContext,
   DowngradeWarning,
+  ChangeClassification,
+  ChangeRequest,
 } from './subscription-engine-core';
 
-// ─── Change Classification ──────────────────────────────────────────────────
+// ─── Change Preview (async — uses platform_settings via getPricing) ─────────
 
-export type ChangeClassification =
-  | 'UPGRADE'
-  | 'DOWNGRADE'
-  | 'INTERVAL_UPGRADE'
-  | 'INTERVAL_DOWNGRADE'
-  | 'NO_CHANGE'
-  | 'BLOCKED';
-
-export interface ChangeRequest {
-  product: 'store' | 'lister' | 'finance' | 'bundle';
-  currentTier: string;
-  currentInterval: BillingInterval;
-  targetTier: string;
-  targetInterval: BillingInterval;
-}
-
-/**
- * Classify a subscription change. Tier direction takes priority over interval direction.
- */
-export function classifySubscriptionChange(req: ChangeRequest): ChangeClassification {
-  const { product, currentTier, currentInterval, targetTier, targetInterval } = req;
-
-  if (currentTier === targetTier && currentInterval === targetInterval) return 'NO_CHANGE';
-  if (targetTier === 'ENTERPRISE' || currentTier === 'ENTERPRISE') return 'BLOCKED';
-  if (targetTier === 'NONE') return 'BLOCKED';
-
-  const tierDiff = product === 'store'
-    ? compareStoreTiers(targetTier as StoreTier, currentTier as StoreTier)
-    : product === 'lister'
-      ? compareListerTiers(targetTier as ListerTier, currentTier as ListerTier)
-      : product === 'bundle'
-        ? compareBundleTiers(targetTier as BundleTier, currentTier as BundleTier)
-        : compareFinnTiers(targetTier, currentTier);
-
-  if (tierDiff > 0) return 'UPGRADE';
-  if (tierDiff < 0) return 'DOWNGRADE';
-
-  // Same tier, different interval
-  if (currentInterval === 'monthly' && targetInterval === 'annual') return 'INTERVAL_UPGRADE';
-  return 'INTERVAL_DOWNGRADE';
-}
-
-/** Simple finance tier comparison (FREE < PRO) */
-function compareFinnTiers(a: string, b: string): number {
-  const order = ['FREE', 'PRO'];
-  return order.indexOf(a) - order.indexOf(b);
-}
-
-export interface ChangePreview {
-  classification: ChangeClassification;
-  currentPriceCents: number;
-  targetPriceCents: number;
-  savingsPerMonthCents: number;
-  effectiveDate: 'immediate' | Date;
-  warnings: DowngradeWarning[];
-}
+export type { ChangePreview } from './subscription-engine-core';
+import type { ChangePreview } from './subscription-engine-core';
 
 /**
  * Build a preview of what a subscription change will look like.
+ * Async because getPricing() reads from platform_settings.
  */
-export function getChangePreview(req: ChangeRequest & { currentPeriodEnd: Date }): ChangePreview {
+export async function getChangePreview(req: ChangeRequest & { currentPeriodEnd: Date }): Promise<ChangePreview> {
   const classification = classifySubscriptionChange(req);
 
-  const currentPricing = getPricing(req.product, req.currentTier);
-  const targetPricing = getPricing(req.product, req.targetTier);
+  const currentPricing = await getPricing(req.product, req.currentTier);
+  const targetPricing = await getPricing(req.product, req.targetTier);
 
   const currentMonthly = req.currentInterval === 'monthly'
     ? (currentPricing?.monthlyCents ?? 0)

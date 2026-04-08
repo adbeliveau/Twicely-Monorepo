@@ -24,7 +24,12 @@ vi.mock('drizzle-orm', async (importOriginal) => {
     notInArray: vi.fn((_c: unknown, ids: unknown) => `notInArray:${JSON.stringify(ids)}`),
     isNotNull: vi.fn(() => 'isNotNull'),
     gt: vi.fn(() => 'gt'),
-    sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn() }),
+    // sql template tag must produce a chainable expression — getInterestMatchedListings
+    // calls sql`...`.as('totalWeight') so the returned object needs an .as() method.
+    sql: Object.assign(
+      vi.fn(() => ({ as: vi.fn().mockReturnValue('sql-expr-aliased') })),
+      { raw: vi.fn() },
+    ),
     count: vi.fn(() => 'count-agg'),
   };
 });

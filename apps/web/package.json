@@ -44,7 +44,6 @@
     "@twicely/realtime": "workspace:*",
     "@twicely/scoring": "workspace:*",
     "@twicely/search": "workspace:*",
-    "@twicely/shipping": "workspace:*",
     "@twicely/sms": "workspace:*",
     "@twicely/storage": "workspace:*",
     "@twicely/stripe": "workspace:*",

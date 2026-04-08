@@ -20,7 +20,9 @@ import {
   AlertDialogTrigger,
 } from '@twicely/ui/alert-dialog';
 import { Button } from '@twicely/ui/button';
-import { getDowngradeWarnings } from '@twicely/subscriptions/subscription-engine';
+// Import directly from -core to avoid pulling in price-map (postgres) via the
+// subscription-engine.ts barrel — this file is a client component.
+import { getDowngradeWarnings } from '@twicely/subscriptions/subscription-engine-core';
 import { cancelSubscriptionAction } from '@/lib/actions/manage-subscription';
 import type { StoreTier } from '@/types/enums';
 

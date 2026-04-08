@@ -8,7 +8,7 @@
  * DOWNGRADE: pending in DB, applied at renewal via webhook.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -18,16 +18,16 @@ import {
 import { Button } from '@twicely/ui/button';
 import { Badge } from '@twicely/ui/badge';
 import { cn } from '@twicely/utils';
-import {
-  classifySubscriptionChange,
-  getChangePreview,
-} from '@twicely/subscriptions/subscription-engine';
-import {
-  formatTierPrice,
-  getAnnualSavingsPercent,
-} from '@twicely/subscriptions/price-map';
+// Pull pure sync helpers from -core (no db imports) — importing from
+// subscription-engine.ts itself would drag price-map (postgres) into this client bundle.
+import { classifySubscriptionChange } from '@twicely/subscriptions/subscription-engine-core';
+import type { ChangePreview } from '@twicely/subscriptions/subscription-engine-core';
 import { changeSubscriptionAction } from '@/lib/actions/change-subscription';
-import type { BillingInterval } from '@twicely/subscriptions/price-map';
+import {
+  getTierPriceDisplayAction,
+  getChangePreviewAction,
+} from '@/lib/actions/subscription-pricing-display';
+import type { BillingInterval } from '@twicely/subscriptions/price-constants';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -97,15 +97,52 @@ export function ChangePlanDialog(props: ChangePlanDialogProps) {
   const tiers = PRODUCT_TIERS[product] ?? [];
   const productLabel = PRODUCT_LABELS[product] ?? product;
 
-  // Compute preview when a tier is selected
-  const preview = selectedTier ? getChangePreview({
-    product,
-    currentTier,
-    currentInterval,
-    targetTier: selectedTier,
-    targetInterval: selectedInterval,
-    currentPeriodEnd: currentPeriodEnd ?? new Date(),
-  }) : null;
+  // Compute preview asynchronously when a tier is selected.
+  // getChangePreview is async (reads platform_settings) so we use useEffect.
+  const [preview, setPreview] = useState<ChangePreview | null>(null);
+  useEffect(() => {
+    if (!selectedTier) {
+      setPreview(null);
+      return;
+    }
+    let cancelled = false;
+    void getChangePreviewAction({
+      product,
+      currentTier,
+      currentInterval,
+      targetTier: selectedTier,
+      targetInterval: selectedInterval,
+      currentPeriodEnd: currentPeriodEnd ?? new Date(),
+    }).then((p) => {
+      if (!cancelled) setPreview(p);
+    }).catch(() => {
+      if (!cancelled) setPreview(null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTier, product, currentTier, currentInterval, selectedInterval, currentPeriodEnd]);
+
+  // Pre-compute display prices for every tier in the list. formatTierPrice and
+  // getAnnualSavingsPercent are now async (they read platform_settings), so we
+  // load them once per (product, interval) combo into a state map.
+  const [tierPrices, setTierPrices] = useState<Record<string, { price: string; savings: number }>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const entries: Record<string, { price: string; savings: number }> = {};
+      await Promise.all(
+        tiers.map(async (t) => {
+          const { price, savings } = await getTierPriceDisplayAction(product, t.tier, selectedInterval);
+          entries[t.tier] = { price, savings };
+        }),
+      );
+      if (!cancelled) setTierPrices(entries);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [product, selectedInterval, tiers]);
 
   const isUpgrade = preview?.classification === 'UPGRADE' || preview?.classification === 'INTERVAL_UPGRADE';
   const isDowngrade = preview?.classification === 'DOWNGRADE' || preview?.classification === 'INTERVAL_DOWNGRADE';
@@ -174,8 +211,9 @@ export function ChangePlanDialog(props: ChangePlanDialogProps) {
           {tiers.filter((t) => t.tier !== 'NONE').map((t) => {
             const isCurrent = t.tier === currentTier && selectedInterval === currentInterval;
             const isSelected = t.tier === selectedTier;
-            const price = formatTierPrice(product, t.tier, selectedInterval);
-            const savings = selectedInterval === 'annual' ? getAnnualSavingsPercent(product, t.tier) : 0;
+            const tierPriceData = tierPrices[t.tier];
+            const price = tierPriceData?.price ?? '$—/mo';
+            const savings = tierPriceData?.savings ?? 0;
 
             // Quick classify to show direction badge
             const cls = classifySubscriptionChange({

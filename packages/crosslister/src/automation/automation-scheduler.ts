@@ -20,37 +20,47 @@ import { runPriceDropEngine } from './price-drop-engine';
 import { runOfferToLikersEngine } from './offer-to-likers-engine';
 import { runPoshShareEngine } from './posh-share-engine';
 import { runPoshFollowEngine } from './posh-follow-engine';
-import {
-  AUTO_RELIST_HOUR_UTC,
-  PRICE_DROP_HOUR_UTC,
-  OFFER_TO_LIKERS_HOUR_UTC,
-} from './constants';
+import { loadCrosslisterQueueSettings } from '../services/queue-settings-loader';
 
 /**
  * Run the automation tick for the current UTC hour.
  * Dispatches the appropriate engines based on the current time.
- * Called once per hour by the worker-init interval.
+ * Called once per tick by the worker-init interval.
+ *
+ * Schedule (UTC, configurable via platform_settings):
+ *   crosslister.automation.autoRelistHourUTC      (default 03:00)
+ *   crosslister.automation.priceDropHourUTC       (default 04:00)
+ *   crosslister.automation.offerToLikersHourUTC   (default 10:00)
+ *   Posh share/follow run every tick — engines self-limit per seller per day
  */
 export async function runAutomationTick(): Promise<void> {
   const now = new Date();
   const hour = now.getUTCHours();
 
-  logger.info('[automationScheduler] Tick', { hour });
+  // Load fire-hour settings (cached 5 min in queue-settings-loader)
+  const settings = await loadCrosslisterQueueSettings();
+
+  logger.info('[automationScheduler] Tick', {
+    hour,
+    autoRelistHour: settings.automationAutoRelistHourUTC,
+    priceDropHour: settings.automationPriceDropHourUTC,
+    offerToLikersHour: settings.automationOfferToLikersHourUTC,
+  });
 
   // Run time-specific engines
-  if (hour === AUTO_RELIST_HOUR_UTC) {
+  if (hour === settings.automationAutoRelistHourUTC) {
     await runAutoRelistEngine().catch((err) => {
       logger.error('[automationScheduler] autoRelistEngine failed', { error: String(err) });
     });
   }
 
-  if (hour === PRICE_DROP_HOUR_UTC) {
+  if (hour === settings.automationPriceDropHourUTC) {
     await runPriceDropEngine().catch((err) => {
       logger.error('[automationScheduler] priceDropEngine failed', { error: String(err) });
     });
   }
 
-  if (hour === OFFER_TO_LIKERS_HOUR_UTC) {
+  if (hour === settings.automationOfferToLikersHourUTC) {
     await runOfferToLikersEngine().catch((err) => {
       logger.error('[automationScheduler] offerToLikersEngine failed', { error: String(err) });
     });

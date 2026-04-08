@@ -150,6 +150,12 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.personalization.purchaseExpiryDays', value: 90, type: 'number', category: 'discovery', description: 'Days before a purchase interest signal expires' },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // SEO — Search engine indexing controls (Decision #71, Buyer Acquisition Addendum §B.4)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'seo.soldListingIndexEnabled', value: true, type: 'boolean', category: 'seo', description: 'Master toggle for indexing SOLD listings (Decision #71)' },
+  { key: 'seo.soldListingIndexDays', value: 90, type: 'number', category: 'seo', description: 'Days to keep SOLD listings indexed in search engines (Decision #71)' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // COMMUNICATIONS — Messaging channel settings (email/push/sms/digest in seed-comms-settings.ts)
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'comms.messaging.enabled', value: true, type: 'boolean', category: 'comms', description: 'Enable buyer-seller direct messaging' },
@@ -288,6 +294,8 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'commerce.local.schedulingMinLeadTimeHours', value: 1, type: 'number', category: 'local', description: 'Minimum lead time for meetup scheduling (hours)' },
   { key: 'commerce.local.schedulingMaxLeadTimeDays', value: 30, type: 'number', category: 'local', description: 'Maximum advance scheduling for meetups (days)' },
+  { key: 'commerce.local.cancelLateHours', value: 24, type: 'number', category: 'local', description: 'Cancellation within this many hours of the meetup issues a reliability mark (G2.11)' },
+  { key: 'commerce.local.cancelSamedayHours', value: 2, type: 'number', category: 'local', description: 'Cancellation within this many hours of the meetup issues two reliability marks (same-day late)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CONTENT MODERATION — G4
@@ -309,6 +317,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'score.enforcement.maxAppealsPerAction', value: 1, type: 'number', category: 'trust', description: 'Maximum appeals allowed per enforcement action' },
   { key: 'score.enforcement.appealReviewSlaHours', value: 48, type: 'number', category: 'trust', description: 'Staff SLA hours to review an appeal' },
   { key: 'score.enforcement.appealableActionTypes', value: ['WARNING', 'RESTRICTION', 'PRE_SUSPENSION', 'SUSPENSION', 'LISTING_REMOVAL', 'LISTING_SUPPRESSION', 'BOOST_DISABLED', 'LISTING_CAP', 'SEARCH_DEMOTION'], type: 'array', category: 'trust', description: 'Enforcement action types that can be appealed (COACHING, REVIEW_REMOVAL, ACCOUNT_BAN are not appealable)' },
+  { key: 'seller-score.bandOverride.defaultDays', value: 90, type: 'number', category: 'trust', description: 'Default duration (days) for an admin-set band override before it expires (R5)' },
 
   // Feature Lock-in Section 44 — seller standards evaluation window settings
   { key: 'sellerStandards.evaluationWindowDays', value: 90, type: 'number', category: 'trust', description: 'Rolling window in days for seller standards metric calculation' },

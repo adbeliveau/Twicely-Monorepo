@@ -124,6 +124,9 @@ export function definePlatformAgentAbilities(
     can('read', 'Expense');
     can('read', 'FinancialReport');
     can('read', 'MileageEntry');
+    // I3 — Chargebacks and Reserve Holds (per permission-registry-data-domains.ts §FINANCE)
+    can('read', 'Chargeback');
+    can('read', 'Hold');
     // Affiliate finance management — G1.2
     can('manage', 'Affiliate');
     can('manage', 'AffiliatePayout');

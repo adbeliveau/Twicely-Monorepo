@@ -16,7 +16,7 @@ export default async function HoldsPage({
   searchParams: Promise<{ filter?: string; page?: string }>;
 }) {
   const { ability } = await staffAuthorize();
-  if (!ability.can('read', 'LedgerEntry')) {
+  if (!ability.can('read', 'Hold')) {
     return <p className="text-red-600">Access denied</p>;
   }
 

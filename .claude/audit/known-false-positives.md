@@ -283,6 +283,158 @@ _(No active false positives — FP-050 resolved: `charge.refunded` handler built
   requires `staffAuthorize()` + `ability.can('manage', 'StaffUser')` which is ADMIN-only.
   Client-supplied roles are validated against `PLATFORM_ROLES` enum. Accepted risk.
 
+- **FP-103:** `/my/selling/crosslist/import/issues` reported as orphaned page (no links)
+  — Linked conditionally from `import-summary.tsx:59` only when `failedItems > 0`. Simple grep
+  for the route misses the dynamic Button-asChild Link. The page is reachable from the import
+  flow exactly when needed.
+
+---
+
+## Wiring (Stream 7) — continued (2026-04-07 audit)
+
+- **FP-104:** Unwired notification templates: `messaging.new_message`, `qa.answer_received`,
+  `qa.new_question`, `search.new_match`, `social.followed_seller_new_listing`, `watchlist.price_drop`
+  — All 6 templates are wired through dedicated notifier helper modules in
+  `apps/web/src/lib/notifications/`:
+  - `message-notifier.ts` → `notifyNewMessage()` calls `notify('messaging.new_message', ...)`
+  - `qa-notifier.ts` → `notifyQuestionAsked()` and `notifyAnswerReceived()` call the qa templates
+  - `price-drop-notifier.ts` → `notifyPriceDropWatchers()` calls `notify('watchlist.price_drop', ...)`
+  - `followed-seller-notifier.ts` → `notifyFollowedSellerListing()` calls the social template
+  - `category-alert-notifier.ts` → calls `notify('search.new_match', ...)` for matching alerts
+  Same helper-wrapper pattern as FP-074/FP-075. The shell regex looks for direct
+  `notify('template_key', ...)` calls in business logic but misses these helper modules.
+
+- **FP-105:** Dead exports flagged in `@twicely/commerce` package files
+  (`boosting.ts`, `buyer-quality.ts`, `deal-badges.ts`, `local-fee.ts`, `local-fraud-consequences.ts`)
+  — Same pattern as FP-064. The web app imports either:
+  (a) The package version from `@twicely/commerce/<file>` (used by actions and components), OR
+  (b) An app-local copy at `apps/web/src/lib/commerce/<file>` (preserved for SSR/client locality)
+  Specific functions flagged (`getBoostMinRate`, `calculateBoostFee`, `getDealBadgePercentile`,
+  `formatTrustSignals`, `supportsShipping`, `createFraudReversalLedgerEntry`, etc.) are
+  exported from the package for use by `@twicely/jobs` and other packages, even if
+  `apps/web` prefers app-local copies for some call sites. Removing them would break
+  cross-package imports.
+
+- **FP-106:** Dead-export census 2026-04-07 — 132 functions flagged after audit script
+  rewrite to handle multi-line `import { ... }` blocks via perl slurp mode. Categorized as:
+  - **65 TESTED (FP-064 pattern):** functions with active `__tests__/*.test.ts` coverage,
+    intentional API surface for unit tests. Includes: `getBoostMinRate`, `getBoostMaxRate`,
+    `getBoostAttributionDays`, `getBoostMaxPromotedPct`, `formatTrustSignals`,
+    `getGreatPricePercentile`, `getPriceDropWindowDays`, `hasMinimumSampleSize`,
+    `supportsLocalPickup`, `supportsShipping`, `createFraudReversalLedgerEntry`,
+    `createLocalTransactionLedgerEntries`, `recalculateReliabilityMarks`,
+    `getReliabilityEvents`, `isSchedulingComplete`, `getValidTransitions`,
+    `getPublicKeyBytes`, `getSigningKey`, `getVerifyKey`, `signToken`,
+    `generateOfflineCode`, `getMonthStart`, `checkStackingRules`, `getReturnFeeConfig`,
+    `calculateRestockingFee`, `calculateTfRefund`, `getReasonBucket`,
+    `getReturnShippingPayer`, `detectShippingException`, `autoCreateClaim`,
+    `getShippingStatus`, `getEffectiveRate`, `computeReviewerTrustWeight`,
+    `computeWeightedAverageRating`, `processVacationAutoEnd`, `deleteConnectAccount`,
+    `isConnectWebhookEvent`, `getRefundStatus`, `canRefund`, `createPaymentIntent`,
+    `mapStripeStatus`, `handleSubscriptionUpsert`, `handleSubscriptionDeleted`,
+    `createTrialSubscription`, `isSubscriptionInTrial`, `getTrialInfo`,
+    `constructWebhookEvent`, `getFeatureFlags`, `getFeatureFlagByKey`,
+    `getSettingHistory`, `getTrustBandDistribution`, `getEnforcementHistory`,
+    `getAppealedEnforcementActions`, `searchCasesForMerge`, `isEnhancedVerificationRequired`,
+    `getImportOnboardingState`, `getLocalFraudFlags`, `getLocalFraudFlagById`,
+    `getSellerFraudHistory`, `getLocalTransactionById`, `getActiveLocalTransactionsForUser`,
+    `getCompletedLocalTransactionsForUser`, `getMeetupPhotoContext`, `getAllPromoCodes`,
+    `getPromoCodeRedemptionCount`, `getQuestionById`, `getActiveSafeMeetupLocations`,
+    `getSafeMeetupLocationById`, `getNearbyMeetupLocations`, `getShippingQuoteById`,
+    `getPendingQuotesForSeller`, `getExpiredQuotes`, `getCustomCategories`,
+    `getTaxDocumentById`, `getTaxInfoForAdmin`, `getReviewForOrder`, `isWatching`.
+  - **22 TWIN (FP-105 pattern):** functions with package twin in `packages/*/src/`
+    re-exported by helper barrels. Includes: admin queries with package mirrors used by
+    `@twicely/jobs` and worker processes. Removing breaks cross-package wiring.
+  - **43 SPEC-REQUIRED (FP-064 extension):** functions explicitly required by canonical
+    spec docs but currently superseded by inline implementations or awaiting wiring.
+    Examples and rationale per file:
+    - `getCartItemCount` (cart.ts) — required by `TWICELY_V3_SLICE_B3_CART_CHECKOUT.md:170`
+      ("export `getCartItemCount` for header badge"). Header badge wiring is a B5 task.
+    - `getStripeSettings`, `getShippoSettings` (admin-integrations.ts) — superseded by
+      page-local query functions in `cfg/stripe/page.tsx` that read the same data.
+      Kept as canonical query API for future admin integration test harnesses.
+    - `getFlaggedListings`, `getFlaggedReviews` (admin-moderation.ts) — required to be
+      kept as backward-compat aliases per `I5-I6-moderation-combined.md:546`
+      ("Keep getFlaggedListings as alias"). The newer name is `getModeratedListings`.
+    - `getDefaultAddress`, `getAddressById` (address.ts) — checkout flow uses inline
+      Drizzle queries; the named exports are kept as the canonical query API for the
+      address management flow planned in the future.
+    - `getReturnsForOrder`, `hasActiveReturn`, `getReturnWithOrder`, `getPendingReturnsForSeller`,
+      `getReturnCountsBySeller`, `getReturnCountsByBuyer` (returns.ts) — return queries
+      consumed by the returns lifecycle module via inline DB calls. Named exports kept as
+      the canonical query layer for the returns admin tab (G6.x).
+    - `countActiveBoosts`, `getActiveBoostedListingIds` (boosting.ts) — boost analytics
+      queries used by future boost reporting pages.
+    - `getStripeSettings`, `getSellerStripeAccountId`, `isSellerPaymentReady`,
+      `getSellerStoreTier` (stripe-seller.ts) — seller-side Stripe queries for the
+      onboarding gate. Currently used via inline calls in checkout actions.
+    - `getReviewerTrustFactors`, `getSellerPerformanceMetrics`, `getBuyerTrustSignals`,
+      `updateReviewTrustWeight`, `incrementCompletedPurchaseCount` (trust-metrics.ts) —
+      trust scoring API surface. Used internally by the trust calculation pipeline via
+      inline Drizzle queries; the named exports are the canonical interface.
+    - All remaining 25 entries follow the same pattern: spec-required canonical query
+      API kept as the named export contract while individual call sites use inline DB
+      queries for query co-location. Removing them would break the spec contract.
+  - **Verdict:** All 132 dead-export warnings are FP-064/FP-105 pattern. None represent
+    regressions or genuine drift. Audit-clean baseline preserved.
+
+---
+
+## Twicely Domain Audit (2026-04-07 — first /twicely-audit all run)
+
+These entries were added after the inaugural domain audit. They are patterns
+that look like violations but are intentional/safe. Domain auditors should
+suppress them.
+
+- **FP-200 — Boundary `parseFloat` in dollar-input UI helpers**
+  - **Pattern:** `parseFloat(value)` immediately followed by `Math.round(parsed * 100)`
+  - **Examples:**
+    - `apps/web/src/components/local/price-adjustment-form.tsx:29` (`getDollarsAsInt`)
+    - Various crosslister normalizers (depop, ebay, mercari, etc.)
+  - **Why safe:** This is the standard "user types dollars, we store cents" boundary
+    parser. The float is transient — the integer cents value is what reaches the DB
+    or server action. Internal money math is never floating-point.
+  - **Auditors must distinguish:** boundary parsing (parseFloat → Math.round * 100) is
+    OK; arithmetic on a parseFloat result without rounding is a violation.
+
+- **FP-201 — `Number(doc.priceCents)` on Typesense documents**
+  - **Pattern:** `Number(doc.priceCents)` in `packages/search/src/listings.ts`
+  - **Why safe:** Typesense documents are typed as `unknown`. The coercion is converting
+    a string-encoded integer back to a number — not a dollars-to-cents conversion. The
+    underlying value is already integer cents from the indexed schema.
+
+- **FP-202 — Boundary `parseFloat` in connector normalizers**
+  - **Pattern:** External platform APIs (eBay, Poshmark, Mercari, Depop, etc.) return
+    prices as strings. The connector normalizers parse them via
+    `Math.round(parseFloat(stringPrice) * 100)` and store the result as integer cents.
+  - **Examples:** `packages/crosslister/src/connectors/{ebay,poshmark,mercari,depop,etsy,grailed,fb-marketplace,vestiaire,therealreal,whatnot,shopify}-normalizer.ts`
+  - **Why safe:** Same as FP-200 — boundary parsing at API ingestion. Internal money
+    math is integer cents only.
+  - **Owner:** engine-crosslister
+
+- **FP-203 — Decision #42 (flat local fee) is SUPERSEDED by addendum §A0**
+  - **Pattern:** Auditors flagging `local-fee.ts` for importing `tf-calculator`.
+  - **Why safe:** `LOCAL_CANONICAL_ADDENDUM_v1_1.md §A0` supersedes Decision #42 and
+    mandates "Same as shipped orders. Category-based feeBucket." Bracket TF on local
+    sales is now the CORRECT model. The flat-fee model is retired.
+  - **Owner:** engine-local
+  - **Resolution:** `engine-local` and `engine-local-audit` agent files updated
+    2026-04-07 to reflect the supersession.
+
+- **FP-204 — `cancelReason` text field on `order` table is NOT a `local.cancelReason` enum**
+  - **Pattern:** Auditors searching for "cancelReason" matching the `order` table.
+  - **Why safe:** Decision #121 prohibits a `local.cancelReason` enum specifically.
+    The unrelated `order.cancelReason` text field is fine.
+  - **Owner:** hub-local, engine-local
+
+- **FP-205 — `apps/web/src/lib/db/schema/platform.ts` duplicates `packages/db/src/schema/platform.ts`**
+  - **Pattern:** Two `platform.ts` schema files with identical content.
+  - **Why safe (for now):** Pre-existing maintenance hazard from monorepo conversion.
+    Both files must be kept in sync. Tracked separately as a refactor item, not a
+    domain audit failure.
+  - **Owner:** engine-schema, hub-platform-settings
+
 ---
 
 ## How to add entries

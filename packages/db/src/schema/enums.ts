@@ -84,7 +84,9 @@ export const returnReasonBucketEnum = pgEnum('return_reason_bucket', [
 export const disputeStatusEnum = pgEnum('dispute_status', [
   'OPEN', 'UNDER_REVIEW', 'RESOLVED_BUYER', 'RESOLVED_SELLER', 'RESOLVED_PARTIAL', 'APPEALED', 'APPEAL_RESOLVED', 'CLOSED'
 ]);
-export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'COUNTERFEIT', 'REMORSE', 'WRONG_ITEM']);
+// claim_type matches migration 0000 + canonical Schema Spec §1.6. WRONG_ITEM is a
+// return_reason only; in buyer-protection.ts it maps → INAD for claim type storage.
+export const claimTypeEnum = pgEnum('claim_type', ['INR', 'INAD', 'DAMAGED', 'COUNTERFEIT', 'REMORSE']);
 
 // §1.7 Reviews
 export const reviewStatusEnum = pgEnum('review_status', ['PENDING', 'APPROVED', 'FLAGGED', 'REMOVED']);

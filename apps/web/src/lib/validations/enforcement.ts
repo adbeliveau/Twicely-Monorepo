@@ -61,6 +61,8 @@ export const updateSellerEnforcementSchema = z.object({
   enforcementLevel:    z.enum(['COACHING', 'WARNING', 'RESTRICTION', 'PRE_SUSPENSION']).nullable().optional(),
   bandOverride:        performanceBandEnum.optional(),
   bandOverrideReason:  z.string().max(500).optional(),
+  /** Days until band override expires (ignored when bandOverride is null). Defaults to seller-score.bandOverride.defaultDays platform setting (90 days). */
+  bandOverrideExpiresInDays: z.number().int().min(1).max(365).optional(),
 }).strict();
 
 export type ContentReportInput = z.infer<typeof contentReportSchema>;

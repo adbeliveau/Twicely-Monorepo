@@ -1,4 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock platform_settings to return the default values supplied as fallbacks.
+// This decouples the unit tests from a real DB connection. The tests now
+// validate the asserted business logic against the seed defaults.
+vi.mock('@twicely/db/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn(async <T>(_key: string, fallback: T): Promise<T> => fallback),
+}));
+
 import {
   resolveBundleComponents,
   getBundleSavingsCents,
@@ -8,6 +16,12 @@ import {
   compareBundleTiers,
   classifySubscriptionChange,
 } from '../subscription-engine';
+import { resetSubscriptionPricingCache } from '../price-map';
+
+// Reset the in-process pricing cache before each test so the mock takes effect freshly
+beforeEach(() => {
+  resetSubscriptionPricingCache();
+});
 
 // ─── resolveBundleComponents + BUNDLE_COMPONENTS ─────────────────────────────
 
@@ -46,20 +60,20 @@ describe('D3-S5: BUNDLE_COMPONENTS mapping', () => {
 // ─── getBundleSavingsCents ───────────────────────────────────────────────────
 
 describe('D3-S5: getBundleSavingsCents', () => {
-  it('returns 0 for NONE tier', () => {
-    expect(getBundleSavingsCents('NONE', 'monthly')).toBe(0);
+  it('returns 0 for NONE tier', async () => {
+    expect(await getBundleSavingsCents('NONE', 'monthly')).toBe(0);
   });
 
-  it('returns positive savings for STARTER monthly', () => {
-    expect(getBundleSavingsCents('STARTER', 'monthly')).toBeGreaterThan(0);
+  it('returns positive savings for STARTER monthly', async () => {
+    expect(await getBundleSavingsCents('STARTER', 'monthly')).toBeGreaterThan(0);
   });
 
-  it('returns positive savings for PRO monthly', () => {
-    expect(getBundleSavingsCents('PRO', 'monthly')).toBeGreaterThan(0);
+  it('returns positive savings for PRO monthly', async () => {
+    expect(await getBundleSavingsCents('PRO', 'monthly')).toBeGreaterThan(0);
   });
 
-  it('returns positive savings for POWER annual', () => {
-    expect(getBundleSavingsCents('POWER', 'annual')).toBeGreaterThan(0);
+  it('returns positive savings for POWER annual', async () => {
+    expect(await getBundleSavingsCents('POWER', 'annual')).toBeGreaterThan(0);
   });
 });
 

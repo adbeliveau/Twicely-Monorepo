@@ -9,7 +9,7 @@
 import { db } from '@twicely/db';
 import { auditEvent } from '@twicely/db/schema';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
-import { getInfraConfig } from '@/lib/config/infra-config';
+import { getInfraConfig } from '@twicely/config/infra-config';
 import { z } from 'zod';
 
 const rebuildSearchSchema = z

@@ -7,7 +7,7 @@ import { db } from '@twicely/db';
 import { user, sellerProfile, sellerBalance } from '@twicely/db/schema';
 import type { InferSelectModel } from 'drizzle-orm';
 import { eq, and, or, ilike, count, desc, asc, isNull, inArray, sql } from 'drizzle-orm';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 
 type StoreTier = InferSelectModel<typeof sellerProfile>['storeTier'];
 type ListerTier = InferSelectModel<typeof sellerProfile>['listerTier'];

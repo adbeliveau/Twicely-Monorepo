@@ -11,6 +11,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { notify } from '@twicely/notifications/service';
 import { processReturnRefund } from '@twicely/stripe/refunds';
 import { applyReturnFees } from './return-fee-apply';
+import { recoverFromSellerWaterfall } from './dispute-recovery';
 import { logger } from '@twicely/logger';
 
 /**
@@ -209,6 +210,35 @@ export async function resolveDispute(
 
   if ((resolution === 'RESOLVED_BUYER' || resolution === 'RESOLVED_PARTIAL') && disp.returnRequestId) {
     const refundAmount = resolution === 'RESOLVED_PARTIAL' ? resolutionAmountCents : undefined;
+
+    // Decision #92: Post-Release Claim Recovery Waterfall.
+    // Before refunding the buyer from platform funds, attempt to claw back from
+    // the seller's available + reserved balance. Whatever can't be recovered
+    // becomes platform absorption (PLATFORM_ABSORBED_COST ledger entry).
+    // The waterfall is best-effort — failure to recover does NOT block the refund.
+    if (refundAmount && refundAmount > 0) {
+      try {
+        const recovery = await recoverFromSellerWaterfall({
+          sellerId: disp.sellerId,
+          amountCents: refundAmount,
+          disputeId,
+          orderId: disp.orderId,
+        });
+        logger.info('Dispute recovery waterfall complete (Decision #92)', {
+          disputeId,
+          sellerId: disp.sellerId,
+          recoveredFromAvailable: recovery.recoveredFromAvailableCents,
+          recoveredFromReserved: recovery.recoveredFromReservedCents,
+          platformAbsorbed: recovery.platformAbsorbedCents,
+        });
+      } catch (err) {
+        logger.error('Recovery waterfall failed; refund proceeds anyway', {
+          disputeId,
+          error: String(err),
+        });
+      }
+    }
+
     const refundResult = await processReturnRefund({
       returnId: disp.returnRequestId,
       amountCents: refundAmount,

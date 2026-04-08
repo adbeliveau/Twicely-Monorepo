@@ -19,17 +19,25 @@ import { cancelLocalTransactionAction } from '@/lib/actions/local-cancel';
 interface CancelMeetupButtonProps {
   localTransactionId: string;
   scheduledAt: Date | null;
+  /** Hours-until-meetup threshold below which a reliability mark is issued (commerce.local.cancelLateHours) */
+  cancelLateHours: number;
+  /** Hours-until-meetup threshold below which a same-day late mark (2 marks) is issued (commerce.local.cancelSamedayHours) */
+  cancelSamedayHours: number;
 }
 
-function getReliabilityWarning(scheduledAt: Date | null): string {
+function getReliabilityWarning(
+  scheduledAt: Date | null,
+  cancelLateHours: number,
+  cancelSamedayHours: number,
+): string {
   if (scheduledAt === null) {
     return 'No reliability impact.';
   }
   const hoursUntil = (scheduledAt.getTime() - Date.now()) / (1000 * 60 * 60);
-  if (hoursUntil < 2) {
+  if (hoursUntil < cancelSamedayHours) {
     return 'This late cancellation will result in 2 reliability marks.';
   }
-  if (hoursUntil < 24) {
+  if (hoursUntil < cancelLateHours) {
     return 'This will result in a reliability mark on your account.';
   }
   return 'No reliability impact.';
@@ -38,13 +46,15 @@ function getReliabilityWarning(scheduledAt: Date | null): string {
 export function CancelMeetupButton({
   localTransactionId,
   scheduledAt,
+  cancelLateHours,
+  cancelSamedayHours,
 }: CancelMeetupButtonProps) {
   const [isCanceled, setIsCanceled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [isPending, startTransition] = useTransition();
 
-  const warning = getReliabilityWarning(scheduledAt);
+  const warning = getReliabilityWarning(scheduledAt, cancelLateHours, cancelSamedayHours);
 
   function handleConfirm() {
     setError(null);

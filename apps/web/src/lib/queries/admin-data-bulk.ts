@@ -6,7 +6,7 @@
 import { db } from '@twicely/db';
 import { listing, user } from '@twicely/db/schema';
 import { and, count, eq, ilike, inArray, or, sql } from 'drizzle-orm';
-import { escapeLike } from '@/lib/utils/escape-like';
+import { escapeLike } from '@twicely/utils/escape-like';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

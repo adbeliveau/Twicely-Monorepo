@@ -9,7 +9,7 @@ import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
 import { headers } from 'next/headers';
-import { getClientIp } from '@/lib/utils/get-client-ip';
+import { getClientIp } from '@twicely/utils/get-client-ip';
 
 const loginSchema = z
   .object({

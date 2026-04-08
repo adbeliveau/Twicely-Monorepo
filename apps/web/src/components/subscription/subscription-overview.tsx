@@ -17,7 +17,7 @@ import { BundleSection } from './bundle-section';
 import { createSubscriptionCheckout } from '@/lib/actions/create-subscription-checkout';
 import { createBillingPortalSession } from '@/lib/actions/manage-subscription';
 import { cancelPendingChangeAction } from '@/lib/actions/change-subscription';
-import { BUNDLE_COMPONENTS } from '@twicely/subscriptions/bundle-resolution';
+import { BUNDLE_COMPONENTS } from '@twicely/subscriptions/bundle-components';
 import type { SubscriptionSnapshot } from '@/lib/queries/subscriptions';
 import type { BundleTier } from '@/types/enums';
 import {

@@ -77,8 +77,8 @@ async function dispatchPlatformEvent(event: Stripe.Event): Promise<WebhookResult
     case 'payment_intent.canceled':
       return handlePaymentIntentCanceled(event.data.object as Stripe.PaymentIntent);
 
-    case 'invoice.payment_failed':
-      return handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+    // NOTE: invoice.payment_failed is handled by subscription-webhooks.ts
+    // (the dedicated subscription webhook). Stripe routes Billing events there.
 
     default:
       return { handled: false };
@@ -435,52 +435,6 @@ async function handlePayoutCanceled(payout: Stripe.Payout, stripeAccountId: stri
     return { handled: true };
   } catch (error) {
     logger.error('Error handling payout.canceled', { error });
-    return { handled: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-/**
- * Handle invoice.payment_failed — subscription renewal hard-failure (dunning).
- * Notifies the seller that their subscription payment failed.
- * Stripe's native dunning will also email the customer, but we add an
- * in-app notification so it surfaces in the Twicely dashboard.
- */
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<WebhookResult> {
-  try {
-    const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
-    if (!customerId) return { handled: true };
-
-    // Find the seller by Stripe customer ID
-    const [seller] = await db
-      .select({ userId: sellerProfile.userId })
-      .from(sellerProfile)
-      .where(eq(sellerProfile.stripeCustomerId, customerId))
-      .limit(1);
-
-    if (!seller) {
-      logger.warn('[webhook] invoice.payment_failed: no seller found for customer', { customerId });
-      return { handled: true };
-    }
-
-    await notify(seller.userId, 'subscription.payment_failed', {
-      invoiceId: invoice.id,
-      amountDue: String(invoice.amount_due),
-      currency: invoice.currency ?? 'usd',
-      attemptCount: String(invoice.attempt_count),
-      nextAttemptAt: invoice.next_payment_attempt
-        ? new Date(invoice.next_payment_attempt * 1000).toISOString()
-        : '',
-    });
-
-    logger.info('[webhook] invoice.payment_failed processed', {
-      userId: seller.userId,
-      invoiceId: invoice.id,
-      attemptCount: invoice.attempt_count,
-    });
-
-    return { handled: true };
-  } catch (error) {
-    logger.error('[webhook] Error handling invoice.payment_failed', { error });
     return { handled: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
