@@ -880,7 +880,7 @@ TF uses progressive volume brackets (like income tax). Calendar month reset. NOT
 | `automation.pricing.annualCents` | cents | 999 | Automation annual/mo |
 | `automation.actionsPerMonth` | number | 2000 | Automation actions included/month |
 | `automation.overagePackSize` | number | 1000 | Actions per overage pack |
-| `fees.automation.overagePackCents` | cents | 900 | Overage pack price |
+| `automation.overagePackCents` | cents | 900 | Overage pack price (seed uses `automation.*` prefix — consistent with `automation.overagePackSize` above; canonical previously listed as `fees.automation.*` which was a typo) |
 
 ### 7.8 Boosting
 
@@ -1090,7 +1090,7 @@ Per Pricing Canonical v3.2 §5.2. All orders, all tiers, no exceptions.
 | `trust.standards.topRatedMaxLateShipRate` | percent | 1.0 | Max late ship rate for TOP_RATED |
 | `trust.standards.topRatedMinOrdersYear` | number | 100 | Min annual orders for TOP_RATED |
 | `trust.standards.belowStandardVisibilityReduction` | percent | 50.0 | Search visibility penalty |
-| `trust.standards.belowStandardTfSurcharge` | bps | 200 | Additional TF penalty in basis points (renamed from `belowStandardFvfSurcharge` per Decision #75 — FvF → TF terminology; value reduced from 500 bps to 200 bps by operator decision) |
+| `trust.standards.belowStandardTfSurcharge` | bps | 500 | Additional TF penalty in basis points = 5.0% (renamed from `belowStandardFvfSurcharge` per Decision #75 — FvF → TF terminology) |
 | `trust.standards.restrictedMaxListings` | number | 10 | Max listings for restricted sellers |
 | `trust.standards.defectExpiryDays` | number | 365 | Days before defects expire |
 

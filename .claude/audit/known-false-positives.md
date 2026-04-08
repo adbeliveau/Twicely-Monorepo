@@ -433,6 +433,12 @@ suppress them.
   - **Do not reuse FP-205.** Keep the ID reserved for historical audit comparisons.
   - **Owner:** engine-schema, hub-platform-settings
 
+- **FP-206:** `/api/hub/session/heartbeat` bypasses `staffAuthorize()` wrapper
+  - **Why it's a false positive:** The endpoint intentionally uses `getStaffSession(token)` directly instead of the `staffAuthorize()` wrapper because it returns custom error shapes (`{ sessionValid: false, reason: 'expired' | 'not_found' }`) that the frontend uses to distinguish between "no session" and "session expired" states for the staff inactivity warning banner. The standard wrapper throws/returns a generic 401 that loses this distinction.
+  - The token IS validated (via `getStaffSession`) and the endpoint only RETURNS timing metadata — no mutations. Bypassing the wrapper is safe here.
+  - Documented inline at `apps/web/src/app/api/hub/session/heartbeat/route.ts:15`.
+  - **Owner:** hub-shell, engine-security
+
 ---
 
 ## How to add entries

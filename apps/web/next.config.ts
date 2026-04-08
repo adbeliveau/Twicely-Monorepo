@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       { source: '/m', destination: '/my/messages', permanent: true },
       { source: '/m/:id', destination: '/my/messages/:id', permanent: true },
-      { source: '/sell', destination: '/my/selling/onboarding', permanent: true },
+      { source: '/sell', destination: '/my/selling/onboarding', permanent: false },
     ];
   },
   async headers() {
