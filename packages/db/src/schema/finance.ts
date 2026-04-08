@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, jsonb, real, date, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, jsonb, real, date, index, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { ledgerEntryTypeEnum, ledgerEntryStatusEnum, payoutStatusEnum, payoutBatchStatusEnum, feeBucketEnum, channelEnum, claimTypeEnum, performanceBandEnum } from './enums';
@@ -15,11 +15,13 @@ export const ledgerEntry = pgTable('ledger_entry', {
   currency:            text('currency').notNull().default('USD'),
 
   // Ownership
-  userId:              text('user_id').references(() => user.id),
+  // restrict: financial history must survive user account deletion (revenue auditability)
+  userId:              text('user_id').references(() => user.id, { onDelete: 'restrict' }),
 
   // Context references
-  orderId:             text('order_id').references(() => order.id),
-  listingId:           text('listing_id').references(() => listing.id),
+  // restrict: financial records must survive order/listing lifecycle changes
+  orderId:             text('order_id').references(() => order.id, { onDelete: 'restrict' }),
+  listingId:           text('listing_id').references(() => listing.id, { onDelete: 'restrict' }),
   channel:             channelEnum('channel'),
 
   // Stripe correlation
@@ -32,6 +34,12 @@ export const ledgerEntry = pgTable('ledger_entry', {
 
   // Reversal tracking
   reversalOfEntryId:   text('reversal_of_entry_id'),
+
+  // §4.4 Canonical idempotency key — prevents duplicate ledger entries from retry storms.
+  // Format: order:{id}:tf | refund:{id}:full | chargeback:{id}:fee | payout:{id} |
+  //         reserve:hold:{id} | manual:{id} | local_cash:{id}
+  // Nullable for back-compat with existing rows; all new entries must populate it.
+  idempotencyKey:      varchar('idempotency_key', { length: 255 }),
 
   // Admin
   createdByStaffId:    text('created_by_staff_id'),
@@ -49,11 +57,12 @@ export const ledgerEntry = pgTable('ledger_entry', {
   reversalIdx:         index('le_reversal').on(table.reversalOfEntryId),
   uniqRefund:          uniqueIndex('le_uniq_refund').on(table.stripeRefundId, table.type).where(sql`stripe_refund_id IS NOT NULL`),
   uniqDispute:         uniqueIndex('le_uniq_dispute').on(table.stripeDisputeId, table.type).where(sql`stripe_dispute_id IS NOT NULL`),
+  uniqIdempotency:     uniqueIndex('le_uniq_idempotency').on(table.idempotencyKey).where(sql`idempotency_key IS NOT NULL`),
 }));
 
 // §11.2 sellerBalance
 export const sellerBalance = pgTable('seller_balance', {
-  userId:              text('user_id').primaryKey().references(() => user.id),
+  userId:              text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
   pendingCents:        integer('pending_cents').notNull().default(0),
   availableCents:      integer('available_cents').notNull().default(0),
   reservedCents:       integer('reserved_cents').notNull().default(0),
@@ -81,8 +90,9 @@ export const payoutBatch = pgTable('payout_batch', {
 // §11.4 payout
 export const payout = pgTable('payout', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  userId:              text('user_id').notNull().references(() => user.id),
-  batchId:             text('batch_id').references(() => payoutBatch.id),
+  // restrict: payout records are financial history — must survive user account deletion
+  userId:              text('user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  batchId:             text('batch_id').references(() => payoutBatch.id, { onDelete: 'cascade' }),
   status:              payoutStatusEnum('status').notNull().default('PENDING'),
   amountCents:         integer('amount_cents').notNull(),
   feeCents:            integer('fee_cents').notNull().default(0),
@@ -135,8 +145,9 @@ export const reconciliationReport = pgTable('reconciliation_report', {
 // §11.7 manualAdjustment
 export const manualAdjustment = pgTable('manual_adjustment', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  userId:              text('user_id').notNull().references(() => user.id),
-  ledgerEntryId:       text('ledger_entry_id').notNull().references(() => ledgerEntry.id),
+  // restrict: manual adjustment is an audit record — must survive user account deletion
+  userId:              text('user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  ledgerEntryId:       text('ledger_entry_id').notNull().references(() => ledgerEntry.id, { onDelete: 'restrict' }),
   type:                text('type').notNull(),
   amountCents:         integer('amount_cents').notNull(),
   reasonCode:          text('reason_code').notNull(),
@@ -166,8 +177,9 @@ export const stripeEventLog = pgTable('stripe_event_log', {
 // §13.4 buyerProtectionClaim (A2.1 — buyer protection fund claims)
 export const buyerProtectionClaim = pgTable('buyer_protection_claim', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:             text('order_id').notNull().references(() => order.id),
-  buyerId:             text('buyer_id').notNull().references(() => user.id),
+  // restrict: buyer protection claim is a financial record — must survive order/user deletion
+  orderId:             text('order_id').notNull().references(() => order.id, { onDelete: 'restrict' }),
+  buyerId:             text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:            text('seller_id').notNull(),
   claimType:           claimTypeEnum('claim_type').notNull(),
   status:              text('status').notNull().default('OPEN'),
@@ -200,7 +212,8 @@ export const sellerScoreSnapshot = pgTable('seller_score_snapshot', {
   createdAt:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 
   // G4.1 — Daily snapshot columns (Seller Score Canonical Section 10.3)
-  userId:              text('user_id').references(() => user.id),
+  // set null: snapshot keeps historical performance data even after user account deletion
+  userId:              text('user_id').references(() => user.id, { onDelete: 'set null' }),
   snapshotDate:        date('snapshot_date'),
   searchMultiplier:    real('search_multiplier'),
 

@@ -19,7 +19,7 @@ export const trialUsage = pgTable('trial_usage', {
 // §3.1 storeSubscription
 export const storeSubscription = pgTable('store_subscription', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:     text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:     text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   tier:                storeTierEnum('tier').notNull(),
   status:              subscriptionStatusEnum('status').notNull().default('ACTIVE'),
   stripeSubscriptionId: text('stripe_subscription_id').unique(),
@@ -39,7 +39,7 @@ export const storeSubscription = pgTable('store_subscription', {
 // §3.2 listerSubscription
 export const listerSubscription = pgTable('lister_subscription', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:     text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:     text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   tier:                listerTierEnum('tier').notNull(),
   status:              subscriptionStatusEnum('status').notNull().default('ACTIVE'),
   stripeSubscriptionId: text('stripe_subscription_id').unique(),
@@ -58,7 +58,7 @@ export const listerSubscription = pgTable('lister_subscription', {
 // §3.3 automationSubscription
 export const automationSubscription = pgTable('automation_subscription', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:     text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:     text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   status:              subscriptionStatusEnum('status').notNull().default('ACTIVE'),
   stripeSubscriptionId: text('stripe_subscription_id').unique(),
   creditsIncluded:     integer('credits_included').notNull().default(2000),
@@ -73,7 +73,7 @@ export const automationSubscription = pgTable('automation_subscription', {
 // §18.1 financeSubscription
 export const financeSubscription = pgTable('finance_subscription', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:       text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:       text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   tier:                  financeTierEnum('tier').notNull(),
   status:                subscriptionStatusEnum('status').notNull().default('ACTIVE'),
   stripeSubscriptionId:  text('stripe_subscription_id').unique(),
@@ -101,7 +101,7 @@ export const financeSubscription = pgTable('finance_subscription', {
 // §3.5 bundleSubscription (addendum: canceledAt + trialEndsAt match storeSubscription pattern)
 export const bundleSubscription = pgTable('bundle_subscription', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:       text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:       text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   tier:                  bundleTierEnum('tier').notNull(),
   status:                subscriptionStatusEnum('status').notNull().default('ACTIVE'),
   stripeSubscriptionId:  text('stripe_subscription_id').unique(),
@@ -120,7 +120,8 @@ export const bundleSubscription = pgTable('bundle_subscription', {
 export const delegatedAccess = pgTable('delegated_access', {
   id:              text('id').primaryKey().$defaultFn(() => createId()),
   sellerId:        text('seller_id').notNull().references(() => sellerProfile.id, { onDelete: 'cascade' }),
-  userId:          text('user_id').notNull().references(() => user.id),
+  // restrict: delegated access records must survive user deletion for access audit
+  userId:          text('user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   email:           text('email').notNull(),
   scopes:          text('scopes').array().notNull().default(sql`'{}'::text[]`),
   status:          delegationStatusEnum('status').notNull().default('ACTIVE'),

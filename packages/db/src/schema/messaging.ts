@@ -9,9 +9,11 @@ import { order } from './commerce';
 // §9.1 conversation
 export const conversation = pgTable('conversation', {
   id:              text('id').primaryKey().$defaultFn(() => createId()),
-  listingId:       text('listing_id').references(() => listing.id),
-  orderId:         text('order_id').references(() => order.id),
-  buyerId:         text('buyer_id').notNull().references(() => user.id),
+  // set null: conversation history kept even if listing/order is deleted
+  listingId:       text('listing_id').references(() => listing.id, { onDelete: 'set null' }),
+  orderId:         text('order_id').references(() => order.id, { onDelete: 'set null' }),
+  // restrict: conversation must survive buyer deletion for moderation audit trail
+  buyerId:         text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:        text('seller_id').notNull(),
   subject:         text('subject'),
   status:          conversationStatusEnum('status').notNull().default('OPEN'),
@@ -33,7 +35,8 @@ export const conversation = pgTable('conversation', {
 export const message = pgTable('message', {
   id:              text('id').primaryKey().$defaultFn(() => createId()),
   conversationId:  text('conversation_id').notNull().references(() => conversation.id, { onDelete: 'cascade' }),
-  senderUserId:    text('sender_user_id').notNull().references(() => user.id),
+  // restrict: messages are communication records — must survive user deletion for moderation
+  senderUserId:    text('sender_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   body:            text('body').notNull(),
   attachments:     text('attachments').array().notNull().default(sql`'{}'::text[]`),
   isRead:          boolean('is_read').notNull().default(false),

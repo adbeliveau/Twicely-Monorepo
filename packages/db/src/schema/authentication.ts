@@ -20,9 +20,10 @@ export const authenticatorPartner = pgTable('authenticator_partner', {
 
 export const authenticationRequest = pgTable('authentication_request', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
-  listingId:             text('listing_id').notNull().references(() => listing.id),
+  // restrict: authentication request is a financial/legal record — must survive listing/user deletion
+  listingId:             text('listing_id').notNull().references(() => listing.id, { onDelete: 'restrict' }),
   orderId:               text('order_id'),
-  sellerId:              text('seller_id').notNull().references(() => user.id),
+  sellerId:              text('seller_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   buyerId:               text('buyer_id'),
   initiator:             text('initiator').notNull(),
   tier:                  text('tier').notNull(),
@@ -32,7 +33,8 @@ export const authenticationRequest = pgTable('authentication_request', {
   sellerFeeCents:        integer('seller_fee_cents'),
   refundedBuyerCents:    integer('refunded_buyer_cents').notNull().default(0),
   providerRef:           text('provider_ref'),
-  authenticatorId:       text('authenticator_id').references(() => authenticatorPartner.id),
+  // set null: authentication request kept even if partner is removed from platform
+  authenticatorId:       text('authenticator_id').references(() => authenticatorPartner.id, { onDelete: 'set null' }),
   certificateNumber:     text('certificate_number').unique(),
   certificateUrl:        text('certificate_url'),
   verifyUrl:             text('verify_url'),

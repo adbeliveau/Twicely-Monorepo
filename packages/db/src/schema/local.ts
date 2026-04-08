@@ -38,10 +38,12 @@ export const safeMeetupLocation = pgTable('safe_meetup_location', {
 
 export const localTransaction = pgTable('local_transaction', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:               text('order_id').notNull().references(() => order.id),
-  buyerId:               text('buyer_id').notNull().references(() => user.id),
-  sellerId:              text('seller_id').notNull().references(() => user.id),
-  meetupLocationId:      text('meetup_location_id').references(() => safeMeetupLocation.id),
+  // restrict: local transaction is a financial record — must survive order/user deletion
+  orderId:               text('order_id').notNull().references(() => order.id, { onDelete: 'restrict' }),
+  buyerId:               text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  sellerId:              text('seller_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  // set null: transaction record kept even if safe meetup location is removed
+  meetupLocationId:      text('meetup_location_id').references(() => safeMeetupLocation.id, { onDelete: 'set null' }),
   status:                localTransactionStatusEnum('status').notNull().default('SCHEDULED'),
   scheduledAt:           timestamp('scheduled_at', { withTimezone: true }),
   scheduledAtConfirmedAt: timestamp('scheduled_at_confirmed_at', { withTimezone: true }),
@@ -99,8 +101,8 @@ export const localTransaction = pgTable('local_transaction', {
 
 export const localReliabilityEvent = pgTable('local_reliability_event', {
   id:              text('id').primaryKey().$defaultFn(() => createId()),
-  userId:          text('user_id').notNull().references(() => user.id),
-  transactionId:   text('transaction_id').notNull().references(() => localTransaction.id),
+  userId:          text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  transactionId:   text('transaction_id').notNull().references(() => localTransaction.id, { onDelete: 'cascade' }),
   eventType:       localReliabilityEventTypeEnum('event_type').notNull(),
   marksApplied:    integer('marks_applied').notNull(),
   decaysAt:        timestamp('decays_at', { withTimezone: true }).notNull(),
@@ -115,9 +117,10 @@ export const localReliabilityEvent = pgTable('local_reliability_event', {
 
 export const localFraudFlag = pgTable('local_fraud_flag', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  sellerId:            text('seller_id').notNull().references(() => user.id),
-  localTransactionId:  text('local_transaction_id').notNull().references(() => localTransaction.id),
-  listingId:           text('listing_id').notNull().references(() => listing.id),
+  // restrict: fraud flags are audit records — must survive user/transaction/listing deletion
+  sellerId:            text('seller_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  localTransactionId:  text('local_transaction_id').notNull().references(() => localTransaction.id, { onDelete: 'restrict' }),
+  listingId:           text('listing_id').notNull().references(() => listing.id, { onDelete: 'restrict' }),
   trigger:             text('trigger').notNull(),  // 'SAME_LISTING_SOLD' | 'PHASH_DUPLICATE' | 'NOSHOW_RELIST' | 'BUYER_CLAIM'
   severity:            localFraudFlagSeverityEnum('severity').notNull(),
   status:              localFraudFlagStatusEnum('status').notNull().default('OPEN'),
@@ -141,9 +144,11 @@ export const localFraudFlag = pgTable('local_fraud_flag', {
 
 export const combinedShippingQuote = pgTable('combined_shipping_quote', {
   id:                      text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:                 text('order_id').notNull().references(() => order.id),
-  sellerId:                text('seller_id').notNull().references(() => user.id),
-  buyerId:                 text('buyer_id').notNull().references(() => user.id),
+  // cascade: combined shipping quote is an ephemeral pre-checkout record owned by the order
+  orderId:                 text('order_id').notNull().references(() => order.id, { onDelete: 'cascade' }),
+  // restrict: financial quote record should survive user deletion for audit
+  sellerId:                text('seller_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  buyerId:                 text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   status:                  text('status').notNull(),
   maxShippingCents:        integer('max_shipping_cents').notNull(),
   quotedShippingCents:     integer('quoted_shipping_cents'),

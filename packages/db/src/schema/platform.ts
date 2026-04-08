@@ -23,7 +23,7 @@ export const platformSetting = pgTable('platform_setting', {
 // §14.2 platformSettingHistory
 export const platformSettingHistory = pgTable('platform_setting_history', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  settingId:           text('setting_id').notNull().references(() => platformSetting.id),
+  settingId:           text('setting_id').notNull().references(() => platformSetting.id, { onDelete: 'cascade' }),
   previousValue:       jsonb('previous_value').notNull(),
   newValue:            jsonb('new_value').notNull(),
   changedByStaffId:    text('changed_by_staff_id').notNull(),

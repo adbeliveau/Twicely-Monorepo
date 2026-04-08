@@ -19,7 +19,8 @@ export const publishCreditLedger = pgTable('publish_credit_ledger', {
   expiresAt:            timestamp('expires_at', { withTimezone: true }).notNull(),
   periodStart:          timestamp('period_start', { withTimezone: true }).notNull(),
   periodEnd:            timestamp('period_end', { withTimezone: true }).notNull(),
-  listerSubscriptionId: text('lister_subscription_id').references(() => listerSubscription.id),
+  // set null: credit ledger record survives subscription deletion (historical credit record)
+  listerSubscriptionId: text('lister_subscription_id').references(() => listerSubscription.id, { onDelete: 'set null' }),
   stripeSessionId:      text('stripe_session_id'),
   createdAt:            timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({

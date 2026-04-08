@@ -9,8 +9,9 @@ import { order } from './commerce';
 // §8.1 review
 export const review = pgTable('review', {
   id:                text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:           text('order_id').notNull().unique().references(() => order.id),
-  reviewerUserId:    text('reviewer_user_id').notNull().references(() => user.id),
+  // restrict: reviews are permanent public records — must survive order/user lifecycle changes
+  orderId:           text('order_id').notNull().unique().references(() => order.id, { onDelete: 'restrict' }),
+  reviewerUserId:    text('reviewer_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:          text('seller_id').notNull(),
   rating:            integer('rating').notNull(),
   title:             text('title'),
@@ -63,7 +64,7 @@ export const reviewResponse = pgTable('review_response', {
 // §8.3 sellerPerformance
 export const sellerPerformance = pgTable('seller_performance', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:       text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:       text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   totalOrders:           integer('total_orders').notNull().default(0),
   completedOrders:       integer('completed_orders').notNull().default(0),
   canceledOrders:        integer('canceled_orders').notNull().default(0),
@@ -97,9 +98,10 @@ export const sellerPerformance = pgTable('seller_performance', {
 // Individual ratings are NEVER publicly visible; buyer sees only aggregate tier
 export const buyerReview = pgTable('buyer_review', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:               text('order_id').notNull().unique().references(() => order.id),
-  sellerUserId:          text('seller_user_id').notNull().references(() => user.id),
-  buyerUserId:           text('buyer_user_id').notNull().references(() => user.id),
+  // restrict: buyer reviews are permanent records — must survive order/user lifecycle changes
+  orderId:               text('order_id').notNull().unique().references(() => order.id, { onDelete: 'restrict' }),
+  sellerUserId:          text('seller_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
+  buyerUserId:           text('buyer_user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
 
   // 3 rating dimensions (1-5 stars each)
   ratingPayment:         integer('rating_payment').notNull(),        // Did buyer pay promptly?

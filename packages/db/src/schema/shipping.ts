@@ -37,8 +37,9 @@ export const shipment = pgTable('shipment', {
 // §7.2 returnRequest
 export const returnRequest = pgTable('return_request', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:             text('order_id').notNull().references(() => order.id),
-  buyerId:             text('buyer_id').notNull().references(() => user.id),
+  // restrict: return requests are legal/financial records — must survive order/user deletion
+  orderId:             text('order_id').notNull().references(() => order.id, { onDelete: 'restrict' }),
+  buyerId:             text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:            text('seller_id').notNull(),
   status:              returnStatusEnum('status').notNull().default('PENDING_SELLER'),
   reason:              returnReasonEnum('reason').notNull(),
@@ -82,10 +83,12 @@ export const returnRequest = pgTable('return_request', {
 // §7.3 dispute
 export const dispute = pgTable('dispute', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  orderId:             text('order_id').notNull().references(() => order.id),
-  buyerId:             text('buyer_id').notNull().references(() => user.id),
+  // restrict: disputes are legal/financial records — must survive order/user deletion
+  orderId:             text('order_id').notNull().references(() => order.id, { onDelete: 'restrict' }),
+  buyerId:             text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:            text('seller_id').notNull(),
-  returnRequestId:     text('return_request_id').references(() => returnRequest.id),
+  // set null: dispute can exist even if return request is resolved/deleted
+  returnRequestId:     text('return_request_id').references(() => returnRequest.id, { onDelete: 'set null' }),
   claimType:           claimTypeEnum('claim_type').notNull(),
   status:              disputeStatusEnum('status').notNull().default('OPEN'),
   description:         text('description').notNull(),

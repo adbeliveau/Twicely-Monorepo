@@ -115,7 +115,7 @@ export const accountingEntityMap = pgTable('accounting_entity_map', {
 // §18.6 financialProjection — nightly cache for intelligence layer metrics
 export const financialProjection = pgTable('financial_projection', {
   id:                        text('id').primaryKey().$defaultFn(() => createId()),
-  sellerProfileId:           text('seller_profile_id').notNull().unique().references(() => sellerProfile.id),
+  sellerProfileId:           text('seller_profile_id').notNull().unique().references(() => sellerProfile.id, { onDelete: 'cascade' }),
   projectedRevenue30dCents:  integer('projected_revenue_30d_cents'),
   projectedExpenses30dCents: integer('projected_expenses_30d_cents'),
   projectedProfit30dCents:   integer('projected_profit_30d_cents'),

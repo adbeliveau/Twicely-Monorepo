@@ -15,7 +15,7 @@ import {
 // §21.1 affiliate
 export const affiliate = pgTable('affiliate', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  userId:              text('user_id').notNull().references(() => user.id).unique(),
+  userId:              text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }).unique(),
   tier:                affiliateTierEnum('tier').notNull().default('COMMUNITY'),
   status:              affiliateStatusEnum('status').notNull().default('ACTIVE'),
   referralCode:        text('referral_code').notNull().unique(),     // e.g., 'USERNAME' → twicely.co/ref/USERNAME
@@ -47,7 +47,7 @@ export const promoCode = pgTable('promo_code', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
   code:                text('code').notNull().unique(),              // Uppercased, 4-20 chars alphanumeric + hyphens
   type:                promoCodeTypeEnum('type').notNull(),
-  affiliateId:         text('affiliate_id').references(() => affiliate.id),  // NULL for platform codes
+  affiliateId:         text('affiliate_id').references(() => affiliate.id, { onDelete: 'cascade' }),  // NULL for platform codes
   discountType:        promoDiscountTypeEnum('discount_type').notNull(),
   discountValue:       integer('discount_value').notNull(),          // BPS for percentage, cents for fixed
   durationMonths:      integer('duration_months').notNull().default(1),  // How many months discount applies
@@ -67,8 +67,8 @@ export const promoCode = pgTable('promo_code', {
 // §21.2 referral
 export const referral = pgTable('referral', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  affiliateId:         text('affiliate_id').notNull().references(() => affiliate.id),
-  referredUserId:      text('referred_user_id').references(() => user.id),  // NULL until signup
+  affiliateId:         text('affiliate_id').notNull().references(() => affiliate.id, { onDelete: 'cascade' }),
+  referredUserId:      text('referred_user_id').references(() => user.id, { onDelete: 'set null' }),  // NULL until signup
   status:              referralStatusEnum('status').notNull().default('CLICKED'),
   clickedAt:           timestamp('clicked_at', { withTimezone: true }).notNull().defaultNow(),
   signedUpAt:          timestamp('signed_up_at', { withTimezone: true }),
@@ -81,9 +81,9 @@ export const referral = pgTable('referral', {
   utmSource:           text('utm_source'),
   utmMedium:           text('utm_medium'),
   utmCampaign:         text('utm_campaign'),
-  promoCodeId:         text('promo_code_id').references(() => promoCode.id),
+  promoCodeId:         text('promo_code_id').references(() => promoCode.id, { onDelete: 'set null' }),
   // G3.6 — listing-level attribution; NULL for signup referrals
-  listingId:           text('listing_id').references(() => listing.id),
+  listingId:           text('listing_id').references(() => listing.id, { onDelete: 'set null' }),
   createdAt:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:           timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
@@ -97,8 +97,8 @@ export const referral = pgTable('referral', {
 // §21.4 promoCodeRedemption
 export const promoCodeRedemption = pgTable('promo_code_redemption', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  promoCodeId:         text('promo_code_id').notNull().references(() => promoCode.id),
-  userId:              text('user_id').notNull().references(() => user.id),
+  promoCodeId:         text('promo_code_id').notNull().references(() => promoCode.id, { onDelete: 'restrict' }),
+  userId:              text('user_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   subscriptionProduct: text('subscription_product').notNull(),       // 'store' | 'lister' | 'automation' | 'finance' | 'bundle'
   discountAppliedCents: integer('discount_applied_cents').notNull(),
   monthsRemaining:     integer('months_remaining').notNull(),        // Countdown of discount months left
@@ -113,8 +113,8 @@ export const promoCodeRedemption = pgTable('promo_code_redemption', {
 // §21.5 affiliateCommission
 export const affiliateCommission = pgTable('affiliate_commission', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  affiliateId:         text('affiliate_id').notNull().references(() => affiliate.id),
-  referralId:          text('referral_id').notNull().references(() => referral.id),
+  affiliateId:         text('affiliate_id').notNull().references(() => affiliate.id, { onDelete: 'restrict' }),
+  referralId:          text('referral_id').notNull().references(() => referral.id, { onDelete: 'restrict' }),
   invoiceId:           text('invoice_id').notNull(),                 // Stripe invoice ID
   subscriptionProduct: text('subscription_product').notNull(),       // Which product generated this
   grossRevenueCents:   integer('gross_revenue_cents').notNull(),     // Invoice amount
@@ -137,7 +137,7 @@ export const affiliateCommission = pgTable('affiliate_commission', {
 // §21.6 affiliatePayout
 export const affiliatePayout = pgTable('affiliate_payout', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
-  affiliateId:         text('affiliate_id').notNull().references(() => affiliate.id),
+  affiliateId:         text('affiliate_id').notNull().references(() => affiliate.id, { onDelete: 'restrict' }),
   amountCents:         integer('amount_cents').notNull(),
   method:              text('method').notNull(),                     // 'stripe_connect' | 'paypal'
   externalPayoutId:    text('external_payout_id'),                   // Stripe transfer ID or PayPal batch ID

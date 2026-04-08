@@ -8,7 +8,7 @@ import { listing } from './listings';
 // §6.1 cart
 export const cart = pgTable('cart', {
   id:               text('id').primaryKey().$defaultFn(() => createId()),
-  userId:           text('user_id').references(() => user.id),
+  userId:           text('user_id').references(() => user.id, { onDelete: 'cascade' }),
   sessionId:        text('session_id'),
   status:           cartStatusEnum('status').notNull().default('ACTIVE'),
   itemCount:        integer('item_count').notNull().default(0),
@@ -29,7 +29,7 @@ export const cart = pgTable('cart', {
 export const cartItem = pgTable('cart_item', {
   id:                text('id').primaryKey().$defaultFn(() => createId()),
   cartId:            text('cart_id').notNull().references(() => cart.id, { onDelete: 'cascade' }),
-  listingId:         text('listing_id').notNull().references(() => listing.id),
+  listingId:         text('listing_id').notNull().references(() => listing.id, { onDelete: 'cascade' }),
   quantity:          integer('quantity').notNull().default(1),
   priceCents:        integer('price_cents').notNull(),
   currency:          text('currency').notNull().default('USD'),
@@ -49,7 +49,7 @@ export const cartItem = pgTable('cart_item', {
 export const order = pgTable('order', {
   id:                    text('id').primaryKey().$defaultFn(() => createId()),
   orderNumber:           text('order_number').notNull().unique(),
-  buyerId:               text('buyer_id').notNull().references(() => user.id),
+  buyerId:               text('buyer_id').notNull().references(() => user.id, { onDelete: 'restrict' }),
   sellerId:              text('seller_id').notNull(),
   status:                orderStatusEnum('status').notNull().default('CREATED'),
   sourceCartId:          text('source_cart_id'),
@@ -121,7 +121,7 @@ export const order = pgTable('order', {
 export const orderItem = pgTable('order_item', {
   id:                  text('id').primaryKey().$defaultFn(() => createId()),
   orderId:             text('order_id').notNull().references(() => order.id, { onDelete: 'cascade' }),
-  listingId:           text('listing_id').notNull().references(() => listing.id),
+  listingId:           text('listing_id').notNull().references(() => listing.id, { onDelete: 'restrict' }),
   listingSnapshotJson: jsonb('listing_snapshot_json').notNull().default(sql`'{}'`),
   title:               text('title').notNull(),
   quantity:            integer('quantity').notNull(),
