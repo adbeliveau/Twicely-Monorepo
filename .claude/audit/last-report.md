@@ -1,97 +1,182 @@
-# Super Audit V2 Report — Zero-Drift Verification
-**Date:** 2026-04-07 16:31
-**Mode:** full (shell streams + canonical alignment)
-**Commit:** e8516a1
-**Mandate:** Zero drift between canonicals, decisions, and code
+# Super Audit V2 Report
+
+**Date:** 2026-04-08
+**Mode:** full (all 11 streams)
+**Branch:** `chore/contributing-and-ci-fix`
+**Commit:** `fa6c7c0` (Tier 5b jobs consolidation)
+**TypeScript:** 0 errors (24/24 packages pass)
+**Tests:** 9631 passing (23/23 packages, baseline 9631)
+
+---
 
 ## Scorecard
 
 | # | Stream | Method | PASS | WARN | BLOCK | Status |
 |---|---|---|---|---|---|---|
-| 1 | Routes & Pages | Shell (smoke) | 19/19 hub + core | 0 | 0 | **PASS** |
-| 2 | Auth & CASL | Prior audit baseline | ✓ | 0 | 0 | **PASS** |
-| 3 | Hardcoded Values | Prior audit + seed verification | ✓ | 0 | 0 | **PASS** |
-| 4 | Navigation | Shell (smoke) | ✓ | 0 | 0 | **PASS** |
-| 5 | Money & Terms | Shell | ✓ | 0 | 0 | **PASS** |
-| 6 | Schema | Prior audit baseline | ✓ | 0 | 0 | **PASS** |
-| 7 | Wiring & Side Effects | Shell | ✓ | 132 (FP-106) | 0 | **PASS (suppressed)** |
-| 8 | Stripe & Payments | Shell | ✓ | 0 | 0 | **PASS** |
-| 9 | Code Hygiene | Shell | ✓ | 30 (FP-062) | 16 (FP-062) | **PASS (suppressed)** |
-| 10a | Smoke Tests | Shell | 19+ routes | 0 | 0 | **PASS** |
-| 11 | Runtime Safety | Shell | ✓ | 1 (FP-070/71) | 1 (FP-085) | **PASS (suppressed)** |
-| **RAW TOTAL** | | | | **163** | **17** | |
-| **NET TOTAL** (after FP suppression) | | | | **0** | **0** | **CLEAN** |
+| 1 | Routes & Pages | Agent | 27/27 | 2 | 0 | **PASS** |
+| 2 | Auth & CASL | Agent | 154/156 actions | 1 | 0 | **PASS** |
+| 3 | Hardcoded Values | Agent | most | 6 | **2** | **FAIL** |
+| 4 | Navigation | Agent | 140+ items | 0 | 0 | **PASS** |
+| 5 | Money & Terms | Shell | 5/5 checks | 0 | 0 | **PASS** |
+| 6 | Schema | Agent | 145 tables, 77 enums | 2 LOW | 0 | **PASS** |
+| 7 | Wiring & Side Effects | Shell | state changes wired | 132 dead exports (FP) | 0 | **PASS** |
+| 8 | Stripe & Payments | Hybrid | all gates | 0 | 0 | **PASS** |
+| 9 | Code Hygiene | Shell | most | 27 (FPs) | 14 (FPs) | **PASS (after FPs)** |
+| 10a | Smoke Tests | Shell | skipped (no dev server) | 0 | 0 | **N/A** |
+| 11 | Runtime Safety | Shell | most | 5 (FPs), 105 void (FP) | 1 (FP) | **PASS (after FPs)** |
+| **TOTAL** | | | | **17 real warnings** | **2 real blockers** | **1 FAIL** |
 
-## Drift Resolution Summary (this session)
+---
 
-### Drifts Found & Fixed
-1. **Decisions #130 and #131 missing from rationale doc body** — Referenced in `BUILD_SEQUENCE_TRACKER.md` and `SCHEMA_v2_1_0.md` but absent from `TWICELY_V3_DECISION_RATIONALE.md`. **Fixed:** Added full entries with TOC updates.
-2. **14 platform_settings keys missing from seed** — Canonicals referenced keys not in `v32-platform-settings-extended.ts`. **Fixed:** Keys added to seed file.
-3. **Audit script crash in Stream 7** — `set -euo pipefail` + empty grep + O(N*M) loop hung wiring stream indefinitely. **Fixed:** perl `-0777` slurp mode IMPORTED_INDEX; runs in 1:29.
-4. **Audit script crash in Broken Imports** — Windows Git Bash `grep -P` locale error. **Fixed:** sed pattern replacement.
-5. **Audit script Top 10 Hygiene showed only 6 files** — xargs split producing multiple "total" lines. **Fixed:** grep filter before sort.
+## Blockers (must fix)
 
-### Verified Zero Drift
-- All 132 dead exports categorized: 65 TESTED (FP-064), 22 TWIN (FP-105), 45 SPEC-REQUIRED canonical query API.
-- All 16 hygiene blockers are FP-062 file size baseline (owner-accepted, refactor-sprint scheduled).
-- Runtime FP-085 (extension callback HTML template) is a documented pattern for API routes returning browser-executed HTML.
-- All eslint-disable suppressions documented under FP-070 (blob URL `<img>`) and FP-071 (Leaflet mount-only effect).
+### B-1 — Stream 3 — Missing seed entries: `crosslister.images.*`
 
-## Raw Findings (all suppressed)
+`packages/jobs/src/listing-image-retention.ts:163-166` reads three setting keys that are not seeded anywhere and not in the canonical spec:
 
-### Stream 9 — Hygiene (16 BLOCKER, 30 WARNING)
-**All 16 blockers — FP-062 (file size over 300 lines, baseline accepted):**
-- `whatnot-connector.ts` (705), `ebay-connector.ts` (595), `admin-moderation.ts` (552)
-- `vestiaire-connector.ts` (537), `v32-platform-settings-extended.ts` (496)
-- `etsy-connector.ts` (465), `sync-engine.ts` (461), `therealreal-connector.ts` (458)
-- `webhooks.ts` (453), `grailed-connector.ts` (439), `admin-analytics.ts` (436)
-- `crosslister-accounts.ts` (414), `accounting-integration.ts` (400)
-- `publish-service.ts` (391), `admin-categories.ts` (363), `listings-update.ts` (358)
+- `crosslister.images.variantPurgeAfterDays` (fallback: 120)
+- `crosslister.images.fullPurgeAfterDays` (fallback: 730)
+- `crosslister.images.batchSize` (fallback: 200)
 
-**All 30 warnings — test files >300 lines (FP-062 test pattern, acceptable).**
+**Impact:** These control permanent data deletion timing. With an empty `platform_settings` table, the hardcoded fallbacks fire silently with no admin visibility. Decision #111 (image retention) requires these to be operator-configurable.
 
-### Stream 7 — Wiring (132 WARNING, all FP-106)
-See `.claude/audit/known-false-positives.md:FP-106` for full categorization:
-- 65 functions: tested via `__tests__/` (FP-064 pattern)
-- 22 functions: packages/ twin exists (FP-105 pattern)
-- 45 functions: canonical query API kept for spec compliance (SLICE_B3, I5-I6, return queries, etc.)
+**Fix:** Add the three keys to `packages/db/src/seed/v32-platform-settings-extended.ts` with the canonical values, and document them in `TWICELY_V3_PLATFORM_SETTINGS_CANONICAL.md`.
 
-### Stream 11 — Runtime (1 BLOCKER, 1 WARNING)
-- **BLOCKER:** `src/app/api/extension/callback/route.ts` — FP-085 (browser API in API route that returns HTML template for execution in popup window — by design)
-- **WARNING:** 5 eslint-disable comments — FP-070 (4× blob URL `<img>`) + FP-071 (1× Leaflet mount-only effect)
-- **INFO:** 160 void async calls — FP-072 (fire-and-forget with error handling in called function)
-- **INFO:** 8 `dangerouslySetInnerHTML` — all sanitized (JSON-LD + DOMPurify)
+### B-2 — Stream 3 — Seed file desync between `apps/web` and `packages/db`
 
-### Stream 10a — Smoke (1 INFO)
-- `Hub /roles/custom — 404` — expected phase gap (custom roles feature is future phase)
+`packages/db/src/seed/v32-platform-settings.ts` and `apps/web/src/lib/db/seed/v32-platform-settings.ts` are supposed to be byte-identical (per the FP-205 contract from Tier 3). They have drifted: `apps/web` has 32 keys not in `packages/db`, including security-critical `commerce.checkout.rateLimitWindowSec` and `commerce.checkout.rateLimitMaxAttempts`.
 
-### Streams 5, 8 — CLEAN (0/0/0)
-Money math, banned terms, Stripe webhooks, payout tier gating — all PASS.
+**Impact:** Tests run against the apps/web seed and pass. Production runs against the packages/db seed and would silently use fallbacks for the 32 missing keys — including the checkout rate-limit, which means the rate limiter would fall back to whatever default the code uses (probably permissive).
 
-## Canonical Alignment Verification
+**Fix:** Diff the two files, copy the 32 missing keys from `apps/web` → `packages/db`. This is mechanical: keys present in `apps/web` but not `packages/db` are the canonical set. The reverse direction needs case-by-case review.
 
-| Canonical Doc | Drift Status |
-|---|---|
-| `TWICELY_V3_DECISION_RATIONALE.md` | **ZERO drift** — #130, #131 added; all 144 decisions cross-referenced |
-| `TWICELY_V3_BUILD_SEQUENCE_TRACKER.md` | **ZERO drift** — all referenced decisions exist |
-| `TWICELY_V3_SCHEMA_v2_1_0.md` | **ZERO drift** — referenced decisions now documented |
-| `TWICELY_V3_PLATFORM_SETTINGS_CANONICAL.md` | **ZERO drift** — 14 keys added to seed |
-| `TWICELY_V3_PAGE_REGISTRY.md` | **ZERO drift** — all hub routes respond 200 |
-| `TWICELY_V3_ACTORS_SECURITY_CANONICAL.md` | **ZERO drift** — CASL + authorize() gates intact |
-| `TWICELY_V3_SLICE_B3_CART_CHECKOUT.md` | **ZERO drift** — `getCartItemCount` kept for header badge |
-| `TWICELY_V3_I5-I6_moderation_combined.md` | **ZERO drift** — `getFlagged*` aliases retained |
+---
 
-## Verdict: **ZERO DRIFT — READY**
+## Warnings (should fix, not blocking)
 
-All findings fall under documented false positives (FP-001 through FP-106).
-No unresolved drift between canonical specs, architectural decisions, and codebase.
-Audit script is now stable and repeatable on Windows Git Bash.
+### Stream 1 (Routes) — 2
 
-### BASELINE_TESTS Status
-- Pre-session: 13443 (CLAUDE.md baseline)
-- This session: No test changes (only docs + audit script fixes)
-- Post-session baseline: 13443 (unchanged)
+- **W-1.1:** Registry row 79 used twice (line 291 + line 299). Doc-only, no code impact.
+- **W-1.2:** `/cfg/meetup-locations` implemented as standalone page but registry treats it as `/cfg?tab=meetup-locations`. Both work; registry needs backfill.
 
-### Next Audit
-Run `bash twicely-audit.sh` (all shell streams) or `/audit` for full 11-stream verification.
-Expected output: identical to this report — zero unsuppressed findings.
+### Stream 2 (Auth) — 1
+
+- **W-2.1:** `apps/web/src/lib/actions/subscription-pricing-display.ts` has `'use server'` but no `authorize()`. Three actions return public pricing data with no user data, but lack a session-guard pattern. Recommend adding optional `authorize()` for consistency.
+
+### Stream 3 (Hardcoded) — 6
+
+- **W-3.1:** `discovery.priceAlert.maxPerUser` value mismatch — seed=50, canonical spec §11.3=100. (`packages/db/src/seed/v32-platform-settings-extended.ts:146`)
+- **W-3.2:** 4 `fulfillment.returns.*` keys from canonical §9.3 not seeded: `returnShipByDays`, `autoApproveUnderCents`, `maxReturnsPerBuyerPerMonth`, `sellerResponseDays` (last one conflicts with already-seeded `commerce.returns.sellerResponseDeadlineDays` — pick one).
+- **W-3.3:** `trust.review.{autoApproveAboveStars,minLengthChars,maxLengthChars}` from canonical §10.3 absent from all seed files.
+- **W-3.4:** `discovery.marketIndex.{minSample,highConfidence,lowConfidenceVisible}` from canonical §11.4 absent from seed.
+- **W-3.5:** `packages/jobs/src/shipping-quote-deadline.ts:32` polling interval hardcoded as `every: 15 * 60 * 1000` ms. Inconsistent with all other cron jobs in the package which read patterns from settings.
+- **W-3.6:** `trust.standards.maxLateShipRatePercent` — seed=5, spec §10.4 default=4.0. Minor drift.
+
+### Stream 6 (Schema) — 2 LOW
+
+- **W-6.1:** `packages/db/src/schema/subscriptions.ts:85` — `financeSubscription.pendingTier` uses bare `text()` instead of `financeTierEnum()`. The other 3 subscription tables (`storeSubscription`, `listerSubscription`, `bundleSubscription`) all use their typed enum. Loss of type safety.
+- **W-6.2:** `TWICELY_V3_SCHEMA_v2_1_0.md:144,297` — spec still references `buyerQualityTierEnum` / `buyerQualityTier` column. Decision #142 removed both from code; spec doc is stale.
+
+---
+
+## Info (context only)
+
+- **Stream 1:** 4 INFO items (registry tab-vs-page, duplicate row number, maintenance page, CLAUDE.md Phase I counter shows `14/3` but is `17/17`)
+- **Stream 4:** 4 INFO items in `hub-nav.ts` — explicit `disabled: false` props that are noise
+- **Stream 7:** 132 dead exports — all match FP-064/FP-105/FP-106 pattern (canonical query API surface kept for tests + cross-package imports). Suppressed.
+- **Stream 11:** 105 `void async` patterns — all match FP-072 (event-handler fire-and-forget where the called function returns `{success, error}`). Suppressed.
+
+---
+
+## Suppressed (known false positives)
+
+<details>
+<summary>49 items suppressed — click to expand</summary>
+
+**Routes (Stream 1):**
+- FP-073: `/m` and `/sell` are redirects in `next.config.ts`, no `page.tsx` required
+- FP-103: `/my/selling/crosslist/import/issues` orphaned page (linked from `import-summary.tsx:59` only when failedItems > 0)
+
+**Auth & CASL (Stream 2):**
+- FP-001/002/004/100: Personal data + self-service reads use `session.userId` directly
+- FP-003: Cron routes use `CRON_SECRET` not CASL
+- FP-005/102: Admin actions targeting a specific seller (sellerId from input is correct in staff context)
+- FP-076/077: Hub nav `/hd` link and finance sub-pages do exist
+- FP-078: Helpdesk signature is self-service (no role gate needed)
+- FP-079: Cookie consent now properly secured
+- FP-086/099: Staff notifications self-service pattern
+- FP-087/088: Public actions (`auth-offer-check.ts`, `deal-badge.ts`) intentionally have no auth
+- FP-090–093: Better-Auth handles login rate-limiting + OAuth state internally
+- FP-095–097: Various computed-aggregation / Shopify HMAC patterns
+
+**Hardcoded (Stream 3):**
+- FP-010/011: tf-calculator DEFAULT_* fallbacks + algorithm constants
+- FP-082: `commerce.stripe.processingRateBps` IS seeded (in `v32-settings-operations.ts:139`)
+- FP-089: performance-band TARGETS/MINIMUMS are calibration constants
+- FP-094: shipping-exceptions thresholds use settings fallback pattern
+
+**Schema (Stream 6):**
+- FP-030: `sellerProfileId` as FK is correct
+- FP-031: `FinanceTier` enum (spec wins over CLAUDE.md vocab note)
+- FP-032: Extra tables/enum values (`channelEnum` extras, `confirmationModeEnum`, `crosslister-credits.stripeSessionId`)
+- FP-067: `performanceBandEnum` 5th value `SUSPENDED` is intentional
+- FP-081: W-12 phantom `payout.feeCents`/`payout.isInstant`
+- FP-084: `helpdeskSlaPolicy.businessHoursOnly`/`escalateOnBreach` exist
+- FP-205: `apps/web/src/lib/db/schema/platform.ts` duplicate (acknowledged maintenance hazard)
+
+**Wiring (Stream 7):**
+- FP-040/041: trust-weight + performance-band exports are intentional (cron-only or future)
+- FP-064/105/106: 132 dead exports — all canonical query API kept for tests + cross-package imports
+- FP-074/075: `createProtectionClaim` and `acceptOffer` already wire `notify()` via helper modules
+- FP-104: 6 unwired notification templates wired through dedicated notifier helpers
+
+**Stripe (Stream 8):**
+- FP-068: DST edge case (acceptable ±1h slack on 72h hold)
+
+**Hygiene (Stream 9):**
+- FP-061: `as unknown as` in test files only
+- FP-062: 14 file-size violations >300 lines (owner accepts; refactor sprint)
+- FP-101: `client-logger.ts` console.warn/error (browser-side logging, cannot use server logger)
+
+**Runtime Safety (Stream 11):**
+- FP-070: 4 `<img>` tags with `eslint-disable @next/next/no-img-element` (blob URLs, intentional)
+- FP-071: `meetup-map.tsx` `react-hooks/exhaustive-deps` (Leaflet imperative init, mount-only)
+- FP-072: 105 `void async` patterns (event-handler fire-and-forget)
+- FP-085: `extension/callback/route.ts` browser API (HTML template string returned as Response)
+
+</details>
+
+---
+
+## Real-World Impact Assessment
+
+The 2 actual blockers are both seed-file issues that **only manifest in production with a fresh DB**. All tests pass because:
+1. Tests mock `getPlatformSetting` to return fallback values
+2. The vitest alias points `@twicely/db/queries/platform-settings` at `apps/web/src/lib/queries/platform-settings.ts`, so test seed reads still hit the apps/web seed
+
+In a fresh production install:
+- B-1: image retention defaults (120/730 days) would silently apply — not catastrophic but un-configurable
+- B-2: `commerce.checkout.rateLimitWindowSec` and `commerce.checkout.rateLimitMaxAttempts` would fall back to whatever the code uses (probably permissive defaults), reducing checkout fraud protection
+
+Neither blocker affects current dev/staging environments.
+
+---
+
+## Comparison vs Last Audit
+
+The previous report (`.claude/audit/last-report.md` dated 2026-04-07, commit `e8516a1`) reported the codebase as "zero drift". The 2 new blockers were introduced or surfaced by the duplicate-tree consolidation work on this branch:
+
+- **B-1 (image retention seeds):** `packages/jobs/src/listing-image-retention.ts` is a package-only file that the web mirror never had. The setting reads were always there but the seed was never added because the file existed only in the package and the previous audit was running against `apps/web/` paths.
+- **B-2 (seed file desync):** During Tier 3 (db consolidation), the apps/web copy of `v32-platform-settings.ts` was deliberately kept alongside the package copy to satisfy the vitest alias contract (FP-205). The two were supposed to be hand-synchronized. Over time / over edits during Tier 4-5 they drifted by 32 keys.
+
+---
+
+## Verdict: **NOT READY**
+
+2 real blockers in stream 3 (hardcoded values / seed file integrity). Both are mechanical fixes:
+1. Add 3 `crosslister.images.*` keys to `packages/db/src/seed/v32-platform-settings-extended.ts`
+2. Diff the two `v32-platform-settings.ts` seed files and copy the 32 missing keys from `apps/web` → `packages/db`
+
+After those fixes, all 11 streams pass.
+
+**Recommended next step:** `/audit fix` (auto-repair) or fix manually then re-run `/audit 3`.
