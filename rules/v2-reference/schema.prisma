@@ -1,0 +1,2619 @@
+// =============================================================================
+// TWICELY V2 Ã¢â‚¬â€ Prisma Schema
+// Version: 2.1 (Phases 0-44)
+// Last Updated: January 2026
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// PHASE 1: USER & AUTHENTICATION
+// =============================================================================
+
+enum SellerType {
+  PERSONAL    // Individual seller - NO store allowed, SELLER tier only
+  BUSINESS    // Registered business - CAN subscribe to store (STARTER+)
+}
+
+model User {
+  id              String    @id @default(cuid())
+  
+  // Authentication
+  email           String    @unique
+  emailVerified   DateTime?
+  passwordHash    String?
+  
+  // Profile
+  displayName     String?
+  firstName       String?
+  lastName        String?
+  avatarUrl       String?
+  phone           String?
+  phoneVerified   DateTime?
+  
+  // Account Type
+  sellerType      SellerType @default(PERSONAL)
+  isSeller        Boolean    @default(false)
+  
+  // Status
+  isActive        Boolean    @default(true)
+  isSuspended     Boolean    @default(false)
+  suspendedAt     DateTime?
+  suspendedReason String?
+  
+  // Locale
+  locale          String     @default("en-US")
+  timezone        String     @default("America/New_York")
+  currency        String     @default("USD")
+  
+  // Timestamps
+  lastLoginAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  // Relations
+  businessInfo         BusinessInfo?
+  sellerProfile        SellerProfile?
+  sellerSubscription   SellerSubscription?
+  sellerStorefront     SellerStorefront?
+  sellerSettings       SellerSettings?
+  listings             Listing[]
+  ordersAsBuyer        Order[]              @relation("BuyerOrders")
+  ordersAsSeller       Order[]              @relation("SellerOrders")
+  reviews              Review[]             @relation("BuyerReviews")
+  reviewsReceived      Review[]             @relation("SellerReviews")
+  carts                Cart[]
+  watchlistItems       WatchlistItem[]
+  savedSearches        SavedSearch[]
+  notifications        Notification[]
+  notificationPrefs    NotificationPreference[]
+  conversations        ConversationParticipant[]
+  messages             Message[]
+  addresses            Address[]
+  delegatedAccessGiven DelegatedAccess[]    @relation("OwnerDelegations")
+  delegatedAccessReceived DelegatedAccess[] @relation("StaffDelegations")
+  auditEvents          AuditEvent[]
+  
+  @@index([email])
+  @@index([isSeller])
+  @@index([sellerType])
+}
+
+model BusinessInfo {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  legalName       String
+  businessType    BusinessType
+  
+  taxId           String?
+  taxIdType       TaxIdType?
+  taxIdVerified   Boolean      @default(false)
+  
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  state           String?
+  postalCode      String?
+  country         String       @default("US")
+  
+  verifiedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+enum BusinessType {
+  SOLE_PROPRIETOR
+  LLC
+  CORPORATION
+  PARTNERSHIP
+  NONPROFIT
+  OTHER
+}
+
+enum TaxIdType {
+  SSN
+  EIN
+  ITIN
+}
+
+// =============================================================================
+// PHASE 1: RBAC & DELEGATED ACCESS
+// =============================================================================
+
+model Role {
+  id              String       @id @default(cuid())
+  name            String       @unique
+  displayName     String
+  description     String?
+  isSystem        Boolean      @default(false)
+  permissions     String[]     @default([])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  staffAssignments StaffRole[]
+}
+
+model StaffRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  grantedBy String
+  grantedAt DateTime @default(now())
+  expiresAt DateTime?
+  
+  @@unique([userId, roleId])
+  @@index([userId])
+}
+
+model DelegatedAccess {
+  id              String    @id @default(cuid())
+  ownerUserId     String
+  owner           User      @relation("OwnerDelegations", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  staffUserId     String
+  staff           User      @relation("StaffDelegations", fields: [staffUserId], references: [id], onDelete: Cascade)
+  
+  scopes          String[]  @default([])
+  
+  invitedAt       DateTime  @default(now())
+  acceptedAt      DateTime?
+  revokedAt       DateTime?
+  expiresAt       DateTime?
+  
+  invitedByEmail  String?
+  status          DelegatedAccessStatus @default(PENDING)
+  
+  @@unique([ownerUserId, staffUserId])
+  @@index([ownerUserId])
+  @@index([staffUserId])
+}
+
+enum DelegatedAccessStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+// =============================================================================
+// PHASE 2: LISTINGS & CATALOG
+// =============================================================================
+
+enum ListingStatus {
+  DRAFT           // Not visible, editable, not sellable
+  PENDING_REVIEW  // Awaiting moderation (optional for some categories)
+  ACTIVE          // Visible, sellable
+  PAUSED          // Temporarily not sellable
+  ENDED           // No longer sellable, may be relisted
+  SOLD            // Reserved to a paid order (terminal for single-item)
+  REMOVED         // Removed by moderation
+  ARCHIVED        // Historical, read-only storage (terminal)
+}
+
+enum ListingType {
+  SINGLE_ITEM
+  MULTI_QUANTITY
+  VARIATION
+}
+
+enum ListingCondition {
+  NEW_WITH_TAGS
+  NEW_WITHOUT_TAGS
+  NEW_WITH_DEFECTS
+  PRE_OWNED_EXCELLENT
+  PRE_OWNED_GOOD
+  PRE_OWNED_FAIR
+  PRE_OWNED_POOR
+}
+
+model Listing {
+  id                String         @id @default(cuid())
+  ownerUserId       String
+  owner             User           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  title             String
+  description       String?
+  status            ListingStatus  @default(DRAFT)
+  type              ListingType    @default(SINGLE_ITEM)
+  
+  // Category
+  categoryId        String?
+  category          Category?      @relation(fields: [categoryId], references: [id])
+  
+  // Condition & Details
+  condition         ListingCondition?
+  brand             String?
+  size              String?
+  color             String?
+  material          String?
+  gender            String?
+  
+  // Pricing (in cents)
+  priceCents        Int
+  originalPriceCents Int?
+  currency          String         @default("USD")
+  
+  // Best Offer
+  bestOfferEnabled  Boolean        @default(false)
+  minOfferCents     Int?
+  autoAcceptCents   Int?
+  autoDeclineCents  Int?
+  
+  // Inventory
+  quantity          Int            @default(1)
+  availableQuantity Int            @default(1)
+  soldQuantity      Int            @default(0)
+  
+  // Shipping
+  shippingProfileId String?
+  weightOz          Int?
+  
+  // Variations
+  hasVariations     Boolean        @default(false)
+  
+  // Search & SEO
+  tags              String[]       @default([])
+  slug              String?        @unique
+  
+  // Media
+  videoUrl          String?
+  
+  // Custom Attributes
+  customAttributesJson Json        @default("{}")
+  
+  // Timestamps
+  publishedAt       DateTime?
+  endedAt           DateTime?
+  soldAt            DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  images            ListingImage[]
+  variations        ListingVariation[]
+  offers            ListingOffer[]
+  orderItems        OrderItem[]
+  cartItems         CartItem[]
+  watchlistItems    WatchlistItem[]
+  priceHistory      ListingPriceHistory[]
+  searchIndex       SearchIndex?
+  
+  @@index([ownerUserId, status])
+  @@index([categoryId])
+  @@index([status, createdAt])
+  @@index([priceCents])
+}
+
+model ListingImage {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  url         String
+  position    Int      @default(0)
+  altText     String?
+  isPrimary   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([listingId, position])
+}
+
+model ListingOffer {
+  id              String       @id @default(cuid())
+  listingId       String
+  listing         Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  buyerId         String
+  sellerId        String
+  
+  offerCents      Int
+  counterCents    Int?
+  status          OfferStatus  @default(PENDING)
+  
+  message         String?
+  counterMessage  String?
+  
+  expiresAt       DateTime
+  respondedAt     DateTime?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([listingId, status])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+enum OfferStatus {
+  PENDING
+  COUNTERED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+}
+
+model ListingVersion {
+  id            String   @id @default(cuid())
+  listingId     String
+  version       Int
+  snapshotJson  Json
+  changeReason  String
+  changedBy     String?
+  createdAt     DateTime @default(now())
+  
+  @@unique([listingId, version])
+  @@index([listingId])
+}
+
+model Category {
+  id                  String     @id @default(cuid())
+  slug                String     @unique
+  name                String
+  parentId            String?
+  parent              Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children            Category[] @relation("CategoryParent")
+  
+  level               Int        @default(0)
+  path                String?
+  
+  requiredAttributes  String[]   @default([])
+  attributesSchema    Json       @default("{}")
+  
+  description         String?
+  imageUrl            String?
+  isActive            Boolean    @default(true)
+  sortOrder           Int        @default(0)
+  
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  
+  listings            Listing[]
+  attributes          CategoryAttribute[]
+  variationTypes      CategoryVariationType[]
+  
+  @@index([parentId])
+  @@index([isActive, sortOrder])
+}
+
+model CategoryAttribute {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  key         String
+  label       String
+  type        String   // string|number|enum|bool
+  options     String[] @default([])
+  isRequired  Boolean  @default(false)
+  isFilterable Boolean @default(true)
+  sortOrder   Int      @default(0)
+  helpText    String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([categoryId, key])
+  @@index([categoryId])
+}
+
+// =============================================================================
+// PHASE 3: CART & ORDERS
+// =============================================================================
+
+enum CartStatus {
+  ACTIVE
+  MERGED
+  CONVERTED
+  ABANDONED
+  EXPIRED
+}
+
+model Cart {
+  id              String      @id @default(cuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  sessionId       String?
+  
+  status          CartStatus  @default(ACTIVE)
+  
+  itemCount       Int         @default(0)
+  subtotalCents   Int         @default(0)
+  currency        String      @default("USD")
+  
+  convertedToOrderIds String[] @default([])
+  
+  expiresAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  items           CartItem[]
+  bundles         CartBundle[]
+  prompts         CartPrompt[]
+  bundleRequests  BundleRequest[]
+  
+  @@index([userId, status])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id              String   @id @default(cuid())
+  cartId          String
+  cart            Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  
+  listingId       String
+  listing         Listing  @relation(fields: [listingId], references: [id])
+  variantId       String?
+  
+  quantity        Int      @default(1)
+  priceCents      Int
+  
+  addedAt         DateTime @default(now())
+  
+  @@unique([cartId, listingId, variantId])
+  @@index([cartId])
+}
+
+enum OrderStatus {
+  // Creation flow
+  CREATED                 // Order created, awaiting payment intent
+  AWAITING_PAYMENT        // Payment initiated but not confirmed
+
+  // Payment confirmed
+  PAID                    // Payment confirmed via webhook
+  AWAITING_FULFILLMENT    // Paid, seller must ship/fulfill
+
+  // Fulfillment flow
+  FULFILLED               // Shipped/picked up completed
+  DELIVERED               // Delivery confirmed
+  COMPLETED               // Post-delivery window passed, no issues
+
+  // Cancellation
+  CANCELED                // Cancelled (American English spelling)
+
+  // Return flow
+  RETURN_REQUESTED        // Buyer requested return
+  RETURN_APPROVED         // Seller/platform approved return
+  RETURN_IN_TRANSIT       // Return shipped back
+  RETURNED                // Return received by seller
+
+  // Refund flow
+  REFUNDED                // Full refund completed
+  PARTIAL_REFUNDED        // Partial refund completed
+
+  // Dispute flow
+  DISPUTED                // Chargeback/dispute opened
+
+  // Terminal
+  CLOSED                  // Terminal state (completed/refunded/dispute resolved)
+}
+
+model Order {
+  id                  String       @id @default(cuid())
+  orderNumber         String       @unique @default(cuid())
+  
+  buyerId             String
+  buyer               User         @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId            String
+  seller              User         @relation("SellerOrders", fields: [sellerId], references: [id])
+  
+  status              OrderStatus  @default(CREATED)
+  
+  // Amounts (cents)
+  subtotalCents       Int
+  shippingCents       Int          @default(0)
+  taxCents            Int          @default(0)
+  discountCents       Int          @default(0)
+  bundleDiscountCents Int          @default(0)
+  totalCents          Int
+  currency            String       @default("USD")
+  
+  // Shipping
+  shippingAddressId   String?
+  shippingAddress     Address?     @relation(fields: [shippingAddressId], references: [id])
+  shippingMethod      String?
+  trackingNumber      String?
+  trackingUrl         String?
+  carrierCode         String?
+  
+  // Handling
+  handlingDueDays     Int          @default(3)
+  handlingDueAt       DateTime?
+  isLateShipment      Boolean      @default(false)
+  
+  // Bundle
+  appliedBundleId     String?
+  bundleRequestId     String?
+  
+  // Checkout
+  checkoutSessionId   String?
+  paymentIntentId     String?
+  
+  // Timestamps
+  paidAt              DateTime?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+  completedAt         DateTime?
+  canceledAt          DateTime?
+  canceledBy          String?
+  cancelReason        String?
+  
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  
+  // Relations
+  items               OrderItem[]
+  payment             OrderPayment?
+  shipments           Shipment[]
+  review              Review?
+  returnRequest       ReturnRequest?
+  disputeCase         DisputeCase?
+  
+  @@index([buyerId, status])
+  @@index([sellerId, status])
+  @@index([status, createdAt])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  listingId     String
+  listing       Listing  @relation(fields: [listingId], references: [id])
+  variantId     String?
+  
+  quantity      Int
+  priceCents    Int
+  title         String
+  
+  snapshotJson  Json?
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([orderId])
+  @@index([listingId])
+}
+
+model Shipment {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  carrier         String
+  trackingNumber  String
+  trackingUrl     String?
+  
+  status          String   @default("CREATED")
+  
+  labelUrl        String?
+  labelCostCents  Int?
+  
+  weightOz        Int?
+  packageLength   Float?
+  packageWidth    Float?
+  packageHeight   Float?
+  
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([orderId])
+  @@index([trackingNumber])
+}
+
+model Address {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name          String
+  line1         String
+  line2         String?
+  city          String
+  state         String
+  postalCode    String
+  country       String   @default("US")
+  phone         String?
+  
+  isDefault     Boolean  @default(false)
+  isVerified    Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  orders        Order[]
+  
+  @@index([userId])
+}
+
+// =============================================================================
+// PHASE 3: BUNDLES
+// =============================================================================
+
+enum BundleType {
+  SPECIFIC_ITEMS
+  CATEGORY
+  ANY_ITEMS
+}
+
+model SellerBundle {
+  id                    String     @id @default(cuid())
+  sellerId              String
+  
+  name                  String
+  type                  BundleType
+  isActive              Boolean    @default(true)
+  
+  minItems              Int        @default(2)
+  maxItems              Int?
+  
+  discountType          String     @default("PERCENT")
+  discountValue         Int
+  
+  specificListingIds    String[]   @default([])
+  categoryIds           String[]   @default([])
+  
+  combinedShipping      Boolean    @default(true)
+  combinedShippingCents Int?
+  
+  startsAt              DateTime?
+  endsAt                DateTime?
+  
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  
+  @@index([sellerId, isActive])
+}
+
+model CartBundle {
+  id                String   @id @default(cuid())
+  cartId            String
+  cart              Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  
+  sellerBundleId    String
+  listingIds        String[]
+  
+  discountCents     Int
+  
+  appliedAt         DateTime @default(now())
+  
+  @@index([cartId])
+}
+
+model CartPrompt {
+  id          String   @id @default(cuid())
+  cartId      String
+  cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  
+  type        String
+  message     String
+  actionUrl   String?
+  metadata    Json     @default("{}")
+  
+  dismissed   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([cartId])
+}
+
+enum BundleRequestStatus {
+  PENDING
+  COUNTER_OFFERED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+  CONVERTED
+}
+
+model BundleRequest {
+  id                    String              @id @default(cuid())
+  cartId                String
+  cart                  Cart                @relation(fields: [cartId], references: [id])
+  
+  buyerId               String
+  sellerId              String
+  listingIds            String[]
+  
+  proposedDiscountCents Int
+  proposedMessage       String?
+  
+  status                BundleRequestStatus @default(PENDING)
+  
+  counterOfferCents     Int?
+  counterOfferMessage   String?
+  counterOfferExpiresAt DateTime?
+  
+  acceptedTotalCents    Int?
+  acceptedDiscountCents Int?
+  
+  respondedAt           DateTime?
+  expiresAt             DateTime
+  
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  
+  @@index([sellerId, status])
+  @@index([buyerId, status])
+}
+
+model BundleSettings {
+  id                        String   @id @default(cuid())
+  version                   String   @unique
+  effectiveAt               DateTime
+  isActive                  Boolean  @default(true)
+  
+  sellerBundlesEnabled      Boolean  @default(true)
+  maxBundlesPerSeller       Int      @default(50)
+  maxDiscountPercent        Int      @default(50)
+  minBundleItems            Int      @default(2)
+  
+  smartPromptsEnabled       Boolean  @default(true)
+  makeMeADealEnabled        Boolean  @default(true)
+  
+  createdByStaffId          String
+  createdAt                 DateTime @default(now())
+  
+  @@index([effectiveAt])
+}
+
+// =============================================================================
+// PHASE 4: PAYMENTS, LEDGER & PAYOUTS
+// =============================================================================
+
+model CheckoutSession {
+  id                String   @id @default(cuid())
+  buyerId           String
+  
+  status            String   @default("PENDING")
+  
+  cartSnapshotJson  Json
+  
+  paymentIntentId   String?  @unique
+  
+  grandTotalCents   Int
+  currency          String   @default("USD")
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([buyerId])
+}
+
+model OrderPayment {
+  id                      String   @id @default(cuid())
+  orderId                 String   @unique
+  order                   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  buyerId                 String
+  sellerId                String
+  
+  provider                String   @default("stripe")
+  currency                String   @default("USD")
+  
+  // Amounts (cents)
+  amountSubtotal          Int
+  amountShipping          Int      @default(0)
+  amountTax               Int      @default(0)
+  amountTotal             Int
+  
+  // Fees
+  marketplaceFeeCents     Int      @default(0)
+  processingFeeCents      Int      @default(0)
+  sellerNetCents          Int      @default(0)
+  
+  // Provider IDs
+  providerPaymentIntentId String?
+  providerChargeId        String?
+  providerTransferId      String?
+  
+  status                  String   @default("requires_payment")
+  
+  paidAt                  DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  @@index([sellerId])
+  @@index([providerPaymentIntentId])
+}
+
+// =============================================================================
+// LEDGER ENTRY TYPE ENUM (Per Monetization Canonical)
+// =============================================================================
+
+enum LedgerEntryType {
+  // SALES & REVENUE
+  SALE_CREDIT           // Gross sale amount credited to seller
+
+  // PLATFORM FEES
+  MARKETPLACE_FEE       // Platform commission deducted from seller
+  PROCESSING_FEE        // Payment processor fee (Stripe, etc.)
+  PROMOTION_FEE         // Promotional/advertising fee (coupon cost absorption)
+  SUBSCRIPTION_FEE      // Seller subscription/tier fee
+  SHIPPING_LABEL_FEE    // Cost of purchased shipping label (Phase 34)
+  PROMOTED_LISTING_FEE  // Cost of promoted listing ads - CPC/CPM/flat (Phase 36)
+  INSERTION_FEE         // Fee for listing creation (over free allowance)
+
+  // REFUNDS & DISPUTES
+  REFUND                // Refund to buyer (debit from seller)
+  REFUND_FEE_REVERSAL   // Fee reversal on refund (credit to seller)
+  DISPUTE               // Dispute/chargeback amount
+  DISPUTE_FEE           // Dispute fee charged by processor
+  DISPUTE_FEE_REVERSAL  // Dispute fee reversal (seller won dispute)
+
+  // HOLDS & RESERVES
+  HOLD_PLACE            // Funds placed on hold (not available for payout)
+  HOLD_RELEASE          // Funds released from hold
+
+  // ADJUSTMENTS
+  ADJUSTMENT_CREDIT     // Manual credit (admin action, requires reason)
+  ADJUSTMENT_DEBIT      // Manual debit (admin action, requires reason)
+
+  // TRANSFERS
+  TRANSFER_OUT          // Transfer to seller's bank account (payout)
+}
+
+enum LedgerDirection {
+  CREDIT    // Increases seller balance
+  DEBIT     // Decreases seller balance
+}
+
+model LedgerEntry {
+  id                  String           @id @default(cuid())
+  ledgerKey           String           @unique
+  
+  provider            String           @default("stripe")
+  providerObjectType  String
+  providerObjectId    String
+  
+  sellerId            String?
+  buyerId             String?
+  orderId             String?
+  orderPaymentId      String?
+  payoutId            String?
+  
+  type                LedgerEntryType
+  direction           LedgerDirection
+  amountCents         Int
+  currency            String           @default("USD")
+  
+  description         String?
+  metadataJson        Json             @default("{}")
+  
+  occurredAt          DateTime
+  postedAt            DateTime         @default(now())
+  
+  @@index([sellerId, occurredAt])
+  @@index([orderId])
+  @@index([type, occurredAt])
+}
+
+model Payout {
+  id                String   @id @default(cuid())
+  sellerId          String
+  
+  status            String   @default("PENDING")
+  
+  grossAmountCents  Int
+  feesAmountCents   Int
+  holdsAmountCents  Int      @default(0)
+  netAmountCents    Int
+  currency          String   @default("USD")
+  
+  periodStart       DateTime
+  periodEnd         DateTime
+  
+  providerPayoutId  String?
+  providerStatus    String?
+  
+  executedAt        DateTime?
+  failedAt          DateTime?
+  failureReason     String?
+  
+  createdByStaffId  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([sellerId, status])
+}
+
+model PayoutHold {
+  id              String   @id @default(cuid())
+  sellerId        String
+  
+  referenceType   String
+  referenceId     String
+  
+  reason          String
+  amountCents     Int?
+  
+  status          String   @default("active")
+  
+  expiresAt       DateTime?
+  releasedAt      DateTime?
+  releaseNote     String?
+  
+  createdByStaffId String?
+  createdAt       DateTime @default(now())
+  
+  @@index([sellerId, status])
+}
+
+model PaymentEventLog {
+  id              String   @id @default(cuid())
+  
+  provider        String
+  providerEventId String
+  type            String
+  livemode        Boolean  @default(true)
+  
+  payloadJson     Json
+  signatureValid  Boolean  @default(true)
+  
+  idempotencyKey  String   @unique
+  
+  status          String   @default("received")
+  processedAt     DateTime?
+  attemptCount    Int      @default(1)
+  lastErrorMessage String?
+  
+  receivedAt      DateTime @default(now())
+  
+  @@unique([provider, providerEventId])
+  @@index([status, receivedAt])
+}
+
+// =============================================================================
+// PHASE 5: SEARCH & DISCOVERY
+// =============================================================================
+
+model SearchIndex {
+  id              String   @id @default(cuid())
+  listingId       String   @unique
+  listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  isEligible      Boolean  @default(false)
+  
+  // Denormalized for search
+  title           String
+  description     String?
+  categoryPath    String?
+  tags            String[] @default([])
+  
+  // Ranking signals
+  trustScore      Float    @default(0)
+  trustMultiplier Float    @default(1.0)
+  freshnessScore  Float    @default(1.0)
+  
+  priceCents      Int
+  condition       String?
+  
+  sellerId        String
+  sellerName      String?
+  
+  indexedAt       DateTime @default(now())
+  
+  @@index([isEligible, indexedAt])
+  @@index([sellerId])
+}
+
+model SearchReindexQueue {
+  id          String    @id @default(cuid())
+  listingId   String
+  reason      String
+  priority    String    @default("normal")
+  queuedAt    DateTime  @default(now())
+  processedAt DateTime?
+  
+  @@unique([listingId, reason, processedAt])
+  @@index([processedAt, priority])
+}
+
+model SearchSettings {
+  id                        String   @id @default(cuid())
+  version                   String
+  effectiveAt               DateTime
+  isActive                  Boolean  @default(true)
+  
+  titleWeight               Float    @default(3.0)
+  descriptionWeight         Float    @default(1.0)
+  trustMultiplierEnabled    Boolean  @default(true)
+  freshnessBoostEnabled     Boolean  @default(true)
+  
+  defaultPageSize           Int      @default(48)
+  maxPageSize               Int      @default(100)
+  
+  synonymsJson              Json     @default("{}")
+  
+  createdByStaffId          String
+  createdAt                 DateTime @default(now())
+  
+  @@index([effectiveAt])
+}
+
+// =============================================================================
+// PHASE 6: TRUST & RATINGS
+// =============================================================================
+
+model TrustSnapshot {
+  id              String   @id @default(cuid())
+  sellerId        String
+  
+  score           Float
+  band            String
+  multiplier      Float    @default(1.0)
+  
+  reviewCount     Int      @default(0)
+  averageRating   Float?
+  volumeCount     Int      @default(0)
+  
+  computedAt      DateTime @default(now())
+  
+  @@index([sellerId, computedAt])
+}
+
+model TrustEvent {
+  id              String   @id @default(cuid())
+  sellerId        String
+  
+  eventKey        String   @unique
+  eventType       String
+  
+  delta           Float
+  weight          Float    @default(1.0)
+  
+  referenceType   String?
+  referenceId     String?
+  
+  metaJson        Json     @default("{}")
+  
+  occurredAt      DateTime @default(now())
+  
+  @@index([sellerId, occurredAt])
+}
+
+// =============================================================================
+// PHASE 7: NOTIFICATIONS
+// =============================================================================
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+  DLQ
+  SKIPPED
+  READ
+}
+
+model NotificationTemplate {
+  id              String               @id @default(cuid())
+  key             String               @unique
+  name            String
+  description     String?
+  
+  channels        NotificationChannel[]
+  
+  emailSubject    String?
+  emailBodyHtml   String?
+  emailBodyText   String?
+  
+  smsBody         String?
+  
+  pushTitle       String?
+  pushBody        String?
+  pushAction      String?
+  
+  inAppTitle      String?
+  inAppBody       String?
+  inAppIcon       String?
+  inAppAction     String?
+  
+  variablesSchema Json                 @default("[]")
+  
+  isActive        Boolean              @default(true)
+  isTransactional Boolean              @default(true)
+  
+  createdByStaffId String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
+model NotificationPreference {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  channel   NotificationChannel
+  category  String
+  enabled   Boolean             @default(true)
+  
+  @@unique([userId, channel, category])
+  @@index([userId])
+}
+
+model Notification {
+  id              String             @id @default(cuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  templateKey     String
+  channel         NotificationChannel
+  status          NotificationStatus @default(QUEUED)
+  
+  title           String?
+  body            String?
+  actionUrl       String?
+  
+  variablesJson   Json               @default("{}")
+  
+  sentAt          DateTime?
+  readAt          DateTime?
+  failedAt        DateTime?
+  failureReason   String?
+  
+  createdAt       DateTime           @default(now())
+  
+  @@index([userId, channel, status])
+}
+
+model NotificationOutbox {
+  id              String             @id @default(cuid())
+  
+  recipientUserId String
+  templateKey     String
+  channel         NotificationChannel
+  
+  variablesJson   Json               @default("{}")
+  
+  status          NotificationStatus @default(QUEUED)
+  attemptCount    Int                @default(0)
+  maxAttempts     Int                @default(3)
+  
+  scheduledFor    DateTime           @default(now())
+  lastAttemptAt   DateTime?
+  processedAt     DateTime?
+  
+  createdAt       DateTime           @default(now())
+  
+  @@index([status, scheduledFor])
+}
+
+// =============================================================================
+// PHASE 8: ANALYTICS
+// =============================================================================
+
+model AnalyticsEvent {
+  id            String   @id @default(cuid())
+  eventKey      String   @unique
+  
+  eventType     String
+  
+  userId        String?
+  sellerId      String?
+  listingId     String?
+  orderId       String?
+  
+  metaJson      Json     @default("{}")
+  
+  occurredAt    DateTime @default(now())
+  
+  @@index([eventType, occurredAt])
+  @@index([sellerId, eventType])
+}
+
+model MetricDefinition {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  name          String
+  description   String?
+  unit          String?
+  aggregation   String   @default("sum")
+  
+  isActive      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+}
+
+model MetricSnapshot {
+  id            String   @id @default(cuid())
+  metricKey     String
+  
+  periodType    String
+  periodStart   DateTime
+  periodEnd     DateTime
+  
+  value         Float
+  
+  dimensionJson Json     @default("{}")
+  
+  computedAt    DateTime @default(now())
+  
+  @@unique([metricKey, periodType, periodStart, dimensionJson])
+  @@index([metricKey, periodStart])
+}
+
+// =============================================================================
+// PHASE 9: FEATURE FLAGS
+// =============================================================================
+
+enum FeatureFlagType {
+  BOOLEAN
+  PERCENTAGE
+  USER_LIST
+  TIER_BASED
+}
+
+model FeatureFlag {
+  id               String          @id @default(cuid())
+  key              String          @unique
+  name             String
+  description      String?
+  
+  type             FeatureFlagType @default(BOOLEAN)
+  enabled          Boolean         @default(false)
+  
+  scope            String          @default("global")
+  percentage       Int?
+  
+  allowListUserIds String[]        @default([])
+  denyListUserIds  String[]        @default([])
+  allowListTiers   String[]        @default([])
+  
+  startsAt         DateTime?
+  endsAt           DateTime?
+  
+  category         String?
+  ownerEmail       String?
+  tags             String[]        @default([])
+  
+  isKillSwitch     Boolean         @default(false)
+  
+  version          Int             @default(1)
+  updatedByStaffId String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  
+  overrides        FeatureFlagOverride[]
+  auditLogs        FeatureFlagAudit[]
+}
+
+model FeatureFlagOverride {
+  id              String      @id @default(cuid())
+  flagId          String
+  flag            FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  
+  userId          String
+  enabled         Boolean
+  reason          String?
+  
+  expiresAt       DateTime?
+  
+  createdByStaffId String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@unique([flagId, userId])
+}
+
+model FeatureFlagAudit {
+  id            String      @id @default(cuid())
+  flagId        String
+  flag          FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  
+  action        String
+  changeJson    Json
+  
+  actorStaffId  String
+  actorIp       String?
+  
+  createdAt     DateTime    @default(now())
+  
+  @@index([flagId, createdAt])
+}
+
+// =============================================================================
+// PHASE 13: SELLER ONBOARDING
+// =============================================================================
+
+enum SellerStatus {
+  SELLER_DRAFT
+  SELLER_PENDING
+  SELLER_ACTIVE
+  SELLER_RESTRICTED
+  SELLER_SUSPENDED
+}
+
+enum PayoutsStatus {
+  PAYOUTS_PENDING
+  PAYOUTS_REVIEW
+  PAYOUTS_ENABLED
+  PAYOUTS_BLOCKED
+}
+
+enum VerificationStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  NEEDS_INFO
+  EXPIRED
+}
+
+model SellerProfile {
+  id                String        @id @default(cuid())
+  sellerId          String        @unique
+  user              User          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  status            SellerStatus  @default(SELLER_DRAFT)
+  payoutsStatus     PayoutsStatus @default(PAYOUTS_PENDING)
+  
+  businessName      String?
+  businessType      String?
+  taxId             String?
+  taxIdVerified     Boolean       @default(false)
+  
+  supportEmail      String?
+  supportPhone      String?
+  
+  businessAddress   Json?
+  
+  onboardingStep    String        @default("STARTED")
+  completedSteps    String[]      @default([])
+  
+  verifiedAt        DateTime?
+  suspendedAt       DateTime?
+  suspensionReason  String?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  verifications     SellerVerification[]
+  payoutDestinations PayoutDestination[]
+}
+
+model SellerVerification {
+  id                String             @id @default(cuid())
+  sellerProfileId   String
+  sellerProfile     SellerProfile      @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  
+  verificationType  String
+  status            VerificationStatus @default(PENDING)
+  
+  documentUrls      String[]           @default([])
+  
+  reviewedByStaffId String?
+  reviewedAt        DateTime?
+  rejectionReason   String?
+  
+  expiresAt         DateTime?
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  @@index([sellerProfileId, verificationType])
+}
+
+model PayoutDestination {
+  id                String   @id @default(cuid())
+  sellerProfileId   String
+  sellerProfile     SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  
+  type              String
+  
+  last4             String?
+  bankName          String?
+  
+  stripeAccountId   String?  @unique
+  stripeStatus      String?
+  
+  isDefault         Boolean  @default(false)
+  isVerified        Boolean  @default(false)
+  verifiedAt        DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([sellerProfileId])
+}
+
+// =============================================================================
+// PHASE 14: RETURNS & DISPUTES
+// =============================================================================
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  DENIED
+  SHIPPED
+  RECEIVED
+  REFUNDED
+  CLOSED
+  ESCALATED
+}
+
+model ReturnRequest {
+  id              String       @id @default(cuid())
+  orderId         String       @unique
+  order           Order        @relation(fields: [orderId], references: [id])
+  
+  buyerId         String
+  sellerId        String
+  
+  reason          String
+  description     String?
+  photoUrls       String[]     @default([])
+  
+  status          ReturnStatus @default(REQUESTED)
+  
+  sellerResponse  String?
+  sellerRespondedAt DateTime?
+  
+  returnTrackingNumber String?
+  returnTrackingUrl    String?
+  
+  refundAmountCents    Int?
+  
+  escalatedAt     DateTime?
+  resolvedAt      DateTime?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+enum DisputeStatus {
+  OPEN
+  PENDING_SELLER
+  PENDING_BUYER
+  UNDER_REVIEW
+  RESOLVED_BUYER_FAVOR
+  RESOLVED_SELLER_FAVOR
+  RESOLVED_SPLIT
+  CLOSED
+  ESCALATED
+}
+
+model DisputeCase {
+  id              String        @id @default(cuid())
+  orderId         String        @unique
+  order           Order         @relation(fields: [orderId], references: [id])
+  
+  buyerId         String
+  sellerId        String
+  
+  type            String
+  reason          String
+  description     String?
+  
+  status          DisputeStatus @default(OPEN)
+  
+  buyerEvidence   Json          @default("[]")
+  sellerEvidence  Json          @default("[]")
+  
+  assignedToStaffId String?
+  
+  resolutionType  String?
+  resolutionNote  String?
+  refundAmountCents Int?
+  
+  escalatedAt     DateTime?
+  resolvedAt      DateTime?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  notes           CaseNote[]
+  timelineEvents  DisputeTimelineEvent[]
+}
+
+model CaseNote {
+  id              String      @id @default(cuid())
+  disputeCaseId   String
+  disputeCase     DisputeCase @relation(fields: [disputeCaseId], references: [id], onDelete: Cascade)
+  
+  authorId        String
+  authorType      String
+  
+  content         String
+  isInternal      Boolean     @default(false)
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([disputeCaseId])
+}
+
+model DisputeTimelineEvent {
+  id              String      @id @default(cuid())
+  disputeCaseId   String
+  disputeCase     DisputeCase @relation(fields: [disputeCaseId], references: [id], onDelete: Cascade)
+  
+  eventType       String
+  description     String
+  actorId         String?
+  actorType       String?
+  
+  metaJson        Json        @default("{}")
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([disputeCaseId])
+}
+
+// =============================================================================
+// PHASE 16: REVIEWS
+// =============================================================================
+
+enum ReviewStatus {
+  VISIBLE
+  HIDDEN
+  REMOVED
+  PENDING_REVIEW
+}
+
+model Review {
+  id                  String       @id @default(cuid())
+  orderId             String       @unique
+  
+  sellerId            String
+  seller              User         @relation("SellerReviews", fields: [sellerId], references: [id])
+  buyerId             String
+  buyer               User         @relation("BuyerReviews", fields: [buyerId], references: [id])
+  
+  rating              Int
+  title               String?
+  comment             String?
+  
+  itemAsDescribed     Int?
+  shipping            Int?
+  communication       Int?
+  
+  photoUrls           String[]     @default([])
+  
+  status              ReviewStatus @default(VISIBLE)
+  isVerifiedPurchase  Boolean      @default(true)
+  isFeatured          Boolean      @default(false)
+  
+  sellerResponse      String?
+  sellerRespondedAt   DateTime?
+  
+  trustEventKey       String?      @unique
+  trustEventEmittedAt DateTime?
+  
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  editedAt            DateTime?
+  
+  moderationActions   ReviewModerationAction[]
+  helpfulVotes        ReviewHelpfulVote[]
+  
+  @@index([sellerId, status])
+  @@index([buyerId])
+}
+
+model ReviewModerationAction {
+  id              String   @id @default(cuid())
+  reviewId        String
+  review          Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  
+  staffId         String
+  action          String
+  reason          String?
+  internalNotes   String?
+  previousStatus  String?
+  newStatus       String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([reviewId])
+}
+
+model ReviewHelpfulVote {
+  id        String   @id @default(cuid())
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String
+  isHelpful Boolean
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([reviewId, userId])
+}
+
+model WatchlistItem {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId         String
+  listing           Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  notifyOnPriceDrop Boolean  @default(true)
+  notifyOnEndingSoon Boolean @default(true)
+  
+  priceWhenAdded    Int
+  lowestPriceSeen   Int?
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  
+  @@unique([userId, listingId])
+  @@index([userId])
+}
+
+model SavedSearch {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name            String
+  queryJson       Json
+  
+  notifyOnNewMatches Boolean @default(true)
+  
+  lastNotifiedAt  DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// =============================================================================
+// PHASE 19: AUDIT & OBSERVABILITY
+// =============================================================================
+
+enum AuditCategory {
+  RBAC
+  FINANCE
+  TRUST
+  COMMERCE
+  MODERATION
+  SYSTEM
+  SECURITY
+  SETTINGS
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model AuditEvent {
+  id              String        @id @default(cuid())
+  
+  actorUserId     String?
+  actor           User?         @relation(fields: [actorUserId], references: [id])
+  actorRole       String?
+  actorIp         String?
+  actorUserAgent  String?
+  
+  action          String
+  category        AuditCategory @default(SYSTEM)
+  severity        AuditSeverity @default(INFO)
+  
+  entityType      String?
+  entityId        String?
+  
+  metaJson        Json          @default("{}")
+  
+  requestId       String?
+  sessionId       String?
+  
+  createdAt       DateTime      @default(now())
+  
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+}
+
+model SystemEvent {
+  id              String   @id @default(cuid())
+  
+  type            String
+  source          String
+  code            String
+  message         String
+  stackTrace      String?
+  
+  metaJson        Json     @default("{}")
+  requestId       String?
+  
+  isAcknowledged  Boolean  @default(false)
+  acknowledgedAt  DateTime?
+  acknowledgedBy  String?
+  resolution      String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([type, createdAt])
+  @@index([isAcknowledged])
+}
+
+model AlertRule {
+  id              String   @id @default(cuid())
+  
+  name            String
+  description     String?
+  
+  eventType       String?
+  eventSource     String?
+  eventCode       String?
+  
+  threshold       Int      @default(1)
+  windowMinutes   Int      @default(5)
+  cooldownMinutes Int      @default(60)
+  
+  channels        String[] @default([])
+  recipients      String[] @default([])
+  
+  isActive        Boolean  @default(true)
+  lastTriggeredAt DateTime?
+  
+  createdByStaffId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AlertHistory {
+  id              String   @id @default(cuid())
+  alertRuleId     String
+  
+  triggerEventIds String[]
+  triggerCount    Int
+  
+  channel         String
+  recipient       String
+  status          String
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([alertRuleId, createdAt])
+}
+
+// =============================================================================
+// PHASE 21: MESSAGING
+// =============================================================================
+
+model Conversation {
+  id              String   @id @default(cuid())
+  
+  orderId         String?
+  listingId       String?
+  
+  subject         String?
+  
+  isActive        Boolean  @default(true)
+  
+  lastMessageAt   DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  participants    ConversationParticipant[]
+  messages        Message[]
+  
+  @@index([orderId])
+  @@index([listingId])
+}
+
+model ConversationParticipant {
+  id              String       @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  
+  role            String       @default("PARTICIPANT")
+  
+  unreadCount     Int          @default(0)
+  lastReadAt      DateTime?
+  
+  joinedAt        DateTime     @default(now())
+  leftAt          DateTime?
+  
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId        String
+  sender          User         @relation(fields: [senderId], references: [id])
+  
+  content         String
+  
+  attachmentUrls  String[]     @default([])
+  
+  isSystemMessage Boolean      @default(false)
+  
+  createdAt       DateTime     @default(now())
+  editedAt        DateTime?
+  
+  @@index([conversationId, createdAt])
+}
+
+// =============================================================================
+// PHASE 24: SUBSCRIPTIONS & BILLING (eBay-Exact 6 Tiers)
+// =============================================================================
+
+enum SellerTier {
+  SELLER      // $0/mo     - Casual seller (no store)
+  STARTER     // $4.95/mo  - Entry level store
+  BASIC       // $21.95/mo - Small business store
+  PRO         // $59.95/mo - Growing business store
+  ELITE       // $299.95/mo - High volume store
+  ENTERPRISE  // $2,999.95/mo - Enterprise store
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  PAUSED
+  TRIALING
+  PENDING
+}
+
+model SellerSubscription {
+  id                  String             @id @default(cuid())
+  sellerId            String             @unique
+  user                User               @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  tier                SellerTier         @default(SELLER)
+  status              SubscriptionStatus @default(PENDING)
+  
+  billingCycle        String             @default("monthly")
+  
+  startedAt           DateTime           @default(now())
+  currentPeriodStart  DateTime           @default(now())
+  currentPeriodEnd    DateTime?
+  endsAt              DateTime?
+  canceledAt          DateTime?
+  
+  stripeSubscriptionId String?           @unique
+  stripeCustomerId    String?
+  
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  
+  usageRecords        ListingMonthlyUsage[]
+  billingEvents       BillingEventLog[]
+}
+
+model SellerStorefront {
+  id              String   @id @default(cuid())
+  sellerId        String   @unique
+  user            User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  slug            String?  @unique
+  name            String?
+  description     String?
+  logoUrl         String?
+  bannerUrl       String?
+  
+  customCss       String?
+  
+  isActive        Boolean  @default(true)
+  isPublished     Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SellerSettings {
+  id                      String   @id @default(cuid())
+  sellerId                String   @unique
+  user                    User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  defaultShippingProfileId String?
+  handlingTimeDays        Int      @default(3)
+  returnPolicyId          String?
+  
+  autoAcceptOffers        Boolean  @default(false)
+  autoDeclineOffers       Boolean  @default(false)
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model TierPricingVersion {
+  id              String   @id @default(cuid())
+  version         String   @unique
+  effectiveAt     DateTime
+  isActive        Boolean  @default(true)
+  
+  pricingJson     Json
+  
+  createdByStaffId String
+  createdAt       DateTime @default(now())
+  
+  @@index([effectiveAt])
+}
+
+model ListingMonthlyUsage {
+  id              String             @id @default(cuid())
+  subscriptionId  String
+  subscription    SellerSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  periodMonth     Int
+  periodYear      Int
+  
+  listingsCreated Int                @default(0)
+  listingsActive  Int                @default(0)
+  freeUsed        Int                @default(0)
+  paidUsed        Int                @default(0)
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  @@unique([subscriptionId, periodMonth, periodYear])
+}
+
+model BillingEventLog {
+  id              String             @id @default(cuid())
+  subscriptionId  String
+  subscription    SellerSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  eventType       String
+  amountCents     Int?
+  currency        String             @default("USD")
+  
+  stripeEventId   String?            @unique
+  metaJson        Json               @default("{}")
+  
+  createdAt       DateTime           @default(now())
+  
+  @@index([subscriptionId, createdAt])
+}
+
+// =============================================================================
+// PHASE 38: BUYER PROTECTION
+// =============================================================================
+
+model CategoryCoverageLimit {
+  id              String   @id @default(cuid())
+  categoryId      String
+  
+  maxCoverageCents Int
+  
+  effectiveAt     DateTime
+  expiresAt       DateTime?
+  
+  createdByStaffId String
+  createdAt       DateTime @default(now())
+  
+  @@index([categoryId, effectiveAt])
+}
+
+model SellerProtectionScore {
+  id              String   @id @default(cuid())
+  sellerId        String
+  
+  score           Int      @default(50)
+  tier            String   @default("GOOD")
+  
+  claimsApproved  Int      @default(0)
+  claimsDenied    Int      @default(0)
+  claimsTotal     Int      @default(0)
+  
+  lastComputedAt  DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([sellerId])
+}
+
+model SellerAppeal {
+  id              String   @id @default(cuid())
+  disputeCaseId   String
+  sellerId        String
+  
+  reason          String
+  evidenceJson    Json     @default("[]")
+  
+  status          String   @default("PENDING")
+  
+  reviewedByStaffId String?
+  reviewedAt      DateTime?
+  resolutionNote  String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([sellerId, status])
+}
+
+model ProtectionSettings {
+  id                        String   @id @default(cuid())
+  version                   String   @unique
+  effectiveAt               DateTime
+  isActive                  Boolean  @default(true)
+  
+  defaultCoverageCents      Int      @default(100000)
+  claimWindowDays           Int      @default(30)
+  appealWindowDays          Int      @default(14)
+  
+  autoApproveEnabled        Boolean  @default(true)
+  autoApproveMaxCents       Int      @default(5000)
+  
+  createdByStaffId          String
+  createdAt                 DateTime @default(now())
+  
+  @@index([effectiveAt])
+}
+
+// =============================================================================
+// PHASE 40: INTERNATIONALIZATION
+// =============================================================================
+
+model Region {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  
+  defaultCurrency String   @default("USD")
+  defaultLocale   String   @default("en-US")
+  
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SupportedCurrency {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  symbol          String
+  
+  decimalPlaces   Int      @default(2)
+  
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+}
+
+model ExchangeRate {
+  id              String   @id @default(cuid())
+  
+  fromCurrency    String
+  toCurrency      String
+  
+  rate            Float
+  
+  effectiveAt     DateTime @default(now())
+  expiresAt       DateTime?
+  
+  source          String   @default("manual")
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([fromCurrency, toCurrency, effectiveAt])
+  @@index([fromCurrency, toCurrency])
+}
+
+// =============================================================================
+// PHASE 43: BUYER EXPERIENCE PLUS (Price Alerts)
+// =============================================================================
+
+model ListingPriceHistory {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  priceCents  Int
+  changedAt   DateTime @default(now())
+  
+  @@index([listingId, changedAt])
+}
+
+model MarketPriceIndex {
+  id              String   @id @default(cuid())
+  
+  categoryId      String?
+  brand           String?
+  condition       String?
+  
+  avgPriceCents   Int
+  minPriceCents   Int
+  maxPriceCents   Int
+  sampleSize      Int
+  
+  computedAt      DateTime @default(now())
+  
+  @@index([categoryId, brand])
+}
+
+model PriceAlert {
+  id              String   @id @default(cuid())
+  userId          String
+  listingId       String
+  
+  type            String
+  targetCents     Int?
+  percentDrop     Int?
+  
+  isTriggered     Boolean  @default(false)
+  triggeredAt     DateTime?
+  
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([userId, listingId, type])
+  @@index([listingId, isActive])
+}
+
+model CategoryAlert {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  categoryId      String
+  searchQuery     String?
+  filtersJson     Json     @default("{}")
+  
+  isActive        Boolean  @default(true)
+  
+  lastNotifiedAt  DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId, isActive])
+}
+
+// =============================================================================
+// PHASE 44: LISTING VARIATIONS
+// =============================================================================
+
+enum VariationScope {
+  PLATFORM
+  CATEGORY
+  SELLER
+}
+
+model VariationType {
+  id              String   @id @default(cuid())
+  
+  key             String   @unique
+  label           String
+  description     String?
+  icon            String?
+  
+  isSystem        Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  
+  sortOrder       Int      @default(0)
+  totalListings   Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  
+  values          VariationValue[]
+  categoryTypes   CategoryVariationType[]
+  listingVariations ListingVariation[]
+  
+  @@index([isActive, sortOrder])
+}
+
+model VariationValue {
+  id              String         @id @default(cuid())
+  
+  variationTypeId String
+  variationType   VariationType  @relation(fields: [variationTypeId], references: [id], onDelete: Cascade)
+  
+  value           String
+  normalizedValue String
+  
+  scope           VariationScope @default(PLATFORM)
+  
+  categoryId      String?
+  sellerId        String?
+  
+  colorHex        String?
+  sortOrder       Int            @default(0)
+  
+  usageCount      Int            @default(0)
+  
+  isActive        Boolean        @default(true)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       String?
+  
+  listingOptions  ListingVariationOption[]
+  
+  @@unique([variationTypeId, normalizedValue, scope, categoryId, sellerId])
+  @@index([variationTypeId, isActive])
+}
+
+model CategoryVariationType {
+  id              String        @id @default(cuid())
+  
+  categoryId      String
+  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  variationTypeId String
+  variationType   VariationType @relation(fields: [variationTypeId], references: [id], onDelete: Cascade)
+  
+  isRequired      Boolean       @default(false)
+  isPrimary       Boolean       @default(false)
+  sortOrder       Int           @default(0)
+  
+  createdAt       DateTime      @default(now())
+  
+  @@unique([categoryId, variationTypeId])
+  @@index([categoryId])
+}
+
+model ListingVariation {
+  id              String        @id @default(cuid())
+  
+  listingId       String
+  listing         Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  variationTypeId String
+  variationType   VariationType @relation(fields: [variationTypeId], references: [id])
+  
+  sortOrder       Int           @default(0)
+  
+  createdAt       DateTime      @default(now())
+  
+  options         ListingVariationOption[]
+  
+  @@unique([listingId, variationTypeId])
+  @@index([listingId])
+}
+
+model ListingVariationOption {
+  id                  String            @id @default(cuid())
+  
+  listingVariationId  String
+  listingVariation    ListingVariation  @relation(fields: [listingVariationId], references: [id], onDelete: Cascade)
+  
+  variationValueId    String?
+  variationValue      VariationValue?   @relation(fields: [variationValueId], references: [id], onDelete: SetNull)
+  
+  customValue         String?
+  
+  priceCents          Int?
+  quantity            Int?
+  sku                 String?
+  imageUrl            String?
+  
+  isActive            Boolean           @default(true)
+  sortOrder           Int               @default(0)
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  
+  @@index([listingVariationId])
+}
+
+model ListingVariant {
+  id                String   @id @default(cuid())
+  listingId         String
+  
+  sku               String?
+  
+  attributeCombo    Json
+  displayName       String?
+  
+  priceCents        Int
+  comparePriceCents Int?
+  
+  quantity          Int      @default(0)
+  availableQuantity Int      @default(0)
+  reservedQuantity  Int      @default(0)
+  
+  imageUrl          String?
+  
+  isDefault         Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@unique([listingId, sku])
+  @@index([listingId, isActive])
+}
+
+// =============================================================================
+// PHASE 18: RECONCILIATION
+// =============================================================================
+
+model ReconciliationRun {
+  id              String   @id @default(cuid())
+  
+  provider        String   @default("stripe")
+  
+  rangeStart      DateTime
+  rangeEnd        DateTime
+  
+  status          String   @default("running")
+  
+  totalsJson      Json     @default("{}")
+  mismatchesCount Int      @default(0)
+  
+  lastErrorMessage String?
+  
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  
+  mismatches      ReconciliationMismatch[]
+  
+  @@index([status, createdAt])
+}
+
+model ReconciliationMismatch {
+  id                  String            @id @default(cuid())
+  reconciliationRunId String
+  reconciliationRun   ReconciliationRun @relation(fields: [reconciliationRunId], references: [id], onDelete: Cascade)
+  
+  providerObjectId    String
+  mismatchType        String
+  
+  expectedJson        Json
+  actualJson          Json
+  
+  resolvedAt          DateTime?
+  resolvedByUserId    String?
+  resolutionNote      String?
+  
+  createdAt           DateTime          @default(now())
+  
+  @@index([reconciliationRunId])
+}
+
+// =============================================================================
+// PLATFORM SETTINGS (Phase 15) Ã¢â‚¬â€ FIX H-3
+// =============================================================================
+
+model PlatformSettings {
+  id          String   @id @default(cuid())
+
+  // Category groups related settings together
+  category    String   // monetization | commerce | fulfillment | trust | discovery | communications | privacy
+
+  // Unique key within category
+  key         String
+
+  // JSON configuration values
+  configJson  Json
+
+  // Version for optimistic locking
+  version     Int      @default(1)
+
+  // Whether this setting is currently active
+  isActive    Boolean  @default(true)
+
+  // When this setting becomes effective (supports scheduled changes)
+  effectiveAt DateTime @default(now())
+
+  // Audit fields
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  @@unique([category, key, effectiveAt])
+  @@index([category, isActive])
+  @@index([effectiveAt])
+}
+
+// =============================================================================
+// MONETIZATION MODELS (Phase 4, 24) Ã¢â‚¬â€ FIX M-2, M-3
+// =============================================================================
+
+model FeeSchedule {
+  id              String   @id @default(cuid())
+
+  name            String
+  description     String?
+
+  // Fee type classification
+  feeType         FeeType
+
+  // Rate configuration (mutually exclusive)
+  percentageRate  Float?           // e.g., 0.1325 for 13.25%
+  flatRateCents   Int?             // e.g., 30 for $0.30
+
+  // Tier-specific rates (if percentageRate is null)
+  tierRates       Json?            // { "SELLER": 0.1325, "STARTER": 0.1235, ... }
+
+  // Category overrides
+  categoryOverrides Json?          // { "categoryId": { rate, flatFee } }
+
+  // Applicability
+  appliesToTiers  String[]         @default([])  // Empty = all tiers
+
+  // Effective dating
+  effectiveAt     DateTime         @default(now())
+  expiresAt       DateTime?
+
+  isActive        Boolean          @default(true)
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([feeType, effectiveAt])
+  @@index([feeType, isActive])
+}
+
+enum FeeType {
+  FINAL_VALUE_FEE         // Percentage of sale
+  INSERTION_FEE           // Per-listing fee
+  PAYMENT_PROCESSING      // Stripe fees (passed through)
+  PROMOTED_LISTING        // CPC/CPM ad fees
+  SUBSCRIPTION            // Monthly tier fee
+  INTERNATIONAL           // Cross-border fees
+  CATEGORY_SURCHARGE      // Category-specific additional fee
+}
+
+model MonetizationPlan {
+  id                  String     @id @default(cuid())
+
+  tier                SellerTier @unique
+
+  // Monthly subscription
+  monthlyPriceCents   Int        // 0 for SELLER tier
+
+  // Listing allowances
+  freeListings        Int        // Per month
+
+  // Fee rates
+  finalValueFeeRate   Float      // e.g., 0.1325
+  insertionFeeCents   Int        // After free allowance
+
+  // Promoted listing discount
+  promotedDiscountPct Float      @default(0)
+
+  // Features
+  features            Json       @default("{}")
+
+  // Effective dating
+  effectiveAt         DateTime   @default(now())
+
+  isActive            Boolean    @default(true)
+
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([tier, isActive])
+}
+
+// =============================================================================
+// CART RESERVATION (Phase 3) Ã¢â‚¬â€ FIX M-5
+// =============================================================================
+
+model CartReservation {
+  id              String   @id @default(cuid())
+
+  // What's being reserved
+  listingId       String
+  variantId       String?          // If variation listing
+
+  // Who's reserving
+  userId          String
+  cartId          String?
+
+  // Reservation details
+  quantity        Int
+
+  // Status tracking
+  status          ReservationStatus @default(PENDING)
+
+  // Expiration
+  expiresAt       DateTime
+
+  // Conversion tracking
+  orderId         String?          // Set when converted to order
+  convertedAt     DateTime?
+
+  // Release tracking
+  releasedAt      DateTime?
+  releaseReason   String?
+
+  createdAt       DateTime         @default(now())
+
+  @@index([listingId, status])
+  @@index([userId, status])
+  @@index([expiresAt, status])
+}
+
+enum ReservationStatus {
+  PENDING           // Active reservation
+  CONVERTED         // Became an order
+  RELEASED          // Released (expired, canceled, payment failed)
+  FAILED            // Could not reserve (insufficient quantity)
+}
+
+// =============================================================================
+// SELLER STANDARDS (Phase 37) Ã¢â‚¬â€ FIX M-8
+// =============================================================================
+
+model SellerStandards {
+  id                    String   @id @default(cuid())
+
+  userId                String   @unique
+
+  // Current band
+  currentBand           SellerBand @default(STANDARD)
+
+  // Evaluation period metrics
+  evaluationPeriodStart DateTime
+  evaluationPeriodEnd   DateTime
+
+  // Transaction metrics
+  transactionCount      Int      @default(0)
+  transactionDefectRate Float    @default(0)
+
+  // Shipping metrics
+  lateShipmentRate      Float    @default(0)
+  validTrackingRate     Float    @default(0)
+
+  // Case metrics
+  casesWithoutResolution Int     @default(0)
+  caseRate              Float    @default(0)
+
+  // Return metrics
+  returnRate            Float    @default(0)
+
+  // Composite scores
+  overallScore          Float    @default(100)
+
+  // Band history
+  previousBand          SellerBand?
+  bandChangedAt         DateTime?
+  bandChangeReason      String?
+
+  // Next evaluation
+  nextEvaluationAt      DateTime
+
+  // Restrictions (if below standard)
+  restrictions          Json     @default("[]")
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([currentBand])
+  @@index([nextEvaluationAt])
+}
+
+enum SellerBand {
+  TOP_RATED             // Highest performers
+  ABOVE_STANDARD        // Good performers
+  STANDARD              // Meeting minimums
+  BELOW_STANDARD        // At risk
+  SUSPENDED             // Selling privileges suspended
+}
+
+// =============================================================================
+// END OF SCHEMA
+// =============================================================================
