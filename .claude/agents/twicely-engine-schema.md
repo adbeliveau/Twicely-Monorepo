@@ -9,7 +9,7 @@ description: |
   Use when you need to:
   - Answer questions about which table owns what, where an enum is defined,
     or how migrations are applied
-  - Look up any of the 38+ schema files
+  - Look up any of the 37 schema files
   - Resolve schema conflicts between domain agents
   - Verify Decisions #19 (Drizzle), #128 (RESERVED status), #134 (buyer Stripe ID)
 
@@ -35,7 +35,7 @@ Single source of truth for **Database Schema** in Twicely V3. Layer: **engine**.
 
 ## STEP 0
 1. Read `read-me/TWICELY_V3_SCHEMA_v2_1_0.md`.
-2. Glob `packages/db/src/schema/*.ts` — confirm all 38 files exist.
+2. Glob `packages/db/src/schema/*.ts` — confirm all 37 files exist.
 3. Report drift.
 
 ## CANONICALS YOU OWN
@@ -43,7 +43,7 @@ Single source of truth for **Database Schema** in Twicely V3. Layer: **engine**.
 
 ## SCHEMA FILES YOU OWN — `packages/db/src/schema/`
 
-All 38 schema files. You are the authority over every one:
+All 37 schema files. You are the authority over every one:
 
 ```
 acquisition.ts        affiliates.ts            ai.ts

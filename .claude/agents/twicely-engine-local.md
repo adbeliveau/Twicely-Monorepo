@@ -6,7 +6,7 @@ description: |
   scoring. Pure engine — paired with hub-local which owns the UI.
 
   Use when you need to:
-  - Answer questions about the local flat-fee model (Decision #42)
+  - Answer questions about the local bracket TF model (addendum §A0, supersedes Decision #42)
   - Look up local state machine, fraud detection, ledger event code
   - Review changes to packages/commerce/src/local-* engine files
   - Verify the QR escrow + SafeTrade implementation
