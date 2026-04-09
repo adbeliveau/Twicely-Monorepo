@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, jsonb, index, unique } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, jsonb, index, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { auditSeverityEnum, featureFlagTypeEnum, moduleStateEnum } from './enums';
@@ -17,6 +17,11 @@ export const platformSetting = pgTable('platform_setting', {
   createdAt:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:           timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
+  // SD-1 (hub-platform-settings audit): canonical §1.2 specifies a named
+  // uniqueIndex. The inline .unique() on column line 10 enforces the same
+  // constraint but without the named index that migration tooling and
+  // admin health-checks query by.
+  keyIdx:              uniqueIndex('ps_key').on(table.key),
   categoryIdx:         index('ps_category').on(table.category),
 }));
 

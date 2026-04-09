@@ -99,6 +99,17 @@ export async function invalidateFlagCache(flagKey: string): Promise<void> {
   }
 }
 
+/**
+ * Reset the process-level TTL cache so changes to featureFlags.cacheSeconds
+ * take effect immediately instead of waiting up to 60s. Called from
+ * admin-settings.ts when the operator updates this specific key.
+ * R5 fix (hub-platform-settings audit).
+ */
+export function resetTtlCache(): void {
+  _cachedTtl = null;
+  _ttlFetchedAt = 0;
+}
+
 // ─── Evaluation engine ────────────────────────────────────────────────────────
 
 function evaluatePayload(

@@ -120,12 +120,9 @@ export function LocalTransactionDetail({ localTx: tx }: LocalTransactionDetailPr
             <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium text-red-700">No-Show: {tx.noShowParty}</p>
-              {tx.noShowFeeCents !== null && (
-                <p className="text-red-600 text-xs">
-                  Fee: ${((tx.noShowFeeCents ?? 0) / 100).toFixed(2)} charged{' '}
-                  {tx.noShowFeeChargedAt ? `on ${formatDate(tx.noShowFeeChargedAt)}` : ''}
-                </p>
-              )}
+              <p className="text-red-600 text-xs">
+                A reliability mark has been recorded. Repeated no-shows may affect seller standing.
+              </p>
             </div>
           </div>
         )}

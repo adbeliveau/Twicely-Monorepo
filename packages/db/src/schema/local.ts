@@ -63,7 +63,9 @@ export const localTransaction = pgTable('local_transaction', {
   safetyAlertSent:       boolean('safety_alert_sent').notNull().default(false),
   safetyAlertAt:         timestamp('safety_alert_at', { withTimezone: true }),
   noShowParty:           text('no_show_party'),
+  /** @deprecated §A5 removed monetary no-show penalties. Column retained for legacy display; no new writes. */
   noShowFeeCents:        integer('no_show_fee_cents'),
+  /** @deprecated §A5 removed monetary no-show penalties. Column retained for legacy display; no new writes. */
   noShowFeeChargedAt:    timestamp('no_show_fee_charged_at', { withTimezone: true }),
   // Price adjustment (A3)
   adjustedPriceCents:       integer('adjusted_price_cents'),
