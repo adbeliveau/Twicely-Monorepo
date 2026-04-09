@@ -201,6 +201,7 @@ export async function executeAffiliatePayouts(
           postedAt: now,
           memo: `Affiliate commission payout: ${aff.id}`,
           reasonCode: 'affiliate_monthly_payout',
+          idempotencyKey: `affiliate_payout:${payoutId}`,
         });
 
         return { payoutId, payoutAmountCents, transferId: transfer.id, commissionCount: commissionIds.length };

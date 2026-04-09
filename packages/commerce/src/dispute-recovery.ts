@@ -127,6 +127,7 @@ export async function recoverFromSellerWaterfall(
         userId: sellerId,
         ...(orderId ? { orderId } : {}),
         memo: `${memo} (step 1: from available)`,
+        idempotencyKey: `dispute_recovery:${disputeId}:seller_available`,
         postedAt: now,
       });
     }
@@ -139,6 +140,7 @@ export async function recoverFromSellerWaterfall(
         userId: sellerId,
         ...(orderId ? { orderId } : {}),
         memo: `${memo} (step 2: from reserved)`,
+        idempotencyKey: `dispute_recovery:${disputeId}:seller_reserved`,
         postedAt: now,
       });
     }
@@ -151,6 +153,7 @@ export async function recoverFromSellerWaterfall(
         userId: sellerId, // attributed to seller for reporting; actual cost is platform
         ...(orderId ? { orderId } : {}),
         memo: `${memo} (step 3: platform absorption)`,
+        idempotencyKey: `dispute_recovery:${disputeId}:platform_absorb`,
         postedAt: now,
       });
     }

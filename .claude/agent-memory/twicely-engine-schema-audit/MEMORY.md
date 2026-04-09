@@ -1,0 +1,1 @@
+- [Phase 6 engine-schema post-audit (2026-04-08)](project_phase6_post_audit.md) — PASS; baseline migration regenerated (no 0038_ file); 2 extra ledger enum values beyond spec (non-blocking)

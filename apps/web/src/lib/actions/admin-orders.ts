@@ -9,6 +9,7 @@ import { db } from '@twicely/db';
 import { order, auditEvent, ledgerEntry } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 
@@ -39,7 +40,16 @@ export async function refundOrderAction(input: unknown) {
   }
 
   // Create refund ledger entry
+  // Finance Engine §4.4: staff-initiated admin refunds have no twicely `refund` row.
+  // Full refunds dedup on `refund:{orderId}:full`; partial refunds are staff manual
+  // adjustments keyed on a fresh ledger entry id (`manual:{adjustmentId}`) so they
+  // remain append-only per order.
+  const refundId = createId();
+  const idempotencyKey = isPartial
+    ? `manual:${refundId}`
+    : `refund:${orderId}:full`;
   await db.insert(ledgerEntry).values({
+    id: refundId,
     type: isPartial ? 'REFUND_PARTIAL' : 'REFUND_FULL',
     status: 'PENDING',
     amountCents: -amountCents,
@@ -49,6 +59,7 @@ export async function refundOrderAction(input: unknown) {
     createdByStaffId: session.staffUserId,
     reasonCode: 'ADMIN_REFUND',
     memo: reason,
+    idempotencyKey,
   });
 
   if (!isPartial) {

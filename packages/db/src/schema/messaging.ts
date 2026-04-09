@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { conversationStatusEnum } from './enums';
@@ -29,6 +29,10 @@ export const conversation = pgTable('conversation', {
   sellerIdx:       index('conv_seller').on(table.sellerId, table.lastMessageAt),
   listingIdx:      index('conv_listing').on(table.listingId),
   orderIdx:        index('conv_order').on(table.orderId),
+  // R1 (hub-messaging audit): dedup (buyerId, sellerId, listingId) at the DB
+  // level to prevent race conditions in concurrent createConversationAndSend
+  // calls. Application-level SELECT-then-INSERT dedup is race-unsafe.
+  uniqueTriple:    uniqueIndex('conv_unique_triple').on(table.buyerId, table.sellerId, table.listingId),
 }));
 
 // §9.2 message

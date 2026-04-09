@@ -8,6 +8,7 @@
 import { db } from '@twicely/db';
 import { ledgerEntry, auditEvent } from '@twicely/db/schema';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 
@@ -32,8 +33,12 @@ export async function createManualAdjustmentAction(input: unknown) {
   const { userId, amountCents, type, reasonCode, reasonText } = parsed.data;
 
   const adjustedAmount = type === 'MANUAL_DEBIT' ? -amountCents : amountCents;
+  // Finance Engine §4.4: canonical idempotency key format `manual:{adjustmentId}`.
+  // Generate a stable ledgerEntry.id up-front so we can populate the idempotency key.
+  const adjustmentId = createId();
 
   await db.insert(ledgerEntry).values({
+    id: adjustmentId,
     type: type as typeof ledgerEntry.type.enumValues[number],
     status: 'POSTED',
     amountCents: adjustedAmount,
@@ -42,6 +47,7 @@ export async function createManualAdjustmentAction(input: unknown) {
     createdByStaffId: session.staffUserId,
     reasonCode,
     memo: reasonText,
+    idempotencyKey: `manual:${adjustmentId}`,
     postedAt: new Date(),
   });
 

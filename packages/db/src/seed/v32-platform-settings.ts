@@ -28,6 +28,7 @@ export const V32_PLATFORM_SETTINGS_CORE: PlatformSettingSeed[] = [
   { key: 'general.staffInactivityTimeoutMinutes', value: 5, type: 'number', category: 'general', description: 'Staff sessions logged out after this many minutes of inactivity' },
   { key: 'general.staffSessionAbsoluteHours', value: 8, type: 'number', category: 'general', description: 'Staff session absolute timeout in hours (session expires regardless of activity)' },
   { key: 'general.staffSessionWarningSeconds', value: 60, type: 'number', category: 'general', description: 'Seconds before session timeout to show the warning modal' },
+  { key: 'general.impersonationTokenTtlMinutes', value: 15, type: 'number', category: 'general', description: 'Staff impersonation token TTL in minutes (HMAC cookie expiry — Decision #133)' },
   { key: 'general.userInactivityTimeoutMinutes', value: 1440, type: 'number', category: 'general', description: 'User sessions logged out after this many minutes of inactivity (default 24h)' },
   { key: 'general.userSessionMaxDays', value: 30, type: 'number', category: 'general', description: 'Maximum session lifetime for users regardless of activity' },
 

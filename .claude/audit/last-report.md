@@ -1,141 +1,158 @@
-# Super Audit V2 Report
+# Twicely Domain Audit Rollup — `/twicely-audit all`
 
-**Date:** 2026-04-08
-**Mode:** full (all 11 streams)
-**Commit:** 72d3b5b (chore/contributing-and-ci-fix)
-**TypeScript:** 24/24 packages clean — 0 errors
-
----
-
-## Scorecard
-
-| # | Stream | Method | PASS | WARN | BLOCK | Status |
-|---|---|---|---|---|---|---|
-| 1 | Routes & Pages | Agent | 219 routes | 0 | 0 | PASS |
-| 2 | Auth & CASL | Agent | 154/154 actions | 1 | 0 | PASS |
-| 3 | Hardcoded Values | Agent | 720 seeded | 2 | 0 | WARN |
-| 4 | Navigation | Agent | 51+28+18 links | 0 | 0 | PASS |
-| 5 | Money & Terms | Shell | 5/5 checks | 0 | 0 | PASS |
-| 6 | Schema | Agent | 154 tables | 0 | 0 | PASS |
-| 7 | Wiring & Side Effects | Shell | all imports resolve | 83 (FP) | 0 | PASS (after FP) |
-| 8 | Stripe & Payments | Hybrid | 14 events handled | 0 | 0 | PASS |
-| 9 | Code Hygiene | Shell | 0 console.log | 30 (FP) | 17 (FP) | PASS (after FP) |
-| 10a | Smoke Tests | Shell | — | 0 | 0 | SKIPPED (no dev server) |
-| 11 | Runtime Safety | Shell | 6/8 checks | 1 (FP) | 1 (FP) | PASS (after FP) |
-| **TOTAL** | | | | **3 real** | **0 real** | **READY** |
-
-**Pre-suppression raw counts:** 18 blockers, 114 warnings
-**Post-suppression real counts:** 0 blockers, 3 warnings
+**Run at:** 2026-04-08T18:00:00Z
+**Commit:** cb87b89 (master, post Phase A-E audit-remediation merge)
+**Scope:** all 20 domains (19 registered + hub-messaging via Explore fallback)
+**Auditor model:** sonnet
 
 ---
 
-## Real Blockers (must fix)
+## OVERALL VERDICT: **FAIL** (2 FAIL, 10 DRIFT, 7 PASS, 1 PASS*)
 
-**None.**
-
----
-
-## Real Warnings (should review)
-
-### WARN-01: Platform setting seed value drifts from canonical spec
-
-- **File:** `packages/db/src/seed/v32-platform-settings-extended.ts:111`
-- **Setting:** `trust.standards.maxLateShipRatePercent`
-- **Seeded:** `5` (5%)
-- **Canonical spec (§10.4):** `4.0` (4%)
-- **Impact:** Sellers tolerate 25% more late shipments before falling below trust standard than the canonical doc intends.
-- **Fix options:** (a) update seed to `4`, (b) update canonical to `5` and note the decision, (c) add a Decision# entry explaining the deviation.
-
-### WARN-02: Platform setting key name divergence
-
-- **File:** `packages/db/src/seed/v32-platform-settings-extended.ts:115`
-- **Seed key:** `trust.standards.belowStandardTfSurcharge` (200 bps)
-- **Canonical spec (§10.4) key:** `trust.standards.belowStandardFvfSurcharge` (5.0%)
-- **Impact:** Any code reading the spec-named key gets a DB miss; the 200 bps vs 5% value type also differs. Silent divergence bug waiting to happen.
-- **Fix:** Align on one name. TF is the current canonical term (FvF was renamed per Decision #75), so the seed key is closer to spec intent — but the VALUE differs. Reconcile both name AND value.
-
-### WARN-03: Three CASL subjects have no explicit non-admin rules
-
-- **File:** `packages/casl/src/platform-abilities.ts`, `subjects.ts`
-- **Subjects:** `Setting`, `Module`, `ProviderUsageMapping`
-- **Impact:** These subjects exist in `subjects.ts` and are used in action CASL checks (admin-settings.ts, admin-modules.ts, admin-providers.ts), but no explicit rules grant them to any role. They are only accessible via ADMIN's `can('manage', 'all')` wildcard. No privilege escalation risk (default-deny works), but DEVELOPER / SRE / future PLATFORM_OPS roles cannot be granted partial access without adding explicit rules.
-- **Fix:** Add explicit `can('read', 'Setting')` for DEVELOPER role in `platform-abilities.ts`, similar for Module and ProviderUsageMapping as appropriate.
+- **PASS:** 7 (hub-company-finance, engine-security, engine-schema, mk-listings, hub-helpdesk, hub-crosslister, mk-checkout)
+- **PASS\*:** 1 (hub-finance — 7 rules PASS, 3 UNVERIFIED Phase-D4 features, 2 low-severity copy drifts)
+- **DRIFT:** 10 (engine-local, mk-personalization, hub-subscriptions, mk-browse, hub-seller-score, hub-local, hub-platform-settings, hub-shell, engine-crosslister, engine-finance)
+- **FAIL:** 2 (hub-messaging, mk-buyer-protection)
 
 ---
 
-## Info (context only)
+## Domain verdicts
 
-- **INFO-01:** 11 canonical spec keys not seeded (Stream 3). All are for unimplemented features (serial-returner flagging, market index confidence bands, review length enforcement, `fulfillment.shipping.enabledCarriers`). Plus one key-name prefix mismatch: spec says `fees.automation.overagePackCents`, seed uses `automation.overagePackCents` (no `fees.` prefix).
-- **INFO-02:** `/sell` redirect marked permanent in `apps/web/next.config.ts:8` while spec annotates as "temporary". Cached 308 risk if onboarding URL changes.
-- **INFO-03:** Extra pages outside registry — `/p/authentication` (covered by `/p/[slug]` catch-all, linked from footer) and `/cfg/crosslister` (admin-nav grouping parent). Neither a 404 risk.
-- **INFO-04:** `/api/hub/session/heartbeat` uses `getStaffSession()` directly instead of `staffAuthorize()`. Read-only, token validated, but inconsistent with the standard auth wrapper pattern.
-- **INFO-05:** 105 void async calls in UI (fire-and-forget pattern in event handlers + useEffect). Covered by FP-072 — error handling is in the server actions themselves.
-- **INFO-06:** No dev server running during audit, so Stream 10a skipped HTTP smoke tests. TypeScript/build checks passed clean via `npx turbo typecheck`.
+| Domain | Verdict | Top finding |
+|---|---|---|
+| mk-browse | DRIFT | R4 — `packages/search/src/listings.ts:44` hardcodes `limit = 48`; canonical default is 24; `discovery.search.defaultPageSize` seeded but never read |
+| mk-checkout | **PASS** | All 7 rules clean. SELECT FOR UPDATE verified, order-number canonical, `reverse_transfer + refund_application_fee` on cancel |
+| mk-listings | **PASS** | All 7 rules clean. Imports ACTIVE, SOLD unarchivable (Decision #109), FREE 5/6mo teaser wired |
+| mk-buyer-protection | **FAIL** | **R1 critical:** `calculateTfRefund()` returns full TF for SELLER_FAULT. Decision #1 LOCKED says Twicely keeps 100%. Bug in `return-fees.ts:101-111` + test asserts wrong value |
+| mk-personalization | DRIFT | D1 `homepage.ts` uses `user.name`, `feed.ts` uses `user.displayName` (inconsistent). D2 `cardEmphasis` not in feed query output (Phase G polish, no TODO) |
+| hub-shell | DRIFT | D1 Crosslister nav gate uses `IS_SELLER` not canonical `HAS_CROSSLISTER` (no Decision record). D2 Impersonation token TTL hardcoded 15min, no seed key |
+| hub-finance | PASS\* | R4/R6/R8 UNVERIFIED — Phase D4 intelligence-layer features not yet built. 2 low-severity copy drifts on upsell card + render-path defensive check |
+| hub-company-finance | **PASS** | Future surface, canonical LOCKED, no scope creep, zero conflation terms |
+| hub-subscriptions | DRIFT | Finance PRO 6-month trial (FC v3.0 §2): schema + seed keys exist but never read/written. Canonical tags as "Phase D4 work" — intentional deferred |
+| hub-crosslister | **PASS** | All 11 rules clean. Phase 10 verified (11-platform UI + auth health check cron at `:15` UTC) |
+| hub-helpdesk | **PASS** | All 8 rules clean. SLA/routing from DB, all 4 crons registered with `tz: 'UTC'`, Phase D split verified, 29 test files |
+| hub-seller-score | DRIFT | Engine B `computePerformanceBand` still exported (dead code) from `packages/scoring/src/performance-band.ts`. Phase 4 removed from commerce path, missed scoring package. Zero callers but risks future fork |
+| hub-platform-settings | DRIFT | SD-1: `platformSetting` uses inline `.unique()` but canonical §1.2 specifies named `uniqueIndex('ps_key')`. R5: `feature-flags.ts` module-level `_cachedTtl` cache has no invalidation path |
+| hub-local | DRIFT | **D1 blocking:** Phase 5 cash sale action layer absent — `local-cash-sale.ts`/`local-cash-complete.ts` exist in `packages/commerce` but no `apps/web/src/lib/actions` wrapper; seller has no UI entry point |
+| hub-messaging | **FAIL** | **V1 (R1):** no `uniqueIndex('buyerId','sellerId','listingId')` in `schema/messaging.ts` — race-unsafe app-level dedup. **V2 (R10):** `use-conversation-realtime.ts` inlines channel string instead of importing `conversationChannel()` |
+| engine-finance | DRIFT | **D1 important:** `ledger_entry.idempotencyKey` column + unique partial index added in Phase 6, but **not populated at 9+ insert sites** (refund, chargeback, admin-finance, local-ledger, etc.). Partial index means NULL inserts pass silently — **idempotency guarantee is inactive** |
+| engine-crosslister | DRIFT | `packages/jobs/src/crosslister-auth-health-check.ts` (Phase 10) has no test file. 4 detection branches + idempotency + notification dispatch all uncovered |
+| engine-security | **PASS** | All 8 rules clean. Better Auth, HMAC-SHA256 impersonation (constant-time compare), Phase A DEVELOPER rule scoped read-only |
+| engine-schema | **PASS** | 189 tables, 37 schema files, zero Prisma, all FKs have explicit onDelete, Phase 6 baseline migration present |
+| engine-local | DRIFT | D1 3 dead schema columns (`noShowFeeCents`, `noShowFeeChargedAt`, `noShowParty`) superseded by §A5 but still in schema. D2 `commerce.local.inconsistentMarkThreshold` used in code but not seeded |
 
 ---
 
-## Stripe Deep Check (Stream 8 Agent)
+## Top violations (FAIL + blocking DRIFT)
 
-14 unique webhook events handled across platform, connect, and subscription dispatchers:
+1. **mk-buyer-protection / R1** — `packages/commerce/src/return-fees.ts:101-111`
+   `calculateTfRefund()` returns full TF to seller for SELLER_FAULT bucket. Decision #1 (LOCKED 2026-02-20) mandates "Twicely keeps 100% of TF on SELLER_FAULT". Current code: `return originalTfCents` for every bucket except BUYER_REMORSE. Correct: return `0` for SELLER_FAULT. **Test asserts the wrong value** (`return-fees.test.ts:100` expects 500, should expect 0). This is a real money bug: Twicely loses TF on every INAD/WRONG_ITEM/COUNTERFEIT return.
 
-- **Platform:** `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`, `charge.refunded`, `charge.dispute.created/updated/closed`, `checkout.session.completed`, `customer.subscription.trial_will_end`, `customer.subscription.updated`
-- **Connect:** `account.updated`, `payout.paid`, `payout.failed`, `payout.canceled`
-- **Subscription:** `customer.subscription.created/updated/deleted`, `invoice.payment_failed`
+2. **hub-messaging / V1 (R1)** — `packages/db/src/schema/messaging.ts:27-32`
+   Missing `uniqueIndex` on `(buyerId, sellerId, listingId)` tuple. Application-level dedup exists (`messaging-actions.ts:90-100` SELECT before INSERT) but is NOT race-safe under concurrent load. Two concurrent `createConversationAndSend` calls with the same triple can insert duplicate rows.
 
-All 7 mandatory events present. Refund safety verified: `reverse_transfer: true`, `refund_application_fee: true`, ledger entries post-Stripe, dedup guards on `stripeRefundId`, refund cap enforced (H1). Checkout gates: seller onboarding verified (stripeAccountId + payoutsEnabled), MIN_ORDER_CENTS from platform_settings, TF computed server-side, coupons fully re-validated server-side, rate limit fail-closed (SEC-023). SEC-016 minimum 2-day payout delay enforced. SEC-022 fail-CLOSED idempotency confirmed in `webhook-idempotency.ts`. Payout tier gating: PERSONAL → manual only, STARTER/PRO → manual/weekly, POWER → +daily, ENTERPRISE → +monthly.
+3. **hub-messaging / V2 (R10)** — `apps/web/src/hooks/use-conversation-realtime.ts:36`
+   Channel constructed inline as `private-conversation.${conversationId}` instead of importing `conversationChannel()` from `@twicely/realtime/messaging-channels`. If the channel naming scheme changes in the package, this hook will silently diverge. The typing route correctly imports the helper.
+
+4. **hub-local / D1 blocking** — `apps/web/src/lib/actions/local-cash-sale.ts` ABSENT
+   Phase 5 backend exists in `packages/commerce/src/local-cash-sale.ts` + `local-cash-complete.ts`. Read side (`LOCAL_CASH_SALE_REVENUE`) is consumed in `finance-center-detail.ts` + `finance-center-reports-pnl.ts`. BUT no server action wrapper exists in `apps/web/src/lib/actions/`, so a seller has NO UI entry point to log a cash sale. Feature is inoperative.
+
+5. **engine-finance / D1 important** — `packages/db/src/schema/finance.ts:42` + 9 insert sites
+   `ledger_entry.idempotencyKey` column added (Phase 6) with partial unique index `le_uniq_idempotency`. But **zero new ledger insert sites populate it**: `webhook-refund-handler.ts`, `chargebacks.ts`, `admin-finance.ts`, `local-ledger.ts`, `protection-processing.ts`, `dispute-recovery.ts`, `return-fee-apply.ts`, `order-cancel.ts`, `checkout-finalize.ts`. The canonical format is defined (`order:{id}:tf`, `refund:{id}:full`, etc.) but unused. Partial index (`WHERE idempotency_key IS NOT NULL`) means NULL inserts pass silently, so the idempotency guarantee §4.4 was meant to provide is not actually active on any path yet.
+
+---
+
+## Drift summary
+
+| Category | Count |
+|---|---|
+| Files in code, missing from registry | 1 (`use-conversation-realtime.ts` in hub-messaging) |
+| Files in registry, missing from code | 2 (`storefront-header-local.tsx`, `seller-card-local.tsx` in hub-local — absorbed into parents) |
+| Schema mismatches (canonical vs implementation) | 3 (engine-local 3 dead cols, hub-platform-settings missing named index, engine-schema 2 extra enum values) |
+| Test coverage gaps | ~15 (seller-score action, 6 orders query files, 3 search package files, 1 Phase 10 cron, etc.) |
+| Missing server-action wrappers | 2 (`local-cash-sale`, `local-cash-complete` in apps/web/src/lib/actions/) |
+| Unseeded canonical keys | 2 (`commerce.local.inconsistentMarkThreshold`, `general.impersonationTokenTtlMinutes`) |
+| Dead exported code | 1 (`computePerformanceBand` in `packages/scoring/src/performance-band.ts`) |
+| Re-export patterns rejected by Turbopack | 0 (all fixed in Phase D hotfix) |
+
+---
+
+## Deferred / Phase-gated (not regressions)
+
+- **hub-subscriptions** Finance PRO 6-month trial wiring — canonical tags as "Phase D4 work"
+- **hub-finance** R4/R6/R8 intelligence layer — Phase D4 build targets, schema tables present, jobs/components absent
+- **mk-personalization** Layer 2 `cardEmphasis` — canonical §14 "G polish"
+- **engine-crosslister** test coverage for Phase 10 auth health check — follow-up from recent addition
+- **hub-crosslister** minor canonical drift on projection status enum (`ORPHANED`/`UNMANAGED` extensions beyond spec §5.7 v1 sketch)
 
 ---
 
 ## Suppressed (known false positives)
 
-**101 items suppressed total.** Full breakdown:
-
-**Stream 7 — Wiring (83 suppressed):** FP-040 (trust weight pending wire-up), FP-041 (perf band cron-only), FP-064 (alias-drift dead exports in commerce/stripe — consolidation artifact), FP-074 (buyer-protection notify already wired), FP-075 (offer-engine notify already wired).
-
-**Stream 9 — Hygiene (17 blockers + 13 warnings suppressed):** FP-062 (17 production files over 300 lines — all pre-existing on master, owner-accepted, tracked for refactor sprint; largest: `admin-moderation.ts` 552, `v32-platform-settings-extended.ts` 505, `accounting/sync-engine.ts` 461). FP-061 (test file line limits). FP-101 (`client-logger.ts` intentionally uses console.error/warn — it IS the logger).
-
-**Stream 11 — Runtime (1 blocker + 1 warning suppressed):** FP-085 (`window.opener` in `extension/callback/route.ts` inside HTML template string — runs in browser, not server). FP-070 (4 `eslint-disable no-img-element` on blob URLs). FP-071 (`meetup-map.tsx` eslint-disable — Leaflet mount-only effect). FP-072 (105 void async fire-and-forget).
-
-**Stream 2 — Auth & CASL:** FP-001 to FP-005 (personal/owner actions), FP-078 (helpdesk-signature self-service), FP-086 (staff-notifications self-service), FP-087 (auth-offer-check public), FP-088 (deal-badge public), FP-090 to FP-097, FP-099, FP-100, FP-102.
-
-**Stream 1 — Routes:** FP-073 (redirect-only routes), FP-076 (`/hd` link exists), FP-077 (finance sub-pages present), FP-103 (import/issues exists).
-
-**Stream 6 — Schema:** FP-030 (sellerProfileId FK), FP-031 (FinanceTier enum), FP-032 (extra enums + ledger types), FP-067 (SUSPENDED band), FP-080, FP-081, FP-084, FP-205.
-
-**Stream 3 — Hardcoded:** FP-010 (fallback constants matching seed), FP-011 (algorithm tuning), FP-089 (perf band calibration), FP-094 (shipping weight thresholds).
-
-**Stream 8 — Stripe:** FP-050 (charge.refunded built), FP-068 (escrow DST ±1h on 72h).
+Total: ~25 FP suppressions matched across 20 domains. Key patterns:
+- **FP-010** (fallback default constants matching seed) — applied in 12 domains
+- **FP-200/FP-201/FP-202** (boundary `parseFloat` → `Math.round * 100`) — applied in mk-listings, mk-checkout, engine-crosslister, hub-finance
+- **FP-062** (file size over 300 lines — 7 remaining owner-accepted) — applied in hub-messaging, hub-platform-settings, mk-checkout
+- **FP-206** (heartbeat staffAuthorize bypass) — applied in engine-security, hub-shell
+- **FP-032** (implementation-phase enum/table additions ahead of spec doc) — applied in engine-schema
 
 ---
 
-## Comparison vs Last Audit
+## Comparison vs last audit (2026-04-06, commit 722fd87 — pre-remediation)
 
-No previous `.claude/audit/last-report.md` to diff against — this is the first Super Audit V2 run since the chore/contributing-and-ci-fix branch landed its 22 commits of audit remediation (Phases 1–10).
+| Metric | Pre-remediation | Post-remediation | Delta |
+|---|---|---|---|
+| PASS domains | 5 | 7 | +2 |
+| DRIFT domains | 14 | 10 + 1 PASS\* | −3 |
+| FAIL domains | 0 | 2 | +2 (both new: hub-messaging first audit, mk-buyer-protection regression surfaced) |
+| Real blockers | 0 | 0 | — |
+| File splits done | 0 of 17 | 10 of 17 | +10 |
+| Unowned action files | 85 | 0 | −85 |
+| Domain count | 19 | 20 | +1 (hub-messaging) |
+| Tests | 9631 | 9838 | +207 |
 
-- **Baseline state on master:** 5 PASS / 14 DRIFT / 0 FAIL (19-domain audit, pre-remediation)
-- **Current state on branch:** 3 real warnings, 0 blockers, ~101 known FPs suppressed
-- **Net progress:** All D1 critical fixes landed (dispute waterfall, dual scoring engine removal), schema hygiene complete (drizzle config + baseline migration + 25 FK onDelete), Phase 7 added +110 tests (9631 → 9836 baseline), Phase 10 added 8 missing crosslister platforms + auth expiry cron.
+**Net progress is significant** — the remediation branch resolved most Phase 1-9 drift. The 2 new FAILs are:
 
----
-
-## Verdict: READY
-
-The codebase is audit-clean after known-FP suppression. The 3 remaining real warnings are documentation/config drift, not code defects:
-
-1. **WARN-01** (seed vs spec value drift) — cosmetic, affects only the auto-suspend threshold for late shipments
-2. **WARN-02** (seed key name divergence + value mismatch) — a latent bug if any code uses the spec-named key; currently no code reads it
-3. **WARN-03** (3 CASL subjects without explicit non-admin rules) — forward-compatibility concern for future roles, not a current security gap
-
-**All three can be fixed in a single sub-30-line commit** if desired. None block merging the current branch.
+- **hub-messaging** — **FIRST EVER AUDIT** of a brand-new domain. V1 (DB-level dedup) and V2 (channel helper import) are real gaps but are greenfield findings, not regressions.
+- **mk-buyer-protection** — The `calculateTfRefund` bug is **pre-existing** and was NOT introduced in this remediation sweep (the code block was untouched by any Phase A-E commit). The auditor surfaced a latent Decision #1 violation that's been in the codebase since the D1 dispute fixes landed. This is the most important finding of the run.
 
 ---
 
-## Recommended next actions
+## Recommended next actions (priority order)
 
-1. **Fix WARN-02 first** — key name divergence is the highest-risk because it silently breaks any future code that reads the spec-named key. Single seed edit + decision on value.
-2. **Fix WARN-01** — single seed edit + Decision# entry.
-3. **Fix WARN-03** — add ~6 lines to `platform-abilities.ts` granting explicit read access to Setting/Module/ProviderUsageMapping for DEVELOPER role.
-4. **Sweep the 11 unseeded canonical keys from Stream 3 INFO** — can be a follow-up batch when the associated features are built.
-5. **Address the 17 pre-existing oversize files (FP-062)** in a dedicated refactor sprint — not blocking but growing.
+1. **URGENT — mk-buyer-protection / R1 SELLER_FAULT TF bug** (real money loss on every INAD return). Fix `calculateTfRefund()` to return 0 for SELLER_FAULT, update `return-fees.test.ts:100` to assert 0, add a new test asserting the full rule table per Decision #1.
 
-Run `/audit fix` to auto-repair WARN-01 through WARN-03. Or fix manually — they're small.
+2. **HIGH — engine-finance / ledger_entry idempotencyKey population.** The partial unique index is inactive because no insert site populates the column. Add canonical-format keys to all 9+ insert sites (`order:{id}:tf`, `refund:{id}:full`, etc.). Write a regression test asserting `idempotencyKey` is non-null on new inserts.
+
+3. **HIGH — hub-local / D1 Phase 5 action layer missing.** Create `apps/web/src/lib/actions/local-cash-sale.ts` + `local-cash-complete.ts` as `'use server'` wrappers over the commerce package functions. Seller currently has no UI entry point.
+
+4. **HIGH — hub-messaging / V1 conversation dedup.** Add `uniqueIndex('conv_unique_triple', [buyerId, sellerId, listingId])` to the conversation table. Generate incremental migration.
+
+5. **MEDIUM — hub-messaging / V2 realtime channel helper.** Update `use-conversation-realtime.ts:36` to import `conversationChannel()` from `@twicely/realtime/messaging-channels`. Add the hook to agent code_paths registry.
+
+6. **MEDIUM — hub-seller-score / Engine B cleanup.** Delete `computePerformanceBand` from `packages/scoring/src/performance-band.ts`. Keep type exports (`PerformanceBand`, `SellerMetrics`, `getTrustBadge`) that display consumers still need.
+
+7. **MEDIUM — hub-shell / D2 impersonation TTL.** Add `general.impersonationTokenTtlMinutes` to `platform_settings` seed (default 15), read from `impersonation/start/route.ts:161`.
+
+8. **LOW — documentation cleanups** (engine-local 3 dead schema cols, hub-platform-settings named index, build doc BASIC/ELITE staleness, mk-personalization sellerName inconsistency, hub-crosslister projection enum spec update, engine-schema spec doc sync)
+
+9. **LOW — test coverage gaps** (6 orders query files, 3 search package files, Phase 10 auth health check cron, seller-score action, mk-browse browse queries)
+
+---
+
+## Gates
+
+- `npx turbo typecheck`: 24/24 pass, 0 errors
+- `npx turbo build`: 1/1 task, 5m07s (passed)
+- Tests: 9838/9838 (isolated per-package)
+- Domain audit: **FAIL** (2 FAIL + 10 DRIFT + 7 PASS + 1 PASS\*)
+
+---
+
+## Verdict: **FAIL — 2 domains, 1 critical money bug**
+
+The mk-buyer-protection SELLER_FAULT TF bug is the #1 priority — it's a direct violation of Decision #1 LOCKED and represents ongoing revenue loss on every returned INAD/WRONG_ITEM/COUNTERFEIT order. The hub-messaging FAIL is less urgent (schema race condition with a low-probability trigger) but should be paired with the V2 channel helper fix in the same commit.
+
+All other DRIFT items are low-to-medium severity and can be handled in a follow-up sprint. The 7 PASS domains and 1 PASS\* confirm the Phase A-E remediation worked — consolidation is clean, schema hygiene holds, CASL is tight, build is green.
+
+**Run `/twicely-fix mk-buyer-protection R1 return-fees.ts:101` to fix the critical bug first.**

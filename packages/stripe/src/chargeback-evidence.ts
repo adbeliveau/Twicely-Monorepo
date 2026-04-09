@@ -133,6 +133,7 @@ export async function handleChargebackResolution(
         orderId: ord.id,
         stripeDisputeId: stripeDispute.id,
         stripeEventId: eventId ?? null,
+        idempotencyKey: `chargeback:${stripeDispute.id}:reversal`,
         postedAt: now,
       });
     }
@@ -164,6 +165,7 @@ export async function handleChargebackResolution(
         orderId: ord.id,
         stripeDisputeId: stripeDispute.id,
         stripeEventId: eventId ?? null,
+        idempotencyKey: `chargeback:${stripeDispute.id}:fee`,
         postedAt: now,
       });
     }
@@ -184,6 +186,7 @@ export async function handleChargebackResolution(
         orderId: ord.id,
         stripeDisputeId: stripeDispute.id,
         stripeEventId: eventId ?? null,
+        idempotencyKey: `chargeback:${stripeDispute.id}:platform_absorb`,
         postedAt: now,
       });
     }

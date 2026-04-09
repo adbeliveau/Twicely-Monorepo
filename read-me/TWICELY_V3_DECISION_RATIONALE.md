@@ -5676,3 +5676,35 @@ Logged-in users skip steps 1-4 and call `toggleWatchlistAction` directly with op
 
 - This decision does NOT add a new "favorites" or "wishlist" entity. Watchlist is the canonical save-for-later mechanism per Schema v2.1.0.
 - This decision does NOT cache the watching state on landing cards. Anonymous users always see an empty heart; logged-in users see optimistic local state. A full SSR `isWatching` query per card was rejected as too much DB load for the homepage.
+
+---
+
+## Decision #143 — Crosslister Nav Gate Uses IS_SELLER, Not HAS_CROSSLISTER — LOCKED 2026-04-08
+
+### Context
+
+The Unified Hub Canonical §3.2 nav table originally listed the Crosslister sub-group with `gate: HAS_CROSSLISTER` (condition: `listerTier !== NONE`). In practice the nav ships with `gate: IS_SELLER` at `apps/web/src/lib/hub/hub-nav.ts:91`, making Platforms / Import / Automation visible to every seller regardless of ListerTier.
+
+The hub-shell domain audit flagged this as drift because no Decision record formally authorized the deviation.
+
+### The Decision
+
+**Honor the shipped code: crosslister nav is gated by `IS_SELLER`, not `HAS_CROSSLISTER`.** Canonical §3.2 is updated to match.
+
+### Rationale
+
+1. **Import is free for every seller.** Decision #105 caps the FREE tier at 5 publishes per 6-month teaser window, but the one-time free import is unmetered — it's the crosslister flywheel. Hiding the Import link behind a paid gate breaks the onboarding funnel for sellers who land on Twicely from an "import your eBay listings" CTA.
+2. **Platforms (Connect) is also ungated.** Sellers need to connect a source platform before they can import. Gating this step means a NONE-tier seller cannot even begin the import flow from the hub.
+3. **Automation is gated inside the action layer, not the nav.** The nav item is visible but `automation-settings.ts` checks `listerTier` and returns an upgrade prompt for NONE sellers. Duplicating that gate at the nav layer would create a second source of truth.
+4. **The lost-nav risk is worse than the noise.** Showing two nav items to a NONE seller who hasn't connected a platform is strictly less bad than hiding the Import link from the ~100% of sellers who want to use it.
+
+### Implementation
+
+- `apps/web/src/lib/hub/hub-nav.ts:91` — `gate: 'IS_SELLER'` (unchanged). Inline comment references this decision.
+- `packages/casl/src/*` — no change. CASL scopes (`crosslister.manage`, `crosslister.import`) are still checked per nav item via `requiresScope`.
+- `read-me/TWICELY_V3_UNIFIED_HUB_CANONICAL.md` — §3.2 crosslister row updated from `HAS_CROSSLISTER` to `IS_SELLER` with a reference to this decision.
+
+### Non-Goals
+
+- This decision does NOT affect the per-tier publish meter. ListerTier still gates publish counts via `canPublish()` in `packages/crosslister/src/services/publish-meter.ts`.
+- This decision does NOT expose paid automation features to NONE sellers. Automation setting mutations still fail CASL / tier checks at the action layer.

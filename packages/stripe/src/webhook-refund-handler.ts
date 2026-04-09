@@ -81,6 +81,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge, eventId?: stri
         stripePaymentIntentId: paymentIntentId,
         stripeRefundId: latestRefund?.id ?? null,
         stripeEventId: eventId ?? null,
+        idempotencyKey: latestRefund?.id
+          ? `refund:${latestRefund.id}:full`
+          : `refund:stripe_charge:${charge.id}:full`,
         postedAt: now,
         memo: 'External full refund via Stripe',
       });
@@ -124,6 +127,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge, eventId?: stri
         stripePaymentIntentId: paymentIntentId,
         stripeRefundId: latestRefund?.id ?? null,
         stripeEventId: eventId ?? null,
+        idempotencyKey: latestRefund?.id
+          ? `refund:${latestRefund.id}:partial`
+          : `refund:stripe_charge:${charge.id}:partial`,
         postedAt: now,
         memo: 'External partial refund via Stripe',
       });

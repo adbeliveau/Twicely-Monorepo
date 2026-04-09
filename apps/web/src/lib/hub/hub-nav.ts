@@ -82,8 +82,10 @@ export const HUB_NAV: HubNavSection[] = [
   },
 
   // ─── CROSSLISTER (sub-group under Selling) ─────────────────────
-  // Gate is IS_SELLER — free one-time import is available to ALL sellers
-  // regardless of ListerTier. The import flywheel must not be gated behind a subscription.
+  // Gate is IS_SELLER per Decision #143 (LOCKED 2026-04-08) — free one-time
+  // import is available to ALL sellers regardless of ListerTier. The import
+  // flywheel must not be gated behind a subscription. Paid features
+  // (Automation, publish meter) are gated at the action layer instead.
   {
     key: 'crosslister',
     label: 'Crosslister',

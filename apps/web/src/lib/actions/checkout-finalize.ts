@@ -195,6 +195,7 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
       userId: ord.sellerId,
       orderId: ord.id,
       stripePaymentIntentId: paymentIntentId,
+      idempotencyKey: `order:${ord.id}:capture`,
       postedAt: now,
     });
 
@@ -206,6 +207,7 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
       userId: ord.sellerId,
       orderId: ord.id,
       stripePaymentIntentId: paymentIntentId,
+      idempotencyKey: `order:${ord.id}:tf`,
       postedAt: now,
     });
 
@@ -218,6 +220,7 @@ export async function finalizeOrder(paymentIntentId: string): Promise<FinalizeOr
         userId: ord.buyerId, // Charged to buyer, not seller
         orderId: ord.id,
         stripePaymentIntentId: paymentIntentId,
+        idempotencyKey: `order:${ord.id}:auth_fee_buyer`,
         postedAt: now,
       });
     }

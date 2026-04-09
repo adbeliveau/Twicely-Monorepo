@@ -126,6 +126,7 @@ export async function handleChargebackWebhook(
       orderId: ord.id,
       stripeDisputeId: stripeDispute.id,
       stripeEventId: eventId ?? null,
+      idempotencyKey: `chargeback:${stripeDispute.id}:debit`,
       postedAt: new Date(),
     });
   } else {
@@ -153,6 +154,7 @@ export async function handleChargebackWebhook(
       orderId: ord.id,
       stripeDisputeId: stripeDispute.id,
       stripeEventId: eventId ?? null,
+      idempotencyKey: `chargeback:${stripeDispute.id}:fee`,
       memo: 'Stripe chargeback dispute fee',
       postedAt: new Date(),
     });

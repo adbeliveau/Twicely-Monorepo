@@ -1,2 +1,3 @@
 - [Crosslister gate deviation](project_crosslister_gate_deviation.md) — hub-nav.ts uses IS_SELLER (not HAS_CROSSLISTER) for crosslister; undocumented product decision, flag each audit
-- [Hardcoded SETTINGS_NAV in settings layout](project_settings_layout_hardcoded_nav.md) — R3 FAIL: settings/layout.tsx has inline 5-item nav array, diverged from hub-nav.ts
+- [Settings layout nav resolved](project_settings_layout_hardcoded_nav.md) — R3 PASS as of cb87b89: settings/layout.tsx now uses SETTINGS_SUB_NAV from hub-nav.ts (was hardcoded)
+- [Impersonation TTL hardcoded](project_impersonation_ttl_hardcoded.md) — R5 DRIFT: impersonation/start/route.ts line 161 hardcodes 15-minute TTL instead of reading from platform_settings

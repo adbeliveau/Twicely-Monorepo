@@ -87,6 +87,9 @@ Messaging does not yet have a standalone canonical. Until it does, consult:
 - `message-seller-button.tsx`
 - `typing-indicator.tsx`
 
+### Hooks
+- `apps/web/src/hooks/use-conversation-realtime.ts` — Centrifugo subscription hook for new-message + typing events
+
 ### Admin components
 - `apps/web/src/components/admin/flagged-messages-table.tsx`
 

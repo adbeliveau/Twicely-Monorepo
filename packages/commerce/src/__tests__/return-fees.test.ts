@@ -93,30 +93,46 @@ describe('Return Fees Module', () => {
     });
   });
 
-  describe('calculateTfRefund', () => {
-    it('returns 100% TF refund for seller fault', async () => {
+  describe('calculateTfRefund — Decision #1 LOCKED', () => {
+    it('returns 0 TF refund for SELLER_FAULT (Twicely keeps 100%)', async () => {
       const { calculateTfRefund } = await import('@twicely/commerce/return-fees');
 
-      expect(calculateTfRefund(500, 'SELLER_FAULT')).toBe(500);
+      // Decision #1: SELLER_FAULT → seller gets 0 TF back, Twicely keeps all.
+      expect(calculateTfRefund(500, 'SELLER_FAULT')).toBe(0);
+      expect(calculateTfRefund(1000, 'SELLER_FAULT')).toBe(0);
+      expect(calculateTfRefund(0, 'SELLER_FAULT')).toBe(0);
     });
 
-    it('returns 50% TF refund for buyer remorse', async () => {
+    it('returns 50% TF refund for BUYER_REMORSE (rounded)', async () => {
       const { calculateTfRefund } = await import('@twicely/commerce/return-fees');
 
       expect(calculateTfRefund(500, 'BUYER_REMORSE')).toBe(250);
       expect(calculateTfRefund(1000, 'BUYER_REMORSE')).toBe(500);
+      expect(calculateTfRefund(333, 'BUYER_REMORSE')).toBe(167); // rounds 166.5 → 167
     });
 
-    it('returns 100% TF refund for platform/carrier fault', async () => {
+    it('returns 100% TF refund for PLATFORM_CARRIER_FAULT (seller whole)', async () => {
       const { calculateTfRefund } = await import('@twicely/commerce/return-fees');
 
       expect(calculateTfRefund(500, 'PLATFORM_CARRIER_FAULT')).toBe(500);
+      expect(calculateTfRefund(1234, 'PLATFORM_CARRIER_FAULT')).toBe(1234);
     });
 
-    it('returns 100% TF refund for edge cases', async () => {
+    it('returns 100% TF refund for EDGE_CONDITIONAL (default)', async () => {
       const { calculateTfRefund } = await import('@twicely/commerce/return-fees');
 
       expect(calculateTfRefund(500, 'EDGE_CONDITIONAL')).toBe(500);
+    });
+
+    it('full Decision #1 rule table coverage', async () => {
+      const { calculateTfRefund } = await import('@twicely/commerce/return-fees');
+      const tf = 1000;
+
+      // Exhaustive bucket matrix per Decision #1.
+      expect(calculateTfRefund(tf, 'SELLER_FAULT')).toBe(0);           // keeps 100%
+      expect(calculateTfRefund(tf, 'BUYER_REMORSE')).toBe(500);        // 50%
+      expect(calculateTfRefund(tf, 'PLATFORM_CARRIER_FAULT')).toBe(tf); // absorbs
+      expect(calculateTfRefund(tf, 'EDGE_CONDITIONAL')).toBe(tf);      // default full
     });
   });
 });

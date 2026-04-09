@@ -207,6 +207,7 @@ async function applySignalOneConsequences(
       orderId: conflictingOrderId,
       stripeRefundId: refund.id,
       reasonCode: `local:fraud:${conflictingTransactionId}`,
+      idempotencyKey: `local_fraud:${conflictingTransactionId}:refund`,
       memo: `SafeTrade escrow reversed — confirmed fraud (flag ${fraudFlagId ?? 'unknown'})`,
       postedAt: now,
       createdAt: now,

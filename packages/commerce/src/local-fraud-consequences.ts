@@ -51,6 +51,7 @@ export async function createFraudReversalLedgerEntry(
   sellerId: string,
   stripeRefundId: string,
   fraudFlagId: string,
+  localTransactionId?: string,
 ): Promise<void> {
   const [ord] = await db
     .select({ itemSubtotalCents: order.itemSubtotalCents })
@@ -61,6 +62,14 @@ export async function createFraudReversalLedgerEntry(
   const amountCents = ord?.itemSubtotalCents ?? 0;
   const now = new Date();
 
+  // Finance Engine §4.4 canonical idempotency key.
+  // When called from applyConfirmedFraudConsequences we pass the localTransactionId
+  // so the key matches the local_fraud:{localTransactionId}:refund canonical format;
+  // as a fallback we use the fraudFlagId (still deterministic per staff resolution).
+  const idempotencyKey = localTransactionId
+    ? `local_fraud:${localTransactionId}:refund`
+    : `local_fraud:flag:${fraudFlagId}:refund`;
+
   await db.insert(ledgerEntry).values({
     type: 'LOCAL_FRAUD_REVERSAL',
     status: 'POSTED',
@@ -69,6 +78,7 @@ export async function createFraudReversalLedgerEntry(
     orderId,
     stripeRefundId,
     reasonCode: `local:fraud:staff:${fraudFlagId}`,
+    idempotencyKey,
     memo: `SafeTrade escrow reversed by staff — confirmed fraud (flag ${fraudFlagId})`,
     postedAt: now,
     createdAt: now,
@@ -147,7 +157,7 @@ export async function applyConfirmedFraudConsequences(
           refund_application_fee: true,
         });
 
-        await createFraudReversalLedgerEntry(orderId, sellerId, refund.id, flagId);
+        await createFraudReversalLedgerEntry(orderId, sellerId, refund.id, flagId, flag.localTransactionId);
         result.refundIssued = true;
 
         await db

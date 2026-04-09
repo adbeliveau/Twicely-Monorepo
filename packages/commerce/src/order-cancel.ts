@@ -97,6 +97,8 @@ export async function cancelOrder(
       .where(eq(order.id, orderId));
 
     // Create REFUND_FULL ledger entry for reconciliation
+    // Finance Engine §4.4: idempotency key uses the Stripe refund ID (no twicely refund
+    // row exists for pre-shipment cancellations).
     await db.insert(ledgerEntry).values({
       type: 'REFUND_FULL',
       status: 'POSTED',
@@ -106,6 +108,7 @@ export async function cancelOrder(
       stripeRefundId: refund.id,
       postedAt: now,
       reasonCode: `order_cancel:${cancelInitiator.toLowerCase()}`,
+      idempotencyKey: `refund:${refund.id}:full`,
       memo: `Pre-shipment cancellation by ${cancelInitiator.toLowerCase()}`,
     });
 

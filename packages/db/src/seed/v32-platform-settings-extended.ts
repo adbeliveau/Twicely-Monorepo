@@ -142,7 +142,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.search.descriptionWeight', value: 3, type: 'number', category: 'discovery', description: 'Weight for description matches in search' },
   { key: 'discovery.search.trustMultiplierEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Boost trusted sellers in search results' },
   { key: 'discovery.search.freshnessBoostEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Boost recently listed items in search' },
-  { key: 'discovery.search.defaultPageSize', value: 48, type: 'number', category: 'discovery', description: 'Default search results per page' },
+  { key: 'discovery.search.defaultPageSize', value: 24, type: 'number', category: 'discovery', description: 'Default search results per page' },
   { key: 'discovery.promo.boostEnabled', value: true, type: 'boolean', category: 'discovery', description: 'Enable promoted listings in search' },
   { key: 'discovery.promo.maxBoostMultiplier', value: 3, type: 'number', category: 'discovery', description: 'Maximum ranking boost for promoted listings' },
   { key: 'discovery.priceAlert.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Enable price drop alerts' },
@@ -291,6 +291,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'commerce.local.schedulingMinLeadTimeHours', value: 1, type: 'number', category: 'local', description: 'Minimum lead time for meetup scheduling (hours)' },
   { key: 'commerce.local.schedulingMaxLeadTimeDays', value: 30, type: 'number', category: 'local', description: 'Maximum advance scheduling for meetups (days)' },
+  { key: 'commerce.local.inconsistentMarkThreshold', value: 3, type: 'number', category: 'local', description: 'Reliability marks threshold for INCONSISTENT tier (engine-local audit D2)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CONTENT MODERATION — G4
@@ -527,7 +528,7 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'trust.protection.autoApproveThresholdCents', value: 2500, type: 'cents' as const, category: 'trust', description: 'Auto-approve claims under this amount if seller does not respond ($25)' },
 
   // ─── Discovery — Search & Price Alerts (canonical §11.1, §11.3) ────────────
-  { key: 'discovery.search.maxPageSize', value: 100, type: 'number' as const, category: 'discovery', description: 'Maximum search results per page' },
+  { key: 'discovery.search.maxPageSize', value: 48, type: 'number' as const, category: 'discovery', description: 'Maximum search results per page' },
   { key: 'discovery.priceAlert.defaultExpiryDays', value: 90, type: 'number' as const, category: 'discovery', description: 'Default price alert expiration (days)' },
   { key: 'discovery.priceAlert.categoryAlertsEnabled', value: true, type: 'boolean' as const, category: 'discovery', description: 'Enable category-wide price alerts' },
   { key: 'discovery.priceAlert.categoryAlertMaxPerUser', value: 20, type: 'number' as const, category: 'discovery', description: 'Max category alerts per user' },

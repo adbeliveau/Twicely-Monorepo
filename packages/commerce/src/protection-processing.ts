@@ -123,6 +123,7 @@ export async function processProtectionClaim(
         stripeRefundId,
         postedAt: now,
         reasonCode: `protection_claim:${claimId}`,
+        idempotencyKey: `protection:${claimId}:refund`,
         memo: 'Buyer protection claim refund',
       },
       {
@@ -133,6 +134,7 @@ export async function processProtectionClaim(
         orderId: claim.orderId,
         postedAt: now,
         reasonCode: `protection_claim:${claimId}:absorbed`,
+        idempotencyKey: `protection:${claimId}:platform_absorb`,
         memo: 'Platform protection fund absorption',
       },
     ]);

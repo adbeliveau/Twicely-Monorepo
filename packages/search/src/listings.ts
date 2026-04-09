@@ -1,10 +1,25 @@
 import { db } from '@twicely/db';
 import { listing, listingImage, user, sellerProfile, category, sellerPerformance } from '@twicely/db/schema';
 import { eq, and, or, ilike, gte, lte, inArray, desc, asc, sql } from 'drizzle-orm';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { mapToListingCard, type ListingCardData, type SearchFilters, type SearchResult } from './shared';
 import { getTypesenseClient } from './typesense-client';
 import { LISTINGS_COLLECTION, DEFAULT_QUERY_BY, DEFAULT_QUERY_WEIGHTS } from './typesense-schema';
 import { calculatePromotedSlots } from '@twicely/commerce/boosting';
+
+// R4 (mk-browse audit): Default and max page size come from platform_settings
+// per CLAUDE.md "All settings from platform_settings table" rule. Canonical
+// B1 spec §B1.4 defaults: 24 default, 48 max. Fallback constants match seed.
+const DEFAULT_PAGE_SIZE_FALLBACK = 24;
+const MAX_PAGE_SIZE_FALLBACK = 48;
+
+async function resolvePageSize(requested: number | undefined): Promise<number> {
+  const [defaultSize, maxSize] = await Promise.all([
+    getPlatformSetting<number>('discovery.search.defaultPageSize', DEFAULT_PAGE_SIZE_FALLBACK),
+    getPlatformSetting<number>('discovery.search.maxPageSize', MAX_PAGE_SIZE_FALLBACK),
+  ]);
+  return Math.min(requested ?? defaultSize, maxSize);
+}
 
 /**
  * Enforce the 30% promoted listings cap (D2.4).
@@ -41,7 +56,7 @@ export async function searchListings(filters: SearchFilters): Promise<SearchResu
 async function searchWithTypesense(filters: SearchFilters): Promise<SearchResult> {
   const client = getTypesenseClient();
   const page = filters.page ?? 1;
-  const limit = Math.min(filters.limit ?? 48, 48);
+  const limit = await resolvePageSize(filters.limit);
 
   // Build filter string
   const filterParts: string[] = ['availableQuantity:>0'];
@@ -151,7 +166,7 @@ async function getChildCategoryIds(parentId: string): Promise<string[]> {
 
 async function searchWithPostgres(filters: SearchFilters): Promise<SearchResult> {
   const page = filters.page ?? 1;
-  const limit = Math.min(filters.limit ?? 48, 48);
+  const limit = await resolvePageSize(filters.limit);
   const offset = (page - 1) * limit;
   const conditions = [eq(listing.status, 'ACTIVE')];
 

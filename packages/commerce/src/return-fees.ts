@@ -1,18 +1,19 @@
 /**
- * C4.2 — Return Fee Allocation
+ * C4.2 — Return Fee Allocation (Decision #1 LOCKED 2026-02-20)
  *
- * Who pays what on returns. 4 fee buckets based on return reason:
+ * Who pays what on returns, by fee allocation bucket:
  *
- * | Reason              | Return Shipping | Restocking Fee | TF Refund   | Platform    |
- * |---------------------|-----------------|----------------|-------------|-------------|
- * | INAD/DAMAGED/WRONG  | Seller pays     | None           | Full refund | Absorbs     |
- * | REMORSE             | Buyer pays      | 10% (max $50)  | 50% refund  | Keeps 50%   |
- * | INR                 | N/A             | None           | Full refund | Absorbs     |
- * | OTHER               | Case-by-case    | None           | Full refund | Absorbs     |
+ * | Bucket                 | Reasons                      | Return Shipping | Restocking    | TF Refund (to seller) | Platform             |
+ * |------------------------|------------------------------|-----------------|---------------|-----------------------|----------------------|
+ * | SELLER_FAULT           | INAD, COUNTERFEIT, WRONG_ITEM| Seller pays     | None          | 0 (Twicely keeps 100%)| Refunds buyer in full|
+ * | BUYER_REMORSE          | REMORSE                      | Buyer pays      | 10% (max $50) | 50%                   | Keeps 50%            |
+ * | PLATFORM_CARRIER_FAULT | DAMAGED (in transit), INR    | Platform pays   | None          | Full (seller whole)   | Absorbs loss         |
+ * | EDGE_CONDITIONAL       | OTHER                        | Case-by-case    | None          | Full (default)        | Case-by-case         |
  *
  * Rules:
- * - Restocking fee: max $50, min $1 (only on REMORSE)
+ * - Restocking fee: max $50, min $1 (only on BUYER_REMORSE)
  * - TF (Transaction Fee) refund uses original TF amount from orderPayment
+ * - SELLER_FAULT: Twicely keeps 100% of TF as enforcement cost (Decision #1)
  */
 
 import { db } from '@twicely/db';
@@ -94,20 +95,33 @@ export function calculateRestockingFee(
 }
 
 /**
- * Calculate TF (Transaction Fee) refund based on return reason.
- * - Seller fault (INAD, DAMAGED, WRONG, INR, COUNTERFEIT): Full TF refund
- * - Buyer fault (REMORSE): 50% TF refund
+ * Calculate TF (Transaction Fee) refund to seller based on fee allocation bucket.
+ *
+ * Decision #1 LOCKED (2026-02-20):
+ *   SELLER_FAULT           → 0 (Twicely keeps 100% of TF)
+ *   BUYER_REMORSE          → 50% of TF (rounded)
+ *   PLATFORM_CARRIER_FAULT → Full TF (seller made whole)
+ *   EDGE_CONDITIONAL       → Full TF by default (case-by-case override possible)
  */
 export function calculateTfRefund(
   originalTfCents: number,
   bucket: ReturnReasonBucket,
   tfRefundRemorsePercent: number = DEFAULT_TF_REFUND_REMORSE_PERCENT
 ): number {
-  if (bucket === 'BUYER_REMORSE') {
-    return Math.round(originalTfCents * tfRefundRemorsePercent);
+  switch (bucket) {
+    case 'SELLER_FAULT':
+      // Decision #1: Twicely keeps 100% of TF as enforcement cost.
+      return 0;
+    case 'BUYER_REMORSE':
+      return Math.round(originalTfCents * tfRefundRemorsePercent);
+    case 'PLATFORM_CARRIER_FAULT':
+      // Seller is not at fault and should be made whole on TF.
+      return originalTfCents;
+    case 'EDGE_CONDITIONAL':
+    default:
+      // Default: full refund to seller; operator may override case-by-case.
+      return originalTfCents;
   }
-  // All other buckets: full TF refund
-  return originalTfCents;
 }
 
 /**

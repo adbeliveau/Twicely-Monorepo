@@ -120,6 +120,7 @@ export async function processMonthlyBoostCredit(
             amountCents: creditAmount,
             userId: seller.userId,
             memo: `Performance reward — ${seller.performanceBand} — ${periodMonth}`,
+            idempotencyKey: `boost_credit:${seller.userId}:${periodMonth}`,
             postedAt: now,
           });
 

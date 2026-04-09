@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Centrifuge } from 'centrifuge';
+import { conversationChannel } from '@twicely/realtime/messaging-channels';
 import type { MessageItem } from '@/lib/queries/messaging';
 
 interface UseConversationRealtimeProps {
@@ -33,7 +34,10 @@ export function useConversationRealtime({
   const centrifugeRef = useRef<Centrifuge | null>(null);
   const onNewMessageRef = useRef(onNewMessage);
   const onTypingRef = useRef(onTyping);
-  const channel = `private-conversation.${conversationId}`;
+  // R10 (hub-messaging audit): always resolve the channel name through the
+  // packages/realtime helper so the client stays in lockstep with the server
+  // typing/publish route. Never inline the channel prefix.
+  const channel = conversationChannel(conversationId);
 
   // Keep refs in sync so the subscription handler always calls the latest callbacks
   // without requiring a reconnect when callback identity changes

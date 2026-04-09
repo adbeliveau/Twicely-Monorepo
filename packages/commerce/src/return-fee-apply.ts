@@ -67,6 +67,7 @@ export async function applyReturnFees(
   // Create ledger entries
   // 1. Return refund (negative seller balance)
   const refundType = fees.restockingFeeCents > 0 ? 'REFUND_PARTIAL' : 'REFUND_FULL';
+  const refundKeyType = refundType === 'REFUND_FULL' ? 'full' : 'partial';
   await db.insert(ledgerEntry).values({
     type: refundType,
     status: 'POSTED',
@@ -74,6 +75,7 @@ export async function applyReturnFees(
     userId: req.sellerId,
     orderId: req.orderId,
     reasonCode: stripeRefundId ? `stripe:${stripeRefundId}` : undefined,
+    idempotencyKey: `refund:${returnId}:${refundKeyType}`,
     postedAt: now,
   });
 
@@ -86,6 +88,7 @@ export async function applyReturnFees(
       userId: req.sellerId,
       orderId: req.orderId,
       reasonCode: stripeRefundId ? `stripe:${stripeRefundId}` : undefined,
+      idempotencyKey: `refund:${returnId}:tf_reversal`,
       postedAt: now,
     });
   }
@@ -99,6 +102,7 @@ export async function applyReturnFees(
       userId: req.sellerId, // Reference seller for tracking
       orderId: req.orderId,
       reasonCode: stripeRefundId ? `stripe:${stripeRefundId}` : undefined,
+      idempotencyKey: `refund:${returnId}:platform_absorb`,
       postedAt: now,
     });
   }
@@ -113,6 +117,7 @@ export async function applyReturnFees(
       orderId: req.orderId,
       stripeRefundId,
       reasonCode: `stripe:${stripeRefundId}`,
+      idempotencyKey: `refund:${returnId}:stripe_reversal`,
       memo: `Stripe refund ${stripeRefundId}`,
       postedAt: now,
     });

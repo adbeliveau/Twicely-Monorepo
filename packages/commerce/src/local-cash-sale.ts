@@ -107,6 +107,7 @@ export async function postLocalCashSale(
     amountCents,
     userId: sellerId,
     reasonCode: rKey,
+    idempotencyKey: `local_cash:${localTransactionId}:revenue`,
     memo: memoText,
     postedAt: now,
     createdAt: now,

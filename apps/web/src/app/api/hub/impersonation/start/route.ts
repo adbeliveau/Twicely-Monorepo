@@ -14,6 +14,7 @@ import {
   createImpersonationToken,
   type ImpersonationTokenPayload,
 } from '@twicely/auth/impersonation';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 const HUB_BASE_URL =
   process.env.HUB_BASE_URL ??
@@ -153,12 +154,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Step 9: Build token payload
+  // Step 9: Build token payload — TTL from platform_settings (hub-shell audit D2)
+  const ttlMinutes = await getPlatformSetting<number>(
+    'general.impersonationTokenTtlMinutes',
+    15,
+  );
   const payload: ImpersonationTokenPayload = {
     targetUserId,
     staffUserId: staffSession.staffUserId,
     staffDisplayName: staffSession.displayName,
-    expiresAt: Date.now() + 15 * 60 * 1000,
+    expiresAt: Date.now() + ttlMinutes * 60 * 1000,
   };
 
   // Step 10: Sign token
