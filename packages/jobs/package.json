@@ -16,6 +16,7 @@
     "@aws-sdk/s3-request-presigner": "^3.995.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@twicely/db": "workspace:*",
+    "@twicely/finance": "workspace:*",
     "@twicely/logger": "workspace:*",
     "@twicely/notifications": "workspace:*",
     "@twicely/scoring": "workspace:*",

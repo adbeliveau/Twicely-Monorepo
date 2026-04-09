@@ -186,3 +186,22 @@ Use `[A-Z][A-Za-z0-9]+` (not `[A-Z][A-Za-z]+`) — `BarChart2`, `ChevronDown` et
 
 ### I17 completion
 Phase I: 17/17 complete. Tests: 9232 (was 9206, +26). TypeScript: 0 errors.
+
+## D4.T1 Finance PRO Trial — Key Patterns (2026-04-08)
+
+### vi.clearAllMocks() does NOT clear mockReturnValueOnce queues
+`vi.clearAllMocks()` resets call history but NOT the `once` queue from `mockReturnValueOnce`.
+Use `vi.resetAllMocks()` in `beforeEach` when tests have `getPlatformSetting` or other mocks
+that use `mockResolvedValueOnce` — otherwise leftover queued values from a previous test bleed
+into the next test. After `resetAllMocks`, restore default implementations with `mockImplementation`.
+
+### Finance trial schema columns (packages/db/src/schema/subscriptions.ts)
+`financeSubscription` has: `storeTierTrialUsed`, `storeTierTrialStartedAt`, `storeTierTrialEndsAt`.
+No `financeTier` column — finance tier is in `sellerProfile.financeTier`.
+
+### Cron-jobs.test.ts: linter may add new jobs to cron-jobs.ts
+The linter process can inject new dynamic imports into `cron-jobs.ts` during the session.
+Always read the current `cron-jobs.test.ts` mockQueueAdd call count before writing your count assertion.
+
+### expire-finance-pro-trial.ts location
+`packages/jobs/src/expire-finance-pro-trial.ts` — follows `expire-free-lister-tier.ts` pattern exactly.

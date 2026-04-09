@@ -159,6 +159,16 @@ export async function registerCronJobs(): Promise<void> {
   await registerCrosslisterAuthHealthJob();
   logger.info('[cronJobs] Registered crosslister auth health check job');
 
+  // Finance PRO trial expiry — daily at 02:00 UTC (FC v3.0 §2)
+  const { registerExpireFinanceProTrialJob } = await import('./expire-finance-pro-trial');
+  await registerExpireFinanceProTrialJob();
+  logger.info('[cronJobs] Registered Finance PRO trial expiry job');
+
+  // Finance intelligence layer projection compute — nightly at 02:00 UTC (Financial Center Canonical §6)
+  const { registerFinanceProjectionComputeJob } = await import('./finance-projection-compute');
+  await registerFinanceProjectionComputeJob();
+  logger.info('[cronJobs] Registered finance projection compute job');
+
   // Buyer quality tier recalc REMOVED — Decision #142.
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }

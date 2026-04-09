@@ -619,6 +619,9 @@ importers:
       '@twicely/db':
         specifier: workspace:*
         version: link:../db
+      '@twicely/finance':
+        specifier: workspace:*
+        version: link:../finance
       '@twicely/logger':
         specifier: workspace:*
         version: link:../logger

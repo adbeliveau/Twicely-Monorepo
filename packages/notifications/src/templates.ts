@@ -261,6 +261,33 @@ export const TEMPLATES: Record<TemplateKey, TemplateDef> = {
     subjectTemplate: 'Your payout could not be sent to your bank',
     bodyTemplate: 'Your payout of {{amountFormatted}} could not be sent. Reason: {{failureReason}}. Please check your bank account details in your payout settings.',
   },
+  'finance.trial.activated': {
+    key: 'finance.trial.activated',
+    name: 'Finance PRO Trial Activated',
+    category: 'subscription',
+    priority: 'HIGH',
+    defaultChannels: ['EMAIL', 'IN_APP'],
+    subjectTemplate: 'Your Finance PRO trial has started',
+    bodyTemplate: 'Your free Finance PRO trial is now active. Enjoy all Finance PRO features for the next {{trialMonths}} months.',
+  },
+  'finance.trial.expiring_soon': {
+    key: 'finance.trial.expiring_soon',
+    name: 'Finance PRO Trial Expiring Soon',
+    category: 'subscription',
+    priority: 'HIGH',
+    defaultChannels: ['EMAIL', 'IN_APP'],
+    subjectTemplate: 'Your Finance PRO trial expires in 30 days',
+    bodyTemplate: 'Your free Finance PRO trial expires on {{trialEndsAt}}. Upgrade to a paid plan to keep access to Finance PRO features.',
+  },
+  'finance.trial.expired': {
+    key: 'finance.trial.expired',
+    name: 'Finance PRO Trial Expired',
+    category: 'subscription',
+    priority: 'HIGH',
+    defaultChannels: ['EMAIL', 'IN_APP'],
+    subjectTemplate: 'Your Finance PRO trial has ended',
+    bodyTemplate: 'Your free Finance PRO trial has ended. Upgrade to Finance PRO to continue accessing premium financial features.',
+  },
 } as Record<TemplateKey, TemplateDef>;
 
 /** Simple template interpolation: replace {{key}} with data[key] */

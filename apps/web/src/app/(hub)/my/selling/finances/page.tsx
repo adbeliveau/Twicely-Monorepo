@@ -15,6 +15,8 @@ import { PnlSummary } from '@/components/finance/pnl-summary';
 import { ExpenseSummaryCard } from '@/components/finance/expense-summary-card';
 import { formatCentsToDollars } from '@twicely/finance/format';
 import { Badge } from '@twicely/ui/badge';
+import { ProIntelligenceDashboard } from './pro-intelligence-dashboard';
+import { FreeIntelligenceDashboard } from './free-intelligence-dashboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -131,29 +133,17 @@ export default async function FinancesPage() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title="Gross revenue (30 days)"
-          valueCents={kpis.grossRevenueCents}
+        <KpiCard title="Gross revenue (30 days)" valueCents={kpis.grossRevenueCents}
           subtitle={`${kpis.totalOrderCount} order${kpis.totalOrderCount !== 1 ? 's' : ''}`}
         />
-        <KpiCard
-          title="Net earnings"
-          valueCents={kpis.netEarningsCents}
+        <KpiCard title="Net earnings" valueCents={kpis.netEarningsCents}
           subtitle="After fees and shipping"
         />
-        <KpiCard
-          title="Total fees"
-          valueCents={kpis.totalFeesCents}
+        <KpiCard title="Total fees" valueCents={kpis.totalFeesCents}
           subtitle={`Effective rate: ${kpis.effectiveFeeRatePercent.toFixed(2)}%`}
         />
-        <KpiCard
-          title="Available for payout"
-          valueCents={kpis.availableForPayoutCents}
-          subtitle={
-            kpis.pendingCents > 0
-              ? `${formatCentsToDollars(kpis.pendingCents)} pending`
-              : undefined
-          }
+        <KpiCard title="Available for payout" valueCents={kpis.availableForPayoutCents}
+          subtitle={kpis.pendingCents > 0 ? `${formatCentsToDollars(kpis.pendingCents)} pending` : undefined}
         />
       </div>
 
@@ -170,31 +160,22 @@ export default async function FinancesPage() {
       {/* P&L Summary */}
       <PnlSummary kpis={kpis} expenses={expenses} mileage={mileage} financeTier={financeTier} />
 
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Recent Transactions</CardTitle>
-            <Link href="/my/selling/finances/transactions" className="text-sm text-primary underline">
-              View all
-            </Link>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {kpis.totalOrderCount === 0 ? (
-            <p className="text-sm text-muted-foreground">No transactions yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {timeSeries.slice(-5).map((d) => (
-                <div key={d.date} className="flex justify-between items-center text-sm py-1 border-b last:border-0">
-                  <span className="text-muted-foreground">{d.date}</span>
-                  <span>{formatCentsToDollars(d.revenueCents)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Intelligence Layer — PRO vs FREE */}
+      {financeTier === 'PRO' ? (
+        <ProIntelligenceDashboard
+          userId={session.userId}
+          sellerProfileId={sellerProfile.id}
+          financeGoals={sellerProfile.financeGoals as { revenueGoalCents?: number | null; profitGoalCents?: number | null } | null}
+        />
+      ) : (
+        <FreeIntelligenceDashboard
+          userId={session.userId}
+          grossRevenueCents={kpis.grossRevenueCents}
+          netEarningsCents={kpis.netEarningsCents}
+          totalFeesCents={kpis.totalFeesCents}
+          financeProAnnualCents={Number(financeProAnnualCents)}
+        />
+      )}
 
       {/* Expense Summary */}
       <ExpenseSummaryCard expenses={expenses} financeTier={financeTier} />

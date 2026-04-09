@@ -175,4 +175,10 @@ export async function upsertBundleSubscription(params: {
       updatedAt: new Date(),
     }).where(eq(sellerProfile.id, params.sellerProfileId));
   });
+
+  // FC v3.0 §2: activate Finance PRO trial when bundle subscription goes ACTIVE or TRIALING
+  if (params.status === 'ACTIVE' || params.status === 'TRIALING') {
+    const { activateFinanceProTrialIfEligible } = await import('./finance-trial');
+    await activateFinanceProTrialIfEligible(params.sellerProfileId);
+  }
 }

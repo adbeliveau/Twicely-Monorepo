@@ -2,6 +2,10 @@
 
 import { authorize, sub } from '@twicely/casl';
 import { logger } from '@twicely/logger';
+import { z } from 'zod';
+import { db } from '@twicely/db';
+import { sellerProfile } from '@twicely/db/schema';
+import { eq } from 'drizzle-orm';
 import {
   getFinanceDashboardKPIs,
   getRevenueTimeSeries,
@@ -18,6 +22,60 @@ import {
   type CogsSummary,
 } from '@/lib/queries/finance-center';
 import { transactionHistorySchema, cogsSummarySchema } from '@/lib/validations/finance-center';
+
+type ActionResult = { success: true } | { success: false; error: string };
+
+const setFinanceGoalSchema = z
+  .object({
+    revenueGoalCents: z.number().int().positive().optional(),
+    profitGoalCents: z.number().int().positive().optional(),
+  })
+  .strict()
+  .refine(
+    (data) => data.revenueGoalCents !== undefined || data.profitGoalCents !== undefined,
+    { message: 'At least one goal (revenue or profit) is required' },
+  );
+
+/**
+ * Set revenue and/or profit goals on the seller profile.
+ * Financial Center Canonical §6.1 — goal tracker.
+ */
+export async function setFinanceGoalAction(data: unknown): Promise<ActionResult> {
+  const { ability, session } = await authorize();
+
+  if (!session) return { success: false, error: 'Unauthorized' };
+
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+
+  if (!ability.can('update', sub('SellerProfile', { userId }))) {
+    return { success: false, error: 'Forbidden' };
+  }
+
+  const parsed = setFinanceGoalSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
+  }
+
+  try {
+    const goals: { revenueGoalCents?: number; profitGoalCents?: number } = {};
+    if (parsed.data.revenueGoalCents !== undefined) {
+      goals.revenueGoalCents = parsed.data.revenueGoalCents;
+    }
+    if (parsed.data.profitGoalCents !== undefined) {
+      goals.profitGoalCents = parsed.data.profitGoalCents;
+    }
+
+    await db
+      .update(sellerProfile)
+      .set({ financeGoals: goals, updatedAt: new Date() })
+      .where(eq(sellerProfile.userId, userId));
+
+    return { success: true };
+  } catch (error) {
+    logger.error('[setFinanceGoalAction] Failed to update finance goals', { error: String(error) });
+    return { success: false, error: 'Failed to save finance goals' };
+  }
+}
 
 export type FinanceDashboardResponse =
   | {

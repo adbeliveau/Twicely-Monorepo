@@ -167,6 +167,15 @@ async function getInterestMatchedListings(
     .select({
       ...listingCardFields,
       relevanceScore: sql<number>`max(coalesce(uw.total_weight, 0))`,
+      cardEmphasis: sql<'social' | 'specs' | 'collectible' | 'default' | null>`(
+  SELECT it2.card_emphasis
+  FROM interest_tag it2
+  INNER JOIN (SELECT tag_slug, SUM(weight::numeric) as tw FROM user_interest WHERE user_id = ${userId} AND (expires_at IS NULL OR expires_at > now()) GROUP BY tag_slug) uw2 ON uw2.tag_slug = it2.slug
+  WHERE ${listing.categoryId} = ANY(it2.category_ids)
+    AND it2.is_active = true
+  ORDER BY uw2.tw DESC
+  LIMIT 1
+)`.as('card_emphasis'),
     })
     .from(listing)
     .leftJoin(listingImage, and(
@@ -234,7 +243,18 @@ async function getBoostedInterestListings(
 
   const rows = await db
     .with(userTagsCte)
-    .select(listingCardFields)
+    .select({
+      ...listingCardFields,
+      cardEmphasis: sql<'social' | 'specs' | 'collectible' | 'default' | null>`(
+  SELECT it2.card_emphasis
+  FROM interest_tag it2
+  INNER JOIN (SELECT tag_slug, SUM(weight::numeric) as tw FROM user_interest WHERE user_id = ${userId} AND (expires_at IS NULL OR expires_at > now()) GROUP BY tag_slug) uw2 ON uw2.tag_slug = it2.slug
+  WHERE ${listing.categoryId} = ANY(it2.category_ids)
+    AND it2.is_active = true
+  ORDER BY uw2.tw DESC
+  LIMIT 1
+)`.as('card_emphasis'),
+    })
     .from(listing)
     .innerJoin(promotedListing, eq(promotedListing.listingId, listing.id))
     .innerJoin(
@@ -261,3 +281,7 @@ async function getBoostedInterestListings(
 
   return rows.map((row) => mapToListingCard(row));
 }
+
+// TODO: Phase G polish — render variant based on cardEmphasis
+// Values: 'social' | 'specs' | 'collectible' | 'default'
+// See TWICELY_V3_PERSONALIZATION_CANONICAL.md §3 for card templates

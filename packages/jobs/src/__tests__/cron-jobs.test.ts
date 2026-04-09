@@ -29,6 +29,14 @@ vi.mock('@twicely/db/schema', () => ({
   caseEvent: { caseId: 'case_id' },
   caseWatcher: { caseId: 'case_id' },
   caseCsat: { caseId: 'case_id' },
+  financeSubscription: { id: 'id', sellerProfileId: 'seller_profile_id', tier: 'tier', stripeSubscriptionId: 'stripe_subscription_id', storeTierTrialEndsAt: 'store_tier_trial_ends_at', updatedAt: 'updated_at' },
+  sellerProfile: { id: 'id', userId: 'user_id', financeTier: 'finance_tier', updatedAt: 'updated_at' },
+  financialProjection: { sellerProfileId: 'seller_profile_id' },
+  order: { id: 'id', sellerId: 'seller_id', status: 'status', completedAt: 'completed_at' },
+  orderItem: { orderId: 'order_id', listingId: 'listing_id' },
+  listing: { id: 'id', ownerUserId: 'owner_user_id', status: 'status', cogsCents: 'cogs_cents', activatedAt: 'activated_at', categoryId: 'category_id', priceCents: 'price_cents' },
+  expense: { id: 'id', userId: 'user_id', amountCents: 'amount_cents', category: 'category', expenseDate: 'expense_date' },
+  user: { id: 'id' },
 }));
 vi.mock('drizzle-orm', () => ({
   sql: vi.fn(),
@@ -40,6 +48,12 @@ vi.mock('@twicely/db/queries/platform-settings', () => ({
   ),
 }));
 
+vi.mock('@twicely/finance/projection-engine', () => ({
+  computeProjection: vi.fn().mockResolvedValue({ dataQualityScore: 50 }),
+}));
+
+vi.mock('@twicely/finance/projection-types', () => ({}));
+
 describe('cron-jobs', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -49,8 +63,8 @@ describe('cron-jobs', () => {
     const { registerCronJobs } = await import('../cron-jobs');
     await registerCronJobs();
 
-    // 8 platform cron jobs (incl. listing image retention Decision #111 + listing sold purge Decision #71) + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6) + 1 helpdesk auto-close + 1 helpdesk SLA check + 1 helpdesk CSAT send + 1 monthly boost credit (Seller Score §5.4) + 1 crosslister auth health check
-    expect(mockQueueAdd).toHaveBeenCalledTimes(20);
+    // 8 platform cron jobs (incl. listing image retention Decision #111 + listing sold purge Decision #71) + 1 tax document + 1 affiliate suspension expiry + 4 cleanup queue jobs (G8) + 1 helpdesk retention purge (G9.6) + 1 helpdesk auto-close + 1 helpdesk SLA check + 1 helpdesk CSAT send + 1 monthly boost credit (Seller Score §5.4) + 1 crosslister auth health check + 1 Finance PRO trial expiry (FC v3.0 §2) + 1 finance projection compute (Financial Center Canonical §6)
+    expect(mockQueueAdd).toHaveBeenCalledTimes(22);
   });
 
   it('registers orders cron at every hour', async () => {

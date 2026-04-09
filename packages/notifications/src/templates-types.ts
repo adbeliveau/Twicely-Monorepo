@@ -108,7 +108,11 @@ export type TemplateKey =
   | 'auth.ai.inconclusive'
   // Accounting Sync — G10.3
   | 'accounting.sync.completed'
-  | 'accounting.sync.failed';
+  | 'accounting.sync.failed'
+  // Finance PRO Trial — FC v3.0 §2
+  | 'finance.trial.activated'
+  | 'finance.trial.expiring_soon'
+  | 'finance.trial.expired';
 
 export type NotificationPriority = 'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW';
 export type NotificationChannel = 'EMAIL' | 'IN_APP';

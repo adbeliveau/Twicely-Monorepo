@@ -23,6 +23,7 @@ export function mapToListingCard(row: {
   sellerTotalReviews: number | null;
   sellerShowStars: boolean | null;
   storefrontCategoryId?: string | null;
+  cardEmphasis?: 'social' | 'specs' | 'collectible' | 'default' | null;
 }): ListingCardData {
   return {
     id: row.id,
@@ -43,5 +44,6 @@ export function mapToListingCard(row: {
     sellerTotalReviews: row.sellerTotalReviews ?? 0,
     sellerShowStars: row.sellerShowStars ?? false,
     storefrontCategoryId: row.storefrontCategoryId,
+    cardEmphasis: row.cardEmphasis ?? null,
   };
 }

@@ -17,6 +17,8 @@ export interface ListingCardData {
   sellerTotalReviews: number;
   sellerShowStars: boolean;
   storefrontCategoryId?: string | null;
+  /** Card emphasis variant from personalization layer. Null for non-personalized views. */
+  cardEmphasis?: 'social' | 'specs' | 'collectible' | 'default' | null;
 }
 
 export interface ListingDetailData {
