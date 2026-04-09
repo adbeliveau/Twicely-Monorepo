@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
-import { getPlatformPromoCodes } from '@/lib/queries/promo-codes';
+import { getAllPromoCodes, getPromoCodeRedemptionCount } from '@/lib/queries/promo-codes';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { CreatePlatformPromoDialog } from '@/components/hub/create-platform-promo-dialog';
 import { Badge } from '@twicely/ui/badge';
@@ -26,17 +26,21 @@ export default async function PromoCodesPage({
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? '1', 10));
   const pageSize = 50;
-  const { rows, total } = await getPlatformPromoCodes({
+  const { rows, total } = await getAllPromoCodes({
     limit: pageSize,
     offset: (page - 1) * pageSize,
   });
+
+  // Total redemption count across displayed codes (for summary display)
+  const redemptionCounts = await Promise.all(rows.map((pc) => getPromoCodeRedemptionCount(pc.id)));
+  const totalRedemptions = redemptionCounts.reduce((sum, c) => sum + c, 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <AdminPageHeader
-          title="Platform Promo Codes"
-          description={`${total} platform code${total !== 1 ? 's' : ''}`}
+          title="Promo Codes"
+          description={`${total} code${total !== 1 ? 's' : ''} · ${totalRedemptions} redemptions this page`}
         />
         <CreatePlatformPromoDialog />
       </div>
@@ -46,22 +50,26 @@ export default async function PromoCodesPage({
           <thead className="bg-primary/5 text-left">
             <tr>
               <th className="px-4 py-3 font-medium text-primary/70">Code</th>
+              <th className="px-4 py-3 font-medium text-primary/70">Type</th>
               <th className="px-4 py-3 font-medium text-primary/70">Discount</th>
               <th className="px-4 py-3 font-medium text-primary/70">Duration</th>
               <th className="px-4 py-3 font-medium text-primary/70">Uses</th>
+              <th className="px-4 py-3 font-medium text-primary/70">Redemptions</th>
               <th className="px-4 py-3 font-medium text-primary/70">Expires</th>
               <th className="px-4 py-3 font-medium text-primary/70">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
-            {rows.map((pc) => (
+            {rows.map((pc, i) => (
               <tr key={pc.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-mono font-medium">{pc.code}</td>
+                <td className="px-4 py-3 text-xs text-gray-500">{pc.type}</td>
                 <td className="px-4 py-3">{formatDiscount(pc.discountType, pc.discountValue)}</td>
                 <td className="px-4 py-3">{pc.durationMonths} mo</td>
                 <td className="px-4 py-3">
                   {pc.usageLimit ? `${pc.usageCount}/${pc.usageLimit}` : pc.usageCount}
                 </td>
+                <td className="px-4 py-3 text-gray-700">{redemptionCounts[i] ?? 0}</td>
                 <td className="px-4 py-3 text-gray-500">
                   {pc.expiresAt ? pc.expiresAt.toLocaleDateString() : '—'}
                 </td>
@@ -74,8 +82,8 @@ export default async function PromoCodesPage({
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                  No platform promo codes
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                  No promo codes
                 </td>
               </tr>
             )}

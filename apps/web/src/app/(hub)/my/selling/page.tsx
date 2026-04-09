@@ -7,13 +7,15 @@ import { getSellerDashboardStats, getSellerRecentActivity } from '@/lib/queries/
 import { getReturnCountsBySeller } from '@/lib/queries/returns';
 import { getActiveTrialInfo } from '@/lib/queries/trial-eligibility';
 import { getConnectedAccounts } from '@/lib/queries/crosslister';
+import { getBlockedBuyerCount } from '@/lib/queries/buyer-block';
+import { getActiveDelegation, getPendingInvitations } from '@/lib/queries/delegation';
 import { DashboardStats } from '@/components/seller/dashboard-stats';
 import { RecentActivity } from '@/components/seller/recent-activity';
 import { AwaitingShipmentAlert } from '@/components/seller/awaiting-shipment-alert';
 import { TrialBanner, TrialStatus } from '@/components/subscriptions';
 import { Button } from '@twicely/ui/button';
 import { Card, CardContent } from '@twicely/ui/card';
-import { Plus, RefreshCw, Store, RotateCcw } from 'lucide-react';
+import { Plus, RefreshCw, Store, RotateCcw, Shield, Users } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,12 +35,15 @@ export default async function SellingOverviewPage() {
   }
 
   // Fetch dashboard data
-  const [stats, recentActivity, activeTrial, connectedAccounts, returnCounts] = await Promise.all([
+  const [stats, recentActivity, activeTrial, connectedAccounts, returnCounts, blockedBuyerCount, activeDelegation, pendingInvitations] = await Promise.all([
     getSellerDashboardStats(session.user.id),
     getSellerRecentActivity(session.user.id, 10),
     getActiveTrialInfo(session.user.id),
     getConnectedAccounts(session.user.id),
     getReturnCountsBySeller(session.user.id),
+    getBlockedBuyerCount(session.user.id),
+    getActiveDelegation(session.user.id),
+    getPendingInvitations(session.user.id),
   ]);
 
   const pendingReturnCount = returnCounts.PENDING_SELLER ?? 0;
@@ -177,6 +182,47 @@ export default async function SellingOverviewPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pending staff invitations — shown when this user has received invitations */}
+      {pendingInvitations.length > 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 space-y-1">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-blue-600 shrink-0" />
+            <p className="text-sm font-semibold text-blue-900">
+              {pendingInvitations.length} pending staff {pendingInvitations.length === 1 ? 'invitation' : 'invitations'}
+            </p>
+          </div>
+          {pendingInvitations.map((inv) => (
+            <p key={inv.id} className="text-sm text-blue-800 pl-6">
+              From <span className="font-medium">{inv.ownerName}</span> — {inv.scopes.join(', ') || 'no scopes'}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Active delegation notice — shown when this user is acting as staff for another seller */}
+      {activeDelegation && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-center gap-3">
+          <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-800">
+            You are acting as staff for <span className="font-medium">{activeDelegation.ownerName}</span>
+            {' '}({activeDelegation.scopes.join(', ') || 'all scopes'})
+          </p>
+        </div>
+      )}
+
+      {/* Blocked buyers count */}
+      {blockedBuyerCount > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            <span className="font-semibold text-gray-900">{blockedBuyerCount}</span>{' '}
+            blocked {blockedBuyerCount === 1 ? 'buyer' : 'buyers'}
+          </p>
+          <Link href="/my/selling/staff" className="text-xs text-primary hover:underline">
+            Manage
+          </Link>
+        </div>
       )}
 
       {/* Recent Activity Feed */}

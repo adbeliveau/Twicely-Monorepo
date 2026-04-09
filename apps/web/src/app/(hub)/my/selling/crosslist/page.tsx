@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { authorize } from '@twicely/casl/authorize';
-import { getCrosslisterDashboardData, getSellerQueueStatus } from '@/lib/queries/crosslister';
+import { getCrosslisterDashboardData, getSellerQueueStatus, getSellerProjections, getSellerCrossJobs } from '@/lib/queries/crosslister';
 import { getPublishAllowance } from '@twicely/crosslister/services/publish-meter';
 import { getExtensionStatus } from '@/lib/queries/extension-status';
 import { CrosslisterDashboard } from '@/components/crosslister/crosslister-dashboard';
@@ -62,11 +62,13 @@ export default async function CrosslisterDashboardPage({
   const sourceRaw = resolvedSearchParams['source'];
   const sourceParam = typeof sourceRaw === 'string' ? sourceRaw : null;
 
-  const [dashboardData, queueStatus, publishAllowance, extensionStatus] = await Promise.all([
+  const [dashboardData, queueStatus, publishAllowance, extensionStatus, projectionsResult, recentJobs] = await Promise.all([
     getCrosslisterDashboardData(userId),
     getSellerQueueStatus(userId),
     getPublishAllowance(userId),
     getExtensionStatus(userId),
+    getSellerProjections(userId, { limit: 5 }),
+    getSellerCrossJobs(userId, { limit: 10 }),
   ]);
 
   return (
@@ -89,6 +91,40 @@ export default async function CrosslisterDashboardPage({
           sourceParam={sourceParam}
         />
       </Suspense>
+
+      {projectionsResult.total > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-800">
+              Channel Projections ({projectionsResult.total})
+            </h2>
+          </div>
+          <div className="space-y-1">
+            {projectionsResult.projections.map((p) => (
+              <div key={p.id} className="flex items-center justify-between text-xs py-1 border-b border-gray-100 last:border-0">
+                <span className="text-gray-700 truncate max-w-[200px]">{p.listingTitle ?? p.listingId}</span>
+                <span className="text-gray-500">{p.channel}</span>
+                <span className="text-gray-400">{p.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recentJobs.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-800">Recent Cross Jobs</h2>
+          <div className="space-y-1">
+            {recentJobs.map((job) => (
+              <div key={job.id} className="flex items-center justify-between text-xs py-1 border-b border-gray-100 last:border-0">
+                <span className="text-gray-700">{job.jobType}</span>
+                <span className="text-gray-500">{job.attempts} attempt{job.attempts !== 1 ? 's' : ''}</span>
+                <span className={job.status === 'FAILED' ? 'text-red-500' : 'text-gray-400'}>{job.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

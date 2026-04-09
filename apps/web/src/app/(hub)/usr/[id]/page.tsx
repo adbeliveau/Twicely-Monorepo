@@ -11,6 +11,7 @@ import {
 } from '@/lib/queries/admin-user-tabs';
 import { getTaxInfoForAdmin } from '@/lib/queries/tax-info';
 import { countActiveBoosts } from '@/lib/queries/boosting';
+import { getSellerFraudHistory } from '@/lib/queries/local-fraud';
 import { UserDetailHeader, UserInfoBar } from '@/components/admin/user-detail/user-detail-header';
 import { UserActionsDropdown } from '@/components/admin/user-detail/user-actions-dropdown';
 import { UserDetailTabs } from '@/components/admin/user-detail/user-detail-tabs';
@@ -56,9 +57,10 @@ export default async function UserDetailPage({
   let tabContent: React.ReactNode = null;
 
   if (tab === 'overview') {
-    const [taxInfo, activeBoostCount] = await Promise.all([
+    const [taxInfo, activeBoostCount, fraudHistory] = await Promise.all([
       ability.can('read', 'TaxInfo') ? getTaxInfoForAdmin(id) : Promise.resolve(null),
       userDetail.isSeller ? countActiveBoosts(id) : Promise.resolve(0),
+      userDetail.isSeller ? getSellerFraudHistory(id) : Promise.resolve([]),
     ]);
     tabContent = (
       <>
@@ -102,6 +104,22 @@ export default async function UserDetailPage({
             <p className="text-sm text-gray-500">
               Active boosts: <span className="font-semibold text-gray-900">{activeBoostCount}</span>
             </p>
+          </div>
+        )}
+        {fraudHistory.length > 0 && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-white p-5">
+            <h3 className="mb-3 text-sm font-semibold text-red-700">
+              Local Fraud History ({fraudHistory.length})
+            </h3>
+            <div className="space-y-2">
+              {fraudHistory.map((flag) => (
+                <div key={flag.id} className="flex items-center justify-between text-xs border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                  <span className="text-gray-700">{flag.trigger}</span>
+                  <span className="text-gray-500">{flag.severity} · {flag.status}</span>
+                  <span className="text-gray-400">{flag.createdAt.toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </>

@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from '@twicely/auth';
-import { getFollowedSellers } from '@/lib/queries/follow';
+import { getFollowedSellers, getFollowingCount } from '@/lib/queries/follow';
 import { FollowingList } from '@/components/pages/following/following-list';
 import type { Metadata } from 'next';
 
@@ -15,7 +15,10 @@ export default async function FollowingPage() {
     redirect('/auth/login');
   }
 
-  const sellers = await getFollowedSellers(session.user.id);
+  const [sellers, followingCount] = await Promise.all([
+    getFollowedSellers(session.user.id),
+    getFollowingCount(session.user.id),
+  ]);
 
   // Serialize dates for client component
   const serialized = sellers.map((s) => ({
@@ -36,7 +39,7 @@ export default async function FollowingPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Following</h1>
         <p className="text-muted-foreground mt-1">
-          Sellers you follow
+          {followingCount} {followingCount === 1 ? 'seller' : 'sellers'} you follow
         </p>
       </div>
       <FollowingList sellers={serialized} />

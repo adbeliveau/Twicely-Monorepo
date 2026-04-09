@@ -5,6 +5,7 @@ import { auth } from '@twicely/auth';
 import { getListingForEdit } from '@/lib/actions/listings-update-status';
 import { getCategoryById } from '@/lib/queries/category-search';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getProjectionsForListing } from '@/lib/queries/crosslister';
 import { ListingFormWrapper } from '@/components/pages/listing/listing-form-wrapper';
 import type { ListingFormData, ListingCondition } from '@/types/listing-form';
 
@@ -40,6 +41,8 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
   }
 
   const { listing, images } = result;
+
+  const projections = await getProjectionsForListing(id, session.user.id);
 
   // Cannot edit SOLD or listings with enforcement issues
   if (listing.status === 'SOLD' || listing.enforcementState === 'REMOVED') {
@@ -91,6 +94,27 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
       </div>
 
       <ListingFormWrapper mode="edit" listingId={id} initialData={initialData} maxImages={maxImages} />
+
+      {projections.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-2">
+          <h2 className="text-sm font-semibold text-gray-800">
+            Cross-platform projections ({projections.length})
+          </h2>
+          <div className="space-y-1">
+            {projections.map((p) => (
+              <div key={p.id} className="flex items-center justify-between text-xs py-1 border-b border-gray-100 last:border-0">
+                <span className="text-gray-700 font-medium">{p.channel}</span>
+                <span className={p.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-400'}>{p.status}</span>
+                {p.externalUrl && (
+                  <a href={p.externalUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    View
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

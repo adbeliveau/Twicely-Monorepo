@@ -2,9 +2,11 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { authorize } from '@twicely/casl';
 import { getVerificationStatus, getMyVerificationHistory } from '@/lib/actions/identity-verification';
+import { isEnhancedVerificationRequired } from '@/lib/queries/identity-verification';
 import { VerificationStatusCard } from '@/components/pages/verification/verification-status-card';
 import { StripeIdentityEmbed } from '@/components/pages/verification/stripe-identity-embed';
 import { Card, CardContent, CardHeader, CardTitle } from '@twicely/ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +22,10 @@ export default async function VerificationPage() {
     redirect('/auth/login?callbackUrl=/my/selling/verification');
   }
 
-  const [statusResult, history] = await Promise.all([
+  const [statusResult, history, enhancedCheck] = await Promise.all([
     getVerificationStatus(),
     getMyVerificationHistory(),
+    isEnhancedVerificationRequired(session.userId),
   ]);
 
   const canStartVerification =
@@ -38,6 +41,21 @@ export default async function VerificationPage() {
           Verify your identity to access advanced selling features.
         </p>
       </div>
+
+      {/* Enhanced verification required notice */}
+      {enhancedCheck.required && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-900">Enhanced verification required</p>
+            {enhancedCheck.reason && (
+              <p className="text-xs text-amber-800 mt-0.5">
+                Reason: {enhancedCheck.reason.replace(/_/g, ' ').toLowerCase()}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Current status */}
       <VerificationStatusCard

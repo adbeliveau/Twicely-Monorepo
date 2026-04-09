@@ -9,6 +9,7 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { auth } from '@twicely/auth';
 import { getConnectedAccounts, getImportBatches } from '@/lib/queries/crosslister';
+import { getImportOnboardingState } from '@/lib/queries/import-onboarding';
 import { ImportPageClient } from '@/components/crosslister/import-page-client';
 
 export const dynamic = 'force-dynamic';
@@ -35,9 +36,10 @@ export default async function ImportPage({ searchParams }: Props) {
   const params = await searchParams;
   const initialAccountId = params['accountId'] ?? null;
 
-  const [accounts, batches] = await Promise.all([
+  const [accounts, batches, onboardingState] = await Promise.all([
     getConnectedAccounts(userId),
     getImportBatches(userId),
+    getImportOnboardingState(userId),
   ]);
 
   // Find the most recent in-progress batch (if any)
@@ -49,12 +51,31 @@ export default async function ImportPage({ searchParams }: Props) {
     ['COMPLETED', 'PARTIALLY_COMPLETED', 'FAILED'].includes(b.status),
   ) ?? null;
 
+  const isFirstTimeUser = !onboardingState.hasConnectedAccounts || !onboardingState.hasCompletedImport;
+
   return (
-    <ImportPageClient
-      accounts={accounts}
-      activeBatchId={activeBatch?.id ?? null}
-      lastCompletedBatch={lastCompletedBatch}
-      initialAccountId={initialAccountId}
-    />
+    <div className="space-y-4">
+      {isFirstTimeUser && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 space-y-1">
+          <p className="text-sm font-semibold text-blue-900">
+            {onboardingState.hasConnectedAccounts
+              ? 'Complete your first import'
+              : 'Connect a platform to import listings'}
+          </p>
+          <p className="text-xs text-blue-700">
+            Lister tier: <span className="font-medium">{onboardingState.listerTier}</span>
+            {onboardingState.connectedChannels.length > 0 && (
+              <> · Connected: {onboardingState.connectedChannels.join(', ')}</>
+            )}
+          </p>
+        </div>
+      )}
+      <ImportPageClient
+        accounts={accounts}
+        activeBatchId={activeBatch?.id ?? null}
+        lastCompletedBatch={lastCompletedBatch}
+        initialAccountId={initialAccountId}
+      />
+    </div>
   );
 }

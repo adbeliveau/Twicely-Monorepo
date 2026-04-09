@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { getMeetupLocations } from '@/lib/queries/admin-meetup-locations';
+import { getActiveSafeMeetupLocations } from '@/lib/queries/safe-meetup-locations';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { MeetupLocationsTab } from '@/components/hub/settings/meetup-locations-tab';
 import Link from 'next/link';
@@ -21,18 +22,22 @@ export default async function MeetupLocationsPage({
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? '1', 10));
 
-  const { total: paginatedTotal } = await getMeetupLocations({
-    page,
-    pageSize: 50,
-    search: params.search,
-    activeOnly: false,
-  });
+  const [{ total: paginatedTotal }, activeLocations] = await Promise.all([
+    getMeetupLocations({
+      page,
+      pageSize: 50,
+      search: params.search,
+      activeOnly: false,
+    }),
+    getActiveSafeMeetupLocations(),
+  ]);
+  const activeCount = activeLocations.length;
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Safe Meetup Locations"
-        description={`${paginatedTotal} location${paginatedTotal === 1 ? '' : 's'} — Create and manage safe meetup locations for local sales`}
+        description={`${paginatedTotal} total · ${activeCount} active — Create and manage safe meetup locations for local sales`}
         actions={
           <Link
             href="/cfg"
