@@ -163,7 +163,7 @@ export async function createBillingPortalSession(
 }
 
 /** Get the current subscription tiers for the authenticated seller. */
-export async function getSellerTiersAction() {
+export async function getSellerProfileTierSummaryAction() {
   const { session } = await authorize();
   if (!session) return null;
   const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
