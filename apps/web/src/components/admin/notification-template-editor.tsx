@@ -7,6 +7,8 @@ import {
   updateNotificationTemplateAction,
   deleteNotificationTemplateAction,
 } from '@/lib/actions/admin-notifications';
+import { TemplateDeleteDialog } from './template-delete-dialog';
+import { TemplateBodyFields } from './template-body-fields';
 
 const CHANNELS = ['EMAIL', 'PUSH', 'IN_APP', 'SMS'] as const;
 type Channel = (typeof CHANNELS)[number];
@@ -35,7 +37,6 @@ export function NotificationTemplateEditor({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [showHtml, setShowHtml] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const isEdit = initialData !== undefined;
@@ -190,51 +191,12 @@ export function NotificationTemplateEditor({
         </datalist>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Subject Template</label>
-        <input
-          type="text"
-          value={fields.subjectTemplate}
-          onChange={(e) => setFields((p) => ({ ...p, subjectTemplate: e.target.value }))}
-          placeholder="Your order {{orderId}} has been confirmed"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <p className="mt-1 text-xs text-gray-400">Use {'{{variableName}}'} for dynamic content.</p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Body Template <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          value={fields.bodyTemplate}
-          onChange={(e) => setFields((p) => ({ ...p, bodyTemplate: e.target.value }))}
-          placeholder="Hi {{buyerName}}, your order for {{itemTitle}} has been confirmed."
-          rows={5}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <p className="mt-1 text-xs text-gray-400">Use {'{{variableName}}'} for dynamic content.</p>
-      </div>
-
-      <div>
-        <button
-          type="button"
-          onClick={() => setShowHtml((v) => !v)}
-          className="text-sm font-medium text-gray-600 hover:text-gray-900"
-        >
-          {showHtml ? 'Hide HTML template' : 'Show HTML template'}
-        </button>
-        {showHtml && (
-          <textarea
-            value={fields.htmlTemplate}
-            onChange={(e) => setFields((p) => ({ ...p, htmlTemplate: e.target.value }))}
-            placeholder="<p>Hi {{buyerName}},</p>"
-            rows={8}
-            className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        )}
-      </div>
+      <TemplateBodyFields
+        subjectTemplate={fields.subjectTemplate}
+        bodyTemplate={fields.bodyTemplate}
+        htmlTemplate={fields.htmlTemplate}
+        onChange={(patch) => setFields((p) => ({ ...p, ...patch }))}
+      />
 
       <fieldset>
         <legend className="block text-sm font-medium text-gray-700">
@@ -297,31 +259,11 @@ export function NotificationTemplateEditor({
       </div>
 
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="text-sm font-semibold text-gray-900">Delete Template</h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Are you sure you want to delete this template? This cannot be undone.
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowDeleteDialog(false)}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={pending}
-                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+        <TemplateDeleteDialog
+          pending={pending}
+          onCancel={() => setShowDeleteDialog(false)}
+          onConfirm={handleDelete}
+        />
       )}
     </form>
   );

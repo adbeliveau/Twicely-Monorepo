@@ -3,9 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockAddCaseWatcher = vi.fn().mockResolvedValue({ success: true });
 const mockRemoveCaseWatcher = vi.fn().mockResolvedValue({ success: true });
 
-vi.mock('@/lib/actions/helpdesk-agent', () => ({
+vi.mock('@/lib/actions/helpdesk-watchers', () => ({
   addCaseWatcher: mockAddCaseWatcher,
   removeCaseWatcher: mockRemoveCaseWatcher,
+}));
+
+vi.mock('@/lib/actions/helpdesk-agent', () => ({
   toggleAgentOnlineStatus: vi.fn(),
   addTeamMember: vi.fn(),
   removeTeamMember: vi.fn(),

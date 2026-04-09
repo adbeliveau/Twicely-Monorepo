@@ -25,7 +25,7 @@ vi.mock('@/lib/queries/seller', () => ({ getSellerProfile: vi.fn() }));
 vi.mock('@/lib/queries/business-info', () => ({ getBusinessInfo: vi.fn() }));
 vi.unmock('@/lib/validations/seller-onboarding');
 
-import { updateStoreNameAction } from '../seller-onboarding';
+import { updateStoreNameAction } from '../seller-onboarding-store';
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { getSellerProfile } from '@/lib/queries/seller';

@@ -10,7 +10,7 @@ import { Button } from '@twicely/ui/button';
 import { Badge } from '@twicely/ui/badge';
 import { RefreshCw, Download, Unplug } from 'lucide-react';
 import type { CrosslisterAccount } from '@twicely/crosslister/db-types';
-import { disconnectAccount } from '@/lib/actions/crosslister-accounts';
+import { disconnectAccount } from '@/lib/actions/crosslister-accounts-manage';
 import { getChannelMetadata } from '@twicely/crosslister/channel-registry';
 import { useTransition } from 'react';
 import type { ExternalChannel } from '@twicely/crosslister/types';

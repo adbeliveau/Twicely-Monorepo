@@ -196,7 +196,7 @@ describe('addCaseWatcher / removeCaseWatcher', () => {
 
   it('addCaseWatcher throws when not staff', async () => {
     mockStaffAuthorize.mockRejectedValue(new Error('Forbidden'));
-    const { addCaseWatcher } = await import('../helpdesk-agent');
+    const { addCaseWatcher } = await import('../helpdesk-watchers');
     await expect(addCaseWatcher('case-1', 'staff-1')).rejects.toThrow('Forbidden');
   });
 
@@ -205,7 +205,7 @@ describe('addCaseWatcher / removeCaseWatcher', () => {
     const insertChain = makeChain([]);
     mockInsert.mockReturnValue(insertChain);
 
-    const { addCaseWatcher } = await import('../helpdesk-agent');
+    const { addCaseWatcher } = await import('../helpdesk-watchers');
     const result = await addCaseWatcher('case-test-001', 'staff-test-mgr');
     expect(result.success).toBe(true);
     expect(mockInsert).toHaveBeenCalled();
@@ -216,7 +216,7 @@ describe('addCaseWatcher / removeCaseWatcher', () => {
     const deleteChain = { where: vi.fn().mockResolvedValue([]) };
     mockDelete.mockReturnValue(deleteChain);
 
-    const { removeCaseWatcher } = await import('../helpdesk-agent');
+    const { removeCaseWatcher } = await import('../helpdesk-watchers');
     const result = await removeCaseWatcher('case-test-001', 'staff-test-mgr');
     expect(result.success).toBe(true);
     expect(mockDelete).toHaveBeenCalled();

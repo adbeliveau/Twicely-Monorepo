@@ -6,7 +6,7 @@ import { Input } from '@twicely/ui/input';
 import { Label } from '@twicely/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@twicely/ui/card';
 import { Loader2 } from 'lucide-react';
-import { updateStoreNameAction } from '@/lib/actions/seller-onboarding';
+import { updateStoreNameAction } from '@/lib/actions/seller-onboarding-store';
 
 interface StoreProfileStepProps {
   existingStoreName: string | null;

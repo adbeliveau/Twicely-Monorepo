@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { addCaseWatcher, removeCaseWatcher } from "@/lib/actions/helpdesk-agent";
+import { addCaseWatcher, removeCaseWatcher } from "@/lib/actions/helpdesk-watchers";
 import type { CaseWatcherItem } from "@/lib/queries/helpdesk-cases";
 import { cn } from "@/lib/utils";
 

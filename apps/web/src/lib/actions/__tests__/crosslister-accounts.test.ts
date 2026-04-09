@@ -118,7 +118,7 @@ function sellerSession(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('connectEbayAccount', () => {
+describe('connectEbayAccount (legacy — crosslister-accounts-manage)', () => {
   beforeEach(() => { vi.clearAllMocks(); vi.resetModules(); });
 
   it('returns OAuth URL for authenticated seller', async () => {
@@ -129,7 +129,7 @@ describe('connectEbayAccount', () => {
       .mockReturnValueOnce(makeChain([{ value: true }]))       // feature flag
       .mockReturnValueOnce(makeChain([]));                      // no existing account
 
-    const { connectEbayAccount } = await import('../crosslister-accounts');
+    const { connectEbayAccount } = await import('../crosslister-accounts-manage');
     const result = await connectEbayAccount();
 
     expect(result.success).toBe(true);
@@ -140,7 +140,7 @@ describe('connectEbayAccount', () => {
     mockAuthorize.mockResolvedValue(sellerSession());
     mockDbSelect.mockReturnValueOnce(makeChain([{ value: false }]));
 
-    const { connectEbayAccount } = await import('../crosslister-accounts');
+    const { connectEbayAccount } = await import('../crosslister-accounts-manage');
     const result = await connectEbayAccount();
 
     expect(result.success).toBe(false);
@@ -153,7 +153,7 @@ describe('connectEbayAccount', () => {
       .mockReturnValueOnce(makeChain([{ value: true }]))
       .mockReturnValueOnce(makeChain([{ id: 'existing-acc' }]));
 
-    const { connectEbayAccount } = await import('../crosslister-accounts');
+    const { connectEbayAccount } = await import('../crosslister-accounts-manage');
     const result = await connectEbayAccount();
 
     expect(result.success).toBe(false);
@@ -166,7 +166,7 @@ describe('connectEbayAccount', () => {
       ability: { can: vi.fn().mockReturnValue(false) },
     });
 
-    const { connectEbayAccount } = await import('../crosslister-accounts');
+    const { connectEbayAccount } = await import('../crosslister-accounts-manage');
     const result = await connectEbayAccount();
 
     expect(result.success).toBe(false);
@@ -189,7 +189,7 @@ describe('disconnectAccount', () => {
     const updateChain = makeChain(undefined);
     mockDbUpdate.mockReturnValue(updateChain);
 
-    const { disconnectAccount } = await import('../crosslister-accounts');
+    const { disconnectAccount } = await import('../crosslister-accounts-manage');
     const result = await disconnectAccount({ accountId: 'acc-1' });
 
     expect(result.success).toBe(true);
@@ -202,7 +202,7 @@ describe('disconnectAccount', () => {
       ability: { can: vi.fn().mockReturnValue(false) },
     });
 
-    const { disconnectAccount } = await import('../crosslister-accounts');
+    const { disconnectAccount } = await import('../crosslister-accounts-manage');
     const result = await disconnectAccount({ accountId: 'acc-1' });
 
     expect(result.success).toBe(false);
@@ -222,7 +222,7 @@ describe('disconnectAccount', () => {
     const updateChain = makeChain(undefined);
     mockDbUpdate.mockReturnValue(updateChain);
 
-    const { disconnectAccount } = await import('../crosslister-accounts');
+    const { disconnectAccount } = await import('../crosslister-accounts-manage');
     const result = await disconnectAccount({ accountId: 'acc-pm' });
 
     expect(result.success).toBe(true);
@@ -346,7 +346,7 @@ describe('refreshAccountAuth', () => {
     const updateChain = makeChain(undefined);
     mockDbUpdate.mockReturnValue(updateChain);
 
-    const { refreshAccountAuth } = await import('../crosslister-accounts');
+    const { refreshAccountAuth } = await import('../crosslister-accounts-manage');
     const result = await refreshAccountAuth({ accountId: 'acc-pm' });
 
     expect(result.success).toBe(false);

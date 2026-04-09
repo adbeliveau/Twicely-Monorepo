@@ -1,8 +1,9 @@
 'use server';
 
 import { db } from '@twicely/db';
-import { order, orderItem, sellerProfile, promotion } from '@twicely/db/schema';
+import { order, orderItem, sellerProfile } from '@twicely/db/schema';
 import { eq, inArray } from 'drizzle-orm';
+import { validateAndComputeCoupon } from './checkout-coupon';
 import { authorize } from '@twicely/casl';
 import { createOrdersFromCart } from '@twicely/commerce/create-order';
 import { createConnectPaymentIntent } from '@twicely/stripe/server';
@@ -170,47 +171,11 @@ export async function initiateCheckout(input: InitiateCheckoutInput): Promise<In
   // SECURITY: Re-validate coupon server-side — never trust discountCents from client
   let verifiedDiscountCents = 0;
   if (input.coupon) {
-    const now = new Date();
-    const [promo] = await db
-      .select({
-        id: promotion.id,
-        isActive: promotion.isActive,
-        discountPercent: promotion.discountPercent,
-        discountAmountCents: promotion.discountAmountCents,
-        minimumOrderCents: promotion.minimumOrderCents,
-        maxUsesTotal: promotion.maxUsesTotal,
-        maxUsesPerBuyer: promotion.maxUsesPerBuyer,
-        usageCount: promotion.usageCount,
-        startsAt: promotion.startsAt,
-        endsAt: promotion.endsAt,
-        couponCode: promotion.couponCode,
-      })
-      .from(promotion)
-      .where(eq(promotion.id, input.coupon.promotionId))
-      .limit(1);
-
-    if (!promo || !promo.isActive || promo.startsAt > now || (promo.endsAt && promo.endsAt < now)) {
-      return { success: false, error: 'Coupon is no longer valid' };
+    const couponResult = await validateAndComputeCoupon(input.coupon, createdOrders);
+    if (!couponResult.valid) {
+      return { success: false, error: couponResult.error };
     }
-    if (promo.couponCode !== input.coupon.couponCode) {
-      return { success: false, error: 'Invalid coupon code' };
-    }
-    if (promo.maxUsesTotal && promo.usageCount >= promo.maxUsesTotal) {
-      return { success: false, error: 'Coupon usage limit reached' };
-    }
-
-    // Recompute discount server-side from promotion data
-    const applicableOrder = createdOrders.find((o) => o.sellerId === input.coupon!.appliedToSellerId);
-    if (applicableOrder) {
-      if (promo.discountAmountCents) {
-        verifiedDiscountCents = Math.min(promo.discountAmountCents, applicableOrder.totalCents);
-      } else if (promo.discountPercent) {
-        verifiedDiscountCents = Math.round(applicableOrder.totalCents * promo.discountPercent / 100);
-      }
-      if (promo.minimumOrderCents && applicableOrder.totalCents < promo.minimumOrderCents) {
-        verifiedDiscountCents = 0; // Order below minimum — coupon does not apply
-      }
-    }
+    verifiedDiscountCents = couponResult.verifiedDiscountCents;
     // Override client-supplied discountCents with server-computed value
     input.coupon.discountCents = verifiedDiscountCents;
   }

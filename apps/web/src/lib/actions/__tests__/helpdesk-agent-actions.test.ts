@@ -468,7 +468,7 @@ describe('addCaseWatcher', () => {
   it('inserts watcher on success', async () => {
     makeAuth(true);
     mockDbInsert.mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) });
-    const { addCaseWatcher } = await import('../helpdesk-agent');
+    const { addCaseWatcher } = await import('../helpdesk-watchers');
     const result = await addCaseWatcher('case-001', 'staff-watcher-1');
     expect(result.success).toBe(true);
     expect(mockDbInsert).toHaveBeenCalled();
@@ -476,7 +476,7 @@ describe('addCaseWatcher', () => {
 
   it('returns Access denied when CASL denies manage HelpdeskCase', async () => {
     makeAuth(false);
-    const { addCaseWatcher } = await import('../helpdesk-agent');
+    const { addCaseWatcher } = await import('../helpdesk-watchers');
     const result = await addCaseWatcher('case-001', 'staff-watcher-1');
     expect(result.success).toBe(false);
     expect(result.error).toBe('Access denied');
@@ -489,7 +489,7 @@ describe('removeCaseWatcher', () => {
   it('deletes watcher on success', async () => {
     makeAuth(true);
     mockDbDelete.mockReturnValue(makeDeleteChain());
-    const { removeCaseWatcher } = await import('../helpdesk-agent');
+    const { removeCaseWatcher } = await import('../helpdesk-watchers');
     const result = await removeCaseWatcher('case-001', 'staff-watcher-1');
     expect(result.success).toBe(true);
     expect(mockDbDelete).toHaveBeenCalled();
@@ -497,7 +497,7 @@ describe('removeCaseWatcher', () => {
 
   it('returns Access denied when CASL denies', async () => {
     makeAuth(false);
-    const { removeCaseWatcher } = await import('../helpdesk-agent');
+    const { removeCaseWatcher } = await import('../helpdesk-watchers');
     const result = await removeCaseWatcher('case-001', 'staff-watcher-1');
     expect(result.success).toBe(false);
     expect(result.error).toBe('Access denied');
@@ -519,7 +519,7 @@ describe('helpdesk-agent auth propagation', () => {
 
   it('removeCaseWatcher propagates staffAuthorize error', async () => {
     makeUnauthorized();
-    const { removeCaseWatcher } = await import('../helpdesk-agent');
+    const { removeCaseWatcher } = await import('../helpdesk-watchers');
     await expect(removeCaseWatcher('case-001', 'staff-1')).rejects.toThrow('Not authenticated');
   });
 });

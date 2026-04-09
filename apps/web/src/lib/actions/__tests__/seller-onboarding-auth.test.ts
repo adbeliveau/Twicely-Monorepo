@@ -32,7 +32,8 @@ vi.mock('@/lib/validations/seller-onboarding', () => ({
   storeNameSchema: { safeParse: vi.fn() },
 }));
 
-import { enableSellerAction, getOnboardingProgressAction } from '../seller-onboarding';
+import { enableSellerAction } from '../seller-onboarding';
+import { getOnboardingProgressAction } from '../seller-onboarding-store';
 import { authorize } from '@twicely/casl';
 import { db } from '@twicely/db';
 import { ensureSellerProfile } from '@/lib/listings/seller-activate';

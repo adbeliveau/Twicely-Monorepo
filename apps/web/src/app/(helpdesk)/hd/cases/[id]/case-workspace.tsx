@@ -1,51 +1,31 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { CaseDetail, CaseListItem } from "@/lib/queries/helpdesk-cases";
-import type { MacroItem } from "@/lib/queries/helpdesk-macros";
-import type { AgentsAndTeams } from "@/lib/queries/helpdesk-agents";
-import { ChannelBadge } from "@/components/helpdesk/helpdesk-badges";
-import type { Channel } from "@/components/helpdesk/helpdesk-badges";
-import { SlaTimer } from "@/components/helpdesk/sla-timer";
-import { MessageBubble, Timeline, DateDivider } from "@/components/helpdesk/message-bubble";
-import type { MessageType } from "@/components/helpdesk/message-bubble";
-import { ReplyComposer } from "@/components/helpdesk/reply-composer";
-import { ContextPanel } from "@/components/helpdesk/context-panel";
-import type { CaseContextData } from "@/components/helpdesk/context-panel";
-import { CaseQueuePanel } from "./case-queue-panel";
-import { CasePropertyDropdowns } from "@/components/helpdesk/case-property-dropdowns";
-import { CaseTagEditor } from "@/components/helpdesk/case-tag-editor";
-import { ShortcutHelpOverlay } from "@/components/helpdesk/shortcut-help-overlay";
-import { addAgentReply, updateCaseStatus, assignCase } from "@/lib/actions/helpdesk-agent-cases";
-import { updateCasePriority } from "@/lib/actions/helpdesk-agent-cases-meta";
-import type { MacroContext } from "@/lib/helpdesk/macro-substitution";
-import { useHelpdeskHotkeys } from "@/lib/helpdesk/use-helpdesk-hotkeys";
-import { WatchToggleButton } from "@/components/helpdesk/case-watchers";
-import type { CaseWatcherItem } from "@/lib/queries/helpdesk-cases";
-import { AiSuggestionCard } from "@/components/helpdesk/ai-suggestion-card";
-
-// =============================================================================
-// HELPERS
-// =============================================================================
-
-function isSameDay(a: Date | string, b: Date | string) {
-  const da = new Date(a);
-  const db = new Date(b);
-  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
-}
-
-type OptimisticMsg = { kind: "message"; id: string; createdAt: Date; direction: string; senderName: string | null; body: string; isOptimistic: true };
-type ServerTimelineItem = { kind: "message"; id: string; createdAt: Date; direction: string; senderName: string | null; body: string } | { kind: "event"; id: string; createdAt: Date; eventType: string };
-type TimelineItem = ServerTimelineItem | OptimisticMsg;
-
-function directionToType(dir: string): MessageType {
-  if (dir === "INBOUND") return "INBOUND";
-  if (dir === "INTERNAL") return "INTERNAL";
-  return "OUTBOUND";
-}
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { CaseDetail, CaseListItem } from '@/lib/queries/helpdesk-cases';
+import type { MacroItem } from '@/lib/queries/helpdesk-macros';
+import type { AgentsAndTeams } from '@/lib/queries/helpdesk-agents';
+import { ChannelBadge } from '@/components/helpdesk/helpdesk-badges';
+import type { Channel } from '@/components/helpdesk/helpdesk-badges';
+import { SlaTimer } from '@/components/helpdesk/sla-timer';
+import { ReplyComposer } from '@/components/helpdesk/reply-composer';
+import { ContextPanel } from '@/components/helpdesk/context-panel';
+import type { CaseContextData } from '@/components/helpdesk/context-panel';
+import { CaseQueuePanel } from './case-queue-panel';
+import { CasePropertyDropdowns } from '@/components/helpdesk/case-property-dropdowns';
+import { CaseTagEditor } from '@/components/helpdesk/case-tag-editor';
+import { ShortcutHelpOverlay } from '@/components/helpdesk/shortcut-help-overlay';
+import { addAgentReply, updateCaseStatus, assignCase } from '@/lib/actions/helpdesk-agent-cases';
+import { updateCasePriority } from '@/lib/actions/helpdesk-agent-cases-meta';
+import type { MacroContext } from '@/lib/helpdesk/macro-substitution';
+import { useHelpdeskHotkeys } from '@/lib/helpdesk/use-helpdesk-hotkeys';
+import { WatchToggleButton } from '@/components/helpdesk/case-watchers';
+import type { CaseWatcherItem } from '@/lib/queries/helpdesk-cases';
+import { AiSuggestionCard } from '@/components/helpdesk/ai-suggestion-card';
+import { CaseTimeline } from './case-timeline';
+import type { OptimisticMsg, ServerTimelineItem, TimelineItem } from './case-timeline';
 
 // =============================================================================
 // PROPS
@@ -71,7 +51,7 @@ interface CaseWorkspaceProps {
 export function CaseWorkspace({
   caseDetail, caseQueue, contextData, macros = [],
   agentsAndTeams = { agents: [], teams: [] },
-  agentName = "Agent", agentStaffUserId = "",
+  agentName = 'Agent', agentStaffUserId = '',
   watchers = [],
   aiSuggestionEnabled = false,
   aiAssistEnabled = false,
@@ -82,9 +62,9 @@ export function CaseWorkspace({
   const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMsg[]>([]);
   const [composerBody, setComposerBody] = useState<string | null>(null);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
-  const [focusRequest, setFocusRequest] = useState<{ mode: "reply" | "internal"; counter: number }>({ mode: "reply", counter: 0 });
+  const [focusRequest, setFocusRequest] = useState<{ mode: 'reply' | 'internal'; counter: number }>({ mode: 'reply', counter: 0 });
   const [macroToggleSignal, setMacroToggleSignal] = useState(0);
-  const isClosed = caseDetail.status === "CLOSED";
+  const isClosed = caseDetail.status === 'CLOSED';
 
   // Queue navigation
   const currentIdx = caseQueue.findIndex((c) => c.id === caseDetail.id);
@@ -97,33 +77,27 @@ export function CaseWorkspace({
     if (next) router.push(`/hd/cases/${next.id}`);
   }, [currentIdx, caseQueue, router]);
 
-  // V2 behavior: after resolving, auto-advance to the next case in the queue.
-  // If no next case, fall back to the case list page. Keeps agents in flow.
   const handleResolve = useCallback(async () => {
-    if (isClosed || caseDetail.status === "RESOLVED") return;
-    const result = await updateCaseStatus({ caseId: caseDetail.id, status: "RESOLVED" });
+    if (isClosed || caseDetail.status === 'RESOLVED') return;
+    const result = await updateCaseStatus({ caseId: caseDetail.id, status: 'RESOLVED' });
     if (!result.success) return;
     const next = currentIdx >= 0 && currentIdx < caseQueue.length - 1 ? caseQueue[currentIdx + 1] : undefined;
     if (next) {
       router.push(`/hd/cases/${next.id}`);
     } else {
-      router.push("/hd/cases");
+      router.push('/hd/cases');
     }
   }, [isClosed, caseDetail.id, caseDetail.status, currentIdx, caseQueue, router]);
 
   const handleEscalate = useCallback(async () => {
     if (isClosed) return;
-    await updateCaseStatus({ caseId: caseDetail.id, status: "ESCALATED" });
+    await updateCaseStatus({ caseId: caseDetail.id, status: 'ESCALATED' });
     router.refresh();
   }, [isClosed, caseDetail.id, router]);
 
   const handleAssignToMe = useCallback(async () => {
     if (isClosed || caseDetail.assignedAgentId === agentStaffUserId) return;
-    await assignCase({
-      caseId: caseDetail.id,
-      assignedAgentId: agentStaffUserId,
-      assignedTeamId: null,
-    });
+    await assignCase({ caseId: caseDetail.id, assignedAgentId: agentStaffUserId, assignedTeamId: null });
     router.refresh();
   }, [isClosed, caseDetail.id, caseDetail.assignedAgentId, agentStaffUserId, router]);
 
@@ -133,12 +107,11 @@ export function CaseWorkspace({
     router.refresh();
   }, [isClosed, caseDetail.id, router]);
 
-  // Register hotkeys per canonical §6.2
   useHelpdeskHotkeys({
     navigatePrev,
     navigateNext,
-    focusReply: () => setFocusRequest((p) => ({ mode: "reply", counter: p.counter + 1 })),
-    focusNote: () => setFocusRequest((p) => ({ mode: "internal", counter: p.counter + 1 })),
+    focusReply: () => setFocusRequest((p) => ({ mode: 'reply', counter: p.counter + 1 })),
+    focusNote: () => setFocusRequest((p) => ({ mode: 'internal', counter: p.counter + 1 })),
     escalate: () => void handleEscalate(),
     toggleMacros: () => setMacroToggleSignal((n) => n + 1),
     toggleShortcutHelp: () => setShowShortcutHelp((s) => !s),
@@ -146,10 +119,9 @@ export function CaseWorkspace({
     setPriority: (p) => void handleSetPriority(p),
   });
 
-  // Optimistic send handlers
   const handleSendReply = useCallback(async (body: string) => {
     const id = `optimistic-${Date.now()}`;
-    const item: OptimisticMsg = { kind: "message", id, createdAt: new Date(), direction: "OUTBOUND", senderName: agentName, body, isOptimistic: true };
+    const item: OptimisticMsg = { kind: 'message', id, createdAt: new Date(), direction: 'OUTBOUND', senderName: agentName, body, isOptimistic: true };
     setOptimisticMessages((prev) => [...prev, item]);
     setIsSubmitting(true);
     setReplyError(null);
@@ -157,16 +129,14 @@ export function CaseWorkspace({
       const result = await addAgentReply({ caseId: caseDetail.id, body, isInternal: false });
       if (!result.success) {
         setOptimisticMessages((prev) => prev.filter((m) => m.id !== id));
-        setReplyError(result.error ?? "Failed to send reply.");
-      } else {
-        router.refresh();
-      }
+        setReplyError(result.error ?? 'Failed to send reply.');
+      } else { router.refresh(); }
     } finally { setIsSubmitting(false); }
   }, [caseDetail.id, router, agentName]);
 
   const handleSendNote = useCallback(async (body: string) => {
     const id = `optimistic-${Date.now()}`;
-    const item: OptimisticMsg = { kind: "message", id, createdAt: new Date(), direction: "INTERNAL", senderName: agentName, body, isOptimistic: true };
+    const item: OptimisticMsg = { kind: 'message', id, createdAt: new Date(), direction: 'INTERNAL', senderName: agentName, body, isOptimistic: true };
     setOptimisticMessages((prev) => [...prev, item]);
     setIsSubmitting(true);
     setReplyError(null);
@@ -174,21 +144,21 @@ export function CaseWorkspace({
       const result = await addAgentReply({ caseId: caseDetail.id, body, isInternal: true });
       if (!result.success) {
         setOptimisticMessages((prev) => prev.filter((m) => m.id !== id));
-        setReplyError(result.error ?? "Failed to add note.");
-      } else {
-        router.refresh();
-      }
+        setReplyError(result.error ?? 'Failed to add note.');
+      } else { router.refresh(); }
     } finally { setIsSubmitting(false); }
   }, [caseDetail.id, router, agentName]);
 
   // Build merged timeline
   const serverItems: ServerTimelineItem[] = [
-    ...caseDetail.messages.map((m) => ({ kind: "message" as const, id: m.id, createdAt: m.createdAt, direction: m.direction, senderName: m.senderName, body: m.body })),
-    ...caseDetail.events.map((e) => ({ kind: "event" as const, id: e.id, createdAt: e.createdAt, eventType: e.eventType })),
+    ...caseDetail.messages.map((m) => ({ kind: 'message' as const, id: m.id, createdAt: m.createdAt, direction: m.direction, senderName: m.senderName, body: m.body })),
+    ...caseDetail.events.map((e) => ({ kind: 'event' as const, id: e.id, createdAt: e.createdAt, eventType: e.eventType })),
   ];
   const serverIds = new Set(serverItems.map((i) => i.id));
-  const timeline: TimelineItem[] = [...serverItems, ...optimisticMessages.filter((m) => !serverIds.has(m.id))]
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const timeline: TimelineItem[] = [
+    ...serverItems,
+    ...optimisticMessages.filter((m) => !serverIds.has(m.id)),
+  ].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   const macroContext: MacroContext = {
     buyerName: contextData.requesterName,
@@ -199,23 +169,18 @@ export function CaseWorkspace({
 
   return (
     <div className="hd-workspace">
-      <CaseQueuePanel
-        cases={caseQueue}
-        selectedCaseId={caseDetail.id}
-        watchers={watchers}
-      />
+      <CaseQueuePanel cases={caseQueue} selectedCaseId={caseDetail.id} watchers={watchers} />
 
       <div className="hd-workspace-center">
-        {/* Header — V2 pattern: back button, case#, subject, SLA, inline properties, tags, watchers */}
-        <div className="border-b px-6 py-3 flex-shrink-0 flex flex-col gap-2" style={{ background: "rgb(var(--hd-bg-panel))", borderColor: "rgb(var(--hd-border))" }}>
-          {/* Back button + case number + channel + subject + SLA */}
+        {/* Header */}
+        <div className="border-b px-6 py-3 flex-shrink-0 flex flex-col gap-2" style={{ background: 'rgb(var(--hd-bg-panel))', borderColor: 'rgb(var(--hd-border))' }}>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex items-start gap-2">
               <button
                 type="button"
-                onClick={() => router.push("/hd/cases")}
+                onClick={() => router.push('/hd/cases')}
                 className="flex-shrink-0 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium hd-transition hover:opacity-70"
-                style={{ color: "rgb(var(--hd-text-muted))" }}
+                style={{ color: 'rgb(var(--hd-text-muted))' }}
                 title="Back to cases"
                 aria-label="Back to cases"
               >
@@ -224,16 +189,12 @@ export function CaseWorkspace({
               </button>
               <div className="min-w-0">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs" style={{ color: "rgb(var(--hd-text-dim))" }}>{caseDetail.caseNumber}</span>
+                  <span className="font-mono text-xs" style={{ color: 'rgb(var(--hd-text-dim))' }}>{caseDetail.caseNumber}</span>
                   <ChannelBadge channel={caseDetail.channel as Channel} />
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <h1 className="text-base font-semibold truncate" style={{ color: "rgb(var(--hd-text-primary))" }}>{caseDetail.subject}</h1>
-                  <WatchToggleButton
-                    caseId={caseDetail.id}
-                    watchers={watchers}
-                    currentStaffUserId={agentStaffUserId}
-                  />
+                  <h1 className="text-base font-semibold truncate" style={{ color: 'rgb(var(--hd-text-primary))' }}>{caseDetail.subject}</h1>
+                  <WatchToggleButton caseId={caseDetail.id} watchers={watchers} currentStaffUserId={agentStaffUserId} />
                 </div>
               </div>
             </div>
@@ -246,45 +207,10 @@ export function CaseWorkspace({
             currentAgentId={caseDetail.assignedAgentId} currentTeamId={caseDetail.assignedTeamId}
             agents={agentsAndTeams.agents} teams={agentsAndTeams.teams} isClosed={isClosed}
           />
-          <CaseTagEditor
-            caseId={caseDetail.id}
-            tags={caseDetail.tags}
-            isClosed={isClosed}
-          />
+          <CaseTagEditor caseId={caseDetail.id} tags={caseDetail.tags} isClosed={isClosed} />
         </div>
 
-        {/* Timeline */}
-        <Timeline className="flex-1">
-          {timeline.map((item, index) => {
-            const prev = index > 0 ? timeline[index - 1] : null;
-            const showDate = !prev || !isSameDay(prev.createdAt, item.createdAt);
-            if (item.kind === "event") {
-              return (
-                <div key={`e-${item.id}`}>
-                  {showDate && <DateDivider date={item.createdAt} />}
-                  <div className="flex justify-center py-1">
-                    <span className="rounded-full px-3 py-1 text-xs" style={{ background: "rgb(var(--hd-bg-card))", color: "rgb(var(--hd-text-muted))" }}>
-                      {item.eventType.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                </div>
-              );
-            }
-            const isOpt = "isOptimistic" in item && item.isOptimistic;
-            const authorName = item.senderName ?? (item.direction === "INBOUND" ? "User" : "Agent");
-            return (
-              <div key={`m-${item.id}`} className={isOpt ? "opacity-70" : undefined}>
-                {showDate && <DateDivider date={item.createdAt} />}
-                <MessageBubble type={directionToType(item.direction)} author={{ id: item.id, name: authorName }} body={item.body} createdAt={item.createdAt} />
-                {isOpt && (
-                  <div className="flex justify-end px-4 pb-1">
-                    <span className="text-[10px] animate-pulse" style={{ color: "rgb(var(--hd-text-dim))" }}>Sending...</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </Timeline>
+        <CaseTimeline timeline={timeline} />
 
         {!isClosed ? (
           <>
@@ -301,13 +227,13 @@ export function CaseWorkspace({
               initialBody={composerBody ?? undefined}
             />
             {replyError && (
-              <div className="px-4 py-2 text-sm border-t" style={{ background: "rgb(var(--hd-bg-card))", borderColor: "rgb(var(--hd-border))", color: "rgb(220 38 38)" }}>
+              <div className="px-4 py-2 text-sm border-t" style={{ background: 'rgb(var(--hd-bg-card))', borderColor: 'rgb(var(--hd-border))', color: 'rgb(220 38 38)' }}>
                 {replyError}
               </div>
             )}
           </>
         ) : (
-          <div className={cn("border-t px-4 py-3 flex items-center gap-2 text-sm")} style={{ borderColor: "rgb(var(--hd-border))", background: "rgb(var(--hd-bg-card))", color: "rgb(var(--hd-text-muted))" }}>
+          <div className={cn('border-t px-4 py-3 flex items-center gap-2 text-sm')} style={{ borderColor: 'rgb(var(--hd-border))', background: 'rgb(var(--hd-bg-card))', color: 'rgb(var(--hd-text-muted))' }}>
             <Lock className="h-4 w-4" /> This case is closed.
           </div>
         )}
