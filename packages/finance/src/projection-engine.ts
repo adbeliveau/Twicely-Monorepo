@@ -7,11 +7,19 @@
 import type {
   ProjectionInput,
   ProjectionOutput,
+  ProjectionConfig,
   OrderSummary,
   ExpenseSummary,
   ListingSummary,
   PerformingPeriods,
 } from './projection-types';
+
+/** Default config — used only as fallback constants matching the seed values.
+ * The real values are read from platform_settings by the compute job. */
+const DEFAULT_CONFIG: ProjectionConfig = {
+  trailingDays: 90,
+  breakEvenMinMonths: 3,
+};
 import { daysAgoFilter, expensesInDays } from './projection-engine-helpers';
 
 // ─── Revenue projection ──────────────────────────────────────────────────────
@@ -20,22 +28,22 @@ import { daysAgoFilter, expensesInDays } from './projection-engine-helpers';
  * Linear extrapolation of 90-day trailing revenue to a 30-day projection.
  * Returns null when fewer than 3 orders in trailing 90 days.
  */
-export function computeProjectedRevenue30d(orders: OrderSummary[]): number | null {
-  const trailing = daysAgoFilter(orders, 90);
+export function computeProjectedRevenue30d(orders: OrderSummary[], trailingDays = 90): number | null {
+  const trailing = daysAgoFilter(orders, trailingDays);
   if (trailing.length < 3) return null;
   const totalRevenue = trailing.reduce((s, o) => s + o.totalCents, 0);
-  return Math.round((totalRevenue / 90) * 30);
+  return Math.round((totalRevenue / trailingDays) * 30);
 }
 
 /**
  * Linear extrapolation of 90-day trailing expenses to a 30-day projection.
  * Returns null when fewer than 3 expense records in trailing 90 days.
  */
-export function computeProjectedExpenses30d(expenses: ExpenseSummary[]): number | null {
-  const trailing = expensesInDays(expenses, 90);
+export function computeProjectedExpenses30d(expenses: ExpenseSummary[], trailingDays = 90): number | null {
+  const trailing = expensesInDays(expenses, trailingDays);
   if (trailing.length < 3) return null;
   const totalExpenses = trailing.reduce((s, e) => s + e.amountCents, 0);
-  return Math.round((totalExpenses / 90) * 30);
+  return Math.round((totalExpenses / trailingDays) * 30);
 }
 
 // ─── Sell-through + pricing ──────────────────────────────────────────────────
@@ -44,19 +52,20 @@ export function computeProjectedExpenses30d(expenses: ExpenseSummary[]): number 
  * Returns basis-point sell-through rate (orders / active+sold listings * 10000).
  * Trailing 90-day orders vs current active listing count.
  */
-export function computeSellThroughRate90d(
+export function computeSellThroughRate90d(trailingDays: number,
+  
   orders: OrderSummary[],
   activeListings: ListingSummary[],
 ): number | null {
-  const trailing = daysAgoFilter(orders, 90);
+  const trailing = daysAgoFilter(orders, trailingDays);
   const denominator = trailing.length + activeListings.length;
   if (denominator === 0) return null;
   return Math.round((trailing.length / denominator) * 10000);
 }
 
 /** Average sale price over trailing 90 days in cents. */
-export function computeAvgSalePrice90d(orders: OrderSummary[]): number | null {
-  const trailing = daysAgoFilter(orders, 90);
+export function computeAvgSalePrice90d(orders: OrderSummary[], trailingDays = 90): number | null {
+  const trailing = daysAgoFilter(orders, trailingDays);
   if (trailing.length === 0) return null;
   const total = trailing.reduce((s, o) => s + o.totalCents, 0);
   return Math.round(total / trailing.length);
@@ -66,8 +75,8 @@ export function computeAvgSalePrice90d(orders: OrderSummary[]): number | null {
  * Effective fee rate as basis points (fees / revenue * 10000).
  * Includes TF + Stripe fees only.
  */
-export function computeEffectiveFeeRate90d(orders: OrderSummary[]): number | null {
-  const trailing = daysAgoFilter(orders, 90);
+export function computeEffectiveFeeRate90d(orders: OrderSummary[], trailingDays = 90): number | null {
+  const trailing = daysAgoFilter(orders, trailingDays);
   if (trailing.length === 0) return null;
   const revenue = trailing.reduce((s, o) => s + o.totalCents, 0);
   if (revenue === 0) return null;
@@ -76,8 +85,8 @@ export function computeEffectiveFeeRate90d(orders: OrderSummary[]): number | nul
 }
 
 /** Average days from listing activation to sale over trailing 90 days. */
-export function computeAvgDaysToSell90d(orders: OrderSummary[]): number | null {
-  const trailing = daysAgoFilter(orders, 90).filter((o) => o.listingActivatedAt !== null);
+export function computeAvgDaysToSell90d(orders: OrderSummary[], trailingDays = 90): number | null {
+  const trailing = daysAgoFilter(orders, trailingDays).filter((o) => o.listingActivatedAt !== null);
   if (trailing.length === 0) return null;
   const totalMs = trailing.reduce((s, o) => {
     const ms = o.completedAt.getTime() - o.listingActivatedAt!.getTime();
@@ -93,19 +102,22 @@ export function computeAvgDaysToSell90d(orders: OrderSummary[]): number | null {
  * Returns null if insufficient expense data (< 3 records in 90 days).
  */
 export function computeBreakEven(
+  trailingDays: number,
+  breakEvenMinMonths: number,
   orders: OrderSummary[],
   expenses: ExpenseSummary[],
 ): { breakEvenRevenueCents: number | null; breakEvenOrders: number | null } {
-  const trailing90Expenses = expensesInDays(expenses, 90);
-  if (trailing90Expenses.length < 3) {
+  const trailingExpenses = expensesInDays(expenses, trailingDays);
+  if (trailingExpenses.length < breakEvenMinMonths) {
     return { breakEvenRevenueCents: null, breakEvenOrders: null };
   }
 
+  const trailingMonths = Math.max(1, trailingDays / 30);
   const monthlyExpenses = Math.round(
-    trailing90Expenses.reduce((s, e) => s + e.amountCents, 0) / 3,
+    trailingExpenses.reduce((s, e) => s + e.amountCents, 0) / trailingMonths,
   );
 
-  const trailing90Orders = daysAgoFilter(orders, 90);
+  const trailing90Orders = daysAgoFilter(orders, trailingDays);
   if (trailing90Orders.length === 0) {
     return { breakEvenRevenueCents: monthlyExpenses, breakEvenOrders: null };
   }
@@ -137,11 +149,12 @@ export function computeBreakEven(
  * = (COGS sold per month / avg inventory value per month) * 10000.
  * Returns null if COGS data missing or active inventory is 0.
  */
-export function computeInventoryTurns(
+export function computeInventoryTurns(trailingDays: number,
+  
   orders: OrderSummary[],
   activeListings: ListingSummary[],
 ): number | null {
-  const trailing90 = daysAgoFilter(orders, 90);
+  const trailing90 = daysAgoFilter(orders, trailingDays);
   const cogsSold = trailing90.reduce((s, o) => s + o.cogsCents, 0);
   if (cogsSold === 0) return null;
 
@@ -162,8 +175,8 @@ export function computeInventoryTurns(
  * Day-of-week (0=Sun..6=Sat) average revenue and monthly revenue totals.
  * Returns null if fewer than 20 orders in trailing 90 days.
  */
-export function computePerformingPeriods(orders: OrderSummary[]): PerformingPeriods | null {
-  const trailing = daysAgoFilter(orders, 90);
+export function computePerformingPeriods(orders: OrderSummary[], trailingDays = 90): PerformingPeriods | null {
+  const trailing = daysAgoFilter(orders, trailingDays);
   if (trailing.length < 20) return null;
 
   const dowSum = new Array<number>(7).fill(0);
@@ -195,7 +208,8 @@ export function computePerformingPeriods(orders: OrderSummary[]): PerformingPeri
 /**
  * 0-100 data quality score based on COGS coverage and history depth.
  */
-export function computeDataQualityScore(
+export function computeDataQualityScore(trailingDays: number,
+  
   orders: OrderSummary[],
   accountCreatedAt: Date,
 ): number {
@@ -203,7 +217,7 @@ export function computeDataQualityScore(
     (Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24),
   );
 
-  const trailing90 = daysAgoFilter(orders, 90);
+  const trailing90 = daysAgoFilter(orders, trailingDays);
   const ordersWithCogs = trailing90.filter((o) => o.cogsCents > 0).length;
   const cogsRatio = trailing90.length > 0 ? ordersWithCogs / trailing90.length : 0;
   const cogsScore = Math.round(cogsRatio * 50);
@@ -221,26 +235,30 @@ import { computeHealthScore } from './projection-health';
  * Compute all projection metrics from pre-fetched input data.
  * Pure function — no DB reads.
  */
-export async function computeProjection(input: ProjectionInput): Promise<ProjectionOutput> {
+export async function computeProjection(
+  input: ProjectionInput,
+  config: ProjectionConfig = DEFAULT_CONFIG,
+): Promise<ProjectionOutput> {
   const { orders, expenses, activeListings, accountCreatedAt } = input;
+  const { trailingDays, breakEvenMinMonths } = config;
 
-  const projectedRevenue30dCents = computeProjectedRevenue30d(orders);
-  const projectedExpenses30dCents = computeProjectedExpenses30d(expenses);
+  const projectedRevenue30dCents = computeProjectedRevenue30d(orders, trailingDays);
+  const projectedExpenses30dCents = computeProjectedExpenses30d(expenses, trailingDays);
 
   const projectedProfit30dCents =
     projectedRevenue30dCents !== null && projectedExpenses30dCents !== null
       ? projectedRevenue30dCents - projectedExpenses30dCents
       : null;
 
-  const sellThroughRate90d = computeSellThroughRate90d(orders, activeListings);
-  const avgSalePrice90dCents = computeAvgSalePrice90d(orders);
-  const effectiveFeeRate90d = computeEffectiveFeeRate90d(orders);
-  const avgDaysToSell90d = computeAvgDaysToSell90d(orders);
+  const sellThroughRate90d = computeSellThroughRate90d(trailingDays, orders, activeListings);
+  const avgSalePrice90dCents = computeAvgSalePrice90d(orders, trailingDays);
+  const effectiveFeeRate90d = computeEffectiveFeeRate90d(orders, trailingDays);
+  const avgDaysToSell90d = computeAvgDaysToSell90d(orders, trailingDays);
 
-  const { breakEvenRevenueCents, breakEvenOrders } = computeBreakEven(orders, expenses);
-  const inventoryTurnsPerMonth = computeInventoryTurns(orders, activeListings);
-  const performingPeriodsJson = computePerformingPeriods(orders);
-  const dataQualityScore = computeDataQualityScore(orders, accountCreatedAt);
+  const { breakEvenRevenueCents, breakEvenOrders } = computeBreakEven(trailingDays, breakEvenMinMonths, orders, expenses);
+  const inventoryTurnsPerMonth = computeInventoryTurns(trailingDays, orders, activeListings);
+  const performingPeriodsJson = computePerformingPeriods(orders, trailingDays);
+  const dataQualityScore = computeDataQualityScore(trailingDays, orders, accountCreatedAt);
 
   const partialOutput: Partial<ProjectionOutput> = {
     projectedRevenue30dCents,

@@ -2,11 +2,11 @@ import { createQueue, createWorker } from './queue';
 import { db } from '@twicely/db';
 import { financeSubscription, sellerProfile } from '@twicely/db/schema';
 import { and, eq, isNull, lt, lte, gte, sql } from 'drizzle-orm';
+import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
 import { notify } from '@twicely/notifications/service';
 
 const QUEUE_NAME = 'expire-finance-pro-trial';
-const BATCH_SIZE = 100;
 
 interface ExpireFinanceProTrialJobData {
   triggeredAt: string;
@@ -47,6 +47,7 @@ export async function registerExpireFinanceProTrialJob(): Promise<void> {
 export async function runExpireFinanceProTrial(): Promise<void> {
   const now = new Date();
   let totalExpired = 0;
+  const BATCH_SIZE = await getPlatformSetting<number>('finance.trial.batchSize', 100);
 
   while (true) {
     const expired = await db
@@ -127,8 +128,12 @@ export async function runExpireFinanceProTrial(): Promise<void> {
  */
 export async function runFinanceProTrialExpiryWarnings(): Promise<void> {
   const now = new Date();
-  const thirtyDaysFromNow = new Date(now);
-  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  const [warningDays, BATCH_SIZE] = await Promise.all([
+    getPlatformSetting<number>('finance.trial.expiryWarningDays', 30),
+    getPlatformSetting<number>('finance.trial.batchSize', 100),
+  ]);
+  const warningCutoff = new Date(now);
+  warningCutoff.setDate(warningCutoff.getDate() + warningDays);
 
   const expiringSoon = await db
     .select({
@@ -141,7 +146,7 @@ export async function runFinanceProTrialExpiryWarnings(): Promise<void> {
         eq(financeSubscription.tier, 'PRO'),
         isNull(financeSubscription.stripeSubscriptionId),
         gte(financeSubscription.storeTierTrialEndsAt, now),
-        lte(financeSubscription.storeTierTrialEndsAt, thirtyDaysFromNow),
+        lte(financeSubscription.storeTierTrialEndsAt, warningCutoff),
       ),
     )
     .limit(BATCH_SIZE);

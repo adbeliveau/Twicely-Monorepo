@@ -62,6 +62,17 @@ export interface PerformingPeriods {
   monthlyRevenue: Array<{ month: string; revenueCents: number }>;
 }
 
+/**
+ * Configurable parameters for the projection engine, all read from platform_settings
+ * by the caller (the nightly compute job). The engine is pure — it never reads the DB.
+ */
+export interface ProjectionConfig {
+  /** Trailing lookback window for all metric computations (default: 90 days). */
+  trailingDays: number;
+  /** Minimum expense months needed for break-even calculation (default: 3). */
+  breakEvenMinMonths: number;
+}
+
 /** Full set of metrics stored in financialProjection table plus derived JSON fields. */
 export interface ProjectionOutput {
   projectedRevenue30dCents: number | null;

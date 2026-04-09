@@ -19,11 +19,10 @@ import {
 import { eq, and, gte } from 'drizzle-orm';
 import { getPlatformSetting } from '@twicely/db/queries/platform-settings';
 import { logger } from '@twicely/logger';
-import type { ProjectionInput, OrderSummary, ExpenseSummary, ListingSummary } from '@twicely/finance/projection-types';
+import type { ProjectionInput, ProjectionConfig, OrderSummary, ExpenseSummary, ListingSummary } from '@twicely/finance/projection-types';
 import { computeProjection } from '@twicely/finance/projection-engine';
 
 const QUEUE_NAME = 'finance-projection-compute';
-const BATCH_SIZE = 50;
 
 interface ProjectionJobData {
   triggeredAt: string;
@@ -57,6 +56,14 @@ export interface ProjectionComputeResult {
 export async function processFinanceProjectionCompute(): Promise<ProjectionComputeResult> {
   const result: ProjectionComputeResult = { processed: 0, errors: 0 };
   const twelveMonthsAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+
+  // All configurable values from platform_settings — no hardcoded business constants
+  const [BATCH_SIZE, trailingDays, breakEvenMinMonths] = await Promise.all([
+    getPlatformSetting<number>('finance.projection.batchSize', 50),
+    getPlatformSetting<number>('finance.projection.trailingDays', 90),
+    getPlatformSetting<number>('finance.projection.breakEvenMinMonths', 3),
+  ]);
+  const projectionConfig: ProjectionConfig = { trailingDays, breakEvenMinMonths };
 
   let offset = 0;
   while (true) {
@@ -176,7 +183,7 @@ export async function processFinanceProjectionCompute(): Promise<ProjectionCompu
           activeListings,
         };
 
-        const output = await computeProjection(input);
+        const output = await computeProjection(input, projectionConfig);
 
         // Upsert into financialProjection
         await db

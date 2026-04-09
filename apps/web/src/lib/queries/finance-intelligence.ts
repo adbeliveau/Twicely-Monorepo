@@ -13,6 +13,7 @@ import {
   financialProjection,
 } from '@twicely/db/schema';
 import { eq, and, gte, sql, isNotNull } from 'drizzle-orm';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -161,13 +162,13 @@ export interface StaleListingData {
   daysActive: number;
 }
 
-const STALE_DAYS_THRESHOLD = 60;
-
 /**
- * Active listings that have been unsold for >= 60 days.
+ * Active listings that have been unsold for >= staleDaysThreshold.
+ * Threshold is read from platform_settings (default 60 days).
  */
 export async function getStaleListings(userId: string): Promise<StaleListingData[]> {
-  const cutoff = new Date(Date.now() - STALE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000);
+  const staleDaysThreshold = await getPlatformSetting<number>('finance.intelligence.staleDaysThreshold', 60);
+  const cutoff = new Date(Date.now() - staleDaysThreshold * 24 * 60 * 60 * 1000);
 
   const rows = await db
     .select({

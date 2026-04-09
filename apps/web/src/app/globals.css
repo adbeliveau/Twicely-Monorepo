@@ -162,6 +162,27 @@
   --z-index-9999: 9999;
   --z-index-99999: 99999;
   --z-index-999999: 999999;
+
+  /* Semantic tokens used by shadcn/ui components (dialog, card, popover, etc.) */
+  --color-background: #ffffff;
+  --color-foreground: #101828;
+  --color-muted: #f9fafb;
+  --color-muted-foreground: #6b7280;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #E91ECB;
+  --color-primary: #E91ECB;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f3f4f6;
+  --color-secondary-foreground: #101828;
+  --color-accent: #f3f4f6;
+  --color-accent-foreground: #101828;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-card: #ffffff;
+  --color-card-foreground: #101828;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #101828;
 }
 
 /*

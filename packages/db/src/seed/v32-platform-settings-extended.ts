@@ -550,4 +550,16 @@ export const V32_EXTENDED_SETTINGS: PlatformSettingSeed[] = [
   { key: 'discovery.marketIndex.minSample', value: 10, type: 'number' as const, category: 'discovery', description: 'Min sales required for market index calculation — canonical §11.4' },
   { key: 'discovery.marketIndex.highConfidence', value: 50, type: 'number' as const, category: 'discovery', description: 'Min sales for HIGH confidence market index — canonical §11.4' },
   { key: 'discovery.marketIndex.lowConfidenceVisible', value: false, type: 'boolean' as const, category: 'discovery', description: 'Display LOW confidence indexes to users — canonical §11.4' },
+
+  // ─── Finance Intelligence Projection (D4.IL) ──────────────────────────────
+  { key: 'finance.projection.trailingDays', value: 90, type: 'number' as const, category: 'finance', description: 'Trailing lookback window (days) for all projection engine metrics' },
+  { key: 'finance.projection.breakEvenMinMonths', value: 3, type: 'number' as const, category: 'finance', description: 'Min expense months needed for break-even calculation' },
+  { key: 'finance.projection.batchSize', value: 50, type: 'number' as const, category: 'finance', description: 'Sellers processed per batch in nightly projection job' },
+
+  // ─── Finance Trial (D4.T1) ────────────────────────────────────────────────
+  { key: 'finance.trial.batchSize', value: 100, type: 'number' as const, category: 'finance', description: 'Max trial expirations processed per batch in nightly job' },
+  { key: 'finance.trial.expiryWarningDays', value: 30, type: 'number' as const, category: 'finance', description: 'Days before trial expiry to send warning notification' },
+
+  // ─── Finance Intelligence UI ──────────────────────────────────────────────
+  { key: 'finance.intelligence.staleDaysThreshold', value: 60, type: 'number' as const, category: 'finance', description: 'Days of inactivity before a listing is considered stale/dead stock' },
 ];
