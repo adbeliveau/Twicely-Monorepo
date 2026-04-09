@@ -14,6 +14,7 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { invalidateFlagCache } from '@/lib/services/feature-flags';
+import { getFeatureFlagByKey, getFeatureFlags } from '@/lib/queries/admin-feature-flags';
 import {
   createFeatureFlagSchema,
   updateFeatureFlagSchema,
@@ -39,12 +40,7 @@ export async function createFeatureFlagAction(input: unknown) {
 
   const { key, name, description, type, enabled, percentage, targetingJson } = parsed.data;
 
-  const [existing] = await db
-    .select({ id: featureFlag.id })
-    .from(featureFlag)
-    .where(eq(featureFlag.key, key))
-    .limit(1);
-
+  const existing = await getFeatureFlagByKey(key);
   if (existing) return { error: 'A flag with this key already exists' };
 
   const [created] = await db.insert(featureFlag).values({
@@ -200,4 +196,10 @@ export async function deleteFeatureFlagAction(input: unknown) {
 
   revalidatePath('/flags');
   return { success: true as const };
+}
+
+export async function listFlagsAction(searchTerm?: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'FeatureFlag')) return [];
+  return getFeatureFlags(searchTerm);
 }

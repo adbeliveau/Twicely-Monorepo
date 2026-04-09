@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
+import { getSettingHistory } from '@/lib/queries/admin-settings';
 
 const updateSettingSchema = z.object({
   settingId: zodId,
@@ -250,4 +251,10 @@ export async function saveGeneralSettings(data: Record<string, unknown>) {
 
   revalidatePath('/cfg');
   return { success: true };
+}
+
+export async function getSettingHistoryAction(settingId: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'Setting')) return [];
+  return getSettingHistory(settingId);
 }

@@ -15,6 +15,7 @@ import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { submitAppealSchema, reviewAppealSchema } from '@/lib/validations/enforcement';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { notify } from '@twicely/notifications/service';
+import { getEnforcementHistory, getAppealedEnforcementActions } from '@/lib/queries/enforcement-actions';
 
 // ─── submitEnforcementAppealAction ────────────────────────────────────────────
 
@@ -206,4 +207,16 @@ export async function reviewEnforcementAppealAction(input: unknown) {
   revalidatePath('/mod/enforcement');
   revalidatePath(`/mod/enforcement/${enforcementActionId}`);
   return { success: true };
+}
+
+export async function getEnforcementHistoryAction(userId: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'EnforcementAction')) return [];
+  return getEnforcementHistory(userId);
+}
+
+export async function getAppealedEnforcementActionsAction(page: number = 1, pageSize: number = 50) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'EnforcementAction')) return { actions: [], total: 0 };
+  return getAppealedEnforcementActions(page, pageSize);
 }

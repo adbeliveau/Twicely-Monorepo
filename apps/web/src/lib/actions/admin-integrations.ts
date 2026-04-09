@@ -17,6 +17,7 @@ import {
 import { encryptSecret } from '@/lib/crypto/provider-secrets';
 import { eq, and } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { getStripeSettings } from '@/lib/queries/admin-integrations';
 import { z } from 'zod';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -235,4 +236,10 @@ export async function toggleIntegrationModule(input: unknown) {
   }
 
   return { success: true };
+}
+
+export async function getStripeSettingsAction() {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'ProviderAdapter')) return null;
+  return getStripeSettings();
 }

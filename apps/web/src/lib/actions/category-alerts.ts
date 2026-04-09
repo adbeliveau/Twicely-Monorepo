@@ -8,6 +8,7 @@ import { authorize } from '@twicely/casl';
 import { saveCategoryAlertSchema, deleteCategoryAlertSchema } from '@/lib/validations/alerts';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getAlertsForCategory } from '@/lib/queries/category-alerts';
 
 interface SaveAlertResult {
   success: boolean;
@@ -134,4 +135,9 @@ export async function deleteCategoryAlertAction(alertId: string): Promise<Delete
     logger.error('Delete category alert error', { error: String(error) });
     return { success: false, error: 'Failed to delete alert' };
   }
+}
+
+/** Get all active alerts for a category (used by notification triggers). */
+export async function getAlertsForCategoryAction(categoryId: string) {
+  return getAlertsForCategory(categoryId);
 }

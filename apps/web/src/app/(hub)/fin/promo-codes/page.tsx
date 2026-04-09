@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
-import { getAllPromoCodes, getPromoCodeRedemptionCount } from '@/lib/queries/promo-codes';
+import { getPlatformPromoCodes, getPromoCodeRedemptionCount } from '@/lib/queries/promo-codes';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { CreatePlatformPromoDialog } from '@/components/hub/create-platform-promo-dialog';
 import { Badge } from '@twicely/ui/badge';
@@ -26,7 +26,7 @@ export default async function PromoCodesPage({
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? '1', 10));
   const pageSize = 50;
-  const { rows, total } = await getAllPromoCodes({
+  const { rows, total } = await getPlatformPromoCodes({
     limit: pageSize,
     offset: (page - 1) * pageSize,
   });

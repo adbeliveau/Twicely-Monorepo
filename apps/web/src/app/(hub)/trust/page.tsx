@@ -3,7 +3,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
-import { getTrustOverviewKPIs, getRecentBandTransitions } from '@/lib/queries/admin-trust';
+import {
+  getTrustOverviewKPIs, getRecentBandTransitions,
+  getTrustBandDistribution, getEnforcementDistribution, getTrustScoreTimeline,
+} from '@/lib/queries/admin-trust';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { StatCard } from '@/components/admin/stat-card';
 import {
@@ -26,9 +29,12 @@ export default async function TrustPage() {
     return <p className="text-red-600">Access denied</p>;
   }
 
-  const [kpis, transitions] = await Promise.all([
+  const [kpis, transitions, bandDist, enfDist, scoreTrend] = await Promise.all([
     getTrustOverviewKPIs(),
     getRecentBandTransitions(20),
+    getTrustBandDistribution(),
+    getEnforcementDistribution(),
+    getTrustScoreTimeline(30),
   ]);
 
   const avgTrust = kpis.avgTrustScore.toFixed(1);
@@ -62,7 +68,7 @@ export default async function TrustPage() {
         <h2 className="mb-3 text-sm font-semibold text-gray-700">Band Distribution</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {['POWER_SELLER', 'TOP_RATED', 'ESTABLISHED', 'EMERGING', 'SUSPENDED'].map((band) => {
-            const entry = kpis.bandDistribution.find((b) => b.band === band);
+            const entry = bandDist.find((b) => b.band === band);
             const cnt = entry?.count ?? 0;
             const color = BAND_COLORS[band] ?? '#6B7280';
             return (
@@ -75,6 +81,36 @@ export default async function TrustPage() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Enforcement Distribution + Score Trend */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">Enforcement Distribution</h2>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-2">
+            {enfDist.length === 0 ? (
+              <p className="text-sm text-gray-400">No active enforcement</p>
+            ) : enfDist.map((e) => (
+              <div key={e.level} className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{e.level || 'NONE'}</span>
+                <span className="font-medium text-gray-900">{e.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">Avg Score (30d)</h2>
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            {scoreTrend.length > 0 ? (
+              <p className="text-2xl font-bold text-gray-900">
+                {(scoreTrend.reduce((s, r) => s + r.avgScore, 0) / scoreTrend.length).toFixed(1)}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400">No score data</p>
+            )}
+            <p className="text-xs text-gray-400 mt-1">Average seller score over {scoreTrend.length} days</p>
+          </div>
         </div>
       </div>
 

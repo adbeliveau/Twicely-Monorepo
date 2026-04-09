@@ -14,6 +14,7 @@ import {
 } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { getTeamMembers } from '@/lib/queries/helpdesk-teams';
 import {
   updateMacroSchema,
   createTeamSchema,
@@ -276,4 +277,10 @@ export async function updateHelpdeskSetting(input: unknown): Promise<ActionResul
 
   revalidatePath('/hd/settings');
   return { success: true };
+}
+
+export async function getTeamMembersAction(teamId: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('manage', 'HelpdeskTeam')) return [];
+  return getTeamMembers(teamId);
 }

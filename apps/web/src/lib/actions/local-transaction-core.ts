@@ -23,6 +23,7 @@ import { checkLocalEligibility } from '@twicely/commerce/local-eligibility';
 import { canProposeMeetupTime } from '@twicely/commerce/local-scheduling';
 import { canTransition } from '@twicely/commerce/local-state-machine';
 import { postConfirmationEffects } from '@twicely/commerce/local-ledger';
+import { incrementCompletedPurchaseCount } from '@/lib/queries/trust-metrics';
 import {
   createLocalTransactionSchema,
   confirmLocalTransactionSchema,
@@ -149,6 +150,9 @@ export async function confirmLocalTransactionAction(
   }
 
   await postConfirmationEffects(tx.id, tx.orderId, tx.sellerId, new Date());
+
+  // Fire-and-forget: increment buyer's completed purchase count (C1.3 trust signals)
+  incrementCompletedPurchaseCount(tx.buyerId).catch(() => {});
 
   revalidatePath('/my/buying/orders');
   revalidatePath('/my/selling/orders');

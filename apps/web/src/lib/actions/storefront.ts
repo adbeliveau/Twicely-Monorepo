@@ -9,6 +9,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { canUseFeature } from '@twicely/utils/tier-gates';
 import { z } from 'zod';
 import { sanitizeHtml } from '@twicely/utils/sanitize-html';
+import { getCustomCategories } from '@/lib/queries/storefront-owner';
 
 const updateStorefrontSettingsSchema = z.object({
   storeName: z.string().min(1).max(100).optional(),
@@ -277,4 +278,11 @@ export async function updateStoreCategories(
 
   revalidatePath('/my/selling/store');
   return { success: true };
+}
+
+export async function getStoreCategoriesAction() {
+  const { session } = await authorize();
+  if (!session) return [];
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  return getCustomCategories(userId);
 }

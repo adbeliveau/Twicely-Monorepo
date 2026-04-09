@@ -14,7 +14,7 @@ import { db } from '@twicely/db';
 import { sellerProfile, bundleSubscription } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
 import { stripe } from '@twicely/stripe/server';
-import { getSellerProfileIdByUserId, getStripeSubscriptionId } from '@/lib/queries/subscriptions';
+import { getSellerProfileIdByUserId, getStripeSubscriptionId, getProfileTiers } from '@/lib/queries/subscriptions';
 
 // ─── Schemas ────────────────────────────────────────────────────────────────
 
@@ -160,4 +160,14 @@ export async function createBillingPortalSession(
   } catch {
     return { success: false, error: 'Failed to open billing portal' };
   }
+}
+
+/** Get the current subscription tiers for the authenticated seller. */
+export async function getSellerTiersAction() {
+  const { session } = await authorize();
+  if (!session) return null;
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  const profileId = await getSellerProfileIdByUserId(userId);
+  if (!profileId) return null;
+  return getProfileTiers(profileId);
 }

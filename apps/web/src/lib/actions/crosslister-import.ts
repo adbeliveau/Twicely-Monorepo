@@ -17,6 +17,7 @@ import {
 import { eq, and, or } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { startImportSchema } from '@/lib/validations/crosslister';
+import { getImportBatchById, getChannelProjectionCount } from '@/lib/queries/crosslister';
 import { processImportBatch } from '@twicely/crosslister/services/import-service';
 import { normalizeExternalListing } from '@twicely/crosslister/services/normalizer-dispatch';
 import { createImportedListing } from '@twicely/crosslister/services/listing-creator';
@@ -157,11 +158,7 @@ export async function getImportBatchStatus(
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
 
-  const [batch] = await db
-    .select()
-    .from(importBatch)
-    .where(and(eq(importBatch.id, parsed.data.batchId), eq(importBatch.sellerId, sellerId)))
-    .limit(1);
+  const batch = await getImportBatchById(parsed.data.batchId, sellerId);
 
   if (!batch) return { success: false, error: 'Import batch not found.' };
 
@@ -291,4 +288,12 @@ export async function retryImportRecord(
     await db.update(importRecord).set({ errorMessage: String(err) }).where(eq(importRecord.id, record.id));
     return { success: false, error: String(err) };
   }
+}
+
+export async function getChannelProjectionCountAction(channel: string): Promise<{ count: number }> {
+  const { session } = await authorize();
+  if (!session) return { count: 0 };
+  const sellerId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  const count = await getChannelProjectionCount(sellerId, channel);
+  return { count };
 }

@@ -6,6 +6,7 @@ import { watchlistItem, listing } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { updateEngagement } from '@/lib/actions/browsing-history-helpers';
+import { isWatching } from '@/lib/queries/watchlist';
 import { toggleWatchlistSchema, togglePriceAlertSchema } from '@/lib/validations/watchlist';
 
 interface ToggleResult {
@@ -44,15 +45,13 @@ export async function toggleWatchlistAction(listingId: string): Promise<ToggleRe
   }
 
   // Check if already watching
-  const [existing] = await db
-    .select({ id: watchlistItem.id })
-    .from(watchlistItem)
-    .where(and(eq(watchlistItem.userId, session.userId), eq(watchlistItem.listingId, listingId)))
-    .limit(1);
+  const alreadyWatching = await isWatching(session.userId, listingId);
 
-  if (existing) {
+  if (alreadyWatching) {
     // Unwatch: delete the row
-    await db.delete(watchlistItem).where(eq(watchlistItem.id, existing.id));
+    await db
+      .delete(watchlistItem)
+      .where(and(eq(watchlistItem.userId, session.userId), eq(watchlistItem.listingId, listingId)));
     revalidatePath(`/i/`);
     return { success: true, watching: false };
   }

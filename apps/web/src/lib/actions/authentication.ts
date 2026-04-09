@@ -13,6 +13,7 @@ import { AUTH_SETTINGS_KEYS } from '@/lib/authentication/constants';
 import { generateCertNumber } from '@/lib/authentication/cert-number';
 import { getValkeyClient } from '@twicely/db/cache';
 import { logger } from '@twicely/logger';
+import { getAuthenticationRequestById, getAuthenticationRequestsForListing } from '@/lib/queries/authentication';
 
 interface ActionResult {
   success: boolean;
@@ -217,4 +218,16 @@ export async function submitAuthenticationPhotos(rawData: unknown): Promise<Acti
     .where(eq(authenticationRequest.id, requestId));
 
   return { success: true };
+}
+
+export async function getAuthenticationRequestByIdAction(requestId: string) {
+  const { session } = await authorize();
+  if (!session) return null;
+  return getAuthenticationRequestById(requestId);
+}
+
+export async function getAuthenticationRequestsForListingAction(listingId: string) {
+  const { session } = await authorize();
+  if (!session) return [];
+  return getAuthenticationRequestsForListing(listingId);
 }

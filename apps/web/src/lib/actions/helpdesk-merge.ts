@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@twicely/db';
 import { helpdeskCase, caseMessage, caseEvent, caseWatcher } from '@twicely/db/schema';
-import { eq, and, count, not, ne, ilike, or, desc } from 'drizzle-orm';
+import { eq, and, count, not } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
+import { searchCasesForMerge } from '@/lib/queries/helpdesk-merge-search';
 import { mergeCasesSchema } from '@/lib/validations/helpdesk';
 
 interface ActionResult {
@@ -30,32 +31,7 @@ export async function searchCasesForMergeAction(
 ): Promise<MergeSearchResult[]> {
   const { ability } = await staffAuthorize();
   if (!ability.can('manage', 'HelpdeskCase')) return [];
-  const trimmed = query.trim();
-  if (!trimmed) return [];
-
-  const pattern = `%${trimmed}%`;
-
-  return db
-    .select({
-      id: helpdeskCase.id,
-      caseNumber: helpdeskCase.caseNumber,
-      subject: helpdeskCase.subject,
-      requesterEmail: helpdeskCase.requesterEmail,
-      status: helpdeskCase.status,
-    })
-    .from(helpdeskCase)
-    .where(
-      and(
-        ne(helpdeskCase.id, excludeCaseId),
-        not(eq(helpdeskCase.status, 'CLOSED')),
-        or(
-          ilike(helpdeskCase.caseNumber, pattern),
-          ilike(helpdeskCase.subject, pattern)
-        )
-      )
-    )
-    .orderBy(desc(helpdeskCase.lastActivityAt))
-    .limit(10);
+  return searchCasesForMerge(query, excludeCaseId);
 }
 
 /**

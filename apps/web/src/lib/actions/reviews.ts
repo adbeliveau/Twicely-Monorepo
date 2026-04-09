@@ -9,6 +9,8 @@ import { reviewSubmissionSchema, type ReviewSubmissionData } from '@/lib/validat
 import { updateSellerPerformanceAggregates } from '@twicely/commerce/seller-performance';
 import { updateReviewVisibility } from '@twicely/commerce/review-visibility';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getReviewerTrustFactors, updateReviewTrustWeight } from '@/lib/queries/trust-metrics';
+import { computeReviewerTrustWeight } from '@twicely/commerce/trust-weight';
 
 interface ReviewActionResult {
   success: boolean;
@@ -146,6 +148,17 @@ export async function submitReview(orderId: string, data: ReviewSubmissionData):
 
   // Update dual-blind visibility (C1.5)
   await updateReviewVisibility(orderId);
+
+  // Fire-and-forget: compute and store reviewer trust weight (C1.1)
+  if (newReview?.id) {
+    (async () => {
+      try {
+        const factors = await getReviewerTrustFactors(userId);
+        const { weight } = computeReviewerTrustWeight(factors);
+        await updateReviewTrustWeight(newReview.id, weight, factors);
+      } catch { /* non-blocking */ }
+    })();
+  }
 
   revalidatePath(`/my/buying/orders/${orderId}`);
   // Note: /seller/[id] routes don't exist yet (Phase D storefronts)

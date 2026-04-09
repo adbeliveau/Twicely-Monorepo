@@ -12,6 +12,7 @@ import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
+import { getPaymentsList } from '@/lib/queries/admin-orders';
 
 const refundOrderSchema = z.object({
   orderId: zodId,
@@ -152,4 +153,10 @@ export async function overrideOrderStatusAction(input: unknown) {
   });
 
   return { success: true };
+}
+
+export async function getPaymentsListAction(limit: number = 100) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'Order')) return [];
+  return getPaymentsList(limit);
 }

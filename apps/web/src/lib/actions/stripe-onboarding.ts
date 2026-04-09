@@ -11,6 +11,7 @@ import {
   createDashboardLink,
   syncAccountStatus,
 } from '@twicely/stripe/connect';
+import { getSellerStripeAccountId, isSellerPaymentReady, getSellerStoreTier } from '@/lib/queries/stripe-seller';
 
 interface OnboardingResult {
   success: boolean;
@@ -46,20 +47,8 @@ export async function startOnboardingAction(): Promise<OnboardingResult> {
     return { success: false, error: 'Forbidden' };
   }
 
-  // Get seller profile and user email
-  const [profile] = await db
-    .select({
-      id: sellerProfile.id,
-      stripeAccountId: sellerProfile.stripeAccountId,
-      stripeOnboarded: sellerProfile.stripeOnboarded,
-    })
-    .from(sellerProfile)
-    .where(eq(sellerProfile.userId, userId))
-    .limit(1);
-
-  if (!profile) {
-    return { success: false, error: 'Seller profile not found. Please complete seller registration first.' };
-  }
+  // Get seller's existing Stripe account ID (if any)
+  let accountId = await getSellerStripeAccountId(userId);
 
   const [userData] = await db
     .select({ email: user.email })
@@ -70,9 +59,6 @@ export async function startOnboardingAction(): Promise<OnboardingResult> {
   if (!userData?.email) {
     return { success: false, error: 'User email not found' };
   }
-
-  // Create Stripe account if needed
-  let accountId = profile.stripeAccountId;
   if (!accountId) {
     const createResult = await createConnectAccount(userId, userData.email);
     if (!createResult.success || !createResult.accountId) {
@@ -212,4 +198,22 @@ export async function getStripeDashboardLinkAction(): Promise<OnboardingResult> 
   }
 
   return { success: true, url: result.url };
+}
+
+/** Check if a seller has payment capability (Stripe Connect fully onboarded). */
+export async function checkSellerPaymentReadyAction(): Promise<{ ready: boolean }> {
+  const { session } = await authorize();
+  if (!session) return { ready: false };
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  const ready = await isSellerPaymentReady(userId);
+  return { ready };
+}
+
+/** Get the store tier for the current seller (for tier-gated feature checks). */
+export async function getSellerStoreTierAction(): Promise<{ tier: string | null }> {
+  const { session } = await authorize();
+  if (!session) return { tier: null };
+  const userId = session.delegationId ? session.onBehalfOfSellerId! : session.userId;
+  const tier = await getSellerStoreTier(userId);
+  return { tier };
 }

@@ -2,7 +2,7 @@
 
 import { authorize, sub } from '@twicely/casl';
 import { getOrderDetail } from '@/lib/queries/orders';
-import { getUserAddresses } from '@/lib/queries/address';
+import { getDefaultAddress } from '@/lib/queries/address';
 import { getShippingRates, type ShippingRate } from '@/lib/shipping/shippo/rates';
 import { purchaseLabel } from '@/lib/shipping/shippo/labels';
 import { markOrderShipped, type Carrier } from '@twicely/commerce/shipping';
@@ -73,8 +73,7 @@ export async function fetchShippingRates(
     }
 
     // Get seller's default address
-    const addresses = await getUserAddresses(userId);
-    const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0];
+    const defaultAddress = await getDefaultAddress(userId);
 
     if (!defaultAddress) {
       return {

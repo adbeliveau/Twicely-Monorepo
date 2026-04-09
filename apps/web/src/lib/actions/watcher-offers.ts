@@ -11,6 +11,7 @@ import {
   createWatcherOffer,
   cancelWatcherOffer,
 } from '@twicely/commerce/watcher-offers';
+import { getActiveWatcherOffer, getWatcherOfferHistory } from '@/lib/queries/watcher-offers';
 
 export async function acceptWatcherOfferAction(params: {
   watcherOfferId: string;
@@ -43,4 +44,16 @@ export async function cancelWatcherOfferAction(watcherOfferId: string) {
     return { success: false, error: 'Not authorized' };
   }
   return cancelWatcherOffer(watcherOfferId);
+}
+
+export async function getActiveWatcherOfferAction(listingId: string) {
+  const { session } = await authorize();
+  if (!session) return null;
+  return getActiveWatcherOffer(listingId);
+}
+
+export async function getWatcherOfferHistoryAction(listingId: string) {
+  const { session } = await authorize();
+  if (!session) return [];
+  return getWatcherOfferHistory(listingId);
 }

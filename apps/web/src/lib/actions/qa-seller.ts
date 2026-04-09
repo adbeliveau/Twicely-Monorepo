@@ -12,6 +12,7 @@ import {
 } from '@/lib/validations/qa';
 import { notifyQuestionAnswered } from '@twicely/notifications/qa-notifier';
 import type { AnswerQuestionInput, HideQuestionInput, PinQuestionInput } from '@/lib/validations/qa';
+import { getQuestionById } from '@/lib/queries/qa';
 
 interface ActionResult {
   success: boolean;
@@ -39,17 +40,7 @@ export async function answerQuestion(input: AnswerQuestionInput): Promise<Action
   const { questionId, answerText } = parsed.data;
 
   // Fetch question + listing for ownership verification
-  const [questionRow] = await db
-    .select({
-      id: listingQuestion.id,
-      listingId: listingQuestion.listingId,
-      askerId: listingQuestion.askerId,
-      answeredAt: listingQuestion.answeredAt,
-      isHidden: listingQuestion.isHidden,
-    })
-    .from(listingQuestion)
-    .where(eq(listingQuestion.id, questionId))
-    .limit(1);
+  const questionRow = await getQuestionById(questionId);
 
   if (!questionRow) {
     return { success: false, error: 'Question not found' };
@@ -63,19 +54,9 @@ export async function answerQuestion(input: AnswerQuestionInput): Promise<Action
     return { success: false, error: 'This question has already been answered' };
   }
 
-  const [listingRow] = await db
-    .select({ ownerUserId: listing.ownerUserId, slug: listing.slug })
-    .from(listing)
-    .where(eq(listing.id, questionRow.listingId))
-    .limit(1);
-
-  if (!listingRow) {
-    return { success: false, error: 'Listing not found' };
-  }
-
   // Action-level ownership check — must be listing owner or delegated staff for that seller
   const effectiveSellerId = session.onBehalfOfSellerId ?? session.userId;
-  if (listingRow.ownerUserId !== effectiveSellerId) {
+  if (questionRow.listingOwnerUserId !== effectiveSellerId) {
     return { success: false, error: 'You do not have permission to answer this question' };
   }
 
@@ -93,7 +74,7 @@ export async function answerQuestion(input: AnswerQuestionInput): Promise<Action
   // Fire-and-forget notification
   notifyQuestionAnswered(questionId).catch(() => {});
 
-  revalidatePath(`/i/${listingRow.slug}`);
+  revalidatePath(`/i/${questionRow.listingSlug}`);
 
   return { success: true };
 }

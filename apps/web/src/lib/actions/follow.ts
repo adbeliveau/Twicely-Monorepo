@@ -6,6 +6,7 @@ import { follow } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
+import { getFollowerCount } from '@/lib/queries/follow';
 
 const toggleFollowSchema = z.object({
   sellerUserId: z.string().cuid2(),
@@ -76,4 +77,9 @@ export async function getIsFollowing(sellerUserId: string): Promise<boolean> {
     .limit(1);
 
   return !!existing;
+}
+
+/** Get the follower count for a seller (how many users follow them). */
+export async function getFollowerCountAction(sellerUserId: string): Promise<number> {
+  return getFollowerCount(sellerUserId);
 }

@@ -25,6 +25,8 @@ import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { notify } from '@twicely/notifications/service';
 import { applyConfirmedFraudConsequences } from '@twicely/commerce/local-fraud-consequences';
 import { logger } from '@twicely/logger';
+import { getLocalFraudFlagById } from '@/lib/queries/local-fraud';
+import { getLocalTransactionById } from '@/lib/queries/local-transaction';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -253,4 +255,16 @@ export async function resolveLocalFraudFlagAction(input: unknown): Promise<{
   });
 
   return { success: true };
+}
+
+export async function getLocalFraudFlagByIdAction(flagId: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'LocalFraudFlag')) return null;
+  return getLocalFraudFlagById(flagId);
+}
+
+export async function getLocalTransactionByIdAction(transactionId: string) {
+  const { session } = await authorize();
+  if (!session) return null;
+  return getLocalTransactionById(transactionId);
 }

@@ -12,6 +12,7 @@ import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
+import { getFlaggedListings } from '@/lib/queries/admin-moderation';
 
 // Review actions and bulk operations are in ./admin-moderation-helpers.ts
 // Import directly from there to avoid Turbopack re-export bundling issues.
@@ -198,4 +199,10 @@ export async function bulkClearListingFlagsAction(input: unknown) {
 
   revalidatePath('/mod');
   return { success: true };
+}
+
+export async function getFlaggedListingsAction(page: number = 1, pageSize: number = 50) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('update', 'Listing')) return { listings: [], total: 0 };
+  return getFlaggedListings(page, pageSize);
 }

@@ -8,6 +8,7 @@ import { authorize } from '@twicely/casl';
 import { createPriceAlertSchema, deletePriceAlertSchema } from '@/lib/validations/alerts';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getPriceAlertCount } from '@/lib/queries/price-alerts';
 
 export type PriceAlertType = 'ANY_DROP' | 'TARGET_PRICE' | 'PERCENT_DROP' | 'BACK_IN_STOCK';
 
@@ -232,4 +233,10 @@ export async function getUserPriceAlertForListing(
     percentDrop: alert.percentDrop ?? undefined,
     alertId: alert.id,
   };
+}
+
+export async function getPriceAlertCountAction(): Promise<number> {
+  const { session } = await authorize();
+  if (!session) return 0;
+  return getPriceAlertCount(session.userId);
 }

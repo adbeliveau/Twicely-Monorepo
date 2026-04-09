@@ -17,6 +17,7 @@ import { recordPriceChange } from '@/lib/services/price-history-service';
 import { eq, and, inArray } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
+import { getListingsForBulkAction } from '@/lib/queries/bulk-listings';
 
 const bulkActionSchema = z.object({
   listingIds: z.array(z.string().cuid2()).min(1).max(100),
@@ -273,4 +274,11 @@ export async function bulkUpdateListingsAction(
 
   return result;
 }
+
+/**
+ * Expose getListingsForBulkAction for client components that need
+ * to resolve a filter (status, category, price range) into listing IDs
+ * before calling bulkUpdateListingsAction.
+ */
+export { getListingsForBulkAction };
 

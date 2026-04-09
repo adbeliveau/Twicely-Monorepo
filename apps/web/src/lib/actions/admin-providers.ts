@@ -10,10 +10,10 @@ import {
   providerInstance,
   providerSecret,
   providerUsageMapping,
-  providerHealthLog,
   auditEvent,
 } from '@twicely/db/schema';
 import { encryptSecret } from '@/lib/crypto/provider-secrets';
+import { writeProviderHealthResult } from '@/lib/queries/health-checks';
 import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { revalidatePath } from 'next/cache';
@@ -133,22 +133,7 @@ export async function testInstance(instanceId: string) {
   const status = instance.status === 'ACTIVE' ? 'healthy' : 'degraded';
   const latencyMs = Date.now() - startMs;
 
-  await db.insert(providerHealthLog).values({
-    instanceId,
-    status,
-    latencyMs,
-    detailsJson: { testType: 'manual' },
-  });
-
-  await db
-    .update(providerInstance)
-    .set({
-      lastHealthStatus: status,
-      lastHealthCheckAt: new Date(),
-      lastHealthLatencyMs: latencyMs,
-      updatedAt: new Date(),
-    })
-    .where(eq(providerInstance.id, instanceId));
+  await writeProviderHealthResult(instanceId, status, latencyMs, null);
 
   return { success: true, status, latencyMs };
 }

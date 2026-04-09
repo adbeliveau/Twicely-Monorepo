@@ -11,6 +11,7 @@ import { eq } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
+import { getBulkUsersByIds } from '@/lib/queries/admin-data-bulk';
 
 const suspendUserSchema = z.object({
   userId: zodId,
@@ -131,4 +132,10 @@ export async function warnUserAction(input: unknown) {
   });
 
   return { success: true };
+}
+
+export async function getBulkUsersByIdsAction(ids: string[]) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'User')) return [];
+  return getBulkUsersByIds(ids);
 }

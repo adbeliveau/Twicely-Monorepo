@@ -7,7 +7,7 @@ import { promotion, auditEvent } from '@twicely/db/schema';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { adminPromotionIdSchema } from '@/lib/validations/admin-promotions';
 import { createPlatformPromoCodeSchema, updatePromoCodeSchema } from '@/lib/validations/promo-code';
-import { getPromoCodeByCode } from '@/lib/queries/promo-codes';
+import { getPromoCodeByCode, getAllPromoCodes } from '@/lib/queries/promo-codes';
 import { createPlatformPromoCode, updatePlatformPromoCode } from './promo-codes-platform';
 
 interface ActionResult {
@@ -141,4 +141,10 @@ export async function adminUpdatePromoCode(input: unknown): Promise<ActionResult
 
   revalidatePath('/promotions');
   return { success: true };
+}
+
+export async function getAllPromoCodesAction(options: { limit: number; offset: number; type?: 'AFFILIATE' | 'PLATFORM' }) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('manage', 'PromoCode')) return { rows: [], total: 0 };
+  return getAllPromoCodes(options);
 }

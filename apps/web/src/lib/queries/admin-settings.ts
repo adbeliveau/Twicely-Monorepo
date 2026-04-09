@@ -225,12 +225,7 @@ export async function getSettingsOverview(): Promise<SettingsOverview> {
 }
 
 export async function getSettingHistoryAction(settingId: string) {
-  return db
-    .select()
-    .from(platformSettingHistory)
-    .where(eq(platformSettingHistory.settingId, settingId))
-    .orderBy(desc(platformSettingHistory.createdAt))
-    .limit(20);
+  return getSettingHistory(settingId);
 }
 
 export async function getRecentAuditEvents(

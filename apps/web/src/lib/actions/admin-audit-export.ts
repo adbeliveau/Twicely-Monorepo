@@ -5,6 +5,7 @@ import { auditEvent } from '@twicely/db/schema';
 import { eq, gte, lte, and } from 'drizzle-orm';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import type { AuditLogQuery } from '@/lib/queries/admin-audit-log-schemas';
+import { getAuditEventById } from '@/lib/queries/admin-audit-log';
 
 function escapeCsvValue(value: string | null | undefined): string {
   const str = value ?? '';
@@ -79,4 +80,10 @@ export async function exportAuditLogCsv(
   );
 
   return { csv: [header, ...lines].join('\n') };
+}
+
+export async function getAuditEventByIdAction(eventId: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'AuditEvent')) return null;
+  return getAuditEventById(eventId);
 }

@@ -11,6 +11,8 @@ import { eq, and, gte, count } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { contentReportSchema } from '@/lib/validations/enforcement';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
+import { getUserReportHistory } from '@/lib/queries/content-reports';
+import { staffAuthorize } from '@twicely/casl/staff-authorize';
 
 export async function submitContentReportAction(input: unknown) {
   const { session, ability } = await authorize();
@@ -104,4 +106,10 @@ export async function submitContentReportAction(input: unknown) {
   });
 
   return { success: true };
+}
+
+export async function getUserReportHistoryAction(userId: string) {
+  const { ability } = await staffAuthorize();
+  if (!ability.can('read', 'ContentReport')) return [];
+  return getUserReportHistory(userId);
 }

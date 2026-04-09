@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { authorize, sub } from '@twicely/casl';
 import { canUseFeature } from '@twicely/utils/tier-gates';
 import { validateCouponCodeFormat, normalizeCouponCode } from '@twicely/commerce/promotions';
-import { couponCodeExists, countActivePromotions } from '@/lib/queries/promotions';
+import { couponCodeExists, countActivePromotions, getPromotionByIdInternal } from '@/lib/queries/promotions';
 import { z } from 'zod';
 import { zodId } from '@/lib/validation/schemas';
 
@@ -231,8 +231,7 @@ export async function reactivatePromotion(promotionId: string): Promise<ActionRe
   if (!ability.can('update', sub('Promotion', { sellerId: userId }))) {
     return { success: false, error: 'Forbidden' };
   }
-  const [existing] = await db.select({ id: promotion.id, sellerId: promotion.sellerId, endsAt: promotion.endsAt })
-    .from(promotion).where(eq(promotion.id, promotionId)).limit(1);
+  const existing = await getPromotionByIdInternal(promotionId);
   if (!existing) return { success: false, error: 'Promotion not found' };
   if (existing.sellerId !== userId) return { success: false, error: 'Forbidden' };
   if (existing.endsAt && existing.endsAt < new Date())
