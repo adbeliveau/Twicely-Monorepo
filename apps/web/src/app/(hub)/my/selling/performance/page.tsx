@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { auth } from '@twicely/auth';
 import { getSellerScoreData, getScoreHistory, getMetricBreakdown, getSellerTrend } from '@/lib/queries/seller-score';
+import { getSellerPerformanceMetrics } from '@/lib/queries/trust-metrics';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getAppealableActionsForUser } from '@/lib/queries/enforcement-actions';
 import { getActiveEnforcementForUser } from '@/lib/queries/enforcement-actions';
@@ -32,19 +33,31 @@ export default async function PerformancePage() {
     redirect('/my/selling');
   }
 
-  const [scoreHistory, metricBreakdown, trend, bandPowerSeller, bandTopRated, bandEstablished, newSellerThreshold, appealWindowDays, appealableActions, activeEnforcements] =
-    await Promise.all([
-      getScoreHistory(userId, 90),
-      getMetricBreakdown(userId),
-      getSellerTrend(userId),
-      getPlatformSetting('performance.band.powerSeller', 900),
-      getPlatformSetting('performance.band.topRated', 750),
-      getPlatformSetting('performance.band.established', 550),
-      getPlatformSetting('score.newSellerOrderThreshold', 10),
-      getPlatformSetting<number>('score.enforcement.appealWindowDays', 30),
-      getAppealableActionsForUser(userId),
-      getActiveEnforcementForUser(userId),
-    ]);
+  const [
+    scoreHistory,
+    metricBreakdown,
+    trend,
+    bandPowerSeller,
+    bandTopRated,
+    bandEstablished,
+    newSellerThreshold,
+    appealWindowDays,
+    appealableActions,
+    activeEnforcements,
+    performanceMetrics,
+  ] = await Promise.all([
+    getScoreHistory(userId, 90),
+    getMetricBreakdown(userId),
+    getSellerTrend(userId),
+    getPlatformSetting('performance.band.powerSeller', 900),
+    getPlatformSetting('performance.band.topRated', 750),
+    getPlatformSetting('performance.band.established', 550),
+    getPlatformSetting('score.newSellerOrderThreshold', 10),
+    getPlatformSetting<number>('score.enforcement.appealWindowDays', 30),
+    getAppealableActionsForUser(userId),
+    getActiveEnforcementForUser(userId),
+    getSellerPerformanceMetrics(userId),
+  ]);
 
   const bandThresholds = {
     powerSeller: Number(bandPowerSeller),
@@ -170,6 +183,41 @@ export default async function PerformancePage() {
             {metricBreakdown.metrics.map((metric) => (
               <MetricCard key={metric.key} metric={metric} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Performance metrics widget (C1.2) */}
+      {performanceMetrics && (
+        <div className="rounded-lg border bg-white p-6">
+          <h2 className="font-semibold mb-4">90-Day Performance Summary</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 text-sm">
+            <div>
+              <p className="text-gray-500">Total Orders</p>
+              <p className="font-semibold text-gray-900">{performanceMetrics.totalOrders}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">On-Time Shipping</p>
+              <p className="font-semibold text-gray-900">{performanceMetrics.onTimeShippingPct.toFixed(1)}%</p>
+            </div>
+            <div>
+              <p className="text-gray-500">INAD Rate</p>
+              <p className="font-semibold text-gray-900">{(performanceMetrics.inadRate * 100).toFixed(2)}%</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Return Rate</p>
+              <p className="font-semibold text-gray-900">{(performanceMetrics.returnRate * 100).toFixed(2)}%</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Cancel Rate</p>
+              <p className="font-semibold text-gray-900">{(performanceMetrics.cancelRate * 100).toFixed(2)}%</p>
+            </div>
+            {performanceMetrics.reviewAverage !== null && (
+              <div>
+                <p className="text-gray-500">Review Average</p>
+                <p className="font-semibold text-gray-900">{performanceMetrics.reviewAverage.toFixed(2)} / 5</p>
+              </div>
+            )}
           </div>
         </div>
       )}

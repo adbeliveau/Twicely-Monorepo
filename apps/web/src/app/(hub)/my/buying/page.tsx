@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@twicely/auth';
 import { getBuyerOrders } from '@/lib/queries/orders';
+import { getReturnCountsByBuyer } from '@/lib/queries/returns';
 import { BuyerOrderList } from '@/components/pages/orders/buyer-order-list';
-import { Package } from 'lucide-react';
+import { Package, RotateCcw } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +16,22 @@ export default async function BuyingOverviewPage() {
     redirect('/auth/login');
   }
 
-  // Get last 5 orders
-  const { items: recentOrders } = await getBuyerOrders(session.user.id, {
-    page: 1,
-    pageSize: 5,
-  });
+  // Get last 5 orders and return counts
+  const [{ items: recentOrders }, returnCounts] = await Promise.all([
+    getBuyerOrders(session.user.id, { page: 1, pageSize: 5 }),
+    getReturnCountsByBuyer(session.user.id),
+  ]);
+
+  const activeReturnCount = (
+    (returnCounts.PENDING_SELLER ?? 0) +
+    (returnCounts.APPROVED ?? 0) +
+    (returnCounts.LABEL_GENERATED ?? 0) +
+    (returnCounts.SHIPPED ?? 0) +
+    (returnCounts.DELIVERED ?? 0) +
+    (returnCounts.PARTIAL_OFFERED ?? 0) +
+    (returnCounts.ESCALATED ?? 0) +
+    (returnCounts.CONDITION_DISPUTE ?? 0)
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -29,6 +41,20 @@ export default async function BuyingOverviewPage() {
           View and manage your orders
         </p>
       </div>
+
+      {/* Active Returns Summary */}
+      {activeReturnCount > 0 && (
+        <Link
+          href="/my/buying/orders"
+          className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 hover:bg-blue-100 transition-colors mb-6"
+        >
+          <RotateCcw className="h-4 w-4 shrink-0" />
+          <span>
+            <span className="font-semibold">{activeReturnCount} active {activeReturnCount === 1 ? 'return' : 'returns'}</span>
+            {' '}in progress
+          </span>
+        </Link>
+      )}
 
       {recentOrders.length === 0 ? (
         <div className="text-center py-12 rounded-lg border bg-white">

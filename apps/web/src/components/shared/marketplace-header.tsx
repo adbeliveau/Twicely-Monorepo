@@ -3,8 +3,10 @@ import { headers } from 'next/headers';
 import { Logo } from './logo';
 import { SearchBar } from './search-bar';
 import { NotificationBell } from './notification-bell';
+import { CartIcon } from './cart-icon';
 import { auth } from '@twicely/auth/server';
 import { getUnreadCount, getRecentNotifications } from '@/lib/queries/notifications';
+import { getCartItemCount } from '@/lib/queries/cart';
 
 const NAV_LINKS = [
   { label: 'Women', href: '/c/womens-clothing' },
@@ -19,11 +21,13 @@ export async function MarketplaceHeader() {
 
   let notifications: Awaited<ReturnType<typeof getRecentNotifications>> = [];
   let unreadCount = 0;
+  let cartItemCount = 0;
 
   if (userId) {
-    [notifications, unreadCount] = await Promise.all([
+    [notifications, unreadCount, cartItemCount] = await Promise.all([
       getRecentNotifications(userId, 10),
       getUnreadCount(userId),
+      getCartItemCount(userId),
     ]);
   }
 
@@ -49,6 +53,8 @@ export async function MarketplaceHeader() {
               {link.label}
             </Link>
           ))}
+
+          <CartIcon itemCount={cartItemCount} />
 
           {userId ? (
             <>

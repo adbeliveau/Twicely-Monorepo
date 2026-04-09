@@ -7,7 +7,8 @@ import { AuthenticationOffer } from './authentication-offer';
 import { CouponInput } from '@/components/checkout/coupon-input';
 import type { CartWithItems } from '@/lib/queries/cart';
 import type { AddressData } from '@/lib/queries/address';
-import { Loader2 } from 'lucide-react';
+import type { SafeMeetupLocationRow } from '@/lib/queries/safe-meetup-locations';
+import { Loader2, MapPin, ShieldCheck } from 'lucide-react';
 
 interface AppliedDiscount {
   promotionId: string;
@@ -33,6 +34,7 @@ interface CheckoutStepAddressProps {
   isProcessing: boolean;
   authBuyerFeeCents: number;
   authOfferThresholdCents: number;
+  nearbyMeetupLocations: Array<SafeMeetupLocationRow & { distanceMiles: number }>;
 }
 
 export function CheckoutStepAddress({
@@ -50,6 +52,7 @@ export function CheckoutStepAddress({
   isProcessing,
   authBuyerFeeCents,
   authOfferThresholdCents,
+  nearbyMeetupLocations,
 }: CheckoutStepAddressProps) {
   const isLocalPickup = fulfillmentChoice === 'local_pickup';
 
@@ -70,6 +73,36 @@ export function CheckoutStepAddress({
           itemSubtotalCents={cart.subtotalCents}
           disabled={isProcessing}
         />
+      )}
+
+      {/* Nearby safe meetup locations (shown when local pickup is selected) */}
+      {isLocalPickup && nearbyMeetupLocations.length > 0 && (
+        <div className="rounded-lg border bg-white p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="h-4 w-4 text-primary" />
+            <h3 className="font-medium text-sm">Safe Meetup Spots</h3>
+          </div>
+          <div className="space-y-2">
+            {nearbyMeetupLocations.slice(0, 5).map((location) => (
+              <div key={location.id} className="flex items-start justify-between gap-2 text-sm py-2 border-b last:border-b-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium text-gray-900 truncate">{location.name}</p>
+                    {location.verifiedSafe && (
+                      <ShieldCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">
+                    {location.address}, {location.city}, {location.state}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-400 shrink-0">
+                  {location.distanceMiles.toFixed(1)} mi
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* B3.5: Authentication offer for $500+ items */}

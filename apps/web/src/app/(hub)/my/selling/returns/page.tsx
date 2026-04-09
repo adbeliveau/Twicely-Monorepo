@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { auth } from '@twicely/auth';
 import { db } from '@twicely/db';
 import { returnRequest, order, user } from '@twicely/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, ne } from 'drizzle-orm';
+import { getPendingReturnsForSeller } from '@/lib/queries/returns';
 import { formatPrice, formatDate } from '@twicely/utils/format';
 import { Clock, CheckCircle, XCircle, AlertTriangle, Package } from 'lucide-react';
 
@@ -69,8 +70,11 @@ export default async function SellerReturnsPage() {
     redirect('/auth/login');
   }
 
-  // Get all returns for orders where user is the seller
-  const returns = await db
+  // Pending returns (needs response) via query function
+  const pendingReturns = await getPendingReturnsForSeller(session.user.id);
+
+  // All non-pending returns for display (with JOIN for buyer name + order total)
+  const otherReturns = await db
     .select({
       id: returnRequest.id,
       status: returnRequest.status,
@@ -86,17 +90,21 @@ export default async function SellerReturnsPage() {
     .from(returnRequest)
     .innerJoin(order, eq(returnRequest.orderId, order.id))
     .innerJoin(user, eq(returnRequest.buyerId, user.id))
-    .where(eq(order.sellerId, session.user.id))
+    .where(
+      and(
+        eq(order.sellerId, session.user.id),
+        ne(returnRequest.status, 'PENDING_SELLER')
+      )
+    )
     .orderBy(desc(returnRequest.createdAt));
 
-  const pendingReturns = returns.filter(r => r.status === 'PENDING_SELLER');
-  const otherReturns = returns.filter(r => r.status !== 'PENDING_SELLER');
+  const totalCount = pendingReturns.length + otherReturns.length;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Return Requests</h1>
 
-      {returns.length === 0 ? (
+      {totalCount === 0 ? (
         <div className="rounded-lg border bg-gray-50 p-8 text-center">
           <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h2 className="text-lg font-medium text-gray-900 mb-2">No return requests</h2>
@@ -104,7 +112,7 @@ export default async function SellerReturnsPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Pending returns requiring action */}
+          {/* Pending returns requiring action — sourced from getPendingReturnsForSeller */}
           {pendingReturns.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -113,8 +121,6 @@ export default async function SellerReturnsPage() {
               </h2>
               <div className="space-y-3">
                 {pendingReturns.map((ret) => {
-                  const status = STATUS_CONFIG[ret.status as keyof typeof STATUS_CONFIG];
-                  const StatusIcon = status?.icon ?? Clock;
                   const isOverdue = ret.sellerResponseDueAt && new Date(ret.sellerResponseDueAt) < new Date();
 
                   return (
@@ -126,10 +132,9 @@ export default async function SellerReturnsPage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">Order #{ret.orderNumber}</span>
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status?.color ?? 'bg-gray-100'}`}>
-                              <StatusIcon className="h-3 w-3" />
-                              {status?.label ?? ret.status}
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG.PENDING_SELLER.color}`}>
+                              <Clock className="h-3 w-3" />
+                              {STATUS_CONFIG.PENDING_SELLER.label}
                             </span>
                             {isOverdue && (
                               <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -137,14 +142,20 @@ export default async function SellerReturnsPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500 mb-1">
-                            {ret.buyerName} · {REASON_LABELS[ret.reason] ?? ret.reason}
+                          <p className="text-sm text-gray-600 font-medium">
+                            {REASON_LABELS[ret.reason] ?? ret.reason}
                           </p>
-                          <p className="text-sm text-gray-600 line-clamp-1">{ret.description}</p>
+                          {ret.description && (
+                            <p className="text-sm text-gray-500 line-clamp-1 mt-0.5">{ret.description}</p>
+                          )}
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-medium">{formatPrice(ret.orderTotalCents)}</p>
                           <p className="text-xs text-gray-500">{formatDate(ret.createdAt)}</p>
+                          {ret.sellerResponseDueAt && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Due {formatDate(ret.sellerResponseDueAt)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </Link>

@@ -12,6 +12,7 @@ import { finalizeOrder } from '@/lib/actions/checkout-finalize';
 import { finalizeOrders } from '@/lib/actions/checkout-finalize-multi';
 import type { CartWithItems } from '@/lib/queries/cart';
 import type { AddressData } from '@/lib/queries/address';
+import type { SafeMeetupLocationRow } from '@/lib/queries/safe-meetup-locations';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 interface OrderPaymentInfo {
@@ -26,11 +27,12 @@ interface CheckoutFlowProps {
   addresses: AddressData[];
   authBuyerFeeCents: number;
   authOfferThresholdCents: number;
+  nearbyMeetupLocations: Array<SafeMeetupLocationRow & { distanceMiles: number }>;
 }
 
 type CheckoutStep = 1 | 2 | 3;
 
-export function CheckoutFlow({ cart, addresses, authBuyerFeeCents, authOfferThresholdCents }: CheckoutFlowProps) {
+export function CheckoutFlow({ cart, addresses, authBuyerFeeCents, authOfferThresholdCents, nearbyMeetupLocations }: CheckoutFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState<CheckoutStep>(1);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
@@ -183,26 +185,14 @@ export function CheckoutFlow({ cart, addresses, authBuyerFeeCents, authOfferThre
     }
   };
 
-  // B3.4: For local pickup, shipping is $0
+  // B3.4: For local pickup, shipping is $0; B3.5: add auth fee; D2.3: apply coupon
   const effectiveShippingCents = isLocalPickup ? 0 : cart.shippingCents;
-  // B3.5: Add auth fee if buyer opted in
   const authFeeCents = showAuthOffer && authenticationRequested ? authBuyerFeeCents : 0;
-  // D2.3: Apply coupon discount
   const discountCents = appliedDiscount?.discountCents ?? 0;
   const totalCents = Math.max(0, cart.subtotalCents + effectiveShippingCents + authFeeCents - discountCents);
-
-  // Get current client secret (single or multi-seller)
-  const currentClientSecret = isMultiSeller
-    ? currentOrderPayment?.clientSecret
-    : clientSecret;
-
-  const currentOrderId = isMultiSeller
-    ? currentOrderPayment?.orderId
-    : orderIds[0];
-
-  const currentTotalCents = isMultiSeller
-    ? currentOrderPayment?.amountCents ?? 0
-    : totalCents;
+  const currentClientSecret = isMultiSeller ? currentOrderPayment?.clientSecret : clientSecret;
+  const currentOrderId = isMultiSeller ? currentOrderPayment?.orderId : orderIds[0];
+  const currentTotalCents = isMultiSeller ? currentOrderPayment?.amountCents ?? 0 : totalCents;
 
   return (
     <div className="space-y-6">
@@ -265,6 +255,7 @@ export function CheckoutFlow({ cart, addresses, authBuyerFeeCents, authOfferThre
               isProcessing={isProcessing}
               authBuyerFeeCents={authBuyerFeeCents}
               authOfferThresholdCents={authOfferThresholdCents}
+              nearbyMeetupLocations={nearbyMeetupLocations}
             />
           )}
 

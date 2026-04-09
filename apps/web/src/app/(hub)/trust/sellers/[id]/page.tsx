@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { getSellerTrustProfile, getSellerScoreHistory } from '@/lib/queries/admin-trust';
+import { getReviewerTrustFactors } from '@/lib/queries/trust-metrics';
 import { updateBandOverride as updateBandOverrideAction, revokeBandOverride as revokeBandOverrideAction } from '@/lib/actions/admin-trust';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
@@ -63,6 +64,8 @@ export default async function SellerTrustProfilePage({ params }: PageProps) {
 
   if (!profile) notFound();
 
+  const reviewerFactors = await getReviewerTrustFactors(profile.userId);
+
   const canOverride = ability.can('update', 'SellerProfile');
   const bandColor = BAND_COLORS[profile.performanceBand] ?? '#6B7280';
 
@@ -106,6 +109,17 @@ export default async function SellerTrustProfilePage({ params }: PageProps) {
           <span>{profile.email}</span>
           <Link href={`/usr/${profile.userId}`} className="text-primary hover:underline">Full User Profile</Link>
           <Link href={`/mod/enforcement?seller=${profile.userId}`} className="text-primary hover:underline">Enforcement Actions</Link>
+        </div>
+      </div>
+
+      {/* Reviewer Trust Factors (C1.1) */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-gray-700">Reviewer Trust Factors</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <MetricCard label="Account Age" value={`${reviewerFactors.accountAgeDays}d`} weight="—" ideal="≥ 180d" />
+          <MetricCard label="Verified Purchases" value={String(reviewerFactors.verifiedPurchases)} weight="—" ideal="≥ 3" />
+          <MetricCard label="Reviews Submitted" value={String(reviewerFactors.reviewsSubmitted)} weight="—" ideal="≥ 1" />
+          <MetricCard label="Identity Verified" value={reviewerFactors.isIdentityVerified ? 'Yes' : 'No'} weight="—" ideal="Yes" />
         </div>
       </div>
 

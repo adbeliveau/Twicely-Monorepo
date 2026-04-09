@@ -11,10 +11,16 @@ import { ShippingTracker } from '@/components/pages/orders/shipping-tracker';
 import { Button } from '@twicely/ui/button';
 import { Package, RotateCcw, Shield, ShieldCheck, HelpCircle, MapPin } from 'lucide-react';
 import { BuyerReviewSection } from './_components/buyer-review-section';
+import { OrderReturnsSection } from './_components/order-returns-section';
 import { ShippingQuoteStatus } from '@/components/buyer/shipping-quote-status';
-import { getShippingQuoteByOrderId } from '@/lib/queries/shipping-quote';
-import { getLocalTransactionByOrderId } from '@/lib/queries/local-transaction';
+import { getShippingQuoteByOrderId, getShippingQuoteById } from '@/lib/queries/shipping-quote';
+import { getReviewForOrder } from '@/lib/queries/review-for-order';
+import { OrderReviewDisplay } from './_components/order-review-display';
+import { getLocalTransactionByOrderId, getMeetupPhotoContext } from '@/lib/queries/local-transaction';
+import { getSafeMeetupLocationById } from '@/lib/queries/safe-meetup-locations';
 import { LocalMeetupCard } from '@/components/local/local-meetup-card';
+import { SafeMeetupLocationCard } from '@/components/local/safe-meetup-location-card';
+import { MeetupPhotoContextCard } from '@/components/local/meetup-photo-context-card';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getReliabilityDisplay } from '@twicely/commerce/local-reliability';
 
@@ -22,10 +28,12 @@ export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ quoteId?: string }>;
 }
 
-export default async function BuyerOrderDetailPage({ params }: PageProps) {
+export default async function BuyerOrderDetailPage({ params, searchParams }: PageProps) {
   const { id: orderId } = await params;
+  const { quoteId } = await searchParams;
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user) {
@@ -45,8 +53,13 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
 
   const { order: ord, items, shipment: ship, seller } = orderData;
 
-  // Fetch combined shipping quote if present
-  const shippingQuote = await getShippingQuoteByOrderId(orderId, session.user.id);
+  // Fetch combined shipping quote — by quoteId if provided, otherwise by orderId
+  const shippingQuote = quoteId
+    ? await getShippingQuoteById(quoteId, session.user.id)
+    : await getShippingQuoteByOrderId(orderId, session.user.id);
+
+  // Fetch review for this order (to display existing review content)
+  const reviewResult = await getReviewForOrder(orderId, session.user.id);
 
   // Fetch local transaction and counterparty reliability for local pickup orders
   const [localTransaction, maxAdjustmentPercent, cancelLateHours, cancelSamedayHours, sellerReliability] = await Promise.all([
@@ -57,15 +70,17 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
     ord.isLocalPickup ? getReliabilityDisplay(ord.sellerId) : Promise.resolve(null),
   ]);
 
-  const shippingAddress = ord.shippingAddressJson as {
-    name: string;
-    address1: string;
-    address2?: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  };
+  const [meetupLocation, meetupPhotoContext] = localTransaction
+    ? await Promise.all([
+        localTransaction.meetupLocationId
+          ? getSafeMeetupLocationById(localTransaction.meetupLocationId)
+          : Promise.resolve(null),
+        getMeetupPhotoContext(localTransaction.id),
+      ])
+    : [null, null];
+
+  type ShippingAddress = { name: string; address1: string; address2?: string; city: string; state: string; zip: string; country: string };
+  const shippingAddress = ord.shippingAddressJson as ShippingAddress;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -79,12 +94,8 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
         </Link>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Order #{ord.orderNumber}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Placed on {formatDate(ord.createdAt)}
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">Order #{ord.orderNumber}</h1>
+            <p className="text-sm text-gray-500 mt-1">Placed on {formatDate(ord.createdAt)}</p>
           </div>
           <div className="flex items-center gap-3">
             <OrderStatusBadge status={ord.status} />
@@ -134,6 +145,9 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
           />
         )}
 
+        {meetupLocation && <SafeMeetupLocationCard location={meetupLocation} />}
+        {meetupPhotoContext && <MeetupPhotoContextCard context={meetupPhotoContext} />}
+
         {/* B3.5: Authentication Status */}
         {ord.authenticationOffered && (
           <div className="rounded-lg border bg-blue-50 p-4">
@@ -149,23 +163,12 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* D2.2: Combined Shipping Quote Status */}
-        {shippingQuote && (
-          <ShippingQuoteStatus quote={shippingQuote} orderId={orderId} />
-        )}
+        {shippingQuote && <ShippingQuoteStatus quote={shippingQuote} orderId={orderId} />}
 
-        {/* Action buttons - only show Confirm Delivery for shipped (non-local) orders */}
         {ord.status === 'SHIPPED' && !ord.isLocalPickup && (
           <div className="rounded-lg border bg-white p-4">
-            <form
-              action={async () => {
-                'use server';
-                await confirmDelivery(orderId);
-              }}
-            >
-              <Button type="submit" className="w-full sm:w-auto">
-                Confirm Delivery
-              </Button>
+            <form action={async () => { 'use server'; await confirmDelivery(orderId); }}>
+              <Button type="submit" className="w-full sm:w-auto">Confirm Delivery</Button>
             </form>
           </div>
         )}
@@ -190,12 +193,20 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
           </div>
         )}
 
+        {/* Returns associated with this order */}
+        <OrderReturnsSection orderId={orderId} />
+
         {/* Review action button */}
         <BuyerReviewSection
           orderId={orderId}
           orderStatus={ord.status}
           deliveredAt={ord.deliveredAt}
         />
+
+        {/* Display existing review content */}
+        {reviewResult.success && reviewResult.review && (
+          <OrderReviewDisplay orderId={orderId} review={reviewResult.review} />
+        )}
 
         {/* Order Items */}
         <div className="rounded-lg border bg-white p-6">
@@ -223,12 +234,8 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
                   <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">
-                    {formatPrice(item.unitPriceCents * item.quantity)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {formatPrice(item.unitPriceCents)} each
-                  </p>
+                  <p className="font-medium">{formatPrice(item.unitPriceCents * item.quantity)}</p>
+                  <p className="text-sm text-gray-500">{formatPrice(item.unitPriceCents)} each</p>
                 </div>
               </div>
             ))}
@@ -245,9 +252,7 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Shipping</span>
-              <span>
-                {ord.shippingCents === 0 ? 'Free' : formatPrice(ord.shippingCents)}
-              </span>
+              <span>{ord.shippingCents === 0 ? 'Free' : formatPrice(ord.shippingCents)}</span>
             </div>
             {ord.taxCents > 0 && (
               <div className="flex justify-between">
@@ -262,40 +267,29 @@ export default async function BuyerOrderDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Shipping Address - hidden for local pickup */}
         {!ord.isLocalPickup && (
           <div className="rounded-lg border bg-white p-6">
             <h2 className="font-semibold mb-4">Shipping Address</h2>
             <div className="text-sm">
               <p className="font-medium">{shippingAddress.name}</p>
               <p className="text-gray-600">{shippingAddress.address1}</p>
-              {shippingAddress.address2 && (
-                <p className="text-gray-600">{shippingAddress.address2}</p>
-              )}
-              <p className="text-gray-600">
-                {shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip}
-              </p>
+              {shippingAddress.address2 && <p className="text-gray-600">{shippingAddress.address2}</p>}
+              <p className="text-gray-600">{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip}</p>
               <p className="text-gray-600">{shippingAddress.country}</p>
             </div>
           </div>
         )}
 
-        {/* Seller Info */}
         <div className="rounded-lg border bg-white p-6">
           <h2 className="font-semibold mb-4">Seller Information</h2>
-          <div className="text-sm">
-            <p className="font-medium">{seller.storeName ?? seller.name}</p>
-          </div>
+          <p className="text-sm font-medium">{seller.storeName ?? seller.name}</p>
         </div>
 
-        {/* Tracking Info (if shipped, not local pickup) */}
         {!ord.isLocalPickup && ship && ship.tracking && (
           <div className="rounded-lg border bg-white p-6">
             <h2 className="font-semibold mb-4">Tracking Information</h2>
-            <div className="text-sm">
-              <p className="text-gray-600">Carrier: {ship.carrier ?? 'N/A'}</p>
-              <p className="font-mono text-gray-900 mt-1">{ship.tracking}</p>
-            </div>
+            <p className="text-sm text-gray-600">Carrier: {ship.carrier ?? 'N/A'}</p>
+            <p className="font-mono text-sm text-gray-900 mt-1">{ship.tracking}</p>
           </div>
         )}
       </div>

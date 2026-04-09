@@ -1,53 +1,74 @@
-'use client';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { auth } from '@twicely/auth';
+import { getBuyerTrustSignals } from '@/lib/queries/trust-metrics';
+import { SignOutButton } from './_components/sign-out-button';
+import { Shield, ShoppingBag, CheckCircle } from 'lucide-react';
+import { formatDate } from '@twicely/utils/format';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signOut, useSession } from '@twicely/auth/client';
+export const dynamic = 'force-dynamic';
 
-export default function MyPage() {
-  const router = useRouter();
-  const { data: session } = useSession();
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [error, setError] = useState('');
+export default async function MyPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
 
-  async function handleSignOut() {
-    if (isSigningOut) return;
-    setIsSigningOut(true);
-    setError('');
-    try {
-      await signOut();
-      router.push('/auth/login');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to sign out';
-      setError(message);
-      setIsSigningOut(false);
-    }
+  if (!session?.user) {
+    redirect('/auth/login');
   }
+
+  const trustSignals = await getBuyerTrustSignals(session.user.id);
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Welcome back!</h2>
+        <h2 className="text-lg font-semibold mb-2">Welcome back!</h2>
         <p className="text-gray-600">
-          {session?.user?.name ? `Hello, ${session.user.name}` : 'Hello!'}
+          {session.user.name ? `Hello, ${session.user.name}` : 'Hello!'}
         </p>
       </div>
 
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">
-          {error}
+      {/* Buyer Trust Signals (Decision #142) */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Your Buyer Profile</h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 text-sm">
+          <div className="flex items-start gap-2">
+            <ShoppingBag className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-gray-500">Completed Purchases</p>
+              <p className="font-semibold text-gray-900">{trustSignals.completedPurchases}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-gray-500">Member Since</p>
+              <p className="font-semibold text-gray-900">{formatDate(trustSignals.memberSince)}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <Shield className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-gray-500">Verified</p>
+              <p className="font-semibold text-gray-900">{trustSignals.verified ? 'Yes' : 'No'}</p>
+            </div>
+          </div>
+          {trustSignals.returns90d > 0 && (
+            <div>
+              <p className="text-gray-500">Returns (90d)</p>
+              <p className="font-semibold text-gray-900">{trustSignals.returns90d}</p>
+            </div>
+          )}
+          {trustSignals.disputes90d > 0 && (
+            <div>
+              <p className="text-gray-500">Disputes (90d)</p>
+              <p className="font-semibold text-gray-900">{trustSignals.disputes90d}</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      <button
-        onClick={handleSignOut}
-        disabled={isSigningOut}
-        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isSigningOut ? 'Signing out...' : 'Sign Out'}
-      </button>
+      <SignOutButton />
     </div>
   );
 }

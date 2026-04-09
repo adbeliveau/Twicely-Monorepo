@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth } from '@twicely/auth';
 import { db } from '@twicely/db';
-import { returnRequest, order, orderItem, user, listingImage } from '@twicely/db/schema';
+import { returnRequest, orderItem, listingImage, user, order } from '@twicely/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
+import { getReturnWithOrder } from '@/lib/queries/returns';
 import { formatPrice, formatDate } from '@twicely/utils/format';
 import { Package, Clock, AlertTriangle } from 'lucide-react';
 import { SellerReturnResponseForm } from './response-form';
@@ -33,30 +34,8 @@ export default async function SellerReturnDetailPage({ params }: PageProps) {
     redirect('/auth/login');
   }
 
-  // Get return with order details
-  const [ret] = await db
-    .select({
-      id: returnRequest.id,
-      status: returnRequest.status,
-      reason: returnRequest.reason,
-      description: returnRequest.description,
-      evidencePhotos: returnRequest.evidencePhotos,
-      createdAt: returnRequest.createdAt,
-      sellerResponseDueAt: returnRequest.sellerResponseDueAt,
-      sellerResponseNote: returnRequest.sellerResponseNote,
-      sellerRespondedAt: returnRequest.sellerRespondedAt,
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      orderTotalCents: order.totalCents,
-      sellerId: order.sellerId,
-      buyerName: user.name,
-      buyerEmail: user.email,
-    })
-    .from(returnRequest)
-    .innerJoin(order, eq(returnRequest.orderId, order.id))
-    .innerJoin(user, eq(returnRequest.buyerId, user.id))
-    .where(eq(returnRequest.id, returnId))
-    .limit(1);
+  // Get return with order details via query function
+  const ret = await getReturnWithOrder(returnId);
 
   if (!ret) {
     notFound();
@@ -67,7 +46,21 @@ export default async function SellerReturnDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Get order items
+  // Fetch supplementary display fields not in getReturnWithOrder
+  const [supplement] = await db
+    .select({
+      buyerName: user.name,
+      sellerResponseNote: returnRequest.sellerResponseNote,
+      sellerRespondedAt: returnRequest.sellerRespondedAt,
+      orderTotalCents: order.totalCents,
+    })
+    .from(returnRequest)
+    .innerJoin(order, eq(returnRequest.orderId, order.id))
+    .innerJoin(user, eq(returnRequest.buyerId, user.id))
+    .where(eq(returnRequest.id, returnId))
+    .limit(1);
+
+  // Fetch items with listingId for image lookup
   const items = await db
     .select({
       id: orderItem.id,
@@ -144,7 +137,7 @@ export default async function SellerReturnDetailPage({ params }: PageProps) {
           <div className="space-y-3 text-sm">
             <div>
               <span className="text-gray-500">From:</span>
-              <span className="ml-2 font-medium">{ret.buyerName}</span>
+              <span className="ml-2 font-medium">{supplement?.buyerName}</span>
             </div>
             <div>
               <span className="text-gray-500">Reason:</span>
@@ -212,7 +205,7 @@ export default async function SellerReturnDetailPage({ params }: PageProps) {
           </div>
           <div className="border-t mt-4 pt-4 flex justify-between font-semibold">
             <span>Order Total</span>
-            <span>{formatPrice(ret.orderTotalCents)}</span>
+            <span>{formatPrice(supplement?.orderTotalCents ?? 0)}</span>
           </div>
         </div>
 
@@ -222,13 +215,13 @@ export default async function SellerReturnDetailPage({ params }: PageProps) {
             returnId={returnId}
             reason={ret.reason}
           />
-        ) : ret.sellerResponseNote ? (
+        ) : supplement?.sellerResponseNote ? (
           <div className="rounded-lg border bg-white p-6">
             <h2 className="font-semibold mb-4">Your Response</h2>
-            <p className="text-sm text-gray-700">{ret.sellerResponseNote}</p>
-            {ret.sellerRespondedAt && (
+            <p className="text-sm text-gray-700">{supplement.sellerResponseNote}</p>
+            {supplement.sellerRespondedAt && (
               <p className="text-xs text-gray-500 mt-2">
-                Responded {formatDate(ret.sellerRespondedAt)}
+                Responded {formatDate(supplement.sellerRespondedAt)}
               </p>
             )}
           </div>

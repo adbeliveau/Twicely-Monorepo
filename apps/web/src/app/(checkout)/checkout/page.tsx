@@ -3,6 +3,7 @@ import { authorize } from '@twicely/casl';
 import { getCartWithItems } from '@/lib/queries/cart';
 import { getUserAddresses } from '@/lib/queries/address';
 import { getAuthOfferConfig } from '@twicely/commerce/auth-offer';
+import { getNearbyMeetupLocations } from '@/lib/queries/safe-meetup-locations';
 import { CheckoutFlow } from '@/components/pages/checkout/checkout-flow';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,11 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Checkout | Twicely',
 };
+
+// US geographic center: used as fallback when user coordinates are not known server-side
+const US_CENTER_LAT = 39.8283;
+const US_CENTER_LON = -98.5795;
+const MEETUP_SEARCH_RADIUS_MILES = 500;
 
 export default async function CheckoutPage() {
   const { ability, session } = await authorize();
@@ -32,6 +38,11 @@ export default async function CheckoutPage() {
     redirect('/cart');
   }
 
+  // Fetch nearby safe meetup locations when cart supports local pickup
+  const nearbyMeetupLocations = cart.supportsLocalPickup
+    ? await getNearbyMeetupLocations(US_CENTER_LAT, US_CENTER_LON, MEETUP_SEARCH_RADIUS_MILES)
+    : [];
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <CheckoutFlow
@@ -39,6 +50,7 @@ export default async function CheckoutPage() {
         addresses={addresses}
         authBuyerFeeCents={authOfferConfig.buyerFeeCents}
         authOfferThresholdCents={authOfferConfig.thresholdCents}
+        nearbyMeetupLocations={nearbyMeetupLocations}
       />
     </div>
   );

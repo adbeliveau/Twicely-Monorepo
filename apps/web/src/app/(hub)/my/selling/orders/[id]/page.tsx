@@ -17,8 +17,11 @@ import { ReviewSection } from './_components/review-section';
 import { ShippingQuoteCard } from '@/components/seller/shipping-quote-card';
 import { getShippingQuoteByOrderId } from '@/lib/queries/shipping-quote';
 import { ShippingAddressCard } from './_components/shipping-address-card';
-import { getLocalTransactionByOrderId } from '@/lib/queries/local-transaction';
+import { getLocalTransactionByOrderId, getMeetupPhotoContext } from '@/lib/queries/local-transaction';
+import { getSafeMeetupLocationById } from '@/lib/queries/safe-meetup-locations';
 import { LocalMeetupCard } from '@/components/local/local-meetup-card';
+import { SafeMeetupLocationCard } from '@/components/local/safe-meetup-location-card';
+import { MeetupPhotoContextCard } from '@/components/local/meetup-photo-context-card';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getReliabilityDisplay } from '@twicely/commerce/local-reliability';
 
@@ -115,6 +118,15 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
     ord.isLocalPickup ? getReliabilityDisplay(ord.buyerId) : Promise.resolve(null),
   ]);
 
+  const [meetupLocation, meetupPhotoContext] = localTransaction
+    ? await Promise.all([
+        localTransaction.meetupLocationId
+          ? getSafeMeetupLocationById(localTransaction.meetupLocationId)
+          : Promise.resolve(null),
+        getMeetupPhotoContext(localTransaction.id),
+      ])
+    : [null, null];
+
   // Calculate if response is still editable (24-hour window per spec §Seller Response)
   const EDIT_WINDOW_HOURS = 24;
   const RESPONSE_WINDOW_DAYS = 30;
@@ -210,6 +222,12 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
                 </p>
               </div>
         )}
+
+        {/* Safe meetup location detail — rendered when location is a verified safe spot */}
+        {meetupLocation && <SafeMeetupLocationCard location={meetupLocation} />}
+
+        {/* Photo evidence context — visible to seller for dispute awareness */}
+        {meetupPhotoContext && <MeetupPhotoContextCard context={meetupPhotoContext} />}
 
         {/* B3.5: Authentication Status */}
         {ord.authenticationOffered && (

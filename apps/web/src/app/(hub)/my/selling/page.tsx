@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { auth } from '@twicely/auth';
 import { getSellerDashboardStats, getSellerRecentActivity } from '@/lib/queries/seller-dashboard';
+import { getReturnCountsBySeller } from '@/lib/queries/returns';
 import { getActiveTrialInfo } from '@/lib/queries/trial-eligibility';
 import { getConnectedAccounts } from '@/lib/queries/crosslister';
 import { DashboardStats } from '@/components/seller/dashboard-stats';
@@ -12,7 +13,7 @@ import { AwaitingShipmentAlert } from '@/components/seller/awaiting-shipment-ale
 import { TrialBanner, TrialStatus } from '@/components/subscriptions';
 import { Button } from '@twicely/ui/button';
 import { Card, CardContent } from '@twicely/ui/card';
-import { Plus, RefreshCw, Store } from 'lucide-react';
+import { Plus, RefreshCw, Store, RotateCcw } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,12 +33,15 @@ export default async function SellingOverviewPage() {
   }
 
   // Fetch dashboard data
-  const [stats, recentActivity, activeTrial, connectedAccounts] = await Promise.all([
+  const [stats, recentActivity, activeTrial, connectedAccounts, returnCounts] = await Promise.all([
     getSellerDashboardStats(session.user.id),
     getSellerRecentActivity(session.user.id, 10),
     getActiveTrialInfo(session.user.id),
     getConnectedAccounts(session.user.id),
+    getReturnCountsBySeller(session.user.id),
   ]);
+
+  const pendingReturnCount = returnCounts.PENDING_SELLER ?? 0;
 
   const hasConnectedAccounts = connectedAccounts.length > 0;
 
@@ -117,6 +121,20 @@ export default async function SellingOverviewPage() {
       {/* Awaiting Shipment Alert (conditional) */}
       {stats.awaitingShipmentCount > 0 && (
         <AwaitingShipmentAlert count={stats.awaitingShipmentCount} />
+      )}
+
+      {/* Pending Returns Alert (conditional) */}
+      {pendingReturnCount > 0 && (
+        <Link
+          href="/my/selling/returns"
+          className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 hover:bg-yellow-100 transition-colors"
+        >
+          <RotateCcw className="h-4 w-4 shrink-0" />
+          <span>
+            <span className="font-semibold">{pendingReturnCount} return {pendingReturnCount === 1 ? 'request' : 'requests'}</span>
+            {' '}awaiting your response
+          </span>
+        </Link>
       )}
 
       {/* Dashboard Stats Cards */}

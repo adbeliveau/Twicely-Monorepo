@@ -3,12 +3,14 @@ import { headers } from 'next/headers';
 import Link from 'next/link';
 import { auth } from '@twicely/auth';
 import { getStorefrontBySlug } from '@/lib/queries/storefront';
+import { getSellerStats } from '@/lib/queries/seller';
 import { FeaturedRow } from '@/components/storefront/featured-row';
 import { ListingGridCard } from '@/components/storefront/listing-grid-card';
 import { ListingListCard } from '@/components/storefront/listing-list-card';
 import { ViewToggle } from '@/components/storefront/view-toggle';
 import { SortSelect } from '@/components/storefront/sort-select';
 import { PagePagination } from '@/components/shared/page-pagination';
+import { formatDate } from '@twicely/utils/format';
 
 const getCachedStorefront = cache(getStorefrontBySlug);
 
@@ -40,12 +42,39 @@ export default async function StorefrontShopPage({ params, searchParams }: PageP
   const isOwnStore = currentUserId === data.seller.userId;
   const accentColor = data.seller.branding.accentColor ?? '#7C3AED';
 
+  // Fetch seller stats for the stats widget
+  const sellerStats = await getSellerStats(data.seller.userId);
+
   return (
     <div className="space-y-6">
       {/* Featured items */}
       {data.featuredListings.length > 0 && (
         <FeaturedRow listings={data.featuredListings} accentColor={accentColor} />
       )}
+
+      {/* Seller stats widget */}
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 text-center text-sm">
+        <div className="rounded-lg border bg-white p-3">
+          <p className="text-2xl font-bold text-gray-900">{sellerStats.activeCount}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Active</p>
+        </div>
+        <div className="rounded-lg border bg-white p-3">
+          <p className="text-2xl font-bold text-gray-900">{sellerStats.soldCount}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Sold</p>
+        </div>
+        <div className="rounded-lg border bg-white p-3">
+          <p className="text-2xl font-bold text-gray-900">{data.stats.totalReviews}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Reviews</p>
+        </div>
+        <div className="rounded-lg border bg-white p-3">
+          <p className="text-2xl font-bold text-gray-900">{data.stats.followerCount}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Followers</p>
+        </div>
+        <div className="rounded-lg border bg-white p-3">
+          <p className="text-xs font-medium text-gray-900">{formatDate(data.seller.memberSince)}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Member since</p>
+        </div>
+      </div>
 
       {/* Toolbar: Sort + View Toggle */}
       <div className="flex items-center justify-between gap-4">
