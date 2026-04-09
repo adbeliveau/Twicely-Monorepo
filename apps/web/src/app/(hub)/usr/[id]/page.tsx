@@ -9,6 +9,8 @@ import {
   getAdminUserOrders, getAdminUserListings, getAdminUserCases,
   getAdminUserFinance, getAdminUserActivity, getAdminUserNotes,
 } from '@/lib/queries/admin-user-tabs';
+import { getTaxInfoForAdmin } from '@/lib/queries/tax-info';
+import { countActiveBoosts } from '@/lib/queries/boosting';
 import { UserDetailHeader, UserInfoBar } from '@/components/admin/user-detail/user-detail-header';
 import { UserActionsDropdown } from '@/components/admin/user-detail/user-actions-dropdown';
 import { UserDetailTabs } from '@/components/admin/user-detail/user-detail-tabs';
@@ -54,7 +56,56 @@ export default async function UserDetailPage({
   let tabContent: React.ReactNode = null;
 
   if (tab === 'overview') {
-    tabContent = <UserOverviewTab user={userDetail} />;
+    const [taxInfo, activeBoostCount] = await Promise.all([
+      ability.can('read', 'TaxInfo') ? getTaxInfoForAdmin(id) : Promise.resolve(null),
+      userDetail.isSeller ? countActiveBoosts(id) : Promise.resolve(0),
+    ]);
+    tabContent = (
+      <>
+        <UserOverviewTab user={userDetail} />
+        {taxInfo && (
+          <div className="mt-6 rounded-lg border border-gray-200 bg-white p-5">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">Tax Information</h3>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-gray-500">Tax ID Type</dt>
+                <dd className="font-medium text-gray-900">{taxInfo.taxIdType ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Masked TIN</dt>
+                <dd className="font-mono font-medium text-gray-900">{taxInfo.maskedTaxId ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Legal Name</dt>
+                <dd className="font-medium text-gray-900">{taxInfo.legalName ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Business Name</dt>
+                <dd className="font-medium text-gray-900">{taxInfo.businessName ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">1099 Threshold</dt>
+                <dd className="font-medium text-gray-900">{taxInfo.form1099Threshold ? 'Yes' : 'No'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">W-9 Received</dt>
+                <dd className="font-medium text-gray-900">
+                  {taxInfo.w9ReceivedAt ? taxInfo.w9ReceivedAt.toLocaleDateString() : '—'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        )}
+        {userDetail.isSeller && (
+          <div className="mt-4 rounded-lg border border-gray-200 bg-white p-5">
+            <h3 className="mb-1 text-sm font-semibold text-gray-700">Promotions</h3>
+            <p className="text-sm text-gray-500">
+              Active boosts: <span className="font-semibold text-gray-900">{activeBoostCount}</span>
+            </p>
+          </div>
+        )}
+      </>
+    );
   } else if (tab === 'orders') {
     const data = await getAdminUserOrders(id, orderPage, 20);
     tabContent = <UserOrdersTab userId={id} orders={data.orders} total={data.total} page={orderPage} />;

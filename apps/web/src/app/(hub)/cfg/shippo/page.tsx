@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { getAdapterByCode, getInstancesByAdapter, getInstanceSecrets } from '@/lib/queries/admin-providers';
+import { getShippoSettings } from '@/lib/queries/admin-integrations';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { ProviderInstanceForm } from '@/components/admin/settings/provider-instance-form';
 import type { ConfigField } from '@/components/admin/settings/provider-config-form';
@@ -31,11 +32,12 @@ export default async function ShippoSettingsPage() {
     return <p className="text-red-600">Access denied</p>;
   }
 
-  const [adapter, fulfillmentRows] = await Promise.all([
+  const [adapter, fulfillmentRows, shippoIntegration] = await Promise.all([
     getAdapterByCode('shippo'),
     db.select({ key: platformSetting.key, value: platformSetting.value })
       .from(platformSetting)
       .where(inArray(platformSetting.key, FULFILLMENT_KEYS)),
+    getShippoSettings(),
   ]);
 
   const fm = new Map<string, unknown>(fulfillmentRows.map((r) => [r.key, r.value]));
@@ -58,6 +60,23 @@ export default async function ShippoSettingsPage() {
           <p className="text-sm text-yellow-800">
             Shippo adapter not found. Run <code className="rounded bg-yellow-100 px-1">pnpm db:seed</code> to register built-in providers.
           </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <h3 className="mb-3 text-sm font-semibold text-gray-700">Integration Status</h3>
+          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <div>
+              <dt className="text-gray-500">Module Enabled</dt>
+              <dd className="font-medium text-gray-900">{shippoIntegration.moduleEnabled ? 'Yes' : 'No'}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Live API Key</dt>
+              <dd className="font-medium text-gray-900">{shippoIntegration.hasLiveSecretKey ? 'Configured' : 'Not set'}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Test API Key</dt>
+              <dd className="font-medium text-gray-900">{shippoIntegration.hasTestSecretKey ? 'Configured' : 'Not set'}</dd>
+            </div>
+          </dl>
         </div>
         <ShippoFulfillmentSummary settings={fulfillmentSettings} />
       </div>
@@ -90,6 +109,24 @@ export default async function ShippoSettingsPage() {
         <Link href="/cfg/providers" className="hover:text-gray-700">Providers</Link>
         <span>/</span>
         <span className="text-gray-900">Shippo</span>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <h3 className="mb-3 text-sm font-semibold text-gray-700">Integration Status</h3>
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+          <div>
+            <dt className="text-gray-500">Module Enabled</dt>
+            <dd className="font-medium text-gray-900">{shippoIntegration.moduleEnabled ? 'Yes' : 'No'}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Live API Key</dt>
+            <dd className="font-medium text-gray-900">{shippoIntegration.hasLiveSecretKey ? 'Configured' : 'Not set'}</dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Test API Key</dt>
+            <dd className="font-medium text-gray-900">{shippoIntegration.hasTestSecretKey ? 'Configured' : 'Not set'}</dd>
+          </div>
+        </dl>
       </div>
 
       <ShippoFulfillmentSummary settings={fulfillmentSettings} />

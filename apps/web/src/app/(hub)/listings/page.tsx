@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { getBulkListingSummary, getBulkListings } from '@/lib/queries/admin-data-bulk';
+import { getActiveBoostedListingIds } from '@/lib/queries/boosting';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { BulkListingPanel } from '@/components/admin/bulk-listing-panel';
 import { Card, CardContent, CardHeader, CardTitle } from '@twicely/ui/card';
@@ -20,6 +21,10 @@ export default async function ListingsAdminPage() {
     getBulkListingSummary(),
     getBulkListings({ page: 1, pageSize: 50 }),
   ]);
+
+  const listingIds = listingData.listings.map((l) => l.id);
+  const boostedMap = await getActiveBoostedListingIds(listingIds);
+  const boostedCount = boostedMap.size;
 
   return (
     <div className="space-y-6">
@@ -58,6 +63,14 @@ export default async function ListingsAdminPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{summary.removedListings}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Boosted (page 1)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{boostedCount}</p>
           </CardContent>
         </Card>
       </div>
