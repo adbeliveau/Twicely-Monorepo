@@ -144,6 +144,14 @@ export async function updatePlatformSetting(settingId: string, value: unknown) {
     detailsJson: { key: existing.key },
   });
 
+  // R5 (hub-platform-settings audit): if the operator changed the feature-flag
+  // cache TTL, clear the process-level TTL cache so it takes effect immediately
+  // instead of waiting up to 60s.
+  if (existing.key === 'featureFlags.cacheSeconds') {
+    const { resetTtlCache } = await import('@/lib/services/feature-flags');
+    resetTtlCache();
+  }
+
   return { success: true };
 }
 

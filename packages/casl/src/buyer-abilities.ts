@@ -93,6 +93,11 @@ export function defineBuyerAbilities(
   can('update', 'User', { id: userId });
   can('delete', 'User', { id: userId });
 
+  // Self-promotion to seller — any authenticated (non-banned) buyer can create
+  // their own SellerProfile row via /api/seller/activate. Scoped to { userId }
+  // so a buyer can only create a profile for themselves, never for others.
+  can('create', 'SellerProfile', { userId });
+
   // Authentication - buyer can request authentication on orders they own
   can('create', 'AuthenticationRequest', { buyerId: userId });
   can('read', 'AuthenticationRequest', { buyerId: userId });

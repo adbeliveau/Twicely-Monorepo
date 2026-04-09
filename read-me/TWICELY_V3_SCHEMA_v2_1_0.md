@@ -176,6 +176,8 @@ export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
   'AFFILIATE_COMMISSION_PAYOUT',
   'CROSSLISTER_SALE_REVENUE', 'CROSSLISTER_PLATFORM_FEE',
   'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT',
+  'LOCAL_CASH_SALE_REVENUE',  // Phase 5 — informational cash sale entry for Financial Center P&L (§A16)
+  'BOOST_CREDIT_ISSUED',      // Seller Score Canonical §5.4 — monthly performance reward
 ]);
 export const ledgerEntryStatusEnum = pgEnum('ledger_entry_status', ['PENDING', 'POSTED', 'REVERSED']);
 export const payoutStatusEnum = pgEnum('payout_status', ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'REVERSED']);

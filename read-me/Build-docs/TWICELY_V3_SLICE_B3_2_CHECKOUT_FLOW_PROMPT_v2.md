@@ -3,7 +3,7 @@
 **Phase:** B3.2 | **Depends On:** B3.1 (DONE) + shippingCents patch (DONE) | **Enables:** B3.3, B3.4, B3.5, B4
 **User Story:** "As a buyer, I can view my cart, enter a shipping address, pay via Stripe, and receive order confirmations — one per seller."
 
-**Prerequisite patch applied:** `listing.shippingCents` column added (integer, not null, default 0). Seller sets flat shipping price per listing. `freeShipping = true` means `shippingCents = 0`. Cart query returns `shippingCents` per item. This is the value used for FVF calculation and checkout display.
+**Prerequisite patch applied:** `listing.shippingCents` column added (integer, not null, default 0). Seller sets flat shipping price per listing. `freeShipping = true` means `shippingCents = 0`. Cart query returns `shippingCents` per item. This is the value used for TF calculation and checkout display.
 
 ---
 
@@ -28,7 +28,7 @@ Read ALL of these FULLY. Not grep. Not skim. Read.
 2. `TWICELY_V3_PAGE_REGISTRY.md` — Cart states, Checkout 3-step flow, Confirmation page
 3. `TWICELY_V3_FEATURE_LOCKIN_ALL_DOMAINS.md` — §3 (Cart & Multi-Seller Checkout)
 4. `TWICELY_V3_SCHEMA.md` — §2.5 (address), §6.1-6.5 (cart → orderPayment), §11.1 (ledgerEntry)
-5. `TWICELY_V3_MONETIZATION_PRICING_CANONICAL.md` — §5.1 (FVF rates), §5.2 (store tier discounts), §5.6 (payment processing)
+5. `TWICELY_V3_MONETIZATION_PRICING_CANONICAL.md` — §5.1 (TF rates), §5.2 (store tier discounts), §5.6 (payment processing)
 6. `TWICELY_V3_FINANCE_ENGINE_CANONICAL.md` — §4.4 (idempotency keys), §5.1 (Order Captured posting rules — 3 or 4 ledger entries per order)
 7. `TWICELY_V3_ACTORS_SECURITY_CANONICAL.md` — CASL gates for BUYER actor
 
@@ -77,30 +77,30 @@ Stripe packages installed: `stripe`, `@stripe/stripe-js`, `@stripe/react-stripe-
 21. **Do NOT build bundle suggestions in cart.** Deferred.
 22. **Do NOT build "Saved for Later" in cart.** Deferred.
 23. **Do NOT build cart expiry logic.** Deferred.
-24. **FVF calculated server-side only.** From `fee_schedule` table or hardcoded defaults. Never trust client.
+24. **TF calculated server-side only.** From `fee_schedule` table or hardcoded defaults. Never trust client.
 25. **Checkout uses `(checkout)` route group** with minimal layout (logo only). NOT `(marketplace)`.
 26. **Checkout is a 3-STEP flow** (Address → Review → Payment). NOT single page. Step indicator + back buttons.
 27. **DECREASE `listing.availableQuantity` after order creation.** If 0 → `status = 'SOLD'`, `soldAt = now()`.
 28. **Order number: `TWC-YYMMDD-XXXXX`** — prefix TWC, 2-digit year, 6-digit date, 5 random uppercase alphanumeric.
-29. **FVF rates (hardcoded defaults):** Electronics=9%, Apparel=10%, Home=10%, Collectibles=11.5%, default=10%.
-30. **Store tier FVF discounts:** NONE=0%, STARTER=-0.1%, BASIC=-0.25%, PRO=-0.5%, ELITE=-0.75%, ENTERPRISE=-0.75%.
+29. **TF rates (hardcoded defaults):** Electronics=9%, Apparel=10%, Home=10%, Collectibles=11.5%, default=10%.
+30. **Store tier TF discounts:** NONE=0%, STARTER=-0.1%, STARTER=-0.25%, PRO=-0.5%, POWER=-0.75%, ENTERPRISE=-0.75%.
 31. **Address form and address selector go in `src/components/shared/`** — NOT in checkout folder. They're reused in account settings.
-32. **Ledger entries are REQUIRED.** Every order must post: `ORDER_PAYMENT_CAPTURED`, `ORDER_FVF_FEE`, `ORDER_STRIPE_PROCESSING_FEE`. Per Finance Engine §5.1.
+32. **Ledger entries are REQUIRED.** Every order must post: `ORDER_PAYMENT_CAPTURED`, `ORDER_TF_FEE`, `ORDER_STRIPE_PROCESSING_FEE`. Per Finance Engine §5.1.
 33. **Idempotency is REQUIRED.** `finalizeOrder` must check for existing orders by `paymentIntentId` before creating. Double-submit must return existing orders, not create duplicates.
-34. **Do NOT distribute shipping across items.** Each cart item has its own `shippingCents` from its listing. FVF per item = `(itemPriceCents + itemShippingCents) × rate`. There is no order-level flat shipping rate to distribute.
+34. **Do NOT distribute shipping across items.** Each cart item has its own `shippingCents` from its listing. TF per item = `(itemPriceCents + itemShippingCents) × rate`. There is no order-level flat shipping rate to distribute.
 35. **Write tests against the SPEC, not the code.** If your code produces $9.00 but the spec says $9.54, the CODE is wrong, not the test. Fix the code.
 
 ---
 
-## THE FVF CALCULATION — READ THIS CAREFULLY
+## THE TF CALCULATION — READ THIS CAREFULLY
 
-This section exists because the first attempt got FVF wrong. Read every line.
+This section exists because the first attempt got TF wrong. Read every line.
 
-### What FVF Is Charged On
+### What TF Is Charged On
 
 Per Monetization Canonical §5.1: **"Calculated on item price + shipping charged to buyer. Taxes excluded."**
 
-FVF base per item = `itemPriceCents + itemShippingCents`
+TF base per item = `itemPriceCents + itemShippingCents`
 
 Each cart item links to a listing. Each listing has a `shippingCents` column (the flat shipping cost the seller set). There is NO order-level shipping to split. Each item already knows its own shipping cost.
 
@@ -112,7 +112,7 @@ export function calculateFvf(
   shippingCents: number,
   feeBucket: string | null,
   storeTier: string
-): { fvfAmountCents: number; fvfRateBps: number }
+): { tfAmountCents: number; tfRateBps: number }
 ```
 
 This is a PURE function. No database calls. No async. It takes the fee bucket and store tier as inputs (the caller resolves those from the DB).
@@ -121,27 +121,27 @@ This is a PURE function. No database calls. No async. It takes the fee bucket an
 
 ```
 1. baseBps = lookup feeBucket → ELECTRONICS=900, APPAREL=1000, HOME=1000, COLLECTIBLES=1150, default=1000
-2. discountBps = lookup storeTier → NONE=0, STARTER=10, BASIC=25, PRO=50, ELITE=75, ENTERPRISE=75
+2. discountBps = lookup storeTier → NONE=0, STARTER=10, STARTER=25, PRO=50, POWER=75, ENTERPRISE=75
 3. effectiveBps = baseBps - discountBps
-4. fvfBase = itemPriceCents + shippingCents
-5. fvfAmountCents = Math.round(fvfBase * effectiveBps / 10000)
-6. return { fvfAmountCents, fvfRateBps: effectiveBps }
+4. tfBase = itemPriceCents + shippingCents
+5. tfAmountCents = Math.round(tfBase * effectiveBps / 10000)
+6. return { tfAmountCents, tfRateBps: effectiveBps }
 ```
 
 ### Worked Examples (Your Tests MUST Match These Exactly)
 
-| # | Item | Shipping | Bucket | Store Tier | Base BPS | Discount | Effective BPS | FVF Base | FVF Amount |
+| # | Item | Shipping | Bucket | Store Tier | Base BPS | Discount | Effective BPS | TF Base | TF Amount |
 |---|------|----------|--------|------------|----------|----------|---------------|----------|------------|
 | 1 | $100.00 (10000) | $5.99 (599) | ELECTRONICS | NONE | 900 | 0 | 900 | 10599 | Math.round(10599 × 900 / 10000) = **954** ($9.54) |
-| 2 | $50.00 (5000) | $0 (0) | APPAREL | BASIC | 1000 | 25 | 975 | 5000 | Math.round(5000 × 975 / 10000) = **488** ($4.88) |
+| 2 | $50.00 (5000) | $0 (0) | APPAREL | STARTER | 1000 | 25 | 975 | 5000 | Math.round(5000 × 975 / 10000) = **488** ($4.88) |
 | 3 | $500.00 (50000) | $12.99 (1299) | COLLECTIBLES | PRO | 1150 | 50 | 1100 | 51299 | Math.round(51299 × 1100 / 10000) = **5643** ($56.43) |
 | 4 | $25.00 (2500) | $0 (0) | null (default) | NONE | 1000 | 0 | 1000 | 2500 | Math.round(2500 × 1000 / 10000) = **250** ($2.50) |
 | 5 | $499.00 (49900) | $8.00 (800) | APPAREL* | NONE | 1000 | 0 | 1000 | 50700 | Math.round(50700 × 1000 / 10000) = **5070** ($50.70) |
 | 6 | $500.00 (50000) | $8.00 (800) | COLLECTIBLES* | NONE | 1150 | 0 | 1150 | 50800 | Math.round(50800 × 1150 / 10000) = **5842** ($58.42) |
-| 7 | $75.00 (7500) | $5.99 (599) | HOME | ELITE | 1000 | 75 | 925 | 8099 | Math.round(8099 × 925 / 10000) = **749** ($7.49) |
+| 7 | $75.00 (7500) | $5.99 (599) | HOME | POWER | 1000 | 75 | 925 | 8099 | Math.round(8099 × 925 / 10000) = **749** ($7.49) |
 | 8 | $200.00 (20000) | $0 (0) | APPAREL | STARTER | 1000 | 10 | 990 | 20000 | Math.round(20000 × 990 / 10000) = **1980** ($19.80) |
 
-*Tests 5-6: The $500 threshold rule for jewelry/watches. Under $500 → APPAREL bucket. At $500+ → COLLECTIBLES bucket. The FVF calculator does NOT determine the bucket — the caller passes the correct bucket based on category + price. But the test must verify the correct bucket is used by the calling code.
+*Tests 5-6: The $500 threshold rule for jewelry/watches. Under $500 → APPAREL bucket. At $500+ → COLLECTIBLES bucket. The TF calculator does NOT determine the bucket — the caller passes the correct bucket based on category + price. But the test must verify the correct bucket is used by the calling code.
 
 **If your code does not produce these exact cent values, your code is wrong. Fix the code, not the test.**
 
@@ -312,7 +312,7 @@ The business logic core. No UI — just pure functions and the order creation tr
 | # | File | Purpose | Max Lines |
 |---|------|---------|-----------|
 | 9 | `src/lib/commerce/order-number.ts` | `generateOrderNumber()` | 30 |
-| 10 | `src/lib/commerce/fvf-calculator.ts` | `calculateFvf(itemPriceCents, shippingCents, feeBucket, storeTier)` | 60 |
+| 10 | `src/lib/commerce/tf-calculator.ts` | `calculateFvf(itemPriceCents, shippingCents, feeBucket, storeTier)` | 60 |
 | 11 | `src/lib/commerce/create-order.ts` | `createOrdersFromCart(...)` — the core transaction | 250 |
 
 ### Order Number (file 9)
@@ -327,9 +327,9 @@ Example: `TWC-260218-A7K2B`
 
 Check uniqueness against `order.orderNumber`. Retry max 5 times on collision.
 
-### FVF Calculator (file 10)
+### TF Calculator (file 10)
 
-**READ "THE FVF CALCULATION" SECTION ABOVE.** The function signature and worked examples are there.
+**READ "THE TF CALCULATION" SECTION ABOVE.** The function signature and worked examples are there.
 
 ```typescript
 // Fee bucket base rates (basis points)
@@ -345,9 +345,9 @@ const DEFAULT_RATE = 1000;
 const TIER_DISCOUNTS: Record<string, number> = {
   NONE: 0,
   STARTER: 10,
-  BASIC: 25,
+  STARTER: 25,
   PRO: 50,
-  ELITE: 75,
+  POWER: 75,
   ENTERPRISE: 75,
 };
 
@@ -356,13 +356,13 @@ export function calculateFvf(
   shippingCents: number,
   feeBucket: string | null,
   storeTier: string
-): { fvfAmountCents: number; fvfRateBps: number } {
+): { tfAmountCents: number; tfRateBps: number } {
   const baseBps = (feeBucket && BASE_RATES[feeBucket]) || DEFAULT_RATE;
   const discountBps = TIER_DISCOUNTS[storeTier] || 0;
   const effectiveBps = baseBps - discountBps;
-  const fvfBase = itemPriceCents + shippingCents;
-  const fvfAmountCents = Math.round(fvfBase * effectiveBps / 10000);
-  return { fvfAmountCents, fvfRateBps: effectiveBps };
+  const tfBase = itemPriceCents + shippingCents;
+  const tfAmountCents = Math.round(tfBase * effectiveBps / 10000);
+  return { tfAmountCents, tfRateBps: effectiveBps };
 }
 ```
 
@@ -410,16 +410,16 @@ FOR EACH seller group (each in its own transaction):
   5g. INSERT orderPayment:
       - stripePaymentIntentId = paymentIntentId
       - amountCents = totalCents
-      - fvfAmountCents = SUM of per-item FVF
-      - fvfRatePercent = weighted average rate
+      - tfAmountCents = SUM of per-item TF
+      - tfRatePercent = weighted average rate
       - stripeFeesCents = Math.round(totalCents * 0.029 + 30)  [estimate]
-      - netToSellerCents = totalCents - fvfAmountCents - stripeFeesCents
+      - netToSellerCents = totalCents - tfAmountCents - stripeFeesCents
       - status = 'captured', capturedAt = now()
   5h. Set handlingDueAt = now() + seller's handlingTimeDays
   5i. For each item: DECREASE listing.availableQuantity. If 0 → status='SOLD', soldAt=now()
   5j. INSERT ledger entries (ALL THREE REQUIRED):
       - ORDER_PAYMENT_CAPTURED: +totalCents, idempotencyKey='order:{orderId}:captured'
-      - ORDER_FVF_FEE: -fvfAmountCents, idempotencyKey='order:{orderId}:fvf'
+      - ORDER_TF_FEE: -tfAmountCents, idempotencyKey='order:{orderId}:tf'
       - ORDER_STRIPE_PROCESSING_FEE: -stripeFeesCents, idempotencyKey='order:{orderId}:stripe_fee'
 
 6. Set cart.status = 'CONVERTED'
@@ -440,13 +440,13 @@ npx tsc --noEmit 2>&1
 grep -n "TWC-" src/lib/commerce/order-number.ts
 grep -n "YYMMDD\|getFullYear\|padStart\|slice" src/lib/commerce/order-number.ts
 
-# FVF includes shipping
-grep -n "shippingCents" src/lib/commerce/fvf-calculator.ts
-grep -n "itemPriceCents + shippingCents\|itemPriceCents +shippingCents\|fvfBase" src/lib/commerce/fvf-calculator.ts
+# TF includes shipping
+grep -n "shippingCents" src/lib/commerce/tf-calculator.ts
+grep -n "itemPriceCents + shippingCents\|itemPriceCents +shippingCents\|tfBase" src/lib/commerce/tf-calculator.ts
 
 # Ledger entries exist
 grep -c "ORDER_PAYMENT_CAPTURED" src/lib/commerce/create-order.ts
-grep -c "ORDER_FVF_FEE" src/lib/commerce/create-order.ts
+grep -c "ORDER_TF_FEE" src/lib/commerce/create-order.ts
 grep -c "ORDER_STRIPE_PROCESSING_FEE" src/lib/commerce/create-order.ts
 
 # Inventory decrement
@@ -459,15 +459,15 @@ grep -n "listingSnapshotJson" src/lib/commerce/create-order.ts
 # Cart converted
 grep -n "CONVERTED" src/lib/commerce/create-order.ts
 
-# FVF function is synchronous (not async)
-grep -n "async.*calculateFvf\|export async function calculateFvf" src/lib/commerce/fvf-calculator.ts
+# TF function is synchronous (not async)
+grep -n "async.*calculateFvf\|export async function calculateFvf" src/lib/commerce/tf-calculator.ts
 ```
 
 **Expected results:**
 - tsc clean
 - `TWC-` in order number (NOT TWI, NOT TW)
-- `shippingCents` appears in fvf-calculator.ts as part of the base calculation
-- `fvfBase = itemPriceCents + shippingCents` (or equivalent)
+- `shippingCents` appears in tf-calculator.ts as part of the base calculation
+- `tfBase = itemPriceCents + shippingCents` (or equivalent)
 - 3 ledger entry types all present in create-order.ts (count ≥ 1 each)
 - `availableQuantity` decrement present
 - `SOLD` and `soldAt` present
@@ -726,48 +726,48 @@ grep -n "getOrderById\|getOrdersByPaymentIntent" src/lib/queries/order-detail.ts
 
 | # | File | What | Max Lines |
 |---|------|------|-----------|
-| 24 | `src/lib/commerce/__tests__/fvf-calculator.test.ts` | All 8 worked examples + edge cases | 120 |
+| 24 | `src/lib/commerce/__tests__/tf-calculator.test.ts` | All 8 worked examples + edge cases | 120 |
 | 25 | `src/lib/commerce/__tests__/order-number.test.ts` | Format, length, prefix, uniqueness | 50 |
 | 26 | `src/lib/actions/__tests__/checkout.test.ts` | Idempotency, PI verification, cart validation | 100 |
 | 27 | `src/lib/actions/__tests__/address.test.ts` | CRUD, default swap, ownership | 100 |
 
-### FVF Tests — MANDATORY EXACT VALUES
+### TF Tests — MANDATORY EXACT VALUES
 
-These are from "THE FVF CALCULATION" section. Your tests MUST assert these exact cent values:
+These are from "THE TF CALCULATION" section. Your tests MUST assert these exact cent values:
 
 ```typescript
 describe('calculateFvf', () => {
   // Test 1: Electronics $100 + $5.99 shipping, no store
   expect(calculateFvf(10000, 599, 'ELECTRONICS', 'NONE'))
-    .toEqual({ fvfAmountCents: 954, fvfRateBps: 900 });
+    .toEqual({ tfAmountCents: 954, tfRateBps: 900 });
 
   // Test 2: Apparel $50, free shipping, Store Basic
-  expect(calculateFvf(5000, 0, 'APPAREL', 'BASIC'))
-    .toEqual({ fvfAmountCents: 488, fvfRateBps: 975 });
+  expect(calculateFvf(5000, 0, 'APPAREL', 'STARTER'))
+    .toEqual({ tfAmountCents: 488, tfRateBps: 975 });
 
   // Test 3: Collectibles $500 + $12.99 shipping, Store Pro
   expect(calculateFvf(50000, 1299, 'COLLECTIBLES', 'PRO'))
-    .toEqual({ fvfAmountCents: 5643, fvfRateBps: 1100 });
+    .toEqual({ tfAmountCents: 5643, tfRateBps: 1100 });
 
   // Test 4: Uncategorized $25, no shipping, no store
   expect(calculateFvf(2500, 0, null, 'NONE'))
-    .toEqual({ fvfAmountCents: 250, fvfRateBps: 1000 });
+    .toEqual({ tfAmountCents: 250, tfRateBps: 1000 });
 
   // Test 5: $499 jewelry → APPAREL bucket
   expect(calculateFvf(49900, 800, 'APPAREL', 'NONE'))
-    .toEqual({ fvfAmountCents: 5070, fvfRateBps: 1000 });
+    .toEqual({ tfAmountCents: 5070, tfRateBps: 1000 });
 
   // Test 6: $500 jewelry → COLLECTIBLES bucket
   expect(calculateFvf(50000, 800, 'COLLECTIBLES', 'NONE'))
-    .toEqual({ fvfAmountCents: 5842, fvfRateBps: 1150 });
+    .toEqual({ tfAmountCents: 5842, tfRateBps: 1150 });
 
   // Test 7: Home $75 + $5.99 shipping, Elite store
-  expect(calculateFvf(7500, 599, 'HOME', 'ELITE'))
-    .toEqual({ fvfAmountCents: 749, fvfRateBps: 925 });
+  expect(calculateFvf(7500, 599, 'HOME', 'POWER'))
+    .toEqual({ tfAmountCents: 749, tfRateBps: 925 });
 
   // Test 8: Apparel $200, free shipping, Starter store
   expect(calculateFvf(20000, 0, 'APPAREL', 'STARTER'))
-    .toEqual({ fvfAmountCents: 1980, fvfRateBps: 990 });
+    .toEqual({ tfAmountCents: 1980, tfRateBps: 990 });
 });
 ```
 
@@ -822,7 +822,7 @@ npm run build 2>&1 | tail -10
 | 7 | `src/components/shared/address-form.tsx` | CREATE | 160 |
 | 8 | `src/components/shared/address-selector.tsx` | CREATE | 130 |
 | 9 | `src/lib/commerce/order-number.ts` | CREATE | 30 |
-| 10 | `src/lib/commerce/fvf-calculator.ts` | CREATE | 60 |
+| 10 | `src/lib/commerce/tf-calculator.ts` | CREATE | 60 |
 | 11 | `src/lib/commerce/create-order.ts` | CREATE | 250 |
 | 12 | `src/lib/stripe/server.ts` | CREATE | 50 |
 | 13 | `src/lib/stripe/client.ts` | CREATE | 15 |
@@ -836,7 +836,7 @@ npm run build 2>&1 | tail -10
 | 21 | `src/app/(checkout)/checkout/confirmation/[orderId]/page.tsx` | CREATE | 80 |
 | 22 | `src/lib/queries/order-detail.ts` | CREATE | 90 |
 | 23 | `src/components/pages/checkout/order-confirmation.tsx` | CREATE | 140 |
-| 24 | `src/lib/commerce/__tests__/fvf-calculator.test.ts` | CREATE | 120 |
+| 24 | `src/lib/commerce/__tests__/tf-calculator.test.ts` | CREATE | 120 |
 | 25 | `src/lib/commerce/__tests__/order-number.test.ts` | CREATE | 50 |
 | 26 | `src/lib/actions/__tests__/checkout.test.ts` | CREATE | 100 |
 | 27 | `src/lib/actions/__tests__/address.test.ts` | CREATE | 100 |
@@ -853,14 +853,14 @@ Before marking B3.2 complete, ALL of these must be true:
 - [ ] `npx next lint` — zero errors
 - [ ] `npx next build` — succeeds
 - [ ] `npx vitest run` — all tests pass (81 existing + new)
-- [ ] FVF test cases 1-8 produce exact cent values from worked examples
+- [ ] TF test cases 1-8 produce exact cent values from worked examples
 - [ ] Order number matches `TWC-YYMMDD-XXXXX` (not TWI, not YYYYMMDD, not 4 chars)
-- [ ] Ledger entries: ORDER_PAYMENT_CAPTURED + ORDER_FVF_FEE + ORDER_STRIPE_PROCESSING_FEE
+- [ ] Ledger entries: ORDER_PAYMENT_CAPTURED + ORDER_TF_FEE + ORDER_STRIPE_PROCESSING_FEE
 - [ ] `finalizeOrder` is idempotent (duplicate PI → existing orders returned)
 - [ ] `stripe.paymentIntents.retrieve` called before creating orders
 - [ ] `listing.availableQuantity` decremented, SOLD when 0
 - [ ] `listingSnapshotJson` populated on every orderItem
-- [ ] `orderPayment` has fvfAmountCents, fvfRatePercent, netToSellerCents, stripePaymentIntentId
+- [ ] `orderPayment` has tfAmountCents, tfRatePercent, netToSellerCents, stripePaymentIntentId
 - [ ] Cart status = CONVERTED after checkout
 - [ ] Address components in `src/components/shared/` (NOT checkout folder)
 - [ ] Checkout uses `(checkout)` route group (NOT marketplace)
@@ -868,7 +868,7 @@ Before marking B3.2 complete, ALL of these must be true:
 - [ ] Stripe PaymentElement renders
 - [ ] No file exceeds 300 lines
 - [ ] No `as any` or `@ts-ignore`
-- [ ] `shippingCents` included in FVF base (item price + shipping)
+- [ ] `shippingCents` included in TF base (item price + shipping)
 
 ---
 

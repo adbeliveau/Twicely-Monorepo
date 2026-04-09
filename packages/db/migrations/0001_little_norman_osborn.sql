@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "ps_key" ON "platform_setting" USING btree ("key");--> statement-breakpoint
+CREATE UNIQUE INDEX "conv_unique_triple" ON "conversation" USING btree ("buyer_id","seller_id","listing_id");

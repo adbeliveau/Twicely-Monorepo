@@ -28,12 +28,12 @@
 15. **Do NOT build real shipping rate calculation.** Use flat $5.99 or free shipping. Shippo is Phase B4.
 16. **Do NOT build coupon/discount logic.** That's Phase D2. discountCents = 0.
 17. **Do NOT build guest checkout.** Requires authentication.
-18. **FVF must be calculated server-side** from the fee_schedule table. Never trust client-submitted fee amounts.
+18. **TF must be calculated server-side** from the fee_schedule table. Never trust client-submitted fee amounts.
 19. **Checkout uses its OWN route group `(checkout)`** with a minimal layout. NOT `(marketplace)`. The checkout page must NOT have the marketplace header/footer/nav.
 20. **Checkout is a 3-STEP flow** (Address → Shipping → Payment). NOT a single scrollable page. Step indicator at top with back buttons.
 21. **After order creation, DECREASE listing.availableQuantity.** If it hits 0, set listing.status = 'SOLD' and listing.soldAt = now(). This is mandatory — without it, the same item can be purchased multiple times.
 22. **Order number format is TWC-YYMMDD-XXXXX** (prefix TWC, 2-digit year + month + day, 5 random alphanumeric uppercase). Superseded by B3.2 v2 prompt rule 28 — the earlier "YYYYMMDD-XXXX" (4-char) wording is retired. Example: `TWC-260218-A7K2B`.
-23. **FVF default rates** from the spec are: Electronics 9%, Apparel 10%, Home 10%, Collectibles 11.5%, default 10%. NOT 12/13/13/15. And you MUST apply store tier discount from sellerProfile.storeTier.
+23. **TF default rates** from the spec are: Electronics 9%, Apparel 10%, Home 10%, Collectibles 11.5%, default 10%. NOT 12/13/13/15. And you MUST apply store tier discount from sellerProfile.storeTier.
 24. **Address components must be REUSABLE** — create separate `address-form.tsx` and `address-selector.tsx` components, not a 400-line monolith page.
 
 ---
@@ -361,18 +361,18 @@ done
 
 ---
 
-## SECTION B3.4 — Order Creation Logic + FVF Calculation
+## SECTION B3.4 — Order Creation Logic + TF Calculation
 
 **Creates ~3 files. Hard stop after.**
 
-Server-side logic for creating orders from a cart. Includes FVF calculation from fee_schedule with store tier discount, order number generation, and per-seller order splitting. No UI in this section.
+Server-side logic for creating orders from a cart. Includes TF calculation from fee_schedule with store tier discount, order number generation, and per-seller order splitting. No UI in this section.
 
 ### Files to Create
 
 | # | File | Type | Purpose |
 |---|------|------|---------|
 | 1 | `src/lib/commerce/create-order.ts` | Server Logic | createOrdersFromCart — splits cart into per-seller orders |
-| 2 | `src/lib/commerce/fees.ts` | Utility | calculateFVF — fee_schedule lookup + store tier discount |
+| 2 | `src/lib/commerce/fees.ts` | Utility | calculateTF — fee_schedule lookup + store tier discount |
 | 3 | `src/lib/commerce/order-number.ts` | Utility | generateOrderNumber — TWC-YYMMDD-XXXXX format (2-digit year, 5 random chars) |
 
 ### Specifications
@@ -383,9 +383,9 @@ Server-side logic for creating orders from a cart. Includes FVF calculation from
 - Check uniqueness against order table, retry if collision (max 5 retries)
 - **NOT `TW-`. NOT 5 chars. Exactly `TWC-` prefix, exactly 4 random chars.**
 
-**FVF Calculator (`fees.ts`):**
+**TF Calculator (`fees.ts`):**
 
-`calculateFVF(categoryId: string, salePriceCents: number, sellerId: string): Promise<{ fvfRatePercent: number; fvfAmountCents: number }>`
+`calculateTF(categoryId: string, salePriceCents: number, sellerId: string): Promise<{ tfRatePercent: number; tfAmountCents: number }>`
 
 Steps:
 1. Get the listing's category -> map to fee bucket (from category.feeBucket)
@@ -395,13 +395,13 @@ Steps:
 5. Apply store tier discount: `finalRate = categoryRate - tierDiscount`
    - NONE = 0
    - STARTER = 0.1
-   - BASIC = 0.25
+   - STARTER = 0.25
    - PRO = 0.5
-   - ELITE = 0.75
+   - POWER = 0.75
    - ENTERPRISE = 0.75
-   - Example: Electronics (9%) with BASIC (0.25) = 9 - 0.25 = 8.75%
-6. Calculate: `fvfAmountCents = Math.round(salePriceCents * finalRate / 100)`
-7. Return `{ fvfRatePercent: finalRate, fvfAmountCents }`
+   - Example: Electronics (9%) with STARTER (0.25) = 9 - 0.25 = 8.75%
+6. Calculate: `tfAmountCents = Math.round(salePriceCents * finalRate / 100)`
+7. Return `{ tfRatePercent: finalRate, tfAmountCents }`
 
 **FORBIDDEN: Hardcoding fee rates in the calculation path. The fee_schedule query is required. Only the fallback defaults are hardcoded.**
 **FORBIDDEN: Using 12/13/13/15% rates. The correct rates are 9/10/10/11.5/10.**
@@ -423,7 +423,7 @@ Logic:
    e. totalCents = itemSubtotalCents + shippingCents
    f. Insert `order` with status='CREATED', shippingAddressJson
    g. Insert `order_item` rows with listingSnapshotJson
-   h. Calculate FVF per item, sum totals
+   h. Calculate TF per item, sum totals
    i. Insert `order_payment`: status='pending', stripePaymentIntentId
    **j. CRITICAL: For each item, UPDATE listing SET availableQuantity = availableQuantity - purchasedQty. IF availableQuantity reaches 0 THEN SET status='SOLD', soldAt=now(). DO NOT SKIP.**
 6. Update cart status to 'CONVERTED'
@@ -447,8 +447,8 @@ grep -n "TWC-" src/lib/commerce/order-number.ts || echo "ERROR: TWC- prefix not 
 # Verify inventory decrement exists
 grep -n "availableQuantity" src/lib/commerce/create-order.ts || echo "ERROR: No inventory decrement"
 
-# Verify FVF defaults are correct
-grep -n "9\.\|10\.\|11\.5" src/lib/commerce/fees.ts || echo "ERROR: Check FVF rates"
+# Verify TF defaults are correct
+grep -n "9\.\|10\.\|11\.5" src/lib/commerce/fees.ts || echo "ERROR: Check TF rates"
 ```
 
 ### STOP. Do not proceed to B3.5 until Adrian approves.
@@ -674,7 +674,7 @@ echo "=== B3 AUDIT COMPLETE ==="
 **Checkpoint:**
 ```bash
 git add -A
-git commit -m "B3 complete: cart, checkout, Stripe payment, order creation, FVF, addresses"
+git commit -m "B3 complete: cart, checkout, Stripe payment, order creation, TF, addresses"
 ```
 
 ### STOP. B3 complete. Wait for Adrian's approval.
