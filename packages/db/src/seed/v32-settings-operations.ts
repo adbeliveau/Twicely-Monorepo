@@ -158,4 +158,9 @@ export const V32_SETTINGS_OPERATIONS: PlatformSettingSeed[] = [
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'featureFlags.cacheSeconds', value: 30, type: 'number', category: 'featureFlags', description: 'Valkey cache TTL in seconds for feature flag values' },
   { key: 'featureFlags.requireApprovalForProduction', value: false, type: 'boolean', category: 'featureFlags', description: 'Require 2-person approval for production flag changes' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROMOTIONS (V4 Phase 6)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'promotions.budgetMonitor.tickPattern', value: '*/5 * * * *', type: 'string', category: 'promotions', description: 'Cron pattern for campaign budget monitor job (default: every 5 min)' },
 ];

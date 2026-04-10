@@ -19,6 +19,8 @@ export interface ListingCardData {
   storefrontCategoryId?: string | null;
   /** Card emphasis variant from personalization layer. Null for non-personalized views. */
   cardEmphasis?: 'social' | 'specs' | 'collectible' | 'default' | null;
+  /** Fulfillment type from listing (for local pickup badge). */
+  fulfillmentType?: string;
 }
 
 export interface ListingDetailData {
@@ -99,6 +101,7 @@ export interface SearchFilters {
   minPrice?: number;
   maxPrice?: number;
   freeShipping?: boolean;
+  localPickup?: boolean;
   brand?: string;
   sort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc';
   page?: number;

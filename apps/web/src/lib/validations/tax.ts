@@ -23,7 +23,16 @@ const US_STATE_CODES = new Set([
   'VA','WA','WV','WI','WY','DC','PR','VI','GU','MP','AS','FM','MH','PW',
 ]);
 
-const ZIP_REGEX = /^\d{5}(-\d{4})?$/;
+function isZipCode(value: string): boolean {
+  const parts = value.split('-');
+  const isDigits = (part: string, length: number) =>
+    part.length === length && Array.from(part).every((char) => char >= '0' && char <= '9');
+
+  return (
+    (parts.length === 1 && isDigits(parts[0] ?? '', 5)) ||
+    (parts.length === 2 && isDigits(parts[0] ?? '', 5) && isDigits(parts[1] ?? '', 4))
+  );
+}
 
 export const taxInfoSchema = z.object({
   taxIdType: z.enum(['SSN', 'EIN', 'ITIN']),
@@ -40,7 +49,7 @@ export const taxInfoSchema = z.object({
   state: z.string().refine((val) => US_STATE_CODES.has(val.toUpperCase()), {
     message: 'Invalid US state code',
   }),
-  zip: z.string().regex(ZIP_REGEX, 'Invalid ZIP code format'),
+  zip: z.string().refine(isZipCode, 'Invalid ZIP code format'),
   country: z.string().default('US'),
 }).strict().superRefine((data, ctx) => {
   const clean = sanitizeTaxId(data.taxId);

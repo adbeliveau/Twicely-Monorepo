@@ -67,7 +67,7 @@ export async function POST(): Promise<NextResponse> {
       success: true,
       clientSecret: setupIntent.client_secret,
     });
-  } catch (err) {
+  } catch (_err) {
     return NextResponse.json({ success: false, error: 'Failed to create setup intent' }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MapPin } from 'lucide-react';
 import { Badge } from '@twicely/ui/badge';
 import { ConditionBadge } from '@/components/shared/condition-badge';
 import { formatPrice, formatDate } from '@twicely/utils/format';
@@ -44,6 +44,18 @@ export function ListingInfo({ listing }: ListingInfoProps) {
             +{formatPrice(listing.shippingCents)} shipping
           </Badge>
         ) : null}
+        {listing.fulfillmentType === 'SHIP_AND_LOCAL' && (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800 flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            Ship &amp; Local Pickup
+          </Badge>
+        )}
+        {listing.fulfillmentType === 'LOCAL_ONLY' && (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800 flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            Local Pickup Only
+          </Badge>
+        )}
         {listing.allowOffers && (
           <Badge variant="outline">Accepts Offers</Badge>
         )}

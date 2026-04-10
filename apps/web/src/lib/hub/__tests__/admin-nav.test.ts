@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { ADMIN_NAV, filterAdminNav, type AdminNavItem } from '../admin-nav';
 import type { PlatformRole } from '@twicely/casl/types';
+
+// Resolve to apps/web/ root regardless of vitest cwd
+const __filename2 = fileURLToPath(import.meta.url);
+const WEB_ROOT = path.resolve(path.dirname(__filename2), '..', '..', '..', '..');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +45,7 @@ const DEFERRED_HREFS = new Set([
 /** Convert a nav href to the expected page.tsx path under src/app/(hub)/ */
 function hrefToPagePath(href: string): string {
   return path.join(
-    process.cwd(),
+    WEB_ROOT,
     'src',
     'app',
     '(hub)',
@@ -52,7 +57,7 @@ function hrefToPagePath(href: string): string {
 /** Extract icon names from ICON_MAP by reading admin-sidebar.tsx source */
 function getIconMapKeys(): string[] {
   const sidebarPath = path.join(
-    process.cwd(),
+    WEB_ROOT,
     'src',
     'components',
     'admin',
@@ -164,7 +169,7 @@ describe('ADMIN_NAV registry', () => {
       'errors',
       'operations',
       'admin-messages',
-      'search-admin',
+      'search-engine',
       'roles',
       'audit-log',
       'system-health',
@@ -359,7 +364,7 @@ describe('filterAdminNav', () => {
     expect(keys).toContain('feature-flags');
     expect(keys).toContain('system-health');
     expect(keys).toContain('crosslister');
-    expect(keys).toContain('search-admin');
+    expect(keys).toContain('search-engine');
     expect(keys).not.toContain('finance');
     expect(keys).not.toContain('moderation');
   });

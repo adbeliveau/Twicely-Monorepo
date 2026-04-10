@@ -1,0 +1,23 @@
+{
+  "name": "@twicely/ai",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "zod": "^3.23.0",
+    "@twicely/db": "workspace:*",
+    "@twicely/config": "workspace:*",
+    "@twicely/logger": "workspace:*",
+    "@twicely/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  }
+}

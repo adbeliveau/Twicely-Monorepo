@@ -21,17 +21,16 @@ export function ImportGuideBanner({
   connectedChannels,
   hasCompletedImport,
 }: ImportGuideBannerProps) {
-  const [dismissed, setDismissed] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    if (localStorage.getItem(DISMISS_KEY) === 'true') {
-      setDismissed(true);
-    }
+    const timeoutId = window.setTimeout(() => {
+      setDismissed(localStorage.getItem(DISMISS_KEY) === 'true');
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
-  if (!mounted) return null;
+  if (dismissed === null) return null;
   if (hasCompletedImport) return null;
   if (connectedChannels.length === 0) return null;
   if (dismissed) return null;

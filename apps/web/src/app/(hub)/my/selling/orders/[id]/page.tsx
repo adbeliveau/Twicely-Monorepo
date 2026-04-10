@@ -7,9 +7,6 @@ import { formatDate } from '@twicely/utils/format';
 import { OrderStatusBadge } from '@/components/pages/orders/order-status-badge';
 import { ShippingTracker } from '@/components/pages/orders/shipping-tracker';
 import { ShieldCheck, HelpCircle, MapPin, AlertTriangle } from 'lucide-react';
-import { db } from '@twicely/db';
-import { review, reviewResponse, buyerReview } from '@twicely/db/schema';
-import { eq, and, or, isNull, lte, sql } from 'drizzle-orm';
 import { OrderItems } from './_components/order-items';
 import { PaymentSummary } from './_components/payment-summary';
 import { OrderActions } from './_components/order-actions';
@@ -24,6 +21,7 @@ import { SafeMeetupLocationCard } from '@/components/local/safe-meetup-location-
 import { MeetupPhotoContextCard } from '@/components/local/meetup-photo-context-card';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getReliabilityDisplay } from '@twicely/commerce/local-reliability';
+import { loadOrderReviewData, RESPONSE_WINDOW_DAYS } from './_components/order-review-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,51 +63,8 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
   const nameParts = buyer.name.split(' ');
   const buyerDisplayName = nameParts[0] + (nameParts[1]?.[0] ? ` ${nameParts[1][0]}.` : '');
 
-  let orderReview: { id: string; rating: number; title: string | null; body: string | null; createdAt: Date } | null = null;
-  let existingResponse: { id: string; body: string; createdAt: Date } | null = null;
-
-  if (ord.status === 'COMPLETED' || ord.status === 'DELIVERED') {
-    // Dual-blind: only show review if visibleAt has passed
-    const [reviewData] = await db
-      .select({
-        id: review.id,
-        rating: review.rating,
-        title: review.title,
-        body: review.body,
-        createdAt: review.createdAt,
-        visibleAt: review.visibleAt,
-        responseId: reviewResponse.id,
-        responseBody: reviewResponse.body,
-        responseCreatedAt: reviewResponse.createdAt,
-      })
-      .from(review)
-      .leftJoin(reviewResponse, eq(reviewResponse.reviewId, review.id))
-      .where(and(
-        eq(review.orderId, orderId),
-        or(isNull(review.visibleAt), lte(review.visibleAt, sql`NOW()`))
-      ))
-      .limit(1);
-
-    if (reviewData) {
-      orderReview = {
-        id: reviewData.id,
-        rating: reviewData.rating,
-        title: reviewData.title,
-        body: reviewData.body,
-        createdAt: reviewData.createdAt,
-      };
-
-      if (reviewData.responseId && reviewData.responseBody && reviewData.responseCreatedAt) {
-        existingResponse = {
-          id: reviewData.responseId,
-          body: reviewData.responseBody,
-          createdAt: reviewData.responseCreatedAt,
-        };
-      }
-    }
-  }
-
-  const [shippingQuote, localTransaction, maxAdjustmentPercent, cancelLateHours, cancelSamedayHours, buyerReliability] = await Promise.all([
+  const [reviewData, shippingQuote, localTransaction, maxAdjustmentPercent, cancelLateHours, cancelSamedayHours, buyerReliability] = await Promise.all([
+    loadOrderReviewData(orderId, ord.status, ord.deliveredAt),
     getShippingQuoteByOrderId(orderId, session.user.id),
     ord.isLocalPickup ? getLocalTransactionByOrderId(orderId) : Promise.resolve(null),
     getPlatformSetting<number>('commerce.local.maxAdjustmentPercent', 33),
@@ -117,6 +72,8 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
     getPlatformSetting<number>('commerce.local.cancelSamedayHours', 2),
     ord.isLocalPickup ? getReliabilityDisplay(ord.buyerId) : Promise.resolve(null),
   ]);
+
+  const { orderReview, existingResponse, canRespondToReview, canEditResponse, existingBuyerReview, canRateBuyer } = reviewData;
 
   const [meetupLocation, meetupPhotoContext] = localTransaction
     ? await Promise.all([
@@ -126,48 +83,6 @@ export default async function SellerOrderDetailPage({ params }: PageProps) {
         getMeetupPhotoContext(localTransaction.id),
       ])
     : [null, null];
-
-  // Calculate if response is still editable (24-hour window per spec §Seller Response)
-  const EDIT_WINDOW_HOURS = 24;
-  const RESPONSE_WINDOW_DAYS = 30;
-  let canEditResponse = false;
-  let canRespondToReview = false;
-
-  if (existingResponse) {
-    const now = new Date();
-    const editDeadline = new Date(existingResponse.createdAt);
-    editDeadline.setHours(editDeadline.getHours() + EDIT_WINDOW_HOURS);
-    canEditResponse = now <= editDeadline;
-  }
-
-  if (orderReview && !existingResponse) {
-    const now = new Date();
-    const responseDeadline = new Date(orderReview.createdAt);
-    responseDeadline.setDate(responseDeadline.getDate() + RESPONSE_WINDOW_DAYS);
-    canRespondToReview = now <= responseDeadline;
-  }
-
-  // Fetch existing buyer review (seller→buyer)
-  const BUYER_REVIEW_WINDOW_DAYS = 30;
-  let existingBuyerReview: { id: string; createdAt: Date } | null = null;
-  let canRateBuyer = false;
-
-  if (ord.status === 'COMPLETED' || ord.status === 'DELIVERED') {
-    const [br] = await db
-      .select({ id: buyerReview.id, createdAt: buyerReview.createdAt })
-      .from(buyerReview)
-      .where(eq(buyerReview.orderId, orderId))
-      .limit(1);
-
-    if (br) {
-      existingBuyerReview = br;
-    } else if (ord.deliveredAt) {
-      const now = new Date();
-      const windowEnd = new Date(ord.deliveredAt);
-      windowEnd.setDate(windowEnd.getDate() + BUYER_REVIEW_WINDOW_DAYS);
-      canRateBuyer = now <= windowEnd;
-    }
-  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

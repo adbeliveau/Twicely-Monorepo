@@ -91,4 +91,12 @@ export const V32_FINANCE_SETTINGS: PlatformSettingSeed[] = [
   { key: 'finance.tax.q4DueDate', value: '2027-01-15', type: 'string', category: 'finance', description: 'Q4 quarterly estimated tax due date' },
   { key: 'finance.tax.reminderBannerDaysBefore', value: 30, type: 'number', category: 'finance', description: 'Days before due date to show tax reminder banner' },
   { key: 'finance.tax.reminderEmailDaysBefore', value: [30, 7], type: 'array', category: 'finance', description: 'Days before due date to send tax reminder emails' },
+
+  // ── Reconciliation Engine ─────────────────────────────────────────────────
+  { key: 'finance.reconciliation.enabled', value: true, type: 'boolean', category: 'finance', description: 'Enable automatic reconciliation engine' },
+  { key: 'finance.reconciliation.lookbackHours', value: 48, type: 'number', category: 'finance', description: 'Hours to look back when scanning for discrepancies' },
+  { key: 'finance.reconciliation.warningThresholdCents', value: 10000, type: 'cents', category: 'finance', description: 'Discrepancy threshold to generate a warning ($100)' },
+  { key: 'finance.reconciliation.errorThresholdCents', value: 100000, type: 'cents', category: 'finance', description: 'Discrepancy threshold to generate an error ($1,000)' },
+  { key: 'finance.reconciliation.autoResolveRoundingCents', value: 100, type: 'cents', category: 'finance', description: 'Max rounding discrepancy auto-resolved ($1.00)' },
+  { key: 'finance.reconciliation.alertEmail', value: '', type: 'string', category: 'finance', description: 'Email for reconciliation alerts (empty = no email)' },
 ];

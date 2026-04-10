@@ -13,7 +13,7 @@ import { recordPriceChange } from '@/lib/services/price-history-service';
 import { logger } from '@twicely/logger';
 import { z } from 'zod';
 import { detectOutboundSyncNeeded, queueOutboundSync } from '@twicely/crosslister/services/outbound-sync';
-import { upsertListingDocument, deleteListingDocument } from '@twicely/search/typesense-index';
+import { enqueueSearchIndexUpsert, enqueueSearchIndexDelete } from '@twicely/jobs/search-index-sync';
 
 const updateListingIdSchema = z.object({
   listingId: z.string().cuid2(),
@@ -177,9 +177,9 @@ export async function updateListing(
       });
     }
 
-    // Fire-and-forget: sync to Typesense search index
+    // Fire-and-forget: sync to search index via BullMQ (routes to active engine)
     if (updated && status === 'ACTIVE') {
-      upsertListingDocument({
+      enqueueSearchIndexUpsert({
         id: listingId,
         title: data.title ?? '',
         description: data.description ?? undefined,
@@ -194,11 +194,11 @@ export async function updateListing(
         slug: updated.slug ?? undefined,
         condition: data.condition ?? undefined,
       }).catch((err) => {
-        logger.error('[typesense] Failed to update listing in index', { listingId, error: String(err) });
+        logger.error('[search-index] Failed to enqueue listing update', { listingId, error: String(err) });
       });
     } else if (status !== 'ACTIVE') {
-      deleteListingDocument(listingId).catch((err) => {
-        logger.error('[typesense] Failed to remove listing from index', { listingId, error: String(err) });
+      enqueueSearchIndexDelete(listingId).catch((err) => {
+        logger.error('[search-index] Failed to enqueue listing removal', { listingId, error: String(err) });
       });
     }
 

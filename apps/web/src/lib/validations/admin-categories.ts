@@ -1,13 +1,21 @@
 import { z } from 'zod';
 import { zodId } from './shared';
 
-const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const feeBucketValues = ['ELECTRONICS', 'APPAREL_ACCESSORIES', 'HOME_GENERAL', 'COLLECTIBLES_LUXURY'] as const;
 const fieldTypeValues = ['text', 'select', 'multi_select', 'number'] as const;
 
+function isSlug(value: string): boolean {
+  if (value.length === 0 || value.startsWith('-') || value.endsWith('-') || value.includes('--')) {
+    return false;
+  }
+  return Array.from(value).every(
+    (char) => (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char === '-',
+  );
+}
+
 export const createCategorySchema = z.object({
   name: z.string().min(1).max(100),
-  slug: z.string().min(1).max(100).regex(slugPattern),
+  slug: z.string().min(1).max(100).refine(isSlug),
   parentId: z.string().nullable().optional(),
   description: z.string().max(500).nullable().optional(),
   icon: z.string().max(50).nullable().optional(),
@@ -22,7 +30,7 @@ export const createCategorySchema = z.object({
 export const updateCategorySchema = z.object({
   id: zodId,
   name: z.string().min(1).max(100).optional(),
-  slug: z.string().min(1).max(100).regex(slugPattern).optional(),
+  slug: z.string().min(1).max(100).refine(isSlug).optional(),
   parentId: z.string().nullable().optional(),
   description: z.string().max(500).nullable().optional(),
   icon: z.string().max(50).nullable().optional(),

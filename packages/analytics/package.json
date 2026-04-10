@@ -1,0 +1,21 @@
+{
+  "name": "@twicely/analytics",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "@twicely/db": "workspace:*",
+    "@twicely/config": "workspace:*",
+    "@twicely/logger": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  }
+}

@@ -78,6 +78,7 @@ export const V32_EXTENDED_SETTINGS_CORE: PlatformSettingSeed[] = [
   { key: 'payout.newSellerHoldThresholdCents', value: 50000, type: 'cents', category: 'payout', description: 'GMV threshold ($500) above which new seller holds apply' },
   { key: 'fulfillment.insurance.maxCoverageCents', value: 500000, type: 'cents', category: 'fulfillment', description: 'Maximum insurance coverage per shipment ($5,000)' },
   { key: 'fulfillment.shipping.lateThresholdDays', value: 1, type: 'number', category: 'fulfillment', description: 'Days past handling time before shipment is marked late' },
+  { key: 'fulfillment.shipping.insuranceRatePercent', value: 1, type: 'number', category: 'fulfillment', description: 'Insurance cost as percentage of insured value (default 1%)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // DEAL BADGES — Market index / deal badge constants

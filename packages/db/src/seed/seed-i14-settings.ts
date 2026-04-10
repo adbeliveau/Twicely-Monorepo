@@ -134,4 +134,17 @@ export const SEED_I14_SETTINGS: PlatformSettingSeed[] = [
     category: 'tax',
     description: 'Default tax rate in basis points (0 = no default)',
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RISK ENGINE (Canonical 26 §15 / C26 §7)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'risk.enabled', value: true, type: 'boolean', category: 'risk', description: 'Master toggle for risk scoring engine' },
+  { key: 'risk.scoring.cacheMinutes', value: 1, type: 'number', category: 'risk', description: 'Risk score cache TTL (minutes)' },
+  { key: 'risk.scoring.windowHours', value: 24, type: 'number', category: 'risk', description: 'Lookback window for risk signal aggregation (hours)' },
+  { key: 'risk.scoring.maxScore', value: 100, type: 'number', category: 'risk', description: 'Maximum risk score cap' },
+  { key: 'risk.security.loginFailureThreshold', value: 3, type: 'number', category: 'risk', description: 'Failed login count to trigger IP velocity signal' },
+  { key: 'risk.security.loginFailureWindowMinutes', value: 15, type: 'number', category: 'risk', description: 'Window for counting failed logins (minutes)' },
+  { key: 'risk.security.ipVelocityScanWindowMinutes', value: 15, type: 'number', category: 'risk', description: 'Pattern scanner IP velocity scan window (minutes)' },
+  { key: 'risk.fraud.paymentFailureThreshold', value: 5, type: 'number', category: 'risk', description: 'Payment failures per user to trigger fraud signal' },
+  { key: 'risk.fraud.paymentFailureWindowMinutes', value: 60, type: 'number', category: 'risk', description: 'Window for counting payment failures (minutes)' },
 ];

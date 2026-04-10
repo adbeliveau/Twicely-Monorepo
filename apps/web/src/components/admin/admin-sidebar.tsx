@@ -52,6 +52,10 @@ import {
   ShoppingBag,
   RefreshCw,
   Search,
+  BarChart,
+  ListFilter,
+  Replace,
+  Filter,
   Globe,
   Languages,
   Calculator,
@@ -76,6 +80,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ShoppingCart, Banknote, Star, MapPin, Receipt, Ticket, Scale,
   Stethoscope, FileText, Gavel, Layers,
   Clock, ShoppingBag, RefreshCw, Search,
+  BarChart, ListFilter, Replace, Filter,
   Globe, Languages, Calculator,
   Store, TrendingUp, EyeOff, Grid, Lock,
 };

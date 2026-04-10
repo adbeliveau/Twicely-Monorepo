@@ -11,10 +11,8 @@ import { session, referral, sellerProfile } from '@twicely/db/schema';
 import { eq, and, gte, count, isNotNull } from 'drizzle-orm';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { logger } from '@twicely/logger';
-import { isExcludedIp, getSubnet24, highestOf } from './fraud-detection-types';
-
+import { isExcludedIp, getSubnet24, highestOf, type FraudCheckResult, type FraudScanResult } from './fraud-detection-types';
 export type { FraudCheckResult, FraudScanResult } from './fraud-detection-types';
-import type { FraudCheckResult, FraudScanResult } from './fraud-detection-types';
 
 // ─── Check 1: Self-Referral by IP ─────────────────────────────────────────────
 /**

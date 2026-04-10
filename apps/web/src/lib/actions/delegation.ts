@@ -22,11 +22,9 @@ const updateScopesSchema = z.object({
   delegationId: z.string().cuid2(),
   scopes: z.array(z.string()).min(1),
 }).strict();
-
 const revokeSchema = z.object({
   delegationId: z.string().cuid2(),
 }).strict();
-
 const acceptSchema = z.object({
   delegationId: z.string().cuid2(),
 }).strict();

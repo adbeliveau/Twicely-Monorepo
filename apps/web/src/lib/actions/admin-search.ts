@@ -50,7 +50,7 @@ export async function rebuildSearchIndexAction(
     });
 
     return { success: true };
-  } catch (err) {
+  } catch (_err) {
     return { error: 'Search index rebuild failed' };
   }
 }

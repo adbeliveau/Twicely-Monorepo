@@ -42,28 +42,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      const storedSession = localStorage.getItem("session");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const parsedSession = storedSession ? JSON.parse(storedSession) : null;
-        if (parsedSession && new Date(parsedSession.expiresAt) <= new Date()) {
-          localStorage.removeItem("user");
-          localStorage.removeItem("session");
-        } else if (parsedUser.role === "STAFF" && !parsedUser.permissions) {
-          localStorage.removeItem("user");
-          localStorage.removeItem("session");
-        } else {
-          setUser(parsedUser);
-          if (parsedSession) setSession(parsedSession);
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const storedUser = localStorage.getItem("user");
+        const storedSession = localStorage.getItem("session");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          const parsedSession = storedSession ? JSON.parse(storedSession) : null;
+          if (parsedSession && new Date(parsedSession.expiresAt) <= new Date()) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("session");
+          } else if (parsedUser.role === "STAFF" && !parsedUser.permissions) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("session");
+          } else {
+            setUser(parsedUser);
+            if (parsedSession) setSession(parsedSession);
+          }
         }
+      } catch {
+        localStorage.removeItem("user");
+        localStorage.removeItem("session");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      localStorage.removeItem("user");
-      localStorage.removeItem("session");
-    }
-    setLoading(false);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
   const router = useRouter();
 

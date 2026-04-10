@@ -222,6 +222,8 @@ import { AI_AUTOFILL_SETTINGS } from './seed-ai-autofill';
 import { AFFILIATE_TRIAL_SETTINGS } from './seed-affiliate-settings';
 // Communications settings — comms.email.*, comms.push.*, comms.sms.*, comms.digest.*
 import { COMMS_SETTINGS } from './seed-comms-settings';
+// Search engine settings (Decision #143 — OpenSearch)
+import { V32_PLATFORM_SETTINGS_SEARCH } from './v32-platform-settings-search';
 
 export { V32_FINANCE_SETTINGS };
 export { V32_SETTINGS_OPERATIONS };
@@ -240,6 +242,7 @@ export const V32_ALL_SETTINGS: PlatformSettingSeed[] = [
   ...AI_AUTOFILL_SETTINGS,
   ...AFFILIATE_TRIAL_SETTINGS,
   ...COMMS_SETTINGS,
+  ...V32_PLATFORM_SETTINGS_SEARCH,
 ];
 
 // Total settings count for verification

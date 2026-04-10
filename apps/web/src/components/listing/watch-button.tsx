@@ -70,9 +70,13 @@ export function WatchButton({
     if (autoWatchFiredRef.current) return;
     if (autoWatch && isLoggedIn && !initialWatching) {
       autoWatchFiredRef.current = true;
-      handleToggleWatch();
-      router.replace(`/i/${listingSlug}`, { scroll: false });
+      const timeoutId = window.setTimeout(() => {
+        handleToggleWatch();
+        router.replace(`/i/${listingSlug}`, { scroll: false });
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
+    return undefined;
   }, [autoWatch, isLoggedIn, initialWatching, handleToggleWatch, router, listingSlug]);
 
   const handleToggleAlert = () => {

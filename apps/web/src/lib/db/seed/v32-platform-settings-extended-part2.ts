@@ -116,7 +116,7 @@ export const V32_EXTENDED_SETTINGS_PART2: PlatformSettingSeed[] = [
   { key: 'trust.authentication.sellerFeeCents', value: 1999, type: 'cents' as const, category: 'trust', description: 'Seller share of AI auth fee when authentic' },
   { key: 'trust.authentication.expertFeeCents', value: 3999, type: 'cents' as const, category: 'trust', description: 'Expert human auth fee (standard items)' },
   { key: 'trust.authentication.expertHighValueFeeCents', value: 6999, type: 'cents' as const, category: 'trust', description: 'Expert human auth fee (high-value items)' },
-  { key: 'trust.authentication.mandatoryAboveCents', value: null, type: 'cents' as const, category: 'trust', description: 'Mandatory auth above this price (null = never)' },
+  { key: 'trust.authentication.mandatoryAboveCents', value: 0, type: 'cents' as const, category: 'trust', description: 'Mandatory auth above this price (0 = never)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ACCOUNTING INTEGRATIONS — G10.3

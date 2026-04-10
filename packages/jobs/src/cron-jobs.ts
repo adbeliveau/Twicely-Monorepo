@@ -189,6 +189,16 @@ export async function registerCronJobs(): Promise<void> {
   await registerAccountingSyncJobs();
   logger.info('[cronJobs] Registered accounting sync jobs');
 
+  // Search index sync worker — Decision #143
+  // Side-effect import: creates the BullMQ worker for search-index-sync queue
+  await import('./search-index-sync');
+  logger.info('[cronJobs] Registered search index sync worker');
+
+  // Search full reindex worker — Decision #143
+  // Side-effect import: creates the BullMQ worker for search-full-reindex queue
+  await import('./search-full-reindex');
+  logger.info('[cronJobs] Registered search full reindex worker');
+
   // Buyer quality tier recalc REMOVED — Decision #142.
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }

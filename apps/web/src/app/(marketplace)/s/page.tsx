@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { searchListings } from '@twicely/search/listings';
+import { logSearchQuery, getActiveSearchEngine } from '@twicely/search/search-engine';
 import { getCategoryTree } from '@/lib/queries/categories';
 import { getCategoryBySlug } from '@/lib/queries/categories';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
@@ -30,6 +31,7 @@ interface SearchPageProps {
     minPrice?: string;
     maxPrice?: string;
     freeShipping?: string;
+    localPickup?: string;
     brand?: string;
     sort?: string;
     page?: string;
@@ -80,13 +82,33 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     minPrice: params.minPrice ? parseInt(params.minPrice, 10) : undefined,
     maxPrice: params.maxPrice ? parseInt(params.maxPrice, 10) : undefined,
     freeShipping: params.freeShipping === 'true',
+    localPickup: params.localPickup === 'true',
     brand: params.brand,
     sort: (params.sort as SearchFiltersType['sort']) ?? 'relevance',
     page: params.page ? parseInt(params.page, 10) : 1,
     limit: pageSize,
   };
 
+  const searchStart = Date.now();
   const results = await searchListings(filters);
+  const searchLatencyMs = Date.now() - searchStart;
+
+  // Fire-and-forget: log search query for analytics (Decision #143)
+  const engine = await getActiveSearchEngine();
+  const normalizedQuery = params.q?.toLowerCase().trim() ?? null;
+  const facetUsage: Record<string, unknown> = {};
+  if (params.condition) facetUsage.condition = params.condition;
+  if (params.brand) facetUsage.brand = params.brand;
+  if (params.freeShipping === 'true') facetUsage.freeShipping = true;
+  if (params.category) facetUsage.category = params.category;
+  logSearchQuery({
+    queryText: params.q ?? null,
+    normalizedQuery,
+    resultCount: results.totalCount,
+    latencyMs: searchLatencyMs,
+    engine,
+    facetUsageJson: facetUsage,
+  });
 
   const deals = params.sort === 'deals';
 

@@ -22,7 +22,6 @@ import type { UploadedImage } from '@/types/upload';
 import type { CategorySearchResult } from '@/lib/queries/category-search';
 import type { AiAutofillSuggestions } from '@/types/ai-autofill';
 import { applyAiSuggestions } from './listing-form-ai-handler';
-
 interface ListingFormProps {
   initialData?: Partial<ListingFormData>;
   onSubmit: (data: ListingFormData, mode: 'ACTIVE' | 'DRAFT') => Promise<void>;

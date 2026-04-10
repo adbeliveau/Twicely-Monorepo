@@ -10,6 +10,7 @@ const mockDb = { select: mockDbSelect, insert: mockDbInsert, update: mockDbUpdat
 const mockAuthorize = vi.fn();
 const mockNotifyAnswered = vi.fn().mockResolvedValue(undefined);
 const mockRevalidatePath = vi.fn();
+const mockGetQuestionById = vi.fn();
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
 vi.mock('@twicely/casl', () => ({
@@ -23,6 +24,10 @@ vi.mock('@twicely/notifications/qa-notifier', () => ({
   notifyQuestionAnswered: (...args: unknown[]) => mockNotifyAnswered(...args),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }));
+vi.mock('@/lib/queries/qa', () => ({
+  getQuestionById: (...args: unknown[]) => mockGetQuestionById(...args),
+  getQuestionsForListing: vi.fn().mockResolvedValue([]),
+}));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -150,7 +155,7 @@ describe('answerQuestion — business rules', () => {
 
   it('returns error when question not found', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect.mockReturnValueOnce(makeSelectChain([]));
+    mockGetQuestionById.mockResolvedValue(null);
 
     const { answerQuestion } = await import('../qa');
     const result = await answerQuestion({ questionId: QUESTION_ID, answerText: 'Yes.' });
@@ -160,7 +165,19 @@ describe('answerQuestion — business rules', () => {
 
   it('returns error when question is hidden', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect.mockReturnValueOnce(makeSelectChain([{ ...baseQuestionRow, isHidden: true }]));
+    mockGetQuestionById.mockResolvedValue({
+      ...baseQuestionRow,
+      isHidden: true,
+      listingOwnerUserId: USER_ID,
+      listingSlug: LISTING_SLUG,
+      listingTitle: 'Test Listing',
+      questionText: 'Test question?',
+      answerText: null,
+      answeredBy: null,
+      isPinned: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     const { answerQuestion } = await import('../qa');
     const result = await answerQuestion({ questionId: QUESTION_ID, answerText: 'Yes.' });
@@ -170,7 +187,20 @@ describe('answerQuestion — business rules', () => {
 
   it('returns error when question already answered', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect.mockReturnValueOnce(makeSelectChain([{ ...baseQuestionRow, answeredAt: new Date() }]));
+    mockGetQuestionById.mockResolvedValue({
+      ...baseQuestionRow,
+      answeredAt: new Date(),
+      isHidden: false,
+      listingOwnerUserId: USER_ID,
+      listingSlug: LISTING_SLUG,
+      listingTitle: 'Test Listing',
+      questionText: 'Test question?',
+      answerText: 'Already answered.',
+      answeredBy: USER_ID,
+      isPinned: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     const { answerQuestion } = await import('../qa');
     const result = await answerQuestion({ questionId: QUESTION_ID, answerText: 'Yes.' });
@@ -180,9 +210,20 @@ describe('answerQuestion — business rules', () => {
 
   it('rejects when user is not the listing owner', async () => {
     mockAuthorize.mockResolvedValue(mockSession(OTHER_USER_ID));
-    mockDbSelect
-      .mockReturnValueOnce(makeSelectChain([baseQuestionRow]))
-      .mockReturnValueOnce(makeSelectChain([{ ownerUserId: USER_ID, slug: LISTING_SLUG }]));
+    mockGetQuestionById.mockResolvedValue({
+      ...baseQuestionRow,
+      answeredAt: null,
+      isHidden: false,
+      listingOwnerUserId: USER_ID,
+      listingSlug: LISTING_SLUG,
+      listingTitle: 'Test Listing',
+      questionText: 'Test question?',
+      answerText: null,
+      answeredBy: null,
+      isPinned: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     const { answerQuestion } = await import('../qa');
     const result = await answerQuestion({ questionId: QUESTION_ID, answerText: 'Yes.' });
@@ -192,9 +233,20 @@ describe('answerQuestion — business rules', () => {
 
   it('updates question and calls notifyQuestionAnswered on success', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect
-      .mockReturnValueOnce(makeSelectChain([baseQuestionRow]))
-      .mockReturnValueOnce(makeSelectChain([baseListingRow]));
+    mockGetQuestionById.mockResolvedValue({
+      ...baseQuestionRow,
+      answeredAt: null,
+      isHidden: false,
+      listingOwnerUserId: USER_ID,
+      listingSlug: LISTING_SLUG,
+      listingTitle: 'Test Listing',
+      questionText: 'Test question?',
+      answerText: null,
+      answeredBy: null,
+      isPinned: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     mockDbUpdate.mockReturnValueOnce(makeUpdateChain());
 
     const { answerQuestion } = await import('../qa');

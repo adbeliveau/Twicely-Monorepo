@@ -79,12 +79,13 @@ export async function runListingSoldPurge(): Promise<ListingSoldPurgeResult> {
   }
 
   // Dynamic import to avoid compile-time circular dep.
-  let deleteListingDocument: (id: string) => Promise<void>;
+  // Uses search-engine abstraction which routes to the active engine (OpenSearch/Typesense/PG).
+  let deleteDocumentFromIndex: (id: string) => Promise<void>;
   try {
-    const mod = await import('@twicely/search/typesense-index');
-    deleteListingDocument = mod.deleteListingDocument;
+    const mod = await import('@twicely/search/search-engine');
+    deleteDocumentFromIndex = mod.deleteDocumentFromIndex;
   } catch (err) {
-    logger.error('[listingSoldPurge] Failed to load Typesense module — aborting pass', { err: String(err) });
+    logger.error('[listingSoldPurge] Failed to load search engine module — aborting pass', { err: String(err) });
     return { purgedCount: 0, errorCount: candidates.length, cutoffDate: cutoff.toISOString() };
   }
 
@@ -93,12 +94,12 @@ export async function runListingSoldPurge(): Promise<ListingSoldPurgeResult> {
 
   for (const { id } of candidates) {
     try {
-      await deleteListingDocument(id);
+      await deleteDocumentFromIndex(id);
       purgedCount++;
     } catch (err) {
-      // Typesense unreachable or unexpected error — log and continue.
+      // Search engine unreachable or unexpected error — log and continue.
       // We do NOT fail the entire batch for a single document.
-      logger.warn('[listingSoldPurge] Failed to delete Typesense document', { listingId: id, err: String(err) });
+      logger.warn('[listingSoldPurge] Failed to delete search document', { listingId: id, err: String(err) });
       errorCount++;
     }
   }

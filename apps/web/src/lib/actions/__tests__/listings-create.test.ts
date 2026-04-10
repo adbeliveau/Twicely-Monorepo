@@ -31,8 +31,8 @@ vi.mock('@/lib/services/price-history-service', () => ({
 vi.mock('@/lib/queries/platform-settings', () => ({
   getPlatformSetting: mockGetPlatformSetting,
 }));
-vi.mock('@twicely/search/typesense-index', () => ({
-  upsertListingDocument: vi.fn().mockResolvedValue(undefined),
+vi.mock('@twicely/jobs/search-index-sync', () => ({
+  enqueueSearchIndexUpsert: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@twicely/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },

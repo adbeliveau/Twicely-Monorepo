@@ -11,7 +11,6 @@ import { QrCodeDisplay } from './qr-code-display';
 import { ManualCodeEntry } from './manual-code-entry';
 import { LocalMeetupTimeline } from './local-meetup-timeline';
 import { checkInToMeetupAction } from '@/lib/actions/local-transaction';
-import type { LocalTransactionWithLocation } from '@/lib/queries/local-transaction';
 import { haversineDistanceMiles } from '@twicely/utils/geo';
 import { PriceAdjustmentForm } from './price-adjustment-form';
 import { PriceAdjustmentResponse } from './price-adjustment-response';
@@ -22,33 +21,13 @@ import { DayOfConfirmation } from './day-of-confirmation';
 import { STATUS_LABELS, STATUS_VARIANT } from './local-meetup-status';
 import { MeetupPhotoCapture } from './meetup-photo-capture';
 import { ReliabilityBadge } from './reliability-badge';
-import type { CounterpartyReliability } from './reliability-badge';
+import type { LocalMeetupCardProps } from './local-meetup-card-helpers';
+import { formatScheduledAt } from './local-meetup-card-helpers';
 
 const MeetupMap = dynamic(
   () => import('./meetup-map').then((m) => m.MeetupMap),
   { ssr: false }
 );
-
-interface LocalMeetupCardProps {
-  transaction: LocalTransactionWithLocation;
-  role: 'BUYER' | 'SELLER';
-  currentUserId: string;
-  otherPartyName: string;
-  buyerLat?: number;
-  buyerLng?: number;
-  sellerLat?: number;
-  sellerLng?: number;
-  originalPriceCents?: number;
-  maxDiscountPercent?: number;
-  rescheduleMaxCount?: number;
-  dayOfConfirmationWindowHours?: number;
-  cancelLateHours: number;
-  cancelSamedayHours: number;
-  counterpartyReliability?: CounterpartyReliability | null;
-}
-
-const FMT_DATE = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-function formatScheduledAt(date: Date): string { return FMT_DATE.format(new Date(date)); }
 
 export function LocalMeetupCard({
   transaction: tx,

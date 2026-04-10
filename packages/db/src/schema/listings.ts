@@ -80,6 +80,9 @@ export const listing = pgTable('listing', {
   importedFromChannel:   channelEnum('imported_from_channel'),
   importedExternalId:    text('imported_external_id'),
 
+  // Variations
+  hasVariations:         boolean('has_variations').notNull().default(false),
+
   // Video
   videoUrl:              text('video_url'),                   // R2 URL, nullable
   videoThumbUrl:         text('video_thumb_url'),             // First frame thumbnail

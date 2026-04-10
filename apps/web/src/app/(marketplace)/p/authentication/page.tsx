@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = { title: 'Authentication | Twicely' };
 
@@ -37,9 +38,9 @@ export default function AuthenticationPage() {
         <h2 className="text-xl font-semibold">For sellers</h2>
         <p className="text-muted-foreground">
           Sellers can request pre-listing authentication from the{' '}
-          <a href="/my/selling/authentication" className="text-primary underline-offset-4 hover:underline">
+          <Link href="/my/selling/authentication" className="text-primary underline-offset-4 hover:underline">
             Authentication dashboard
-          </a>
+          </Link>
           . Authenticated listings earn a trust badge and unlock access to
           the 90-day Authenticated protection tier.
         </p>
@@ -49,9 +50,9 @@ export default function AuthenticationPage() {
         <h2 className="text-xl font-semibold">Protection tiers</h2>
         <p className="text-muted-foreground">
           See{' '}
-          <a href="/p/buyer-protection" className="text-primary underline-offset-4 hover:underline">
+          <Link href="/p/buyer-protection" className="text-primary underline-offset-4 hover:underline">
             Buyer protection
-          </a>{' '}
+          </Link>{' '}
           for the full breakdown of protection tiers, coverage limits, and
           claim windows.
         </p>

@@ -122,14 +122,14 @@ describe('computeSellThroughRate90d', () => {
 
   it('returns null when no orders and no active listings', async () => {
     const { computeSellThroughRate90d } = await import('../projection-engine');
-    expect(computeSellThroughRate90d([], [])).toBeNull();
+    expect(computeSellThroughRate90d(90, [], [])).toBeNull();
   });
 
   it('returns 5000 bps when 1 sold of 2 total', async () => {
     const { computeSellThroughRate90d } = await import('../projection-engine');
     const orders = [makeOrder({ completedAt: daysAgo(5) })];
     const listings = [makeListing()];
-    expect(computeSellThroughRate90d(orders, listings)).toBe(5000);
+    expect(computeSellThroughRate90d(90, orders, listings)).toBe(5000);
   });
 
   it('returns 10000 bps when all items sold (2 orders, 0 active)', async () => {
@@ -138,7 +138,7 @@ describe('computeSellThroughRate90d', () => {
       makeOrder({ completedAt: daysAgo(5) }),
       makeOrder({ completedAt: daysAgo(10) }),
     ];
-    expect(computeSellThroughRate90d(orders, [])).toBe(10000);
+    expect(computeSellThroughRate90d(90, orders, [])).toBe(10000);
   });
 });
 
@@ -200,7 +200,7 @@ describe('computeBreakEven', () => {
 
   it('returns null for both when fewer than 3 expenses', async () => {
     const { computeBreakEven } = await import('../projection-engine');
-    const result = computeBreakEven([], [makeExpense(), makeExpense()]);
+    const result = computeBreakEven(90, 3, [], [makeExpense(), makeExpense()]);
     expect(result.breakEvenRevenueCents).toBeNull();
     expect(result.breakEvenOrders).toBeNull();
   });
@@ -215,7 +215,7 @@ describe('computeBreakEven', () => {
     const orders = [
       makeOrder({ totalCents: 5000, tfFeesCents: 500, stripeFeesCents: 175, shippingCostsCents: 0, completedAt: daysAgo(5) }),
     ];
-    const result = computeBreakEven(orders, expenses);
+    const result = computeBreakEven(90, 3, orders, expenses);
     expect(result.breakEvenRevenueCents).toBeGreaterThan(0);
   });
 });
@@ -227,14 +227,14 @@ describe('computeInventoryTurns', () => {
     const { computeInventoryTurns } = await import('../projection-engine');
     const orders = [makeOrder({ cogsCents: 0, completedAt: daysAgo(5) })];
     const listings = [makeListing()];
-    expect(computeInventoryTurns(orders, listings)).toBeNull();
+    expect(computeInventoryTurns(90, orders, listings)).toBeNull();
   });
 
   it('computes turns in basis points', async () => {
     const { computeInventoryTurns } = await import('../projection-engine');
     const orders = [makeOrder({ cogsCents: 3000, completedAt: daysAgo(5) })];
     const listings = [makeListing({ cogsCents: 10000, priceCents: 15000 })];
-    expect(computeInventoryTurns(orders, listings)).toBe(1000);
+    expect(computeInventoryTurns(90, orders, listings)).toBe(1000);
   });
 });
 
@@ -265,7 +265,7 @@ describe('computeDataQualityScore', () => {
 
   it('returns 0 for brand new account with no orders', async () => {
     const { computeDataQualityScore } = await import('../projection-engine');
-    expect(computeDataQualityScore([], new Date())).toBe(0);
+    expect(computeDataQualityScore(90, [], new Date())).toBe(0);
   });
 
   it('increases score with COGS coverage', async () => {
@@ -274,7 +274,7 @@ describe('computeDataQualityScore', () => {
       makeOrder({ cogsCents: 1000, completedAt: daysAgo(5) }),
       makeOrder({ cogsCents: 1000, completedAt: daysAgo(10) }),
     ];
-    const score = computeDataQualityScore(orders, daysAgo(90));
+    const score = computeDataQualityScore(90, orders, daysAgo(90));
     expect(score).toBeGreaterThan(0);
   });
 
@@ -283,7 +283,7 @@ describe('computeDataQualityScore', () => {
     const orders = Array.from({ length: 20 }, (_, i) =>
       makeOrder({ cogsCents: 500, completedAt: daysAgo(i + 1) }),
     );
-    const score = computeDataQualityScore(orders, daysAgo(400));
+    const score = computeDataQualityScore(90, orders, daysAgo(400));
     expect(score).toBeLessThanOrEqual(100);
   });
 });

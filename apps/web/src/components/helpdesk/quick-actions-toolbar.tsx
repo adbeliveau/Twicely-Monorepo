@@ -8,7 +8,6 @@ import { MergeDialog } from "./merge-dialog";
 // =============================================================================
 // TYPES
 // =============================================================================
-
 interface QuickActionsProps {
   caseId: string;
   caseNumber: string;

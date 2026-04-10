@@ -28,10 +28,10 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-const mockDeleteListingDocument = vi.fn().mockResolvedValue(undefined);
+const mockDeleteDocumentFromIndex = vi.fn().mockResolvedValue(undefined);
 
-vi.mock('@twicely/search/typesense-index', () => ({
-  deleteListingDocument: (...args: unknown[]) => mockDeleteListingDocument(...args),
+vi.mock('@twicely/search/search-engine', () => ({
+  deleteDocumentFromIndex: (...args: unknown[]) => mockDeleteDocumentFromIndex(...args),
 }));
 
 /**
@@ -76,10 +76,10 @@ describe('runListingSoldPurge — Decision #71', () => {
 
     expect(result.purgedCount).toBe(0);
     expect(result.errorCount).toBe(0);
-    expect(mockDeleteListingDocument).not.toHaveBeenCalled();
+    expect(mockDeleteDocumentFromIndex).not.toHaveBeenCalled();
   });
 
-  it('calls deleteListingDocument for each candidate', async () => {
+  it('calls deleteDocumentFromIndex for each candidate', async () => {
     const { db } = await import('@twicely/db');
 
     const candidates = [
@@ -92,24 +92,24 @@ describe('runListingSoldPurge — Decision #71', () => {
     const { runListingSoldPurge } = await import('../listing-sold-purge');
     const result = await runListingSoldPurge();
 
-    expect(mockDeleteListingDocument).toHaveBeenCalledTimes(3);
-    expect(mockDeleteListingDocument).toHaveBeenCalledWith('lst-1');
-    expect(mockDeleteListingDocument).toHaveBeenCalledWith('lst-2');
-    expect(mockDeleteListingDocument).toHaveBeenCalledWith('lst-3');
+    expect(mockDeleteDocumentFromIndex).toHaveBeenCalledTimes(3);
+    expect(mockDeleteDocumentFromIndex).toHaveBeenCalledWith('lst-1');
+    expect(mockDeleteDocumentFromIndex).toHaveBeenCalledWith('lst-2');
+    expect(mockDeleteDocumentFromIndex).toHaveBeenCalledWith('lst-3');
     expect(result.purgedCount).toBe(3);
     expect(result.errorCount).toBe(0);
   });
 
-  it('logs and continues when Typesense delete throws for one document', async () => {
+  it('logs and continues when search engine delete throws for one document', async () => {
     const { db } = await import('@twicely/db');
     const { logger } = await import('@twicely/logger');
 
     const candidates = [{ id: 'lst-ok' }, { id: 'lst-bad' }, { id: 'lst-ok-2' }];
     vi.mocked(db.select).mockReturnValue(makeSelectChain(candidates) as unknown as ReturnType<typeof db.select>);
 
-    mockDeleteListingDocument
+    mockDeleteDocumentFromIndex
       .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error('Typesense connection refused'))
+      .mockRejectedValueOnce(new Error('Search engine connection refused'))
       .mockResolvedValueOnce(undefined);
 
     const { runListingSoldPurge } = await import('../listing-sold-purge');
@@ -119,15 +119,15 @@ describe('runListingSoldPurge — Decision #71', () => {
     expect(result.purgedCount).toBe(2);
     expect(result.errorCount).toBe(1);
     expect(logger.warn).toHaveBeenCalledWith(
-      '[listingSoldPurge] Failed to delete Typesense document',
+      '[listingSoldPurge] Failed to delete search document',
       expect.objectContaining({ listingId: 'lst-bad' }),
     );
   });
 
-  it('returns all as errors and purgedCount=0 when Typesense module fails to load', async () => {
+  it('returns all as errors and purgedCount=0 when search engine module fails to load', async () => {
     // Override the dynamic import to simulate module load failure.
     // We use vi.doMock inside the test to simulate the failure after resetModules.
-    vi.doMock('@twicely/search/typesense-index', () => {
+    vi.doMock('@twicely/search/search-engine', () => {
       throw new Error('Cannot find module');
     });
 

@@ -27,10 +27,13 @@ export function ListingVideoPlayer({
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
+    const timeoutId = window.setTimeout(() => setReducedMotion(mq.matches), 0);
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    return () => {
+      window.clearTimeout(timeoutId);
+      mq.removeEventListener('change', handler);
+    };
   }, []);
 
   // Sync muted state to video element

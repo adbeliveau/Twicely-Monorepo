@@ -67,12 +67,15 @@ export function CaseQueuePanel({ cases, selectedCaseId, watchers = [], className
 
   // Load persisted availability state on mount (client-only)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(AVAILABILITY_KEY);
-      if (stored === "offline") setIsOnline(false);
-    } catch {
-      // localStorage unavailable; keep default
-    }
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(AVAILABILITY_KEY);
+        if (stored === "offline") setIsOnline(false);
+      } catch {
+        // localStorage unavailable; keep default
+      }
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   function toggleAvailability() {

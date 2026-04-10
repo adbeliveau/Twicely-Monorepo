@@ -39,6 +39,7 @@ export function SearchFilters({ categories, onClose }: SearchFiltersProps) {
   const currentConditions =
     searchParams.get('condition')?.split(',').filter(Boolean) ?? [];
   const currentFreeShipping = searchParams.get('freeShipping') === 'true';
+  const currentLocalPickup = searchParams.get('localPickup') === 'true';
 
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') ?? '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') ?? '');
@@ -80,6 +81,12 @@ export function SearchFilters({ categories, onClose }: SearchFiltersProps) {
   function handleFreeShippingToggle() {
     updateFilters({
       freeShipping: currentFreeShipping ? null : 'true',
+    });
+  }
+
+  function handleLocalPickupToggle() {
+    updateFilters({
+      localPickup: currentLocalPickup ? null : 'true',
     });
   }
 
@@ -221,6 +228,18 @@ export function SearchFilters({ categories, onClose }: SearchFiltersProps) {
         />
         <Label htmlFor="freeShipping" className="text-sm font-normal">
           Free Shipping only
+        </Label>
+      </div>
+
+      {/* Local Pickup */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="localPickup"
+          checked={currentLocalPickup}
+          onCheckedChange={handleLocalPickupToggle}
+        />
+        <Label htmlFor="localPickup" className="text-sm font-normal">
+          Local Pickup Available
         </Label>
       </div>
 

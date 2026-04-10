@@ -22,9 +22,9 @@ vi.mock('drizzle-orm', () => ({
 }));
 vi.mock('@twicely/db', () => ({ db: { select: mockDbSelect, update: mockDbUpdate } }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@twicely/search/typesense-index', () => ({
-  upsertListingDocument: vi.fn().mockResolvedValue(undefined),
-  deleteListingDocument: vi.fn().mockResolvedValue(undefined),
+vi.mock('@twicely/jobs/search-index-sync', () => ({
+  enqueueSearchIndexUpsert: vi.fn().mockResolvedValue(undefined),
+  enqueueSearchIndexDelete: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/lib/services/price-alert-processor', () => ({
   processBackInStockAlerts: vi.fn().mockResolvedValue(undefined),

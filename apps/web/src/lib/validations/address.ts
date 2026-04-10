@@ -59,6 +59,29 @@ export const US_STATES = [
 
 const stateValues = US_STATES.map((s) => s.value);
 
+function isDigits(value: string, length: number): boolean {
+  return value.length === length && Array.from(value).every((char) => char >= '0' && char <= '9');
+}
+
+function isZipCode(value: string): boolean {
+  const parts = value.split('-');
+  return (
+    (parts.length === 1 && isDigits(parts[0] ?? '', 5)) ||
+    (parts.length === 2 && isDigits(parts[0] ?? '', 5) && isDigits(parts[1] ?? '', 4))
+  );
+}
+
+function isPhoneNumber(value: string): boolean {
+  const trimmed = value.trim();
+  const withoutCountryCode = trimmed.startsWith('+1') ? trimmed.slice(2) : trimmed;
+  const chars = Array.from(withoutCountryCode);
+  const allowed = chars.every(
+    (char) => (char >= '0' && char <= '9') || char === ' ' || char === '-' || char === '(' || char === ')' || char === '.',
+  );
+  const digitCount = chars.filter((char) => char >= '0' && char <= '9').length;
+  return allowed && digitCount >= 10;
+}
+
 /**
  * Zod schema for address form validation.
  */
@@ -86,11 +109,11 @@ export const addressSchema = z.object({
   zip: z
     .string()
     .min(1, 'ZIP code is required')
-    .regex(/^\d{5}(-\d{4})?$/, 'Please enter a valid ZIP code (e.g., 12345 or 12345-6789)'),
+    .refine(isZipCode, 'Please enter a valid ZIP code (e.g., 12345 or 12345-6789)'),
   country: z.string().min(1),
   phone: z
     .string()
-    .regex(/^(\+1)?[\d\s\-().]{10,}$/, 'Please enter a valid phone number')
+    .refine(isPhoneNumber, 'Please enter a valid phone number')
     .optional()
     .or(z.literal('')),
   isDefault: z.boolean().optional(),

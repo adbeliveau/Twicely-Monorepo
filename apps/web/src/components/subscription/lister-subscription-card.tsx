@@ -32,16 +32,8 @@ export interface ListerSubscriptionCardProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LISTER_UPGRADE_TIERS = [
-  {
-    tier: 'LITE',
-    label: 'Lite',
-    features: ['200 publishes/mo', '25 AI credits', '25 BG removals', '60-day rollover'],
-  },
-  {
-    tier: 'PRO',
-    label: 'Pro',
-    features: ['2,000 publishes/mo', '200 AI credits', '200 BG removals', '60-day rollover'],
-  },
+  { tier: 'LITE', label: 'Lite', features: ['200 publishes/mo', '25 AI credits', '25 BG removals', '60-day rollover'] },
+  { tier: 'PRO', label: 'Pro', features: ['2,000 publishes/mo', '200 AI credits', '200 BG removals', '60-day rollover'] },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

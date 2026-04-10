@@ -7,8 +7,8 @@ import { describe, it, expect } from 'vitest';
 import { SEED_I14_SETTINGS } from '../seed-i14-settings';
 
 describe('SEED_I14_SETTINGS', () => {
-  it('exports exactly 17 settings', () => {
-    expect(SEED_I14_SETTINGS).toHaveLength(17);
+  it('exports exactly 26 settings', () => {
+    expect(SEED_I14_SETTINGS).toHaveLength(26);
   });
 
   it('all keys are unique', () => {

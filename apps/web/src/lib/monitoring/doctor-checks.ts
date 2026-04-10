@@ -33,7 +33,7 @@ async function checkDbConnection(): Promise<HealthCheckResult> {
   try {
     await withTimeout(db.execute(sql`SELECT 1`), TIMEOUT_MS);
     return makeResult('db.connection', 'Database', 'HEALTHY', Date.now() - start, null);
-  } catch (error) {
+  } catch (_error) {
     return makeResult('db.connection', 'Database', 'UNHEALTHY', Date.now() - start,
       'Database connection failed');
   }
@@ -44,7 +44,7 @@ async function checkDbPool(): Promise<HealthCheckResult> {
   try {
     await withTimeout(db.execute(sql`SELECT 1`), TIMEOUT_MS);
     return makeResult('db.pool', 'Database', 'HEALTHY', Date.now() - start, null);
-  } catch (error) {
+  } catch (_error) {
     return makeResult('db.pool', 'Database', 'UNHEALTHY', Date.now() - start,
       'Database pool check failed');
   }
@@ -94,7 +94,7 @@ async function checkAppSettings(): Promise<HealthCheckResult> {
     }
     return makeResult('app.settings', 'App', 'HEALTHY', Date.now() - start,
       `${total} settings`);
-  } catch (error) {
+  } catch (_error) {
     return makeResult('app.settings', 'App', 'UNHEALTHY', Date.now() - start,
       'Platform settings check failed');
   }
@@ -109,7 +109,7 @@ async function checkValkeyPing(): Promise<HealthCheckResult> {
       return makeResult('valkey.ping', 'Valkey', 'HEALTHY', Date.now() - start, null);
     }
     return makeResult('valkey.ping', 'Valkey', 'DEGRADED', Date.now() - start, `Unexpected: ${pong}`);
-  } catch (error) {
+  } catch (_error) {
     return makeResult('valkey.ping', 'Valkey', 'UNHEALTHY', Date.now() - start,
       'Connection failed');
   }
@@ -125,7 +125,7 @@ async function checkTypesenseHealth(): Promise<HealthCheckResult> {
     const status = resp.ok ? 'HEALTHY' : 'DEGRADED';
     return makeResult('typesense.health', 'Typesense', status, Date.now() - start,
       resp.ok ? null : `HTTP ${resp.status}`);
-  } catch (error) {
+  } catch (_error) {
     return makeResult('typesense.health', 'Typesense', 'UNHEALTHY', Date.now() - start,
       'Connection failed');
   }
@@ -140,7 +140,7 @@ async function checkCentrifugoHealth(): Promise<HealthCheckResult> {
     // Any HTTP response (even 4xx) means the server is up — only connection error = UNHEALTHY
     await withTimeout(fetch(url, { method: 'GET' }), TIMEOUT_MS);
     return makeResult('centrifugo.health', 'Centrifugo', 'HEALTHY', Date.now() - start, null);
-  } catch (error) {
+  } catch (_error) {
     return makeResult('centrifugo.health', 'Centrifugo', 'UNHEALTHY', Date.now() - start,
       'Connection failed');
   }

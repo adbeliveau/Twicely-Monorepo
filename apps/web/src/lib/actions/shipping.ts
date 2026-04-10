@@ -126,7 +126,7 @@ export async function fetchShippingRates(
     );
 
     return result;
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: 'Failed to fetch shipping rates' };
   }
 }
@@ -215,7 +215,7 @@ export async function purchaseShippingLabel(
       success: true,
       redirectUrl: `/my/selling/orders/${orderId}`,
     };
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: 'Failed to purchase shipping label' };
   }
 }

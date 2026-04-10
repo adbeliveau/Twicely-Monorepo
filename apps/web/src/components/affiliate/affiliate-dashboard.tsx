@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@twicely/ui/card';
 import { Badge } from '@twicely/ui/badge';
 import { Button } from '@twicely/ui/button';
@@ -126,13 +127,13 @@ export function AffiliateDashboard({
       {/* Navigation */}
       <div className="flex flex-wrap gap-3">
         <Button variant="outline" asChild>
-          <a href="/my/selling/affiliate/referrals">View Referred Users</a>
+          <Link href="/my/selling/affiliate/referrals">View Referred Users</Link>
         </Button>
         <Button variant="outline" asChild>
-          <a href="/my/selling/affiliate/payouts">View Payouts</a>
+          <Link href="/my/selling/affiliate/payouts">View Payouts</Link>
         </Button>
         <Button variant="outline" asChild>
-          <a href="/my/selling/promotions">Promo Codes</a>
+          <Link href="/my/selling/promotions">Promo Codes</Link>
         </Button>
       </div>
     </div>

@@ -13,7 +13,7 @@ import type { ListingFormData } from '@/types/listing-form';
 import { listingFormSchema } from '@/lib/validations/listing';
 import { logger } from '@twicely/logger';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { upsertListingDocument } from '@twicely/search/typesense-index';
+import { enqueueSearchIndexUpsert } from '@twicely/jobs/search-index-sync';
 import { z } from 'zod';
 
 const createListingStatusSchema = z.object({
@@ -148,7 +148,7 @@ export async function createListing(
       notifyFollowedSellerNewListing(newListing.id).catch((err) => {
         logger.error('[followed-seller-notify] Failed for listing', { listingId: newListing.id, error: String(err) });
       });
-      upsertListingDocument({
+      enqueueSearchIndexUpsert({
         id: newListing.id,
         title: data.title ?? '',
         description: data.description ?? undefined,
@@ -164,7 +164,7 @@ export async function createListing(
         condition: data.condition ?? undefined,
         categoryId: typeof data.category === 'string' ? data.category : undefined,
       }).catch((err) => {
-        logger.error('[typesense] Failed to index listing', { listingId: newListing.id, error: String(err) });
+        logger.error('[search-index] Failed to enqueue listing index', { listingId: newListing.id, error: String(err) });
       });
     }
 

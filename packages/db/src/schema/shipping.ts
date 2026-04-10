@@ -12,6 +12,7 @@ export const shipment = pgTable('shipment', {
   carrier:             text('carrier'),
   service:             text('service'),
   tracking:            text('tracking'),
+  shippingLabelId:     text('shipping_label_id'), // FK to shipping_label added at migration level to avoid circular import
   labelUrl:            text('label_url'),
   status:              shipmentStatusEnum('status').notNull().default('PENDING'),
   shippingCostCents:   integer('shipping_cost_cents'),

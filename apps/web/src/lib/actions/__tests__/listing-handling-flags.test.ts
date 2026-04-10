@@ -61,9 +61,9 @@ vi.mock('@twicely/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn() },
 }));
 
-vi.mock('@twicely/search/typesense-index', () => ({
-  upsertListingDocument: vi.fn().mockResolvedValue(undefined),
-  deleteListingDocument: vi.fn().mockResolvedValue(undefined),
+vi.mock('@twicely/jobs/search-index-sync', () => ({
+  enqueueSearchIndexUpsert: vi.fn().mockResolvedValue(undefined),
+  enqueueSearchIndexDelete: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@twicely/notifications/followed-seller-notifier', () => ({

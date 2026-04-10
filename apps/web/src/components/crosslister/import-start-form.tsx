@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import { Button } from '@twicely/ui/button';
 import { startImport } from '@/lib/actions/crosslister-import';
-import { useTransition, useEffect, useRef, useCallback } from 'react';
+import { useTransition, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Download } from 'lucide-react';
 import type { CrosslisterAccount } from '@twicely/crosslister/db-types';
 
@@ -22,23 +22,10 @@ export function ImportStartForm({ accounts, onBatchStarted, initialAccountId }: 
   const [isPending, startTransition] = useTransition();
   const autoStarted = useRef(false);
 
-  const eligibleAccounts = accounts.filter(
-    (a) => a.status === 'ACTIVE' && a.firstImportCompletedAt === null,
+  const eligibleAccounts = useMemo(
+    () => accounts.filter((a) => a.status === 'ACTIVE' && a.firstImportCompletedAt === null),
+    [accounts],
   );
-
-  if (eligibleAccounts.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed bg-muted/40 p-8 text-center space-y-3">
-        <p className="font-medium">No accounts available for import</p>
-        <p className="text-sm text-muted-foreground">
-          Connect an eBay account or your free import has already been used.
-        </p>
-        <Button asChild variant="secondary">
-          <Link href="/my/selling/crosslist/connect">Connect a platform</Link>
-        </Button>
-      </div>
-    );
-  }
 
   const handleImport = useCallback((accountId: string) => {
     startTransition(async () => {
@@ -58,6 +45,20 @@ export function ImportStartForm({ accounts, onBatchStarted, initialAccountId }: 
       handleImport(target.id);
     }
   }, [initialAccountId, eligibleAccounts, handleImport]);
+
+  if (eligibleAccounts.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed bg-muted/40 p-8 text-center space-y-3">
+        <p className="font-medium">No accounts available for import</p>
+        <p className="text-sm text-muted-foreground">
+          Connect an eBay account or your free import has already been used.
+        </p>
+        <Button asChild variant="secondary">
+          <Link href="/my/selling/crosslist/connect">Connect a platform</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

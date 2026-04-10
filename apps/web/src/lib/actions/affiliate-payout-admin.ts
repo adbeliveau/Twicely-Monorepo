@@ -59,7 +59,7 @@ export async function triggerAffiliatePayoutManually(): Promise<TriggerAffiliate
       payoutCount: payouts.payoutCount,
       totalPaidCents: payouts.totalPaidCents,
     };
-  } catch (err) {
+  } catch (_err) {
     return {
       success: false,
       error: 'Payout job failed',

@@ -21,6 +21,9 @@ export interface InfraConfig {
   valkeyPort: number;
   typesenseUrl: string;
   typesenseApiKey: string;
+  opensearchUrl: string;
+  opensearchUsername: string;
+  opensearchPassword: string;
   centrifugoApiUrl: string;
   centrifugoApiKey: string;
 }
@@ -39,6 +42,9 @@ export async function loadInfraConfig(): Promise<void> {
       valkeyHost: String(settings.get('infrastructure.valkey.host') ?? process.env.VALKEY_HOST ?? '127.0.0.1'),
       valkeyPort: Number(settings.get('infrastructure.valkey.port') ?? process.env.VALKEY_PORT ?? 6379),
       typesenseUrl: String(settings.get('infrastructure.typesense.url') ?? process.env.TYPESENSE_URL ?? ''),
+      opensearchUrl: String(settings.get('infrastructure.opensearch.url') ?? process.env.OPENSEARCH_URL ?? 'http://127.0.0.1:9200'),
+      opensearchUsername: process.env.OPENSEARCH_USERNAME ?? '',
+      opensearchPassword: process.env.OPENSEARCH_PASSWORD ?? '',
       centrifugoApiUrl: String(settings.get('infrastructure.centrifugo.apiUrl') ?? process.env.CENTRIFUGO_API_URL ?? ''),
       // API keys are sensitive — not stored in platform_settings (not encrypted)
       // Use provider settings system once wired; env var until then
@@ -51,6 +57,7 @@ export async function loadInfraConfig(): Promise<void> {
     process.env.VALKEY_HOST = _config.valkeyHost;
     process.env.VALKEY_PORT = String(_config.valkeyPort);
     if (_config.typesenseUrl) process.env.TYPESENSE_URL = _config.typesenseUrl;
+    if (_config.opensearchUrl) process.env.OPENSEARCH_URL = _config.opensearchUrl;
     if (_config.centrifugoApiUrl) process.env.CENTRIFUGO_API_URL = _config.centrifugoApiUrl;
 
     logger.info('[infraConfig] Loaded infrastructure config from platform_settings', {
@@ -66,6 +73,9 @@ export async function loadInfraConfig(): Promise<void> {
       valkeyHost: process.env.VALKEY_HOST ?? '127.0.0.1',
       valkeyPort: parseInt(process.env.VALKEY_PORT ?? '6379', 10),
       typesenseUrl: process.env.TYPESENSE_URL ?? '',
+      opensearchUrl: process.env.OPENSEARCH_URL ?? 'http://127.0.0.1:9200',
+      opensearchUsername: process.env.OPENSEARCH_USERNAME ?? '',
+      opensearchPassword: process.env.OPENSEARCH_PASSWORD ?? '',
       centrifugoApiUrl: process.env.CENTRIFUGO_API_URL ?? '',
       typesenseApiKey: process.env.TYPESENSE_API_KEY ?? '',
       centrifugoApiKey: process.env.CENTRIFUGO_API_KEY ?? '',
@@ -83,6 +93,9 @@ export function getInfraConfig(): InfraConfig {
       valkeyHost: process.env.VALKEY_HOST ?? '127.0.0.1',
       valkeyPort: parseInt(process.env.VALKEY_PORT ?? '6379', 10),
       typesenseUrl: process.env.TYPESENSE_URL ?? '',
+      opensearchUrl: process.env.OPENSEARCH_URL ?? 'http://127.0.0.1:9200',
+      opensearchUsername: process.env.OPENSEARCH_USERNAME ?? '',
+      opensearchPassword: process.env.OPENSEARCH_PASSWORD ?? '',
       centrifugoApiUrl: process.env.CENTRIFUGO_API_URL ?? '',
       typesenseApiKey: process.env.TYPESENSE_API_KEY ?? '',
       centrifugoApiKey: process.env.CENTRIFUGO_API_KEY ?? '',

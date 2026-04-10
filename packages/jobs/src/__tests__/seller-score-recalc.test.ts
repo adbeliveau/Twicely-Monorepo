@@ -64,18 +64,8 @@ vi.mock('@twicely/notifications/service', () => ({
   notify: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@twicely/search/typesense-client', () => ({
-  getTypesenseClient: vi.fn().mockReturnValue({
-    collections: vi.fn().mockReturnValue({
-      documents: vi.fn().mockReturnValue({
-        import: vi.fn().mockResolvedValue(undefined),
-      }),
-    }),
-  }),
-}));
-
-vi.mock('@twicely/search/typesense-schema', () => ({
-  LISTINGS_COLLECTION: 'listings',
+vi.mock('@twicely/search/search-engine', () => ({
+  partialUpdateDocument: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../seller-score-recalc-helpers', async () => {

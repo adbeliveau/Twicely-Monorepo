@@ -17,9 +17,10 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self)' },
           { key: 'X-DNS-Prefetch-Control', value: 'off' },
-          // SEC-008: CSP moved to middleware.ts for nonce-based policy
+          { key: 'X-XSS-Protection', value: '0' },
+          // SEC-008: CSP moved to proxy.ts for nonce-based policy
           // SEC-039: X-DNS-Prefetch-Control set to 'off' to prevent navigation leakage
         ],
       },

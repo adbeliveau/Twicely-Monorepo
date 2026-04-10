@@ -14,7 +14,7 @@ import { authorize, sub } from '@twicely/casl';
 import { z } from 'zod';
 import { logger } from '@twicely/logger';
 import { processBackInStockAlerts } from '@/lib/services/price-alert-processor';
-import { upsertListingDocument, deleteListingDocument } from '@twicely/search/typesense-index';
+import { enqueueSearchIndexUpsert, enqueueSearchIndexDelete } from '@twicely/jobs/search-index-sync';
 
 const updateListingStatusSchema = z.object({
   listingId: z.string().cuid2(),
@@ -117,9 +117,9 @@ export async function updateListingStatus(
 
     await db.update(listing).set(updateData).where(eq(listing.id, listingId));
 
-    // Fire-and-forget: sync Typesense — remove non-ACTIVE listings from index
+    // Fire-and-forget: sync search index via BullMQ — remove non-ACTIVE listings
     if (newStatus === 'ACTIVE') {
-      upsertListingDocument({
+      enqueueSearchIndexUpsert({
         id: listingId,
         title: existingListing.title ?? '',
         ownerUserId: userId,
@@ -130,11 +130,11 @@ export async function updateListingStatus(
         activatedAt: Math.floor(Date.now() / 1000),
         createdAt: Math.floor(Date.now() / 1000),
       }).catch((err) => {
-        logger.error('[typesense] Failed to index reactivated listing', { listingId, error: String(err) });
+        logger.error('[search-index] Failed to enqueue reactivated listing', { listingId, error: String(err) });
       });
     } else {
-      deleteListingDocument(listingId).catch((err) => {
-        logger.error('[typesense] Failed to remove listing from index', { listingId, error: String(err) });
+      enqueueSearchIndexDelete(listingId).catch((err) => {
+        logger.error('[search-index] Failed to enqueue listing removal', { listingId, error: String(err) });
       });
     }
 

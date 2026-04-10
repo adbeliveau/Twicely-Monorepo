@@ -86,6 +86,10 @@ vi.mock('drizzle-orm', () => ({
   inArray: vi.fn((_a: unknown, _b: unknown) => ({})),
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockResolvedValue(15),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

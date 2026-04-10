@@ -5,6 +5,7 @@ export interface SearchFilters {
   minPrice?: number;
   maxPrice?: number;
   freeShipping?: boolean;
+  localPickup?: boolean;
   brand?: string;
   sort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc';
   page?: number;
@@ -40,6 +41,8 @@ export interface ListingCardData {
   storefrontCategoryId?: string | null;
   /** True when this listing occupies a promoted slot (D2.4 boost) */
   isBoosted?: boolean;
+  /** Fulfillment type from listing (for local pickup badge). */
+  fulfillmentType?: string;
 }
 
 /**
@@ -65,6 +68,7 @@ export function mapToListingCard(row: {
   sellerTotalReviews: number | null;
   sellerShowStars: boolean | null;
   storefrontCategoryId?: string | null;
+  fulfillmentType?: string | null;
 }): ListingCardData {
   return {
     id: row.id,
@@ -85,5 +89,6 @@ export function mapToListingCard(row: {
     sellerTotalReviews: row.sellerTotalReviews ?? 0,
     sellerShowStars: row.sellerShowStars ?? false,
     storefrontCategoryId: row.storefrontCategoryId,
+    fulfillmentType: row.fulfillmentType ?? undefined,
   };
 }

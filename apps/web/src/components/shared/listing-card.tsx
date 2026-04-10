@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { MapPin } from 'lucide-react';
 import { ConditionBadge } from './condition-badge';
 import { formatPrice, buildListingUrl } from '@twicely/utils/format';
 import { cn } from '@twicely/utils';
@@ -51,6 +52,12 @@ export function ListingCard({ listing, cardEmphasis }: ListingCardProps) {
         {listing.freeShipping && (
           <span className="absolute left-2 top-2 rounded bg-green-600 px-1.5 py-0.5 text-xs font-medium text-white">
             Free Shipping
+          </span>
+        )}
+        {(listing.fulfillmentType === 'LOCAL_ONLY' || listing.fulfillmentType === 'SHIP_AND_LOCAL') && (
+          <span className="absolute left-2 bottom-2 flex items-center gap-0.5 rounded bg-blue-600 px-1.5 py-0.5 text-xs font-medium text-white">
+            <MapPin className="h-3 w-3" />
+            Local
           </span>
         )}
         {/* specs: condition badge overlay top-right */}

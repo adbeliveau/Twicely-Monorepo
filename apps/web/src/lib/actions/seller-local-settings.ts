@@ -56,7 +56,7 @@ export async function updateSellerLocalSettings(
     })
     .where(eq(sellerProfile.userId, userId));
 
-  revalidatePath('/my/selling/settings/local');
+  revalidatePath('/my/selling/local/settings');
 
   return { success: true };
 }

@@ -15,6 +15,7 @@ const mockRevalidatePath = vi.fn();
 const mockDbSelect = vi.fn();
 const mockDbInsert = vi.fn();
 const mockDbUpdate = vi.fn();
+const mockGetQuestionById = vi.fn();
 
 const mockDb = { select: mockDbSelect, insert: mockDbInsert, update: mockDbUpdate };
 
@@ -30,6 +31,10 @@ vi.mock('@twicely/notifications/qa-notifier', () => ({
   notifyQuestionAnswered: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('next/cache', () => ({ revalidatePath: mockRevalidatePath }));
+vi.mock('@/lib/queries/qa', () => ({
+  getQuestionById: (...args: unknown[]) => mockGetQuestionById(...args),
+  getQuestionsForListing: vi.fn().mockResolvedValue([]),
+}));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -80,14 +85,6 @@ const USER_ID = 'user-test-001';
 const LISTING_SLUG = 'blue-jacket-abc';
 
 const ACTIVE_LISTING = { id: LISTING_ID, status: 'ACTIVE', slug: LISTING_SLUG };
-const BASE_QUESTION_ROW = {
-  id: QUESTION_ID,
-  listingId: LISTING_ID,
-  askerId: 'asker-test-ccc',
-  answeredAt: null,
-  isHidden: false,
-};
-const BASE_LISTING_ROW = { ownerUserId: USER_ID, slug: LISTING_SLUG };
 
 // ─── AskQuestionForm — action call signature ──────────────────────────────────
 
@@ -172,14 +169,29 @@ describe('AskQuestionForm — ask form MAX_LENGTH boundary (500)', () => {
 
 // ─── AnswerQuestionForm — action call signature ───────────────────────────────
 
+const FULL_QUESTION_DETAIL = {
+  id: QUESTION_ID,
+  listingId: LISTING_ID,
+  askerId: 'asker-test-ccc',
+  questionText: 'Does it fit large?',
+  answerText: null,
+  answeredAt: null,
+  answeredBy: null,
+  isPinned: false,
+  isHidden: false,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  listingOwnerUserId: USER_ID,
+  listingTitle: 'Test Listing',
+  listingSlug: LISTING_SLUG,
+};
+
 describe('AnswerQuestionForm — answerQuestion call signature', () => {
   beforeEach(() => { vi.clearAllMocks(); vi.resetModules(); });
 
   it('calls answerQuestion with questionId and answerText and succeeds', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect
-      .mockReturnValueOnce(makeSelectChain([BASE_QUESTION_ROW]))
-      .mockReturnValueOnce(makeSelectChain([BASE_LISTING_ROW]));
+    mockGetQuestionById.mockResolvedValue(FULL_QUESTION_DETAIL);
     mockDbUpdate.mockReturnValueOnce(makeUpdateChain());
 
     const { answerQuestion } = await import('@/lib/actions/qa');
@@ -191,9 +203,7 @@ describe('AnswerQuestionForm — answerQuestion call signature', () => {
 
   it('returns error when question is already answered', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect.mockReturnValueOnce(
-      makeSelectChain([{ ...BASE_QUESTION_ROW, answeredAt: new Date() }])
-    );
+    mockGetQuestionById.mockResolvedValue({ ...FULL_QUESTION_DETAIL, answeredAt: new Date(), answerText: 'Already answered.' });
 
     const { answerQuestion } = await import('@/lib/actions/qa');
     const result = await answerQuestion({ questionId: QUESTION_ID, answerText: 'Yes.' });
@@ -203,9 +213,7 @@ describe('AnswerQuestionForm — answerQuestion call signature', () => {
 
   it('returns error when question is hidden (treat as not found)', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect.mockReturnValueOnce(
-      makeSelectChain([{ ...BASE_QUESTION_ROW, isHidden: true }])
-    );
+    mockGetQuestionById.mockResolvedValue({ ...FULL_QUESTION_DETAIL, isHidden: true });
 
     const { answerQuestion } = await import('@/lib/actions/qa');
     const result = await answerQuestion({ questionId: QUESTION_ID, answerText: 'Yes.' });
@@ -231,9 +239,7 @@ describe('AnswerQuestionForm — answer form MAX_LENGTH boundary (1000)', () => 
 
   it('accepts answer text at exactly 1000 chars', async () => {
     mockAuthorize.mockResolvedValue(mockSession(USER_ID));
-    mockDbSelect
-      .mockReturnValueOnce(makeSelectChain([BASE_QUESTION_ROW]))
-      .mockReturnValueOnce(makeSelectChain([BASE_LISTING_ROW]));
+    mockGetQuestionById.mockResolvedValue(FULL_QUESTION_DETAIL);
     mockDbUpdate.mockReturnValueOnce(makeUpdateChain());
 
     const { answerQuestion } = await import('@/lib/actions/qa');

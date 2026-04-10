@@ -194,28 +194,23 @@ export async function computeAndStoreSellerScore(
     enfSettings.warningBelow, enfSettings.restrictionBelow, enfSettings.preSuspensionBelow,
   );
 
-  // Typesense sync — dynamic import to avoid circular dep (search → commerce)
+  // Search index sync — dynamic import to avoid circular dep (search → commerce).
+  // Uses search-engine abstraction which routes to the active engine (OpenSearch/Typesense).
   try {
-    const [{ getTypesenseClient }, { LISTINGS_COLLECTION }] = await Promise.all([
-      import('@twicely/search/typesense-client'),
-      import('@twicely/search/typesense-schema'),
-    ]);
-    const client = getTypesenseClient();
+    const { partialUpdateDocument } = await import('@twicely/search/search-engine');
     const activeListings = await db
       .select({ id: listing.id })
       .from(listing)
       .where(and(eq(listing.ownerUserId, sellerId), eq(listing.status, 'ACTIVE')));
 
-    if (activeListings.length > 0) {
-      const docs = activeListings.map((l) => ({
-        id: l.id,
+    for (const l of activeListings) {
+      await partialUpdateDocument(l.id, {
         sellerScore: result.score,
         sellerPerformanceBand: effectiveBand,
-      }));
-      await client.collections(LISTINGS_COLLECTION).documents().import(docs, { action: 'update' });
+      });
     }
   } catch {
-    // Typesense unavailable — scores will sync on next listing update
+    // Search engine unavailable — scores will sync on next listing update
   }
 
   logger.info('[computeAndStoreSellerScore] Complete', { sellerId, score: result.score, band: effectiveBand });

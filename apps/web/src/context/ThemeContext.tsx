@@ -19,9 +19,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const stored = (localStorage.getItem("theme") as Theme) || "light";
-    setTheme(stored);
-    setIsInitialized(true);
+    const timeoutId = window.setTimeout(() => {
+      const stored = (localStorage.getItem("theme") as Theme) || "light";
+      setTheme(stored);
+      setIsInitialized(true);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {

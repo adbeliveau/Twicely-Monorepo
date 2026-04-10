@@ -1,6 +1,6 @@
 /**
  * Seed Kill Switches Tests (G10.4)
- * Validates seed data structure: 12 kill switches (enabled) + 8 launch gates (disabled).
+ * Validates seed data structure: 12 kill switches (enabled) + 9 launch gates (disabled).
  * Verifies idempotency via onConflictDoNothing behavior.
  */
 
@@ -43,11 +43,11 @@ describe('seedKillSwitches — data structure', () => {
     mockOnConflictDoNothing.mockResolvedValue([]);
   });
 
-  it('seeds exactly 20 flags total (12 kill switches + 8 launch gates)', async () => {
+  it('seeds exactly 21 flags total (12 kill switches + 9 launch gates)', async () => {
     const { seedKillSwitches } = await import('../seed-kill-switches');
     await seedKillSwitches(mockDb as never);
 
-    expect(insertedValues).toHaveLength(20);
+    expect(insertedValues).toHaveLength(21);
   });
 
   it('seeds exactly 12 kill switch flags with kill. prefix', async () => {
@@ -60,14 +60,14 @@ describe('seedKillSwitches — data structure', () => {
     expect(killSwitches).toHaveLength(12);
   });
 
-  it('seeds exactly 8 launch gate flags with gate. prefix', async () => {
+  it('seeds exactly 9 launch gate flags with gate. prefix', async () => {
     const { seedKillSwitches } = await import('../seed-kill-switches');
     await seedKillSwitches(mockDb as never);
 
     const gates = insertedValues.filter((v) =>
       typeof v.key === 'string' && v.key.startsWith('gate.'),
     );
-    expect(gates).toHaveLength(8);
+    expect(gates).toHaveLength(9);
   });
 
   it('all kill switches start enabled = true', async () => {
@@ -129,7 +129,7 @@ describe('seedKillSwitches — data structure', () => {
     }
   });
 
-  it('contains all 8 expected launch gate keys', async () => {
+  it('contains all 9 expected launch gate keys', async () => {
     const { seedKillSwitches } = await import('../seed-kill-switches');
     await seedKillSwitches(mockDb as never);
 
@@ -143,6 +143,7 @@ describe('seedKillSwitches — data structure', () => {
       'gate.authentication',
       'gate.financial.center',
       'gate.store.subscriptions',
+      'gate.opensearch',
     ];
     for (const key of expectedGateKeys) {
       expect(keys).toContain(key);
@@ -154,7 +155,7 @@ describe('seedKillSwitches — data structure', () => {
     await seedKillSwitches(mockDb as never);
 
     // Each insert call must chain to onConflictDoNothing
-    expect(mockOnConflictDoNothing).toHaveBeenCalledTimes(20);
+    expect(mockOnConflictDoNothing).toHaveBeenCalledTimes(21);
   });
 
   it('uses the seeded staff admin ID as createdByStaffId', async () => {

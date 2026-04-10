@@ -59,9 +59,13 @@ export function SetAlertButton({
     if (autoSetFiredRef.current) return;
     if (autoSetAlert && isLoggedIn && !alertSet) {
       autoSetFiredRef.current = true;
-      handleSetAlert();
-      router.replace(`/c/${categorySlug}`, { scroll: false });
+      const timeoutId = window.setTimeout(() => {
+        handleSetAlert();
+        router.replace(`/c/${categorySlug}`, { scroll: false });
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
+    return undefined;
   }, [autoSetAlert, isLoggedIn, alertSet, handleSetAlert, router, categorySlug]);
 
   return (

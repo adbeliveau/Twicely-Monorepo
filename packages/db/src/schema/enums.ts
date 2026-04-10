@@ -40,6 +40,9 @@ export const orderStatusEnum = pgEnum('order_status', [
 export const cancelInitiatorEnum = pgEnum('cancel_initiator', ['BUYER', 'SELLER', 'SYSTEM', 'ADMIN']);
 
 // §1.5 Shipping
+export const labelStatusEnum = pgEnum('label_status', [
+  'PURCHASED', 'PRINTED', 'USED', 'VOID_PENDING', 'VOIDED', 'REFUNDED', 'EXPIRED', 'ERROR',
+]);
 export const fulfillmentTypeEnum = pgEnum('fulfillment_type', ['SHIP_ONLY', 'LOCAL_ONLY', 'SHIP_AND_LOCAL']);
 export const shipmentStatusEnum = pgEnum('shipment_status', [
   'PENDING', 'LABEL_CREATED', 'PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY',
@@ -117,7 +120,8 @@ export const ledgerEntryTypeEnum = pgEnum('ledger_entry_type', [
   'CROSSLISTER_SALE_REVENUE', 'CROSSLISTER_PLATFORM_FEE',
   'LOCAL_FRAUD_REVERSAL', 'LOCAL_PRICE_ADJUSTMENT',
   'LOCAL_CASH_SALE_REVENUE',  // §8/A16 Cash local sale — INFORMATIONAL ONLY, no sellerBalance update
-  'BOOST_CREDIT_ISSUED'  // §5.4 Seller Score Canonical — monthly performance reward credit
+  'BOOST_CREDIT_ISSUED',  // §5.4 Seller Score Canonical — monthly performance reward credit
+  'PROMOTED_LISTING_FEE'  // V4-06 CPC click charge for promoted listings
 ]);
 export const ledgerEntryStatusEnum = pgEnum('ledger_entry_status', ['PENDING', 'POSTED', 'REVERSED']);
 export const payoutStatusEnum = pgEnum('payout_status', ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'REVERSED']);
@@ -246,6 +250,14 @@ export const verificationStatusEnum = pgEnum('verification_status', [
   'EXPIRED',      // Enhanced verification expired after N months
 ]);
 
+// §1.16 Variations / Catalog
+export const variationValueScopeEnum = pgEnum('variation_value_scope', [
+  'PLATFORM', 'CATEGORY', 'SELLER',
+]);
+export const variantReservationStatusEnum = pgEnum('variant_reservation_status', [
+  'ACTIVE', 'RELEASED', 'CONVERTED',
+]);
+
 // §1.15 Newsletter
 export const newsletterSourceEnum = pgEnum('newsletter_source', ['HOMEPAGE_SECTION', 'HOMEPAGE_FOOTER']);
 
@@ -262,3 +274,27 @@ export const localReliabilityEventTypeEnum = pgEnum('local_reliability_event_typ
   'SELLER_DARK',
   'RESCHEDULE_EXCESS',
 ]);
+
+// §1.12.3 Promotion Campaigns (V4-06)
+export const promotionCampaignTypeEnum = pgEnum('promotion_campaign_type', [
+  'SALE', 'FLASH_SALE', 'SEASONAL', 'CLEARANCE', 'LOYALTY',
+]);
+export const promotionCampaignStatusEnum = pgEnum('promotion_campaign_status', [
+  'DRAFT', 'SCHEDULED', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELED',
+]);
+
+// §1.8.1 Messaging Safety (V4-15)
+export const bannedKeywordCategoryEnum = pgEnum('banned_keyword_category', ['contact_info', 'profanity', 'spam', 'scam']);
+export const bannedKeywordActionEnum = pgEnum('banned_keyword_action', ['block', 'flag', 'warn']);
+export const moderationActionEnum = pgEnum('moderation_action', [
+  'auto_blocked', 'auto_flagged', 'ai_flagged',
+  'manual_flagged', 'manual_hidden', 'manual_cleared', 'manual_restored',
+]);
+export const messageModerationStatusEnum = pgEnum('message_moderation_status', ['none', 'auto_flagged', 'ai_flagged', 'manual_review', 'cleared']);
+export const safetyActionTypeEnum = pgEnum('safety_action_type', ['warning', 'rate_restrict', 'messaging_suspend', 'account_ban']);
+
+// §1.17 Search (Decision #143 — OpenSearch)
+export const searchRuleTypeEnum = pgEnum('search_rule_type', ['PIN', 'BURY', 'REWRITE', 'REDIRECT', 'BLOCK']);
+export const searchIndexStatusEnum = pgEnum('search_index_status', ['CREATING', 'READY', 'ACTIVE', 'RETIRED', 'DELETED']);
+export const searchIndexJobTypeEnum = pgEnum('search_index_job_type', ['FULL_REINDEX', 'PARTIAL_REINDEX', 'ALIAS_SWAP', 'ROLLBACK']);
+export const searchIndexJobStatusEnum = pgEnum('search_index_job_status', ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']);

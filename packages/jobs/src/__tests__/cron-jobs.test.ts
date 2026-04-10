@@ -43,6 +43,11 @@ vi.mock('@twicely/db/schema', () => ({
   campaignBudgetLog: { id: 'id', campaignId: 'campaign_id', action: 'action', createdAt: 'created_at' },
   authenticationRequest: { id: 'id', status: 'status', createdAt: 'created_at', listingId: 'listing_id', sellerId: 'seller_id' },
   accountingIntegration: { id: 'id', status: 'status', syncFrequency: 'sync_frequency', userId: 'user_id', provider: 'provider', syncErrorCount: 'sync_error_count' },
+  searchIndexJob: { id: 'id', jobType: 'job_type', domain: 'domain', status: 'status', totalItems: 'total_items', succeededItems: 'succeeded_items', failedItems: 'failed_items', triggeredByStaffId: 'triggered_by_staff_id', startedAt: 'started_at', completedAt: 'completed_at', errorSummary: 'error_summary' },
+  searchIndexVersion: { id: 'id', domain: 'domain', physicalIndexName: 'physical_index_name', mappingVersion: 'mapping_version', docCount: 'doc_count', status: 'status', isReadActive: 'is_read_active', isWriteActive: 'is_write_active' },
+  listingImage: { listingId: 'listing_id', url: 'url', altText: 'alt_text', isPrimary: 'is_primary' },
+  category: { id: 'id', name: 'name', slug: 'slug', parentId: 'parent_id' },
+  sellerPerformance: { sellerProfileId: 'seller_profile_id', currentScore: 'current_score', performanceBand: 'performance_band', totalReviews: 'total_reviews', averageRating: 'average_rating', showStars: 'show_stars' },
 }));
 
 // Campaign lifecycle mock for campaign-scheduler and campaign-budget-monitor auto-instantiated workers

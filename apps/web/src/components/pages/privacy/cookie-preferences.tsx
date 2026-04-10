@@ -55,15 +55,18 @@ interface Props {
 export function CookiePreferencesForm({ isAuthenticated }: Props) {
   const [functional, setFunctional] = useState(false);
   const [analytics, setAnalytics] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const existing = readConsentCookie();
-    if (existing) {
-      setFunctional(existing.functional);
-      setAnalytics(existing.analytics);
-    }
+    const timeoutId = window.setTimeout(() => {
+      const existing = readConsentCookie();
+      if (existing) {
+        setFunctional(existing.functional);
+        setAnalytics(existing.analytics);
+      }
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
-  const [saved, setSaved] = useState(false);
 
   async function handleSave(): Promise<void> {
     const state: ConsentState = {

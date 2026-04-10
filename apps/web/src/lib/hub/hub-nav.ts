@@ -150,6 +150,23 @@ export const HUB_NAV: HubNavSection[] = [
     ],
   },
 
+  // ─── LOCAL (sub-group under Selling) ────────────────────────────
+  {
+    key: 'local',
+    label: 'Local',
+    icon: 'MapPin',
+    gate: 'IS_SELLER',
+    parent: 'selling',
+    items: [
+      { key: 'local-overview', label: 'Overview', href: '/my/selling/local', icon: 'LayoutDashboard',
+        exact: true },
+      { key: 'local-transactions', label: 'Transactions', href: '/my/selling/local/transactions', icon: 'FileText' },
+      { key: 'local-reliability', label: 'Reliability', href: '/my/selling/local/reliability', icon: 'Shield' },
+      { key: 'local-locations', label: 'Locations', href: '/my/selling/local/locations', icon: 'Map' },
+      { key: 'local-settings', label: 'Settings', href: '/my/selling/local/settings', icon: 'Settings' },
+    ],
+  },
+
   // ─── SELLER EXTRAS (flat items after sub-groups) ────────────────
   {
     key: 'seller-extras',
@@ -168,7 +185,6 @@ export const HUB_NAV: HubNavSection[] = [
       { key: 'affiliate', label: 'Affiliate', href: '/my/selling/affiliate', icon: 'Users' },
       { key: 'tax', label: 'Tax Info', href: '/my/selling/tax', icon: 'FileText' },
       { key: 'verification', label: 'Verification', href: '/my/selling/verification', icon: 'ShieldCheck' },
-      { key: 'local-pickup', label: 'Local Pickup', href: '/my/selling/settings/local', icon: 'MapPin' },
     ],
   },
 

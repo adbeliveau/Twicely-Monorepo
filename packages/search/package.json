@@ -10,8 +10,11 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@opensearch-project/opensearch": "^2.12.0",
     "@twicely/commerce": "workspace:*",
+    "@twicely/config": "workspace:*",
     "@twicely/db": "workspace:*",
+    "@twicely/logger": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "typesense": "^3.0.3"
   },

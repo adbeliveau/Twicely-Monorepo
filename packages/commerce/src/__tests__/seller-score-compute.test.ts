@@ -97,19 +97,9 @@ vi.mock('@twicely/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn() },
 }));
 
-// Dynamic imports used for Typesense
-vi.mock('@twicely/search/typesense-client', () => ({
-  getTypesenseClient: vi.fn(() => ({
-    collections: vi.fn(() => ({
-      documents: vi.fn(() => ({
-        import: vi.fn(() => Promise.resolve()),
-      })),
-    })),
-  })),
-}));
-
-vi.mock('@twicely/search/typesense-schema', () => ({
-  LISTINGS_COLLECTION: 'listings',
+// Dynamic imports used for search engine abstraction
+vi.mock('@twicely/search/search-engine', () => ({
+  partialUpdateDocument: vi.fn(() => Promise.resolve()),
 }));
 
 import { db } from '@twicely/db';

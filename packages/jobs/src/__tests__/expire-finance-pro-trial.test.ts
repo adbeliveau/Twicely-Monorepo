@@ -35,6 +35,11 @@ vi.mock('@twicely/db/schema', () => ({
     financeTier: 'finance_tier',
     updatedAt: 'updated_at',
   },
+  platformSetting: { key: 'key', value: 'value' },
+}));
+
+vi.mock('@twicely/db/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, defaultVal: unknown) => Promise.resolve(defaultVal)),
 }));
 
 vi.mock('@twicely/logger', () => ({

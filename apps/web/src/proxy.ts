@@ -1,4 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import {
+  checkRateLimit,
+  isSearchEndpoint,
+  isRateLimitExempt,
+  RATE_LIMITS,
+  type ActorType,
+} from './lib/rate-limit/sliding-window';
+
+// SEC-008: nodejs runtime required for Valkey rate limiting (not Edge)
+export const runtime = 'nodejs';
 
 function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
@@ -9,25 +19,6 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   return result === 0;
 }
 
-/**
- * Next.js Proxy — Route protection, auth checks, subdomain routing
- *
- * Renamed from middleware.ts per Next.js 16 convention.
- * See: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
- *
- * Route types:
- * - HUB: hub.twicely.co subdomain → staff dashboard
- * - CRON: Require Authorization: Bearer <CRON_SECRET>
- * - PUBLIC: Pass through, no auth check
- * - AUTHENTICATED: Redirect to /auth/login if no session
- */
-
-/**
- * Maintenance mode check — reads process.env.MAINTENANCE_MODE.
- * Set by: admin action (process.env write) or Railway env var panel.
- * The admin saveGeneralSettings action writes to both DB (source of truth)
- * and process.env (for same-instance middleware) and Valkey (for cross-instance sync).
- */
 function isMaintenanceModeActive(): boolean {
   return process.env.MAINTENANCE_MODE === '1' || process.env.MAINTENANCE_MODE === 'true';
 }
@@ -45,42 +36,35 @@ function isMaintenanceExempt(pathname: string): boolean {
     || pathname === '/favicon.ico';
 }
 
-const PUBLIC_PATHS = [
-  '/',
-  '/pricing',
-  '/s',
-  '/explore',
-];
+const PUBLIC_PATHS = ['/', '/pricing', '/s', '/explore'];
 
 const PUBLIC_PREFIXES = [
-  '/i/',       // Listing detail
-  '/c/',       // Categories
-  '/st/',      // Storefronts
-  '/auth/',    // Auth pages
-  '/api/auth/', // Better Auth catch-all
-  '/api/webhooks/', // Stripe webhooks (signature verified internally)
-  '/api/categories/', // Public category search
-  '/p/',       // Policies
-  '/h/',       // Help center
-  '/ref/',     // Referral link handler
-  '/_next/',   // Static assets
+  '/i/',
+  '/c/',
+  '/st/',
+  '/auth/',
+  '/api/auth/',
+  '/api/webhooks/',
+  '/api/categories/',
+  '/p/',
+  '/h/',
+  '/ref/',
+  '/_next/',
 ];
 
 const AUTH_REQUIRED_PREFIXES = [
-  '/my/',      // User hub
-  '/cart',     // Cart (registry: AUTH-gated)
-  '/checkout/', // Checkout flow
-  '/api/upload', // Upload API
-  '/api/returns/', // Returns API
-  '/api/protection/', // Buyer protection API
-  '/api/user/', // User API (SEC-012)
-  '/api/accounting/', // Accounting integrations (SEC-012)
-  '/api/crosslister/', // Crosslister API (SEC-012)
+  '/my/',
+  '/cart',
+  '/checkout/',
+  '/api/upload',
+  '/api/returns/',
+  '/api/protection/',
+  '/api/user/',
+  '/api/accounting/',
+  '/api/crosslister/',
 ];
 
-const CRON_PREFIXES = [
-  '/api/cron/',
-];
+const CRON_PREFIXES = ['/api/cron/'];
 
 const AUTH_PATHS = ['/auth/login', '/auth/signup', '/auth/forgot-password'];
 
@@ -109,17 +93,62 @@ function isHubSubdomain(request: NextRequest): boolean {
   return hostname === 'hub.twicely.co' || hostname === 'hub.twicely.local';
 }
 
+// -- G10.1.3: Actor-type detection from cookies --------------------------------
+function detectActor(request: NextRequest): ActorType {
+  if (request.cookies.get('twicely.staff_token')?.value) return 'staff';
+  if (request.cookies.get('twicely.session_token')?.value) return 'buyer';
+  return 'guest';
+}
+
+function getRateLimitKey(request: NextRequest, actor: ActorType): string {
+  if (actor === 'buyer' || actor === 'seller') {
+    const token = request.cookies.get('twicely.session_token')?.value ?? '';
+    return actor + ':' + token.slice(0, 32);
+  }
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    'unknown';
+  return 'guest:' + ip;
+}
+
+// -- SEC-008: CSP nonce generation ---------------------------------------------
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array));
+}
+
+function buildCsp(nonce: string): string {
+  return [
+    "default-src 'self'",
+    "script-src 'self' 'nonce-" + nonce + "' js.stripe.com",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: *.twicely.com cdn.twicely.com *.stripe.com",
+    "font-src 'self' data:",
+    "connect-src 'self' api.stripe.com *.twicely.com wss://*.twicely.com",
+    "frame-src 'self' js.stripe.com hooks.stripe.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+  ].join('; ');
+}
+
+function nextWithCsp(nonce: string): NextResponse {
+  const response = NextResponse.next();
+  response.headers.set('x-nonce', nonce);
+  response.headers.set('Content-Security-Policy', buildCsp(nonce));
+  return response;
+}
+
 function handleHub(request: NextRequest, nonce: string): NextResponse {
   const { pathname } = request.nextUrl;
 
-  // Redirect hub root to /d (dashboard)
   if (pathname === '/') {
     const url = request.nextUrl.clone();
     url.pathname = '/d';
     return NextResponse.redirect(url);
   }
 
-  // /login is public on hub subdomain
   if (pathname === '/login') {
     const response = nextWithCsp(nonce);
     response.headers.set('x-pathname', pathname);
@@ -127,7 +156,6 @@ function handleHub(request: NextRequest, nonce: string): NextResponse {
     return response;
   }
 
-  // All other hub routes require staff session
   const staffToken = request.cookies.get('twicely.staff_token');
   if (!staffToken?.value) {
     const url = request.nextUrl.clone();
@@ -141,45 +169,48 @@ function handleHub(request: NextRequest, nonce: string): NextResponse {
   return response;
 }
 
-// ── SEC-008: CSP nonce generation ────────────────────────────────────
-function generateNonce(): string {
-  const array = new Uint8Array(16);
-  crypto.getRandomValues(array);
-  return btoa(String.fromCharCode(...array));
-}
-
-function buildCsp(nonce: string): string {
-  return [
-    `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' js.stripe.com`,
-    // A2: 'unsafe-inline' required — React style props, Next.js internals, and Tailwind all inject inline styles
-    `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: blob: *.twicely.com cdn.twicely.com *.stripe.com`,
-    `font-src 'self' data:`,
-    `connect-src 'self' api.stripe.com *.twicely.com wss://*.twicely.com`,
-    `frame-src 'self' js.stripe.com hooks.stripe.com`,
-    `object-src 'none'`,
-    `base-uri 'self'`,
-  ].join('; ');
-}
-
-function nextWithCsp(nonce: string): NextResponse {
-  const response = NextResponse.next();
-  response.headers.set('x-nonce', nonce);
-  response.headers.set('Content-Security-Policy', buildCsp(nonce));
-  return response;
-}
-
-export default function proxy(request: NextRequest): NextResponse {
+export default async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
   const nonce = generateNonce();
 
-  // 0. Hub subdomain — separate routing
+  // 0. Hub subdomain -- no rate limiting on hub subdomain
   if (isHubSubdomain(request)) {
     return handleHub(request, nonce);
   }
 
-  // 0.5. Maintenance mode — block all public traffic except auth + webhooks + cron
+  // G10.1.3: Rate limiting (skip static/health/webhook paths)
+  if (!isRateLimitExempt(pathname)) {
+    const actor = detectActor(request);
+
+    // Staff/Admin are exempt from rate limiting
+    if (actor !== 'staff') {
+      const isSearch = isSearchEndpoint(pathname);
+      let limit: number;
+      if (actor === 'guest') {
+        limit = isSearch ? RATE_LIMITS.guestSearch : RATE_LIMITS.guestOther;
+      } else if (actor === 'seller') {
+        limit = RATE_LIMITS.seller;
+      } else {
+        limit = RATE_LIMITS.buyer;
+      }
+
+      const key = getRateLimitKey(request, actor);
+      const result = await checkRateLimit(key, limit);
+
+      if (!result.allowed) {
+        return new NextResponse('Too Many Requests', {
+          status: 429,
+          headers: {
+            'Retry-After': String(result.retryAfter),
+            'X-RateLimit-Limit': String(limit),
+            'X-RateLimit-Remaining': '0',
+          },
+        });
+      }
+    }
+  }
+
+  // 0.5. Maintenance mode
   if (isMaintenanceModeActive() && !isMaintenanceExempt(pathname)) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(
@@ -198,7 +229,7 @@ export default function proxy(request: NextRequest): NextResponse {
     const cronSecret = process.env.CRON_SECRET;
 
     const encoder = new TextEncoder();
-    const expected = encoder.encode(`Bearer ${cronSecret}`);
+    const expected = encoder.encode('Bearer ' + (cronSecret ?? ''));
     const actual = encoder.encode(authHeader ?? '');
     if (!cronSecret || !timingSafeEqual(expected, actual)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

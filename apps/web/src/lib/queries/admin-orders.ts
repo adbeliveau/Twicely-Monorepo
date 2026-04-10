@@ -19,10 +19,7 @@ interface OrderListItem {
   paymentStatus: string | null;
 }
 
-interface OrderListResult {
-  orders: OrderListItem[];
-  total: number;
-}
+interface OrderListResult { orders: OrderListItem[]; total: number; }
 
 export async function getAdminOrderList(opts: {
   page: number;

@@ -42,8 +42,8 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock('@twicely/search/typesense-index', () => ({
-  deleteListingDocument: vi.fn().mockResolvedValue(undefined),
+vi.mock('@twicely/jobs/search-index-sync', () => ({
+  enqueueSearchIndexDelete: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@twicely/logger', () => ({

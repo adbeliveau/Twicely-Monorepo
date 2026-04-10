@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { mockDbSelect, mockDbUpdate, mockDbInsert, mockDb, mockAuthorize,
-  mockCouponCodeExists, mockCountActivePromotions } = vi.hoisted(() => {
+  mockCouponCodeExists, mockCountActivePromotions, mockGetPromotionByIdInternal } = vi.hoisted(() => {
   const mockDbSelect = vi.fn();
   const mockDbUpdate = vi.fn();
   const mockDbInsert = vi.fn();
@@ -9,8 +9,9 @@ const { mockDbSelect, mockDbUpdate, mockDbInsert, mockDb, mockAuthorize,
   const mockAuthorize = vi.fn();
   const mockCouponCodeExists = vi.fn();
   const mockCountActivePromotions = vi.fn();
+  const mockGetPromotionByIdInternal = vi.fn();
   return { mockDbSelect, mockDbUpdate, mockDbInsert, mockDb, mockAuthorize,
-    mockCouponCodeExists, mockCountActivePromotions };
+    mockCouponCodeExists, mockCountActivePromotions, mockGetPromotionByIdInternal };
 });
 
 vi.mock('@twicely/db', () => ({ db: mockDb }));
@@ -23,6 +24,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/queries/promotions', () => ({
   couponCodeExists: (...args: unknown[]) => mockCouponCodeExists(...args),
   countActivePromotions: (...args: unknown[]) => mockCountActivePromotions(...args),
+  getPromotionByIdInternal: (...args: unknown[]) => mockGetPromotionByIdInternal(...args),
 }));
 vi.mock('@twicely/utils/tier-gates', () => ({
   canUseFeature: vi.fn((tier: string) => tier === 'PRO' || tier === 'POWER' || tier === 'ENTERPRISE'),
@@ -148,7 +150,7 @@ describe('reactivatePromotion', () => {
 
   it('fails when endsAt is in the past', async () => {
     mockAuthorize.mockResolvedValue({ ability: { can: vi.fn(() => true) }, session: { userId: 'user-1' } });
-    mockDbSelect.mockReturnValue(createChainableMock([{ id: 'promo-1', sellerId: 'user-1', endsAt: new Date('2020-01-01') }]));
+    mockGetPromotionByIdInternal.mockResolvedValue({ id: 'promo-1', sellerId: 'user-1', endsAt: new Date('2020-01-01') });
     const result = await reactivatePromotion('promo-1');
     expect(result.success).toBe(false);
     expect(result.error).toContain('expired');

@@ -14,51 +14,8 @@ import {
   isNotNull,
 } from 'drizzle-orm';
 
-// ---------------------------------------------------------------------------
-// Interface
-// ---------------------------------------------------------------------------
-
-export interface PnlReportData {
-  periodStart: string;
-  periodEnd: string;
-  generatedAt: string;
-
-  grossRevenueCents: number;
-  totalOrderCount: number;
-
-  cogsTotalCents: number;
-  grossProfitCents: number;
-
-  tfFeesCents: number;
-  stripeFeesCents: number;
-  boostFeesCents: number;
-  insertionFeesCents: number;
-  localFeesCents: number;
-  authFeesCents: number;
-  subscriptionChargesCents: number;
-  crosslisterFeesCents: number;
-  totalPlatformFeesCents: number;
-
-  crosslisterRevenueCents: number;
-  /** Cash local sale revenue — INFORMATIONAL, no platform fee (§A16) */
-  cashLocalRevenueCents: number;
-  shippingCostsCents: number;
-
-  netAfterFeesCents: number;
-
-  operatingExpensesCents: number;
-  expensesByCategory: Array<{ category: string; totalCents: number; count: number }>;
-
-  mileageDeductionCents: number;
-  totalMiles: number;
-  tripCount: number;
-
-  netProfitCents: number;
-
-  avgSalePriceCents: number;
-  effectiveFeeRatePercent: number;
-  cogsMarginPercent: number;
-}
+import type { PnlReportData } from './finance-center-reports-pnl-types';
+export type { PnlReportData } from './finance-center-reports-pnl-types';
 
 // ---------------------------------------------------------------------------
 // Internal constant (exported for use in balance-cashflow module)

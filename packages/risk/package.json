@@ -1,0 +1,22 @@
+{
+  "name": "@twicely/risk",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "@twicely/db": "workspace:*",
+    "@twicely/config": "workspace:*",
+    "@twicely/logger": "workspace:*",
+    "@twicely/scoring": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  }
+}

@@ -55,7 +55,7 @@ const KILL_SWITCHES: FlagSeed[] = [
   {
     key: 'kill.search',
     name: 'Search',
-    description: 'Disables Typesense search (falls back to basic DB query)',
+    description: 'Disables search engine (falls back to PostgreSQL ILIKE)',
     enabled: true,
   },
   {
@@ -143,6 +143,12 @@ const LAUNCH_GATES: FlagSeed[] = [
     key: 'gate.store.subscriptions',
     name: 'Store Subscriptions',
     description: 'Paid store tiers are available for purchase',
+    enabled: false,
+  },
+  {
+    key: 'gate.opensearch',
+    name: 'OpenSearch',
+    description: 'Routes search reads to OpenSearch instead of Typesense (percentage rollout supported)',
     enabled: false,
   },
 ];

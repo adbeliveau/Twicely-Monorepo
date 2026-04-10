@@ -13,7 +13,7 @@ import type { SearchFilters } from '@/types/listings';
 
 interface SubcategoryPageProps {
   params: Promise<{ slug: string; subslug: string }>;
-  searchParams: Promise<{ sort?: string; page?: string }>;
+  searchParams: Promise<{ sort?: string; page?: string; localPickup?: string }>;
 }
 
 export async function generateMetadata({
@@ -39,7 +39,7 @@ export default async function SubcategoryPage({
   searchParams,
 }: SubcategoryPageProps) {
   const { slug: parentSlug, subslug } = await params;
-  const { sort, page } = await searchParams;
+  const { sort, page, localPickup } = await searchParams;
 
   // Get both parent and subcategory
   const [parentCategory, subcategory] = await Promise.all([
@@ -56,6 +56,7 @@ export default async function SubcategoryPage({
   const filters: SearchFilters = {
     categoryId: subcategory.id,
     sort: (sort as SearchFilters['sort']) ?? 'newest',
+    localPickup: localPickup === 'true',
     page: page ? parseInt(page, 10) : 1,
     limit: pageSize,
   };

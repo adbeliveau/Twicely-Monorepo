@@ -16,7 +16,7 @@ import type { SearchFilters } from '@/types/listings';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ sort?: string; page?: string; action?: string }>;
+  searchParams: Promise<{ sort?: string; page?: string; action?: string; localPickup?: string }>;
 }
 
 export async function generateMetadata({
@@ -59,7 +59,7 @@ export default async function CategoryPage({
   searchParams,
 }: CategoryPageProps) {
   const { slug } = await params;
-  const { sort, page, action } = await searchParams;
+  const { sort, page, action, localPickup } = await searchParams;
 
   // Run auth and category lookup in parallel (independent)
   const [session, category] = await Promise.all([
@@ -79,6 +79,7 @@ export default async function CategoryPage({
   const filters: SearchFilters = {
     categoryId: category.id,
     sort: (sort as SearchFilters['sort']) ?? 'newest',
+    localPickup: localPickup === 'true',
     page: page ? parseInt(page, 10) : 1,
     limit: pageSize,
   };

@@ -12,29 +12,7 @@ import {
   updateRoutingRule,
   deleteRoutingRule,
 } from "@/lib/actions/helpdesk-manage";
-
-type ConditionField = "type" | "channel" | "priority" | "subject" | "tags" | "requesterType";
-type ConditionOperator = "eq" | "in" | "contains" | "gte" | "lte" | "startsWith";
-
-interface RuleCondition {
-  field: ConditionField;
-  operator: ConditionOperator;
-  value: string;
-}
-
-interface RuleAction {
-  setPriority?: string;
-  setCategory?: string;
-}
-
-interface RoutingRule {
-  id: string;
-  name: string;
-  conditionsJson: unknown;
-  actionsJson: unknown;
-  sortOrder: number;
-  isActive: boolean;
-}
+import type { ConditionField, ConditionOperator, RuleCondition, RuleAction, RoutingRule } from "./routing-rule-types";
 
 interface RoutingRuleListProps {
   rules: RoutingRule[];

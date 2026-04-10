@@ -70,17 +70,19 @@ export function CookieConsentBanner({
   isAuthenticated = false,
 }: Props) {
   const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!consentRequired) return;
-    const existing = readConsentCookie();
-    if (!existing || existing.version !== CONSENT_VERSION) {
-      setVisible(true);
-    }
-  }, [consentRequired]);
   const [showDetails, setShowDetails] = useState(false);
   const [functional, setFunctional] = useState(false);
   const [analytics, setAnalytics] = useState(false);
+
+  useEffect(() => {
+    if (!consentRequired) return undefined;
+    const existing = readConsentCookie();
+    if (!existing || existing.version !== CONSENT_VERSION) {
+      const timeoutId = window.setTimeout(() => setVisible(true), 0);
+      return () => window.clearTimeout(timeoutId);
+    }
+    return undefined;
+  }, [consentRequired]);
 
   if (!visible) return null;
 
