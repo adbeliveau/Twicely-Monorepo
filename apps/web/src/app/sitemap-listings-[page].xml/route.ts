@@ -1,11 +1,9 @@
 import { generateListingSitemap } from '@twicely/commerce/seo/sitemap';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ page: string }> },
-): Promise<Response> {
-  const { page: pageStr } = await params;
-  const page = parseInt(pageStr, 10);
+export async function GET(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const match = url.pathname.match(/sitemap-listings-(\d+)\.xml/);
+  const page = match ? parseInt(match[1]!, 10) : NaN;
 
   if (isNaN(page) || page < 1) {
     return new Response('Not Found', { status: 404 });
