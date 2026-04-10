@@ -23,6 +23,11 @@ vi.mock('@twicely/db/schema', () => ({
   accountingEntityMap: { id: 'id', integrationId: 'integrationId' },
   order: { id: 'id', sellerId: 'sellerId', status: 'status', completedAt: 'completedAt' },
   expense: { id: 'id', userId: 'userId', expenseDate: 'expenseDate' },
+  payout: { id: 'id', userId: 'userId', status: 'status', amountCents: 'amountCents', createdAt: 'createdAt' },
+}));
+
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback?: unknown) => Promise.resolve(fallback)),
 }));
 
 vi.mock('@twicely/db/encryption', () => ({
@@ -133,7 +138,9 @@ describe('syncSales', () => {
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))  // get integration
       .mockReturnValueOnce({                                       // get orders
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'order-001', buyerId: 'buyer-001', totalCents: 5000, shippingCents: 500, completedAt: new Date() }]),
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: 'order-001', buyerId: 'buyer-001', totalCents: 5000, shippingCents: 500, completedAt: new Date() }]),
+          }),
         }),
       })
       .mockReturnValueOnce(makeSelectChain([]));  // entity map check — not synced yet
@@ -152,7 +159,9 @@ describe('syncSales', () => {
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'order-001', buyerId: 'buyer-001', totalCents: 5000, shippingCents: 0, completedAt: new Date() }]),
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: 'order-001', buyerId: 'buyer-001', totalCents: 5000, shippingCents: 0, completedAt: new Date() }]),
+          }),
         }),
       })
       .mockReturnValueOnce(makeSelectChain([{ id: 'existing-map-entry' }]));  // already synced
@@ -171,7 +180,9 @@ describe('syncSales', () => {
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'order-001', buyerId: 'buyer-001', totalCents: 5000, shippingCents: 0, completedAt: new Date() }]),
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: 'order-001', buyerId: 'buyer-001', totalCents: 5000, shippingCents: 0, completedAt: new Date() }]),
+          }),
         }),
       })
       .mockReturnValueOnce(makeSelectChain([]));
@@ -187,7 +198,11 @@ describe('syncSales', () => {
     mockDbSelect
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))
       .mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
     const { syncSales } = await import('../sync-engine');
@@ -211,7 +226,9 @@ describe('syncExpenses', () => {
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: 'exp-001', vendor: 'USPS', category: 'Shipping', amountCents: 1500, expenseDate: new Date(), description: null }]),
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: 'exp-001', vendor: 'USPS', category: 'Shipping', amountCents: 1500, expenseDate: new Date(), description: null }]),
+          }),
         }),
       })
       .mockReturnValueOnce(makeSelectChain([]));  // not yet synced
@@ -239,10 +256,14 @@ describe('runFullSync', () => {
     mockDbInsert.mockReturnValueOnce(makeInsertChain([{ id: 'log-001' }]));  // log entry
 
     mockDbSelect
+      .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))  // runFullSync: get integration for notification
+      .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))  // refreshIntegrationTokens: get integration
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))  // syncSales: get integration
-      .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) })  // orders
+      .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }) }) })  // orders
       .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))  // syncExpenses: get integration
-      .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) });  // expenses
+      .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }) }) })  // expenses
+      .mockReturnValueOnce(makeSelectChain([MOCK_INTEGRATION]))  // syncPayouts: get integration
+      .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }) }) });  // payouts
 
     mockDbUpdate.mockReturnValue(makeUpdateChain());
 

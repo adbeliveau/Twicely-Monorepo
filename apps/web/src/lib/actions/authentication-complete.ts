@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '@twicely/db';
-import { authenticationRequest, listing, auditEvent } from '@twicely/db/schema';
+import { authenticationRequest, listing, auditEvent, ledgerEntry } from '@twicely/db/schema';
 import { staffAuthorize } from '@twicely/casl/staff-authorize';
 import { sub } from '@twicely/casl';
 import { calculateAuthCostSplit } from '@/lib/authentication/cost-split';
@@ -113,6 +113,32 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
       updatedAt: now,
     }).where(eq(listing.id, req.listingId));
 
+    // Post AUTH_FEE ledger entries — seller share deducted from proceeds
+    if (split.sellerShareCents > 0) {
+      await db.insert(ledgerEntry).values({
+        type: 'AUTH_FEE_SELLER',
+        status: 'POSTED',
+        amountCents: -split.sellerShareCents,
+        userId: req.sellerId,
+        listingId: req.listingId,
+        idempotencyKey: `auth-fee:${requestId}:seller`,
+        postedAt: now,
+      });
+    }
+    // Buyer fee is already posted at checkout (checkout-finalize.ts).
+    // Post buyer ledger only for seller-initiated requests where buyer didn't pay at checkout.
+    if (split.buyerShareCents > 0 && req.buyerId && initiator === 'SELLER') {
+      await db.insert(ledgerEntry).values({
+        type: 'AUTH_FEE_BUYER',
+        status: 'POSTED',
+        amountCents: -split.buyerShareCents,
+        userId: req.buyerId,
+        listingId: req.listingId,
+        idempotencyKey: `auth-fee:${requestId}:buyer`,
+        postedAt: now,
+      });
+    }
+
   } else if (result === 'COUNTERFEIT') {
     const refundedBuyer = initiator === 'BUYER' ? req.totalFeeCents : 0;
     const newStatus = isAi ? 'AI_COUNTERFEIT' : 'EXPERT_COUNTERFEIT';
@@ -133,6 +159,19 @@ export async function completeAuthentication(rawData: unknown): Promise<ActionRe
       enforcementState: 'REMOVED',
       updatedAt: now,
     }).where(eq(listing.id, req.listingId));
+
+    // Post AUTH_FEE_SELLER ledger — seller pays full fee for counterfeit
+    if (req.totalFeeCents > 0) {
+      await db.insert(ledgerEntry).values({
+        type: 'AUTH_FEE_SELLER',
+        status: 'POSTED',
+        amountCents: -req.totalFeeCents,
+        userId: req.sellerId,
+        listingId: req.listingId,
+        idempotencyKey: `auth-fee:${requestId}:seller-counterfeit`,
+        postedAt: now,
+      });
+    }
 
     await db.insert(auditEvent).values({
       actorType: 'PLATFORM_STAFF',

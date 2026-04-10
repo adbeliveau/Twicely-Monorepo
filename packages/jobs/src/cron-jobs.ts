@@ -169,6 +169,26 @@ export async function registerCronJobs(): Promise<void> {
   await registerFinanceProjectionComputeJob();
   logger.info('[cronJobs] Registered finance projection compute job');
 
+  // Campaign scheduler — every minute (V4-06 §7.1)
+  const { registerCampaignSchedulerJob } = await import('./campaign-scheduler');
+  await registerCampaignSchedulerJob();
+  logger.info('[cronJobs] Registered campaign scheduler job');
+
+  // Campaign budget monitor — every 5 min (V4-06 §7.2)
+  const { registerCampaignBudgetMonitorJob } = await import('./campaign-budget-monitor');
+  await registerCampaignBudgetMonitorJob();
+  logger.info('[cronJobs] Registered campaign budget monitor job');
+
+  // AI authentication timeout — marks stale AI_PENDING → AI_INCONCLUSIVE (G10.2)
+  const { registerAiAuthTimeoutJob } = await import('./ai-auth-timeout');
+  await registerAiAuthTimeoutJob();
+  logger.info('[cronJobs] Registered AI auth timeout job');
+
+  // Accounting sync — scheduled QB/Xero sync for HOURLY/DAILY integrations (G10.3)
+  const { registerAccountingSyncJobs } = await import('./accounting-sync');
+  await registerAccountingSyncJobs();
+  logger.info('[cronJobs] Registered accounting sync jobs');
+
   // Buyer quality tier recalc REMOVED — Decision #142.
   // Trust signals are computed at query time; completedPurchaseCount is incremented at order completion.
 }

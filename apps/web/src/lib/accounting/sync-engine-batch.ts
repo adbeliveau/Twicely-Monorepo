@@ -1,9 +1,3 @@
-/**
- * Batch sync functions — G10.3
- * Idempotent entity-level sync: sales, expenses, payouts.
- * Called by runFullSync in sync-engine.ts.
- */
-
 import { db } from '@twicely/db';
 import {
   accountingIntegration,
@@ -15,10 +9,10 @@ import {
 import { eq, and, gt } from 'drizzle-orm';
 import { decrypt } from '@twicely/db/encryption';
 import { logger } from '@twicely/logger';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { getAccountingAdapter } from './adapter-factory';
 import { orderToInvoice, expenseToExpenseData, payoutToJournalEntry } from './entity-mappers';
 
-/** Sync completed sales (orders) as invoices. Idempotent — skips already-mapped orders. */
 export async function syncSales(integrationId: string): Promise<{
   recordsSynced: number;
   recordsFailed: number;
@@ -39,6 +33,7 @@ export async function syncSales(integrationId: string): Promise<{
   const realmId = integration.externalAccountId;
   const adapter = getAccountingAdapter(integration.provider as 'QUICKBOOKS' | 'XERO');
 
+  const batchSize = await getPlatformSetting<number>('accounting.sync.batchSize', 50);
   const sinceDate = integration.lastSyncAt ?? new Date(0);
   const completedOrders = await db
     .select({
@@ -55,7 +50,8 @@ export async function syncSales(integrationId: string): Promise<{
         eq(order.status, 'COMPLETED'),
         gt(order.completedAt, sinceDate),
       ),
-    );
+    )
+    .limit(batchSize);
 
   let recordsSynced = 0;
   let recordsFailed = 0;
@@ -114,7 +110,6 @@ export async function syncSales(integrationId: string): Promise<{
   };
 }
 
-/** Sync expenses to the accounting provider. Idempotent — skips already-mapped expenses. */
 export async function syncExpenses(integrationId: string): Promise<{
   recordsSynced: number;
   recordsFailed: number;
@@ -135,6 +130,7 @@ export async function syncExpenses(integrationId: string): Promise<{
   const realmId = integration.externalAccountId;
   const adapter = getAccountingAdapter(integration.provider as 'QUICKBOOKS' | 'XERO');
 
+  const batchSizeExpenses = await getPlatformSetting<number>('accounting.sync.batchSize', 50);
   const sinceDate = integration.lastSyncAt ?? new Date(0);
   const expenseRows = await db
     .select({
@@ -151,7 +147,8 @@ export async function syncExpenses(integrationId: string): Promise<{
         eq(expense.userId, integration.userId),
         gt(expense.expenseDate, sinceDate),
       ),
-    );
+    )
+    .limit(batchSizeExpenses);
 
   let recordsSynced = 0;
   let recordsFailed = 0;
@@ -203,7 +200,6 @@ export async function syncExpenses(integrationId: string): Promise<{
   };
 }
 
-/** Sync completed payouts as journal entries. Idempotent — skips already-mapped payouts. */
 export async function syncPayouts(integrationId: string): Promise<{
   recordsSynced: number;
   recordsFailed: number;
@@ -224,6 +220,7 @@ export async function syncPayouts(integrationId: string): Promise<{
   const realmId = integration.externalAccountId;
   const adapter = getAccountingAdapter(integration.provider as 'QUICKBOOKS' | 'XERO');
 
+  const batchSizePayouts = await getPlatformSetting<number>('accounting.sync.batchSize', 50);
   const sinceDate = integration.lastSyncAt ?? new Date(0);
   const completedPayouts = await db
     .select({
@@ -238,7 +235,8 @@ export async function syncPayouts(integrationId: string): Promise<{
         eq(payout.status, 'COMPLETED'),
         gt(payout.createdAt, sinceDate),
       ),
-    );
+    )
+    .limit(batchSizePayouts);
 
   let recordsSynced = 0;
   let recordsFailed = 0;

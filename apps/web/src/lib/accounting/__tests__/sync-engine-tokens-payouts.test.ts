@@ -29,6 +29,10 @@ vi.mock('@twicely/db/schema', () => ({
   payout: { id: 'id', userId: 'userId', status: 'status', amountCents: 'amountCents', createdAt: 'createdAt' },
 }));
 
+vi.mock('@/lib/queries/platform-settings', () => ({
+  getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback?: unknown) => Promise.resolve(fallback)),
+}));
+
 vi.mock('@twicely/db/encryption', () => ({
   decrypt: (...args: unknown[]) => mockDecrypt(...args),
   encrypt: (...args: unknown[]) => mockEncrypt(...args),
@@ -86,7 +90,9 @@ function makeSelectChain(rows: unknown[]) {
 function makeSelectChainNoLimit(rows: unknown[]) {
   return {
     from: vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue(rows),
+      where: vi.fn().mockReturnValue({
+        limit: vi.fn().mockResolvedValue(rows),
+      }),
     }),
   };
 }

@@ -36,6 +36,8 @@ function mapEntrupyStatus(status: string): AiAuthResult['status'] {
 export class EntrupyProvider implements AiAuthProvider {
   readonly name = 'entrupy';
 
+  constructor(private readonly webhookSecret?: string) {}
+
   async submitForAuthentication(
     submission: AiAuthSubmission
   ): Promise<{ providerRef: string; submittedAt: Date }> {
@@ -97,11 +99,10 @@ export class EntrupyProvider implements AiAuthProvider {
   }
 
   verifyWebhookSignature(payload: string, signature: string): boolean {
-    const secret = (
-      typeof process !== 'undefined'
-        ? process.env['AI_PROVIDER_WEBHOOK_SECRET'] ?? ''
-        : ''
-    );
+    // Prefer platform_settings secret (injected via constructor), fall back to env var
+    const secret = this.webhookSecret
+      || process.env['AI_PROVIDER_WEBHOOK_SECRET']
+      || '';
 
     if (!secret || !signature) return false;
 

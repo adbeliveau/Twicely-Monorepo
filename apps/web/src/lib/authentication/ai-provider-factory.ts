@@ -10,14 +10,14 @@ import { EntrupyProvider } from './entrupy-provider';
 import type { AiAuthProvider } from './ai-provider';
 
 export async function getAiAuthProvider(): Promise<AiAuthProvider> {
-  const providerName = await getPlatformSetting<string>(
-    AUTH_SETTINGS_KEYS.AI_PROVIDER_NAME,
-    'entrupy'
-  );
+  const [providerName, webhookSecret] = await Promise.all([
+    getPlatformSetting<string>(AUTH_SETTINGS_KEYS.AI_PROVIDER_NAME, 'entrupy'),
+    getPlatformSetting<string>(AUTH_SETTINGS_KEYS.AI_PROVIDER_WEBHOOK_SECRET, ''),
+  ]);
 
   switch (providerName) {
     case 'entrupy':
-      return new EntrupyProvider();
+      return new EntrupyProvider(webhookSecret || undefined);
     default:
       throw new Error(`Unknown AI authentication provider: ${providerName}`);
   }

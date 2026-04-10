@@ -31,12 +31,21 @@ export function AuthenticationBadge({
   }
 
   if (authenticationStatus === 'AI_AUTHENTICATED') {
-    return (
+    const verifyHref = certificateNumber ? `/verify/${certificateNumber}` : undefined;
+    const badge = (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
         <ShieldCheck className="h-3.5 w-3.5" />
         AI Authenticated
       </span>
     );
+    if (verifyHref) {
+      return (
+        <Link href={verifyHref} className="hover:opacity-80 transition-opacity" target="_blank">
+          {badge}
+        </Link>
+      );
+    }
+    return badge;
   }
 
   if (authenticationStatus === 'AI_PENDING') {

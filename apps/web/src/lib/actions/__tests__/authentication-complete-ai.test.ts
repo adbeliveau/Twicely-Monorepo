@@ -13,6 +13,7 @@ vi.mock('@twicely/db/schema', () => ({
   authenticationRequest: { id: 'id', listingId: 'listing_id', sellerId: 'seller_id', status: 'status', tier: 'tier', totalFeeCents: 'total_fee_cents', certificateNumber: 'certificate_number' },
   listing: { id: 'id', authenticationStatus: 'authentication_status', authenticationRequestId: 'authentication_request_id', enforcementState: 'enforcement_state' },
   auditEvent: { id: 'id' },
+  ledgerEntry: { id: 'id', userId: 'user_id', type: 'type', amountCents: 'amount_cents', idempotencyKey: 'idempotency_key' },
 }));
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ type: 'eq', a, b })),

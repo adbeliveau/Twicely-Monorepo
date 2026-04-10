@@ -6,7 +6,7 @@
 
 import { db } from '@twicely/db';
 import { accountingIntegration, accountingSyncLog } from '@twicely/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { decrypt, encrypt } from '@twicely/db/encryption';
 import { logger } from '@twicely/logger';
 import { getAccountingAdapter } from './adapter-factory';
@@ -110,12 +110,17 @@ export async function runFullSync(integrationId: string): Promise<{
       })
       .where(eq(accountingSyncLog.id, logId));
 
+    // Reset error count on full success; increment on partial failure
+    const errorCountUpdate = totalFailed === 0
+      ? { syncErrorCount: 0 }
+      : { syncErrorCount: sql<number>`${accountingIntegration.syncErrorCount} + 1` };
+
     await db
       .update(accountingIntegration)
       .set({
         lastSyncAt: new Date(),
         lastSyncStatus: finalStatus,
-        syncErrorCount: totalFailed,
+        ...errorCountUpdate,
         updatedAt: new Date(),
       })
       .where(eq(accountingIntegration.id, integrationId));

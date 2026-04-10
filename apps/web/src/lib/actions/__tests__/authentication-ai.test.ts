@@ -41,6 +41,15 @@ vi.mock('@/lib/authentication/cert-number', () => ({
 vi.mock('@/lib/authentication/ai-provider-factory', () => ({
   getAiAuthProvider: (...args: unknown[]) => mockGetAiAuthProvider(...args),
 }));
+vi.mock('@/lib/authentication/constants', () => ({
+  AUTH_SETTINGS_KEYS: {
+    AI_ENABLED: 'trust.authentication.aiEnabled',
+    AI_FEE_CENTS: 'trust.authentication.aiFeeCents',
+    AI_SUPPORTED_CATEGORIES: 'trust.authentication.aiSupportedCategories',
+    AI_PROVIDER_NAME: 'trust.authentication.aiProviderName',
+    AI_PROVIDER_WEBHOOK_SECRET: 'trust.authentication.aiProviderWebhookSecret',
+  },
+}));
 
 // ─── Chainable mock helpers ─────────────────────────────────────────────────
 
@@ -117,6 +126,7 @@ describe('requestAiAuthentication', () => {
     mockGetPlatformSetting.mockImplementation((key: string) => {
       if (key === 'trust.authentication.aiEnabled') return Promise.resolve(true);
       if (key === 'trust.authentication.aiFeeCents') return Promise.resolve(1999);
+      if (key === 'trust.authentication.aiSupportedCategories') return Promise.resolve(['cat-handbags', 'cat-watches', 'cat-sneakers', 'cat-trading-cards']);
       return Promise.resolve(null);
     });
     mockGenerateCertNumber.mockResolvedValue('TW-AUTH-AABBB');
@@ -186,6 +196,7 @@ describe('requestAiAuthentication', () => {
     mockGetPlatformSetting.mockImplementation((key: string) => {
       if (key === 'trust.authentication.aiEnabled') return Promise.resolve(true);
       if (key === 'trust.authentication.aiFeeCents') return Promise.resolve(2499);
+      if (key === 'trust.authentication.aiSupportedCategories') return Promise.resolve(['cat-handbags', 'cat-watches', 'cat-sneakers', 'cat-trading-cards']);
       return Promise.resolve(null);
     });
     mockDbSelect.mockReturnValueOnce(chainSelect([LISTING_ROW]));

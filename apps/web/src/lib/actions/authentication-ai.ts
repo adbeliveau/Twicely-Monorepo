@@ -20,8 +20,6 @@ interface ActionResult {
   certificateNumber?: string;
 }
 
-// ─── Zod Schemas ─────────────────────────────────────────────────────────────
-
 const requestAiAuthSchema = z.object({
   listingId: z.string().cuid2(),
   orderId: z.string().cuid2().optional(),
@@ -32,8 +30,6 @@ const retryAiAuthSchema = z.object({
   requestId: z.string().cuid2(),
   photoUrls: z.array(z.string().url()).min(3).max(20),
 }).strict();
-
-// ─── Action 1: requestAiAuthentication ───────────────────────────────────────
 
 export async function requestAiAuthentication(
   rawData: unknown
@@ -86,6 +82,18 @@ export async function requestAiAuthentication(
     .limit(1);
 
   if (!listingRow) return { success: false, error: 'Listing not found' };
+
+  // GAP 8: Validate listing category against supported AI auth categories
+  const supportedCategories = await getPlatformSetting<string[]>(
+    AUTH_SETTINGS_KEYS.AI_SUPPORTED_CATEGORIES,
+    ['HANDBAGS', 'WATCHES', 'SNEAKERS', 'TRADING_CARDS'],
+  );
+  if (!supportedCategories.includes(listingRow.categoryId ?? '')) {
+    return {
+      success: false,
+      error: 'AI authentication is not available for this category. Please use Expert authentication.',
+    };
+  }
 
   const isSeller = session.userId === listingRow.ownerUserId;
   const isBuyer = !!orderId && !isSeller;
@@ -157,8 +165,6 @@ export async function requestAiAuthentication(
   revalidatePath(`/i/${listingRow.slug ?? listingId}`);
   return { success: true, requestId: newRequest.id, certificateNumber: certNumber };
 }
-
-// ─── Action 2: retryAiAuthentication ─────────────────────────────────────────
 
 export async function retryAiAuthentication(
   rawData: unknown
