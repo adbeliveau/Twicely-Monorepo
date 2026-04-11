@@ -5,6 +5,12 @@
  */
 
 export async function register(): Promise<void> {
+  // `next build` runs instrumentation while collecting page data. Skip worker
+  // startup in that phase so builds do not require live Valkey/BullMQ services.
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return;
+  }
+
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     // Validate required environment variables at startup (A10 + A5)
     const critical = [

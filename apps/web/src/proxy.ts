@@ -7,9 +7,6 @@ import {
   type ActorType,
 } from './lib/rate-limit/sliding-window';
 
-// SEC-008: nodejs runtime required for Valkey rate limiting (not Edge)
-export const runtime = 'nodejs';
-
 function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let result = 0;

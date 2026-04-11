@@ -10,7 +10,7 @@ import { zodId } from '@/lib/validations/shared';
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
-export const adminEditUserSchema = z.object({
+const adminEditUserSchema = z.object({
   userId: zodId,
   name: z.string().min(1).max(100),
   displayName: z.string().max(100).optional().nullable(),

@@ -10,6 +10,7 @@ import { canUseFeature } from '@twicely/utils/tier-gates';
 import { z } from 'zod';
 import { sanitizeHtml } from '@twicely/utils/sanitize-html';
 import { getCustomCategories } from '@/lib/queries/storefront-owner';
+import { ACCENT_PALETTE } from '@/lib/storefront/accent-palette';
 
 const updateStorefrontSettingsSchema = z.object({
   storeName: z.string().min(1).max(100).optional(),
@@ -28,12 +29,6 @@ const updateStorefrontSettingsSchema = z.object({
 }).strict();
 
 interface ActionResult { success: boolean; error?: string }
-
-export const ACCENT_PALETTE = [
-  '#7C3AED', '#2563EB', '#0891B2', '#059669',
-  '#65A30D', '#CA8A04', '#EA580C', '#DC2626',
-  '#DB2777', '#9333EA', '#4F46E5', '#475569',
-] as const;
 
 async function getSellerProfileForUser(userId: string) {
   const [row] = await db

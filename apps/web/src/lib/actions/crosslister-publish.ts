@@ -35,9 +35,11 @@ import {
   REMOVE_ON_FAIL,
 } from '@twicely/crosslister/queue/constants';
 import type { ExternalChannel } from '@twicely/crosslister/types';
-
-// Re-export queue management actions
-export { cancelJob, getJobQueueStatus, getPublishAllowanceAction } from './crosslister-publish-queue';
+import {
+  cancelJob as cancelJobImpl,
+  getJobQueueStatus as getJobQueueStatusImpl,
+  getPublishAllowanceAction as getPublishAllowanceActionImpl,
+} from './crosslister-publish-queue';
 
 interface ActionResult<T = undefined> {
   success: boolean;
@@ -52,6 +54,18 @@ interface EnqueueSummary {
 }
 
 const delistSchema = z.object({ projectionId: zodId }).strict();
+
+export async function cancelJob(input: unknown) {
+  return cancelJobImpl(input);
+}
+
+export async function getJobQueueStatus() {
+  return getJobQueueStatusImpl();
+}
+
+export async function getPublishAllowanceAction() {
+  return getPublishAllowanceActionImpl();
+}
 
 /**
  * Publish one or more listings to one or more channels (async enqueue).

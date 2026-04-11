@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { ACCENT_PALETTE } from '@/lib/actions/storefront';
+import { ACCENT_PALETTE } from '@/lib/storefront/accent-palette';
 import { cn } from '@twicely/utils/cn';
 
 interface AccentColorPickerProps {

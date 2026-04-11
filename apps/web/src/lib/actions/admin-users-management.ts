@@ -15,6 +15,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { z } from 'zod';
 import { zodId } from '@/lib/validations/shared';
 import { requireMfaForCriticalAction } from './staff-mfa';
+import { adminEditUserAction as adminEditUserActionImpl } from './admin-users-management-edit';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -257,4 +258,6 @@ export async function resetPasswordAction(input: unknown) {
 
 // ─── Admin Edit User ────────────────────────────────────────────────────────
 
-export { adminEditUserSchema, adminEditUserAction } from './admin-users-management-edit';
+export async function adminEditUserAction(input: unknown) {
+  return adminEditUserActionImpl(input);
+}

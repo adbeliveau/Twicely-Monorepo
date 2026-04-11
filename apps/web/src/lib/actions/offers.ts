@@ -9,14 +9,13 @@ import {
   counterOffer,
   cancelOffer,
 } from '@twicely/commerce/offer-engine';
-import { createOfferSchema, counterOfferSchema } from '@/lib/validations/offers';
+import { createBundleOfferSchema, createOfferSchema, counterOfferSchema } from '@/lib/validations/offers';
 import { zodId } from '@/lib/validations/shared';
 import { z } from 'zod';
 import { db } from '@twicely/db';
 import { listingOffer } from '@twicely/db/schema';
 import { eq } from 'drizzle-orm';
-
-export { createBundleOfferAction } from './offers-bundle';
+import { createBundleOfferAction as createBundleOfferActionImpl } from './offers-bundle';
 
 interface ActionResult {
   success: boolean;
@@ -25,6 +24,12 @@ interface ActionResult {
   orderId?: string;
   orderNumber?: string;
   autoAccepted?: boolean;
+}
+
+export async function createBundleOfferAction(
+  data: z.infer<typeof createBundleOfferSchema>
+): Promise<ActionResult> {
+  return createBundleOfferActionImpl(data);
 }
 
 /**
