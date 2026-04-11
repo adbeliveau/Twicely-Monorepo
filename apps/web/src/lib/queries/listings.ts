@@ -52,6 +52,8 @@ export async function getListingBySlug(slug: string): Promise<ListingDetailData 
       storeName: sellerProfile.storeName,
       storeSlug: sellerProfile.storeSlug,
       performanceBand: sellerProfile.performanceBand,
+      sellerLat: sellerProfile.sellerLat,
+      sellerLng: sellerProfile.sellerLng,
       // Seller performance fields
       averageRating: sellerPerformance.averageRating,
       totalReviews: sellerPerformance.totalReviews,
@@ -138,6 +140,8 @@ export async function getListingBySlug(slug: string): Promise<ListingDetailData 
       memberSince: row.userCreatedAt ?? row.createdAt,
       performanceBand: row.performanceBand ?? 'EMERGING',
     },
+    sellerLat: row.sellerLat,
+    sellerLng: row.sellerLng,
     category: row.categoryId
       ? {
           id: row.categoryId,

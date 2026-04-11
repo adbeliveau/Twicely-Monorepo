@@ -8,6 +8,7 @@
 import { authorize } from '@twicely/casl';
 import { geocodeAddress, reverseGeocode } from '@twicely/geocoding';
 import type { GeoPoint } from '@twicely/geocoding';
+import { getPlatformSetting } from '@/lib/queries/platform-settings';
 import { z } from 'zod';
 
 const addressSchema = z.object({
@@ -17,6 +18,12 @@ const addressSchema = z.object({
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
+}).strict();
+
+const searchLocationSchema = z.object({
+  zip: z.string().min(3).max(10).optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
 }).strict();
 
 export async function geocodeAddressAction(input: unknown) {
@@ -68,4 +75,44 @@ export async function reverseGeocodeAction(input: unknown) {
     country: result.country,
     postalCode: result.postalCode,
   };
+}
+
+/**
+ * Resolve a buyer's location for geo-proximity search (Decision #144).
+ * Public action — no auth required (search is public).
+ * Accepts zip code or lat/lng coordinates.
+ */
+export async function resolveSearchLocation(input: unknown) {
+  const geoEnabled = await getPlatformSetting<boolean>('discovery.geo.enabled', true);
+  if (!geoEnabled) return { error: 'Geo search is disabled' };
+
+  const parsed = searchLocationSchema.safeParse(input);
+  if (!parsed.success) return { error: 'Invalid location input' };
+
+  const { zip, lat, lng } = parsed.data;
+
+  // If coordinates provided, reverse geocode for label
+  if (lat !== undefined && lng !== undefined) {
+    const result = await reverseGeocode({ lat, lng });
+    return {
+      success: true,
+      lat,
+      lng,
+      label: result ? `${result.city}, ${result.state}` : `${lat.toFixed(2)}, ${lng.toFixed(2)}`,
+    };
+  }
+
+  // If zip provided, forward geocode
+  if (zip) {
+    const result = await geocodeAddress(zip);
+    if (!result) return { error: 'Location not found' };
+    return {
+      success: true,
+      lat: result.point.lat,
+      lng: result.point.lng,
+      label: result.city ? `${result.city}, ${result.state}` : zip,
+    };
+  }
+
+  return { error: 'Provide zip or coordinates' };
 }

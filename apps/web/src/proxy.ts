@@ -153,6 +153,10 @@ function handleHub(request: NextRequest, nonce: string): NextResponse {
     const response = nextWithCsp(nonce);
     response.headers.set('x-pathname', pathname);
     response.headers.set('x-subdomain', 'hub');
+    // Clear expired staff token to prevent redirect loop:
+    // layout.tsx's getStaffSession() fails on expired token → redirect('/login')
+    // → cookie still present → layout tries auth again → loop
+    response.cookies.delete('twicely.staff_token');
     return response;
   }
 

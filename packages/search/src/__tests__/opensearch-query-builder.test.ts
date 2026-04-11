@@ -187,6 +187,76 @@ describe('buildListingQuery — sorting', () => {
   });
 });
 
+describe('buildListingQuery — geo-proximity (Decision #144)', () => {
+  const geoFilters: SearchFilters = {
+    buyerLat: 40.7128,
+    buyerLng: -74.006,
+    radiusMiles: 25,
+  };
+
+  it('adds geo_distance filter when buyer location and radius are provided', () => {
+    const result = buildListingQuery(geoFilters, 24);
+    const inner = result.query as Record<string, Record<string, Record<string, unknown[]>>>;
+    const filters = inner.function_score.query.bool.filter as Array<Record<string, unknown>>;
+    expect(filters).toContainEqual({
+      geo_distance: {
+        distance: '25mi',
+        sellerLocation: { lat: 40.7128, lon: -74.006 },
+      },
+    });
+  });
+
+  it('does not add geo_distance filter without radiusMiles', () => {
+    const result = buildListingQuery({ buyerLat: 40.7, buyerLng: -74.0 }, 24);
+    const inner = result.query as Record<string, Record<string, Record<string, unknown[]>>>;
+    const filters = inner.function_score.query.bool.filter as Array<Record<string, unknown>>;
+    const geoFilter = filters.find((f) => 'geo_distance' in f);
+    expect(geoFilter).toBeUndefined();
+  });
+
+  it('adds proximity decay function_score when geo is present', () => {
+    const result = buildListingQuery(geoFilters, 24);
+    const query = result.query as Record<string, Record<string, unknown>>;
+    const fns = query.function_score.functions as Array<Record<string, unknown>>;
+    const gaussFn = fns.find((f) => 'gauss' in f);
+    expect(gaussFn).toBeDefined();
+    expect(gaussFn!.weight).toBe(DEFAULT_RELEVANCE_WEIGHTS.proximityBoost);
+    const gauss = gaussFn!.gauss as Record<string, Record<string, unknown>>;
+    expect(gauss.sellerLocation.origin).toEqual({ lat: 40.7128, lon: -74.006 });
+    expect(gauss.sellerLocation.scale).toBe('25mi');
+  });
+
+  it('skips proximity decay when proximityBoost is 0', () => {
+    const weights: RelevanceWeights = { ...DEFAULT_RELEVANCE_WEIGHTS, proximityBoost: 0 };
+    const result = buildListingQuery(geoFilters, 24, weights);
+    const query = result.query as Record<string, Record<string, unknown>>;
+    const fns = query.function_score.functions as Array<Record<string, unknown>>;
+    const gaussFn = fns.find((f) => 'gauss' in f);
+    expect(gaussFn).toBeUndefined();
+  });
+
+  it('sorts by _geo_distance for nearest sort', () => {
+    const result = buildListingQuery({ ...geoFilters, sort: 'nearest' }, 24);
+    const sortFirst = result.sort[0] as Record<string, Record<string, unknown>>;
+    expect(sortFirst._geo_distance).toBeDefined();
+    expect(sortFirst._geo_distance.order).toBe('asc');
+    expect(sortFirst._geo_distance.unit).toBe('mi');
+  });
+
+  it('falls back to newest when nearest sort has no geo context', () => {
+    const result = buildListingQuery({ sort: 'nearest' }, 24);
+    expect(result.sort).toEqual([{ activatedAt: { order: 'desc' } }]);
+  });
+
+  it('does not add geo clauses when only buyerLat is provided (no buyerLng)', () => {
+    const result = buildListingQuery({ buyerLat: 40.7, radiusMiles: 25 }, 24);
+    const inner = result.query as Record<string, Record<string, Record<string, unknown[]>>>;
+    const filters = inner.function_score.query.bool.filter as Array<Record<string, unknown>>;
+    const geoFilter = filters.find((f) => 'geo_distance' in f);
+    expect(geoFilter).toBeUndefined();
+  });
+});
+
 describe('buildCategoryFilterClause', () => {
   it('combines parent and child category IDs', () => {
     const clause = buildCategoryFilterClause('cat-1', ['cat-2', 'cat-3']);

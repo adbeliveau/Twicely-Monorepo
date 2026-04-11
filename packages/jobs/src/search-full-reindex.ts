@@ -329,6 +329,8 @@ async function loadListingBatch(
       dealBadgeType: listing.dealBadgeType,
       primaryImageUrl: listingImage.url,
       primaryImageAlt: listingImage.altText,
+      sellerLat: sellerProfile.sellerLat,
+      sellerLng: sellerProfile.sellerLng,
     })
     .from(listing)
     .leftJoin(category, eq(listing.categoryId, category.id))
@@ -389,5 +391,9 @@ function buildListingDocument(row: ListingRow): Record<string, unknown> {
     dealBadgeType: row.dealBadgeType ?? undefined,
     primaryImageUrl: row.primaryImageUrl ?? undefined,
     primaryImageAlt: row.primaryImageAlt ?? undefined,
+    // Decision #144: city-level centroid for geo-proximity search
+    sellerLocation: row.sellerLat != null && row.sellerLng != null
+      ? [row.sellerLat, row.sellerLng]
+      : undefined,
   };
 }

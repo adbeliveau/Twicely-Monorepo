@@ -134,6 +134,18 @@ export async function notify(
     return;
   }
 
+  // Guard: verify userId exists in the user table (staff_user IDs will fail FK)
+  const [targetUser] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (!targetUser) {
+    logger.warn(`[notify] Skipping notification — userId not found in user table`, { userId, templateKey });
+    return;
+  }
+
   const prefs = await getUserPreferences(userId, templateKey);
   const settings = await getNotificationSettingsInternal(userId);
   const subject = interpolate(template.subjectTemplate, data);

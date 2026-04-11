@@ -7,9 +7,15 @@ export interface SearchFilters {
   freeShipping?: boolean;
   localPickup?: boolean;
   brand?: string;
-  sort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc';
+  sort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc' | 'nearest';
   page?: number;
   limit?: number;
+  /** Buyer latitude for geo-proximity search (Decision #144). */
+  buyerLat?: number;
+  /** Buyer longitude for geo-proximity search (Decision #144). */
+  buyerLng?: number;
+  /** Search radius in miles (Decision #144). */
+  radiusMiles?: number;
 }
 
 export interface SearchResult {
@@ -43,6 +49,12 @@ export interface ListingCardData {
   isBoosted?: boolean;
   /** Fulfillment type from listing (for local pickup badge). */
   fulfillmentType?: string;
+  /** Approximate distance in miles from buyer location (Decision #144). */
+  distanceMiles?: number;
+  /** Seller city-level latitude (Decision #144). Null if seller has no geocoded address. */
+  sellerLat?: number;
+  /** Seller city-level longitude (Decision #144). Null if seller has no geocoded address. */
+  sellerLng?: number;
 }
 
 /**

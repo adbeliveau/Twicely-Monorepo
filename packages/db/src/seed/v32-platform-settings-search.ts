@@ -37,6 +37,17 @@ export const V32_PLATFORM_SETTINGS_SEARCH: PlatformSettingSeed[] = [
   { key: 'discovery.search.promotedBoost', value: 4, type: 'number', category: 'discovery', description: 'Boost factor for promoted/boosted listings (D2.4)' },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // GEO-PROXIMITY SEARCH (Decision #144)
+  // ═══════════════════════════════════════════════════════════════════════════
+  { key: 'discovery.geo.enabled', value: true, type: 'boolean', category: 'discovery', description: 'Master kill switch for geo-proximity search features' },
+  { key: 'discovery.geo.defaultRadiusMiles', value: 25, type: 'number', category: 'discovery', description: 'Default search radius in miles when location is active' },
+  { key: 'discovery.geo.maxRadiusMiles', value: 100, type: 'number', category: 'discovery', description: 'Maximum selectable search radius in miles' },
+  { key: 'discovery.geo.radiusOptions', value: '5,10,25,50,100', type: 'string', category: 'discovery', description: 'Comma-separated radius options for UI dropdown' },
+  { key: 'discovery.geo.proximityBoost', value: 3.0, type: 'number', category: 'discovery', description: 'Weight for proximity Gaussian decay function in relevance scoring' },
+  { key: 'discovery.geo.decayScale', value: '25mi', type: 'string', category: 'discovery', description: 'Distance at which proximity score decays to 50%' },
+  { key: 'discovery.geo.decayOffset', value: '5mi', type: 'string', category: 'discovery', description: 'Distance within which proximity score is 1.0 (no decay)' },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // INFRASTRUCTURE
   // ═══════════════════════════════════════════════════════════════════════════
   { key: 'infrastructure.opensearch.url', value: 'http://127.0.0.1:9200', type: 'string', category: 'infrastructure', description: 'OpenSearch cluster URL' },

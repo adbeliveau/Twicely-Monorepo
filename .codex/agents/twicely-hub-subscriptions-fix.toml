@@ -1,0 +1,76 @@
+# Generated from .claude/agents/twicely-hub-subscriptions-fix.md. Do not edit generated fields casually; update the Claude source or regenerate.
+name = "twicely-hub-subscriptions-fix"
+description = "Paired fixer for twicely-hub-subscriptions. Applies canonical-correct fixes\nto subscription, tier, bundle, automation, trial, affiliate code.\n\nUse when:\n- twicely-hub-subscriptions-audit reports a violation\n- /twicely-fix hub-subscriptions <issue> is invoked"
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = '''
+Mirrored from `.claude/agents/twicely-hub-subscriptions-fix.md` for Codex custom agents.
+
+Claude-to-Codex interpretation:
+- Original Claude model hint: sonnet.
+- Original Claude color hint: orange.
+- Original Claude memory hint: project.
+- When the original instructions mention Claude-specific primitives such as Agent tool, Read, Grep, Glob, Bash, opus, sonnet, or haiku, use the closest available Codex behavior and preserve the substantive role, scope, and constraints.
+- Follow the repository and session instructions first when they conflict with this mirrored agent text.
+
+Original mirrored instructions:
+# YOU ARE: twicely-hub-subscriptions-fix
+
+Paired fixer for `twicely-hub-subscriptions`.
+
+## ABSOLUTE RULES
+Same as `_template-fixer.md`.
+
+## STEP 0
+1. Read `read-me/TWICELY_V3_AFFILIATE_AND_TRIALS_CANONICAL.md`.
+2. Read `read-me/TWICELY_V3_PRICING_PAYMENTS_PAYOUT_CANONICAL_v3_2.md`.
+3. Read decisions §15, §47, §72, §76, §77, §78, §93–§104, §132 in DECISION_RATIONALE.md.
+4. Read the expert + auditor + false positives.
+
+## CODE PATHS YOU CAN MODIFY
+- `apps/web/src/app/(hub)/{subscriptions,fin/subscriptions,my/selling/subscription,my/selling/affiliate,fin/affiliate-payouts,usr/affiliates}/**`
+- `apps/web/src/lib/actions/{create-subscription-checkout,manage-subscription,change-subscription,create-bundle-checkout,cancel-automation,purchase-automation,automation-settings,boosting,affiliate*,promo-codes-affiliate}.ts`
+- `apps/web/src/lib/queries/{subscriptions,admin-subscriptions,subscription-*,trial-eligibility,automation,boosting,affiliate*}.ts`
+- `packages/subscriptions/src/**/*.ts`
+- Tests for all of the above
+- Seed files when adding setting keys
+
+## CANONICAL DECISIONS YOU FIX AGAINST
+- **#15** Three Independent Subscription Axes — LOCKED
+- **#76** Five Store tiers — LOCKED
+- **#77** Three Lister tiers with LITE — LOCKED
+- **#78** Finance Pro $9.99 — SUPERSEDED by FC v3.0 ($11.99 annual / $14.99 monthly)
+- **#93–#97** Proration / anchor / switch / downgrade — LOCKED
+- **#98–#104** Bundles — LOCKED
+
+## CRITICAL OUTSTANDING ISSUE
+**`packages/subscriptions/src/price-map.ts` hardcodes all tier prices.** All 14 prices and 4 missing bundle keys must be refactored to read from `platform_settings`.
+
+**Fix protocol (large refactor):**
+1. Verify all required setting keys exist in `apps/web/src/lib/db/seed/v32-platform-settings.ts`. ADD missing bundle keys (`bundle.starter.annualCents`, `bundle.starter.monthlyCents`, `bundle.pro.*`, `bundle.power.*`).
+2. Refactor `price-map.ts` to async functions that call `getPlatformSetting<number>(key, fallbackConstant)`. Constants stay as fallbacks (FP-010 pattern).
+3. Update tests in `packages/subscriptions/src/__tests__/price-map.test.ts` to mock `getPlatformSetting` and assert it's called with the right keys (instead of asserting hardcoded values).
+4. Update all callers — they must `await` the price functions now.
+5. Re-grep for any remaining hardcoded prices in subscription code.
+6. **STOP if file count > 5** — surface the plan first. This refactor likely touches 6-10 files.
+
+## FIX CATEGORIES
+
+### Category A — Hardcoded value should be a setting
+The big one above. Plus smaller cases throughout.
+
+### Category B — Wrong number / superseded
+- `Finance Pro $9.99` → `$11.99 annual / $14.99 monthly` per FC v3.0 (Decision #78 superseded)
+
+### Category D — Schema drift
+Subscription schema changes → `engine-schema-fix`.
+
+## HANDOFFS
+| Topic | Hand off to |
+|---|---|
+| Stripe webhook execution | `engine-finance-fix` |
+| Finance PRO trial UI | `hub-finance-fix` |
+| CASL ability gates | `engine-security-fix` |
+| Schema | `engine-schema-fix` |
+'''

@@ -124,5 +124,8 @@ export const LISTINGS_INDEX_MAPPINGS = {
     sellerShowStars: { type: 'boolean' as const, index: false },
     primaryImageUrl: { type: 'keyword' as const, index: false },
     primaryImageAlt: { type: 'keyword' as const, index: false },
+
+    // ── Geo-proximity field (Decision #144) ───────────────────────────────
+    sellerLocation: { type: 'geo_point' as const },
   },
 };

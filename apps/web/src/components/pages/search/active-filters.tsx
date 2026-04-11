@@ -30,9 +30,12 @@ export function ActiveFilters({ categoryName }: ActiveFiltersProps) {
   const maxPrice = searchParams.get('maxPrice');
   const freeShipping = searchParams.get('freeShipping') === 'true';
   const brand = searchParams.get('brand');
+  const near = searchParams.get('near');
+  const hasGeo = !!(near || searchParams.get('lat'));
+  const geoRadius = searchParams.get('r') ?? '25';
 
   const hasActiveFilters =
-    category || conditions.length > 0 || minPrice || maxPrice || freeShipping || brand;
+    category || conditions.length > 0 || minPrice || maxPrice || freeShipping || brand || hasGeo;
 
   if (!hasActiveFilters) {
     return null;
@@ -110,6 +113,22 @@ export function ActiveFilters({ categoryName }: ActiveFiltersProps) {
         <FilterTag
           label={`Brand: ${brand}`}
           onRemove={() => removeFilter('brand')}
+        />
+      )}
+
+      {hasGeo && (
+        <FilterTag
+          label={`Near: ${near ?? 'Your location'} (${geoRadius} mi)`}
+          onRemove={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('near');
+            params.delete('lat');
+            params.delete('lng');
+            params.delete('r');
+            if (params.get('sort') === 'nearest') params.delete('sort');
+            params.delete('page');
+            router.push(`${pathname}?${params.toString()}`);
+          }}
         />
       )}
 

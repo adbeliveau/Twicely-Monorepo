@@ -40,6 +40,8 @@ export interface ListingDocument {
   dealBadgeType?: string;
   primaryImageUrl?: string;
   primaryImageAlt?: string;
+  /** [lat, lng] — city centroid from seller profile zip. Nullable. (Decision #144) */
+  sellerLocation?: [number, number];
 }
 
 /** Ensure the listings collection exists. Creates it if missing. */

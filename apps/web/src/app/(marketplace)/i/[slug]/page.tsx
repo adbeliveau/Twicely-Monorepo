@@ -30,6 +30,7 @@ import { getListingAffiliateInfo } from '@/lib/queries/affiliate-listing';
 import { AffiliateClickTracker } from '@/components/affiliate/affiliate-click-tracker';
 import { AffiliateLinkButton } from '@/components/affiliate/affiliate-link-button';
 import { getTrustBadge, type PerformanceBand } from '@twicely/commerce/performance-band';
+import { ListingAreaMap } from '@/components/pages/listing/listing-area-map';
 
 export const revalidate = 300; // 5 min ISR
 
@@ -187,6 +188,14 @@ export default async function ListingPage({ params, searchParams }: ListingPageP
                 fulfillmentType={listing.fulfillmentType}
               />
             </div>
+
+            {(listing.fulfillmentType === 'LOCAL_ONLY' || listing.fulfillmentType === 'SHIP_AND_LOCAL') &&
+              listing.sellerLat != null && listing.sellerLng != null && (
+              <div className="mt-6">
+                <h3 className="mb-2 text-sm font-semibold text-gray-700">Seller Area</h3>
+                <ListingAreaMap lat={listing.sellerLat} lng={listing.sellerLng} />
+              </div>
+            )}
 
             {reviewSummary && (
               <div className="mt-6">

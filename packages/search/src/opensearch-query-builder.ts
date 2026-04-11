@@ -16,6 +16,8 @@ export interface RelevanceWeights {
   sellerTrustBoost: number;
   freshnessBoost: number;
   promotedBoost: number;
+  /** Proximity decay function weight (Decision #144). 0 = disabled. */
+  proximityBoost: number;
 }
 
 export const DEFAULT_RELEVANCE_WEIGHTS: RelevanceWeights = {
@@ -28,6 +30,7 @@ export const DEFAULT_RELEVANCE_WEIGHTS: RelevanceWeights = {
   sellerTrustBoost: 2,
   freshnessBoost: 2,
   promotedBoost: 4,
+  proximityBoost: 3.0,
 };
 
 export interface OpenSearchQueryDSL {
@@ -124,6 +127,17 @@ export function buildListingQuery(
     });
   }
 
+  // Geo-distance radius filter (Decision #144)
+  const hasGeo = filters.buyerLat !== undefined && filters.buyerLng !== undefined;
+  if (hasGeo && filters.radiusMiles) {
+    filterClauses.push({
+      geo_distance: {
+        distance: `${filters.radiusMiles}mi`,
+        sellerLocation: { lat: filters.buyerLat, lon: filters.buyerLng },
+      },
+    });
+  }
+
   // ── Assemble bool query ─────────────────────────────────────────────────
   const boolQuery: Record<string, unknown> = {
     filter: filterClauses,
@@ -141,22 +155,41 @@ export function buildListingQuery(
     boolQuery.minimum_should_match = 0;
   }
 
-  // ── Wrap with function_score for promoted boost ─────────────────────────
+  // ── Wrap with function_score for promoted boost + proximity decay ────────
   let query: Record<string, unknown>;
+  const scoreFunctions: Array<Record<string, unknown>> = [];
+
   if (weights.promotedBoost > 0) {
+    scoreFunctions.push({
+      field_value_factor: {
+        field: 'boostPercent',
+        factor: 0.01 * weights.promotedBoost,
+        modifier: 'ln1p',
+        missing: 0,
+      },
+    });
+  }
+
+  // Proximity decay scoring (Decision #144)
+  if (hasGeo && weights.proximityBoost > 0) {
+    scoreFunctions.push({
+      gauss: {
+        sellerLocation: {
+          origin: { lat: filters.buyerLat, lon: filters.buyerLng },
+          scale: '25mi',
+          offset: '5mi',
+          decay: 0.5,
+        },
+      },
+      weight: weights.proximityBoost,
+    });
+  }
+
+  if (scoreFunctions.length > 0) {
     query = {
       function_score: {
         query: { bool: boolQuery },
-        functions: [
-          {
-            field_value_factor: {
-              field: 'boostPercent',
-              factor: 0.01 * weights.promotedBoost,
-              modifier: 'ln1p',
-              missing: 0,
-            },
-          },
-        ],
+        functions: scoreFunctions,
         boost_mode: 'sum',
         score_mode: 'sum',
       },
@@ -166,7 +199,7 @@ export function buildListingQuery(
   }
 
   // ── Sort ────────────────────────────────────────────────────────────────
-  const sort = buildSort(filters.sort, hasQuery ?? false);
+  const sort = buildSort(filters.sort, hasQuery ?? false, hasGeo ? filters : undefined);
 
   // ── Aggregations (facets) ───────────────────────────────────────────────
   const aggs: Record<string, unknown> = {};
@@ -199,8 +232,25 @@ export function buildCategoryFilterClause(
 function buildSort(
   sort: SearchFilters['sort'],
   hasTextQuery: boolean,
+  geoFilters?: SearchFilters,
 ): Array<Record<string, unknown>> {
   switch (sort) {
+    case 'nearest':
+      if (geoFilters?.buyerLat !== undefined && geoFilters?.buyerLng !== undefined) {
+        return [
+          {
+            _geo_distance: {
+              sellerLocation: { lat: geoFilters.buyerLat, lon: geoFilters.buyerLng },
+              order: 'asc',
+              unit: 'mi',
+              distance_type: 'arc',
+            },
+          },
+          { activatedAt: { order: 'desc' } },
+        ];
+      }
+      // No geo context — fall through to newest
+      return [{ activatedAt: { order: 'desc' } }];
     case 'newest':
       return [{ activatedAt: { order: 'desc' } }];
     case 'price_asc':
@@ -210,14 +260,12 @@ function buildSort(
     case 'relevance':
     default:
       if (hasTextQuery) {
-        // Score first, then seller quality, then freshness
         return [
           { _score: { order: 'desc' } },
           { sellerScore: { order: 'desc' } },
           { activatedAt: { order: 'desc' } },
         ];
       }
-      // No text query — sort by newest
       return [{ activatedAt: { order: 'desc' } }];
   }
 }

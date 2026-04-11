@@ -95,6 +95,17 @@ const result = await action({ trigger: 'INVALID' as 'USER_INITIATED' });  // sam
 This works because string literals share the string supertype, making single-step TS casts valid.
 BANNED: `'xml' as unknown as 'json'`, `as any`, `@ts-expect-error`.
 
+## G10.2/G10.3 build step: missing mocks pattern
+When a source action gains new imports in a G10.x build step, tests fail with "Cannot find package" or "No X export defined on mock". Three recurring patterns:
+
+1. **New module import not mocked**: `authentication-ai.ts` added `import { AUTH_SETTINGS_KEYS } from '@/lib/authentication/constants'`. Fix: add `vi.mock('@/lib/authentication/constants', () => ({ AUTH_SETTINGS_KEYS: { ... } }))`. Also update `getPlatformSetting` mock to return the expected value for any new settings keys called in the action (e.g., `AI_SUPPORTED_CATEGORIES` must return a list that includes the test fixture's `categoryId`).
+
+2. **New schema table import**: `authentication-complete.ts` added `import { ..., ledgerEntry } from '@twicely/db/schema'`. Fix: add `ledgerEntry: { id: 'id', userId: 'user_id', type: 'type', amountCents: 'amount_cents', idempotencyKey: 'idempotency_key' }` to the `@twicely/db/schema` mock. Missing table in schema mock causes `TypeError: Cannot read properties of undefined` at runtime in the action.
+
+3. **New `getPlatformSetting` call adds `.limit()` to a chain**: `sync-engine-batch.ts` added `getPlatformSetting('accounting.sync.batchSize', 50)` then passes the result to `.limit(batchSize)`. Tests that had `where: vi.fn().mockResolvedValue(rows)` (resolving at `.where()`) now need `where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue(rows) })`. Fix: add `vi.mock('@/lib/queries/platform-settings', () => ({ getPlatformSetting: vi.fn().mockImplementation((_key: string, fallback?: unknown) => Promise.resolve(fallback)) }))` AND update all batch-query chains to add `.limit`. When updating `makeSelectChainNoLimit`, adding `.limit` to it fixes all its usages at once.
+
+4. **`runFullSync` test needs extra `mockReturnValueOnce` for `refreshIntegrationTokens`**: `runFullSync` now calls `refreshIntegrationTokens` before `syncSales`/`syncExpenses`/`syncPayouts`. That adds 1 extra `db.select()` call. Mock queue order: (1) integration-for-notification, (2) refreshTokens-integration, (3) syncSales-integration, (4) orders, (5) syncExpenses-integration, (6) expenses, (7) syncPayouts-integration, (8) payouts.
+
 ## HTML injection fix pattern
 Add `escapeHtml` to any file that interpolates user-provided strings into HTML template literals:
 ```typescript

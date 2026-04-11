@@ -88,7 +88,8 @@
 
 - I3+I4 Finance Gaps + Enrichment -- See [i3-i4-finance-findings.md]
 
-## Recent Prompts Written (2026-03-18/19/20/04-04)
+## Recent Prompts Written (2026-03-18/19/20/04-04/04-10)
+- G10.2 AI Authentication (Tier 2 Entrupy) -- See [g102-ai-auth-findings.md]
 - G10.3 QuickBooks/Xero Accounting Sync -- See [g103-accounting-sync-findings.md]
 - G10.1 Load Testing + Security Audit — See [g101-load-test-security-findings.md]
 - I17 Admin Sidebar Final Update — See [i17-admin-sidebar-findings.md]
@@ -123,6 +124,7 @@
 - G10.13 Connector Admin — See [g1013-connector-admin-findings.md]
 
 ## See Also (Topic Files)
+- [g102-ai-auth-findings.md] - G10.2 AI Auth (Tier 2 Entrupy): ~85% built, 9 gaps (webhook secret from env, no ledger entries, no stale timeout job, badge missing verify link, packages/ai not wired, checkout tier differentiation, no result detail UI, no category validation, no admin hub page), 138 existing tests, ~30-35 new tests, 3 owner decisions needed
 - [i17-admin-sidebar-findings.md] - I17 Admin Sidebar Final Update: 15 new nav items, 3 group restructures, 2 new groups (trust-safety, promotions), 5 missing icons, dispute rules URL discrepancy, ~25-30 tests
 - [i16-remaining-page-enrichment-findings.md] - I16 Remaining Page Enrichment: 8 pages, NO new schema tables, dashboard quick actions, KB filters+author+helpful%, audit date range+export, flags search, mod report name resolution, ~40 tests
 - [i15-settings-config-findings.md] - I15 Settings & Config: 7 pages, keyword API route MISSING, no bannedKeyword table in schema, provider mapping new page needed, 6 existing pages to enrich, ~50 tests

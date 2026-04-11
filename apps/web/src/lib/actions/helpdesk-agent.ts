@@ -19,7 +19,6 @@ import {
 } from '@/lib/validations/helpdesk';
 import { toggleAgentOnlineStatusSchema } from '@/lib/validations/helpdesk-agent-status';
 
-export { addCaseWatcher, removeCaseWatcher } from './helpdesk-agent-watchers';
 
 interface ActionResult<T = undefined> {
   success: boolean;

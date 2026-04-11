@@ -14,13 +14,16 @@ const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
+  { value: 'nearest', label: 'Nearest', geoOnly: true },
 ];
 
 interface SortSelectProps {
   currentSort: string;
+  /** When true, "Nearest" sort option is shown (Decision #144). */
+  hasLocation?: boolean;
 }
 
-export function SortSelect({ currentSort }: SortSelectProps) {
+export function SortSelect({ currentSort, hasLocation }: SortSelectProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -43,11 +46,13 @@ export function SortSelect({ currentSort }: SortSelectProps) {
         <SelectValue placeholder="Sort by" />
       </SelectTrigger>
       <SelectContent>
-        {SORT_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
+        {SORT_OPTIONS
+          .filter((opt) => !('geoOnly' in opt && opt.geoOnly) || hasLocation)
+          .map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
       </SelectContent>
     </Select>
   );

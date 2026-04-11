@@ -66,6 +66,9 @@ export const sellerProfile = pgTable('seller_profile', {
   sellerScoreUpdatedAt:  timestamp('seller_score_updated_at', { withTimezone: true }),
   isNew:                 boolean('is_new').notNull().default(true),
   boostCreditCents:      integer('boost_credit_cents').notNull().default(0),
+  // Decision #144 — Geo-proximity search (city centroid from profile zip)
+  sellerLat:             real('seller_lat'),
+  sellerLng:             real('seller_lng'),
 }, (table) => ({
   userIdx:       index('sp_user').on(table.userId),
   storeSlugIdx:  index('sp_store_slug').on(table.storeSlug),

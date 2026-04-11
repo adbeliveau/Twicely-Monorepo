@@ -14,6 +14,9 @@
  *   Queue: 'search-index-sync'
  */
 
+import { db } from '@twicely/db';
+import { sellerProfile } from '@twicely/db/schema';
+import { eq } from 'drizzle-orm';
 import { logger } from '@twicely/logger';
 import { createQueue, createWorker } from './queue';
 
@@ -55,6 +58,11 @@ export async function processSearchIndexJob(data: SearchIndexJobData): Promise<v
       if (!data.document) {
         logger.warn('[search-index-sync] upsert job missing document');
         return;
+      }
+      // Decision #144: enrich with sellerLocation if not already present
+      if (!data.document.sellerLocation && data.document.ownerUserId) {
+        const loc = await lookupSellerLocation(String(data.document.ownerUserId));
+        if (loc) data.document.sellerLocation = loc;
       }
       await indexDocument(data.document as never);
       break;
@@ -168,4 +176,26 @@ export async function enqueueSearchIndexBulkUpsert(
     `bulk-upsert:${documents.length}-docs`,
     { type: 'bulk-upsert', documents },
   );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Look up seller lat/lng for geo-proximity search (Decision #144).
+ * Returns [lat, lng] tuple or null if seller has no geocoded location.
+ */
+async function lookupSellerLocation(ownerUserId: string): Promise<[number, number] | null> {
+  try {
+    const [profile] = await db
+      .select({ sellerLat: sellerProfile.sellerLat, sellerLng: sellerProfile.sellerLng })
+      .from(sellerProfile)
+      .where(eq(sellerProfile.userId, ownerUserId))
+      .limit(1);
+    if (profile?.sellerLat != null && profile?.sellerLng != null) {
+      return [profile.sellerLat, profile.sellerLng];
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

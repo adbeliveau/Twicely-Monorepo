@@ -57,7 +57,9 @@ export function ListingCard({ listing, cardEmphasis }: ListingCardProps) {
         {(listing.fulfillmentType === 'LOCAL_ONLY' || listing.fulfillmentType === 'SHIP_AND_LOCAL') && (
           <span className="absolute left-2 bottom-2 flex items-center gap-0.5 rounded bg-blue-600 px-1.5 py-0.5 text-xs font-medium text-white">
             <MapPin className="h-3 w-3" />
-            Local
+            {listing.distanceMiles != null
+              ? `${listing.distanceMiles < 1 ? '<1' : Math.round(listing.distanceMiles)} mi`
+              : 'Local'}
           </span>
         )}
         {/* specs: condition badge overlay top-right */}

@@ -5,12 +5,15 @@ interface SearchResultsHeaderProps {
   query: string | null;
   totalCount: number;
   sort: string;
+  /** When true, "Nearest" sort option is available (Decision #144). */
+  hasLocation?: boolean;
 }
 
 export function SearchResultsHeader({
   query,
   totalCount,
   sort,
+  hasLocation,
 }: SearchResultsHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -25,7 +28,7 @@ export function SearchResultsHeader({
           </h1>
         )}
       </div>
-      <SortSelect currentSort={sort} />
+      <SortSelect currentSort={sort} hasLocation={hasLocation} />
     </div>
   );
 }

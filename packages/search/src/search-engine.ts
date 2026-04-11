@@ -152,7 +152,7 @@ async function searchWithOpenSearch(
 
   // Load weights from platform_settings
   const weights = { ...DEFAULT_RELEVANCE_WEIGHTS };
-  const [tw, dw, bw, tgw, cw, pb, stb, fb, pmb] = await Promise.all([
+  const [tw, dw, bw, tgw, cw, pb, stb, fb, pmb, pxb] = await Promise.all([
     getPlatformSetting<number>('discovery.search.titleWeight', weights.titleWeight),
     getPlatformSetting<number>('discovery.search.descriptionWeight', weights.descriptionWeight),
     getPlatformSetting<number>('discovery.search.brandWeight', weights.brandWeight),
@@ -162,6 +162,7 @@ async function searchWithOpenSearch(
     getPlatformSetting<number>('discovery.search.sellerTrustBoost', weights.sellerTrustBoost),
     getPlatformSetting<number>('discovery.search.freshnessBoost', weights.freshnessBoost),
     getPlatformSetting<number>('discovery.search.promotedBoost', weights.promotedBoost),
+    getPlatformSetting<number>('discovery.geo.proximityBoost', weights.proximityBoost),
   ]);
 
   weights.titleWeight = tw;
@@ -173,6 +174,7 @@ async function searchWithOpenSearch(
   weights.sellerTrustBoost = stb;
   weights.freshnessBoost = fb;
   weights.promotedBoost = pmb;
+  weights.proximityBoost = pxb;
 
   const queryDSL = buildListingQuery(filters, limit, weights);
   const client = getOpenSearchClient();
@@ -188,8 +190,14 @@ async function searchWithOpenSearch(
     : body.hits?.total ?? 0;
   const page = filters.page ?? 1;
 
+  const isNearestSort = filters.sort === 'nearest';
   const listings: ListingCardData[] = hits.map((hit: Record<string, unknown>) => {
     const doc = (hit as { _source: Record<string, unknown> })._source;
+    // When sorting by _geo_distance, OpenSearch puts distance (in miles) as first sort value
+    const sortValues = (hit as { sort?: unknown[] }).sort;
+    const distanceMiles = isNearestSort && sortValues?.[0] != null
+      ? Math.round(Number(sortValues[0]) * 10) / 10
+      : undefined;
     return {
       id: String(doc.id ?? ''),
       slug: String(doc.slug ?? ''),
@@ -211,6 +219,10 @@ async function searchWithOpenSearch(
       storefrontCategoryId: doc.storefrontCategoryId ? String(doc.storefrontCategoryId) : null,
       isBoosted: Number(doc.boostPercent ?? 0) > 0,
       fulfillmentType: doc.fulfillmentType ? String(doc.fulfillmentType) : undefined,
+      distanceMiles,
+      // Decision #144: city-level centroid for browse map view
+      sellerLat: extractGeoLat(doc.sellerLocation),
+      sellerLng: extractGeoLng(doc.sellerLocation),
     };
   });
 
@@ -374,6 +386,8 @@ async function searchWithPostgres(
       sellerShowStars: sellerPerformance.showStars,
       boostPercent: listing.boostPercent,
       fulfillmentType: listing.fulfillmentType,
+      sellerLat: sellerProfile.sellerLat,
+      sellerLng: sellerProfile.sellerLng,
     })
     .from(listing)
     .leftJoin(user, orm.eq(listing.ownerUserId, user.id))
@@ -389,6 +403,8 @@ async function searchWithPostgres(
     ...mapToListingCard(row),
     isBoosted: (row.boostPercent ?? 0) > 0,
     fulfillmentType: row.fulfillmentType ?? undefined,
+    sellerLat: row.sellerLat ?? undefined,
+    sellerLng: row.sellerLng ?? undefined,
   }));
 
   return {
@@ -494,6 +510,25 @@ export async function partialUpdateDocument(
   }
 
   await Promise.allSettled(tasks);
+}
+
+// ─── Geo Helpers (Decision #144) ────────────────────────────────────────────
+
+/** Extract latitude from OpenSearch geo_point stored as [lat, lng] or {lat, lon}. */
+function extractGeoLat(geoField: unknown): number | undefined {
+  if (Array.isArray(geoField) && geoField.length >= 2) return Number(geoField[0]);
+  if (geoField && typeof geoField === 'object' && 'lat' in geoField) return Number((geoField as { lat: number }).lat);
+  return undefined;
+}
+
+/** Extract longitude from OpenSearch geo_point stored as [lat, lng] or {lat, lon}. */
+function extractGeoLng(geoField: unknown): number | undefined {
+  if (Array.isArray(geoField) && geoField.length >= 2) return Number(geoField[1]);
+  if (geoField && typeof geoField === 'object') {
+    if ('lng' in geoField) return Number((geoField as { lng: number }).lng);
+    if ('lon' in geoField) return Number((geoField as { lon: number }).lon);
+  }
+  return undefined;
 }
 
 // ─── Search Analytics Logging ───────────────────────────────────────────────

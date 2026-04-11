@@ -2,10 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@twicely/db';
-import { address } from '@twicely/db/schema';
+import { address, sellerProfile } from '@twicely/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { authorize } from '@twicely/casl';
 import { addressSchema, type AddressFormData } from '@/lib/validations/address';
+import { logger } from '@twicely/logger';
 
 interface AddressActionResult {
   success: boolean;
@@ -39,6 +40,37 @@ async function clearDefaultAddresses(userId: string): Promise<void> {
 function revalidateAddressPaths() {
   revalidatePath('/my/settings/addresses');
   revalidatePath('/checkout');
+}
+
+/**
+ * Geocode a seller's default address to update sellerLat/sellerLng on their profile.
+ * Fire-and-forget — never blocks address save. (Decision #144)
+ */
+async function geocodeSellerLocation(userId: string, city: string, state: string, zip: string): Promise<void> {
+  try {
+    const [profile] = await db
+      .select({ id: sellerProfile.id })
+      .from(sellerProfile)
+      .where(eq(sellerProfile.userId, userId))
+      .limit(1);
+    if (!profile) return; // Not a seller — skip
+
+    const { geocodeAddress } = await import('@twicely/geocoding');
+    const result = await geocodeAddress(`${city}, ${state} ${zip}`);
+    if (!result) {
+      await db.update(sellerProfile).set({ sellerLat: null, sellerLng: null }).where(eq(sellerProfile.id, profile.id));
+      return;
+    }
+    await db.update(sellerProfile).set({
+      sellerLat: result.point.lat,
+      sellerLng: result.point.lng,
+    }).where(eq(sellerProfile.id, profile.id));
+  } catch (err) {
+    logger.warn('[geocode] Failed to geocode seller location', {
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 export async function createAddress(data: AddressFormData): Promise<AddressActionResult> {
@@ -75,6 +107,11 @@ export async function createAddress(data: AddressFormData): Promise<AddressActio
     isDefault: shouldBeDefault,
   }).returning({ id: address.id });
 
+  // Decision #144: geocode seller location from default address (fire-and-forget)
+  if (shouldBeDefault) {
+    void geocodeSellerLocation(userId, v.city.trim(), v.state.trim(), v.zip.trim());
+  }
+
   revalidateAddressPaths();
   return { success: true, addressId: newAddr!.id };
 }
@@ -100,6 +137,7 @@ export async function updateAddress(addressId: string, data: AddressFormData): P
 
   if (v.isDefault) await clearDefaultAddresses(userId);
 
+  const isDefault = v.isDefault ?? false;
   await db.update(address).set({
     label: v.label?.trim() || null,
     name: v.name.trim(),
@@ -110,9 +148,14 @@ export async function updateAddress(addressId: string, data: AddressFormData): P
     zip: v.zip.trim(),
     country: v.country.trim(),
     phone: v.phone?.trim() || null,
-    isDefault: v.isDefault ?? false,
+    isDefault,
     updatedAt: new Date(),
   }).where(eq(address.id, addressId));
+
+  // Decision #144: re-geocode seller location when default address is updated
+  if (isDefault) {
+    void geocodeSellerLocation(userId, v.city.trim(), v.state.trim(), v.zip.trim());
+  }
 
   revalidateAddressPaths();
   return { success: true, addressId };

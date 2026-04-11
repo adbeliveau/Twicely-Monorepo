@@ -6,13 +6,14 @@ import { logSearchQuery, getActiveSearchEngine } from '@twicely/search/search-en
 import { getCategoryTree } from '@/lib/queries/categories';
 import { getCategoryBySlug } from '@/lib/queries/categories';
 import { getPlatformSetting } from '@/lib/queries/platform-settings';
-import { ListingGrid } from '@/components/shared/listing-grid';
 import { ListingCardSkeleton } from '@/components/shared/listing-card-skeleton';
+import { SearchResultsWithMap } from '@/components/pages/search/search-results-with-map';
 import { PagePagination } from '@/components/shared/page-pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { SearchResultsHeader } from '@/components/pages/search/search-results-header';
 import { SearchFilters } from '@/components/pages/search/search-filters';
 import { ActiveFilters } from '@/components/pages/search/active-filters';
+import { SearchLocationFilter } from '@/components/pages/search/search-location-filter';
 import { Button } from '@twicely/ui/button';
 import {
   Sheet,
@@ -35,6 +36,14 @@ interface SearchPageProps {
     brand?: string;
     sort?: string;
     page?: string;
+    /** Zip code for geo-proximity (Decision #144). */
+    near?: string;
+    /** Buyer latitude for geo-proximity (Decision #144). */
+    lat?: string;
+    /** Buyer longitude for geo-proximity (Decision #144). */
+    lng?: string;
+    /** Radius in miles for geo-proximity (Decision #144). */
+    r?: string;
   }>;
 }
 
@@ -73,6 +82,40 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     }
   }
 
+  // Decision #144: resolve buyer geo-location from URL params
+  let buyerLat: number | undefined;
+  let buyerLng: number | undefined;
+  let radiusMiles: number | undefined;
+  const geoEnabled = await getPlatformSetting<boolean>('discovery.geo.enabled', true);
+
+  if (geoEnabled) {
+    if (params.lat && params.lng) {
+      buyerLat = parseFloat(params.lat);
+      buyerLng = parseFloat(params.lng);
+    } else if (params.near) {
+      // Forward geocode the zip/city
+      const { geocodeAddress } = await import('@twicely/geocoding');
+      const geoResult = await geocodeAddress(params.near);
+      if (geoResult) {
+        buyerLat = geoResult.point.lat;
+        buyerLng = geoResult.point.lng;
+      }
+    }
+    if (buyerLat !== undefined && params.r) {
+      radiusMiles = parseInt(params.r, 10);
+    } else if (buyerLat !== undefined) {
+      radiusMiles = await getPlatformSetting<number>('discovery.geo.defaultRadiusMiles', 25);
+    }
+  }
+
+  const hasLocation = buyerLat !== undefined && buyerLng !== undefined;
+
+  // Resolve a display label for the location filter
+  let locationLabel: string | null = null;
+  if (hasLocation && params.near) {
+    locationLabel = params.near;
+  }
+
   // Build search filters
   const pageSize = await getPlatformSetting<number>('discovery.search.defaultPageSize', 48);
   const filters: SearchFiltersType = {
@@ -87,6 +130,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     sort: (params.sort as SearchFiltersType['sort']) ?? 'relevance',
     page: params.page ? parseInt(params.page, 10) : 1,
     limit: pageSize,
+    buyerLat,
+    buyerLng,
+    radiusMiles,
   };
 
   const searchStart = Date.now();
@@ -145,6 +191,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <h2 className="mb-4 text-lg font-extrabold text-[var(--tw-black)]">
                 Filters
               </h2>
+              {geoEnabled && (
+                <div className="mb-4">
+                  <SearchLocationFilter locationLabel={locationLabel} />
+                </div>
+              )}
               <SearchFilters categories={filterCategories} />
             </div>
           </aside>
@@ -163,6 +214,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   <SheetTitle>Filters</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">
+                  {geoEnabled && (
+                    <div className="mb-4">
+                      <SearchLocationFilter locationLabel={locationLabel} />
+                    </div>
+                  )}
                   <SearchFilters categories={filterCategories} />
                 </div>
               </SheetContent>
@@ -176,6 +232,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 query={params.q ?? null}
                 totalCount={results.totalCount}
                 sort={filters.sort ?? 'relevance'}
+                hasLocation={hasLocation}
               />
             </div>
 
@@ -190,7 +247,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             >
               {results.listings.length > 0 ? (
                 <>
-                  <ListingGrid listings={results.listings} />
+                  <SearchResultsWithMap
+                    listings={results.listings}
+                    buyerLat={buyerLat}
+                    buyerLng={buyerLng}
+                    hasGeoListings={results.listings.some((l) => l.sellerLat != null)}
+                  />
                   {results.totalPages > 1 && (
                     <div className="mt-8">
                       <PagePagination
